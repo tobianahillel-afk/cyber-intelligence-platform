@@ -98,6 +98,7 @@ class CollectionJob:
     adapter_id: str
     scheduled_for: datetime
     available_at: datetime
+    lease_seconds: int
     max_attempts: int
     base_delay_seconds: int
     max_delay_seconds: int
@@ -113,6 +114,8 @@ class CollectionJob:
             raise ValueError("source_id is required")
         if not self.adapter_id.strip():
             raise ValueError("adapter_id is required")
+        if self.lease_seconds < 1:
+            raise ValueError("lease_seconds must be positive")
         for field_name in ("scheduled_for", "available_at", "created_at"):
             value = require_aware_utc(getattr(self, field_name), field_name=field_name)
             object.__setattr__(self, field_name, value)
@@ -135,6 +138,7 @@ class CollectionJob:
             adapter_id=schedule.adapter_id,
             scheduled_for=slot,
             available_at=slot,
+            lease_seconds=schedule.lease_seconds,
             max_attempts=retry.max_attempts,
             base_delay_seconds=retry.base_delay_seconds,
             max_delay_seconds=retry.max_delay_seconds,
