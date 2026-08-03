@@ -1,76 +1,118 @@
 # Cyber Intelligence Platform
 
-A compliance-first platform for cyber threat intelligence, company research, passive exposure analysis, and B2B opportunity discovery.
+Cyber Intelligence Platform is a human-operated cyber revenue intelligence workspace. It collects authorized public or licensed cyber, company, technology, commercial, and professional-role signals to identify organizations that may currently or soon need cybersecurity services or products.
 
-## Purpose
+The product is designed to answer:
 
-The platform correlates lawful public or licensed data to help identify organizations that may need cybersecurity services or products. It is designed to answer:
+1. Which organization should be reviewed?
+2. What cybersecurity need or buying signal was detected?
+3. Which evidence supports the conclusion?
+4. Which professional roles or people are relevant?
+5. Which offer should be proposed, and why now?
 
-- What public cyber events affect an organization?
-- Which technologies and externally visible assets are publicly associated with it?
-- Which published vulnerabilities are relevant to those technologies?
-- Which professional roles are appropriate contacts?
-- What evidence supports a timely, factual, non-manipulative outreach?
+## Product experience
 
-## Planned capabilities
+The analyst interface includes:
 
-- Company and domain intelligence
-- Public incident and ransomware-event aggregation
-- Vulnerability and technology correlation
-- Search-engine dork management for lawful public research
-- Professional organization mapping
-- Evidence-backed opportunity scoring
-- Source provenance, confidence, freshness, and retention controls
-- Human-reviewed outreach preparation
+- a Command Center for urgent changes and source health;
+- an Opportunity Inbox for triage and qualification;
+- complete Organization Workspaces;
+- timelines, technologies, vulnerability relevance, incidents, tenders, contracts, jobs, and transformation signals;
+- organization charts and buying committees;
+- professional-contact provenance and freshness;
+- a Research Workspace for approved searches and browser research jobs;
+- a Source Operations area for connector health, permissions, schedules, and quotas;
+- an Offer Catalog used by the opportunity engine.
 
-## Operating principles
+## Core capabilities
 
-1. **Public or licensed sources only.** Every connector must have a documented legal and contractual basis.
-2. **Passive by default.** No intrusive scan, exploitation, authentication attempt, or unsolicited security test.
-3. **No stolen-data repository.** Store event metadata, indicators, summaries, and source references—not credential dumps, victim files, private conversations, or extorted content.
-4. **Professional data minimization.** Collect only data relevant to a person's professional role and the stated B2B purpose.
-5. **Evidence before scoring.** Every signal must be traceable to a source and timestamp.
-6. **Human review before outreach.** The platform does not autonomously contact organizations.
-7. **No crisis manipulation.** Recent incidents may create a relevant service need, but outreach must remain factual, respectful, and non-coercive.
+- organization, group, subsidiary, domain, and infrastructure intelligence;
+- public incident, ransomware-claim, breach, and disruption monitoring;
+- technology and vulnerability correlation;
+- tenders, contract awards, renewal-window estimates, hiring, and transformation signals;
+- professional organization mapping and decision-role identification;
+- evidence-backed need detection and explainable opportunity scoring;
+- saved searches and approved dork templates;
+- freshness, confidence, provenance, retention, suppression, and deletion controls;
+- human-reviewed export and CRM workflows.
 
-## Dorking scope
+## Architecture
 
-The project may generate and manage advanced search queries for public search engines. Dorking is treated as a discovery mechanism, not authorization to access restricted systems or download sensitive material.
-
-Allowed examples include:
-
-- locating official company documents and security contacts;
-- identifying publicly indexed technology documentation;
-- finding public incident notices, tenders, job postings, and regulatory publications;
-- detecting potentially exposed public pages for manual, non-intrusive review.
-
-The platform must not bypass authentication, defeat access controls, brute-force resources, exploit a discovered weakness, or collect secrets and personal files.
-
-## Initial architecture
+The initial system is a **modular monolith**, not a collection of premature microservices. The API, workers, scheduler, and web application are separate entry points over strongly isolated business modules.
 
 ```text
 apps/
-  api/                 FastAPI application
-  worker/              ingestion and enrichment jobs
+  api/                         FastAPI composition root
+  worker/                      background processing
+  scheduler/                   recurring-job entry point
+  web/                         Next.js analyst interface
+
+src/cip/
+  shared/                      kernel, configuration, security, observability
+  modules/                     bounded business contexts
+  adapters/                    sources, browsers, search, storage, messaging
+
 packages/
-  domain/              core entities and scoring models
-  collectors/          source-specific connectors
-  compliance/          source policy and data controls
-docs/
-  PRODUCT.md
-  ARCHITECTURE.md
-  SOURCE_POLICY.md
-  DATA_MODEL.md
-policies/
-  sources.example.yml
-  retention.yml
-tests/
+  contracts/                   generated API and event contracts
+  ui/                          reusable design-system components
+  source_sdk/                  adapter SDK and contract-test kit
+
+infra/                         containers, migrations, monitoring
+policies/                      machine-readable source and retention policies
+tests/                         architecture, integration, and end-to-end tests
 ```
 
-## Status
+Important module boundaries include source governance, collection, organizations, professional intelligence, cyber intelligence, technologies, vulnerabilities, commercial intelligence, evidence, entity resolution, need detection, opportunities, research, notifications, and integrations.
 
-Bootstrap phase. The first milestone is a source registry, normalized event model, company records, evidence storage, and a small set of official/public feeds.
+## Modularity rules
+
+- Functions target 40 logical lines or fewer; review is mandatory above 70.
+- Handwritten Python and TypeScript files target 300 lines or fewer; review is mandatory above 500.
+- React components target 200 lines or fewer.
+- API routes contain transport logic only.
+- Domain code does not import FastAPI, SQLAlchemy, Redis, browser libraries, or HTTP clients.
+- Source adapters do not resolve organizations or calculate opportunities.
+- Opportunity rules consume canonical evidence-backed signals, not provider payloads.
+- Cross-module operations use application interfaces or events, never another module's repositories.
+
+## Operating principles
+
+1. **Human in the loop.** Automation collects and prioritizes; a human reviews conclusions and controls outreach.
+2. **Evidence before scoring.** Every alert, relationship, score, and recommendation links to provenance.
+3. **Freshness-aware.** Observations record first seen, last seen, collected, verified, and expiry timestamps.
+4. **Public, licensed, or explicitly authorized sources.** Each source has a machine-readable policy and activation state.
+5. **Passive by default.** No intrusive scan, exploitation, authentication attempt, or unsolicited security test.
+6. **No stolen-data repository.** Do not store credentials, victim files, private communications, or extorted datasets.
+7. **Professional-data minimization.** Collect only information relevant to a professional role and documented B2B purpose.
+8. **Reversible inference.** Entity merges, technology matches, and scores can be rejected and recomputed.
+9. **Safe browser automation.** Browser workers are isolated, allowlisted, rate-limited, audited, and kill-switch controlled.
+10. **No autonomous outreach.** No message leaves the system without explicit human action.
+
+## Documentation
+
+- [`docs/PRODUCT.md`](docs/PRODUCT.md): initial product definition and workflows
+- [`docs/PRODUCT_ARCHITECTURE.md`](docs/PRODUCT_ARCHITECTURE.md): complete product, backend, pipeline, module, and repository architecture
+- [`docs/UI_UX.md`](docs/UI_UX.md): analyst navigation, screens, tables, timelines, alerts, and interaction rules
+- [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md): technical components and trust boundaries
+- [`docs/DEVELOPMENT_STANDARDS.md`](docs/DEVELOPMENT_STANDARDS.md): file-size budgets, dependency rules, testing, and code-review standards
+- [`docs/DATA_MODEL.md`](docs/DATA_MODEL.md): canonical entities and relationships
+- [`docs/SOURCE_POLICY.md`](docs/SOURCE_POLICY.md): source authorization and collection policy
+- [`SECURITY.md`](SECURITY.md): repository and platform security requirements
+
+## Initial implementation sequence
+
+1. Analyst application shell and navigation.
+2. Organization, evidence, signal, need, and opportunity backbone.
+3. Source registry, durable jobs, source SDK, and one official feed.
+4. Opportunity Inbox and Organization Workspace with live backend data.
+5. Research Workspace and isolated browser-worker interface.
+6. Tenders, contracts, renewals, jobs, and transformation signals.
+7. Professional roles, buying committees, contact provenance, and CRM export.
+
+## Current status
+
+Architecture and bootstrap phase. The repository contains the first FastAPI endpoint, canonical models, source-policy validation, tests, and CI configuration. The next implementation slice is the analyst shell and opportunity backbone.
 
 ## Security
 
-Do not commit API keys, credentials, personal-data exports, leaked datasets, or proprietary source content. See `SECURITY.md`.
+Do not commit API keys, authentication material, personal-data exports, leaked datasets, or proprietary source content. The repository is currently public, so all runtime secrets and collected business data must remain outside Git.
