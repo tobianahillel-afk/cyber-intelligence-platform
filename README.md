@@ -7,34 +7,118 @@ The product is designed to answer:
 1. Which organization should be reviewed?
 2. What cybersecurity need or buying signal was detected?
 3. Which evidence supports the conclusion?
-4. Which professional roles or people are relevant?
+4. Which professional roles are relevant?
 5. Which offer should be proposed, and why now?
 
-## Product experience
+## Current implementation status
 
-The analyst interface includes:
+The repository now contains an executable foundation rather than documentation only:
 
-- a Command Center for urgent changes and source health;
-- an Opportunity Inbox for triage and qualification;
-- complete Organization Workspaces;
-- timelines, technologies, vulnerability relevance, incidents, tenders, contracts, jobs, and transformation signals;
-- organization charts and buying committees;
-- professional-contact provenance and freshness;
-- a Research Workspace for approved searches and browser research jobs;
-- a Source Operations area for connector health, permissions, schedules, and quotas;
-- an Offer Catalog used by the opportunity engine.
+- FastAPI application factory and source-governance endpoints;
+- framework-independent domain modules for organizations, evidence, cyber events, raw observations, opportunity scoring, retention, suppression, source accounts, and product metrics;
+- explicit source policies, authorization records, runtime state, and collection decisions;
+- PostgreSQL persistence models and reversible Alembic migrations;
+- local PostgreSQL through Docker Compose;
+- HMAC-SHA256 suppression records without raw contact identifiers;
+- executable retention rules;
+- a machine-readable source registry;
+- an official CISA KEV feed adapter with conditional HTTP requests, size/type checks, strict schemas, checkpoints, provenance, and network-free tests;
+- a Next.js analyst shell and Opportunity Inbox using clearly marked demonstration data;
+- pinned direct dependencies, dependency audits, Ruff, Mypy, migration validation, frontend build validation, and 90% branch-aware coverage gates;
+- Dependabot, CODEOWNERS, contribution rules, a PR template, and manually runnable CodeQL.
 
-## Core capabilities
+Not yet implemented:
 
-- organization, group, subsidiary, domain, and infrastructure intelligence;
-- public incident, ransomware-claim, breach, and disruption monitoring;
-- technology and vulnerability correlation;
-- tenders, contract awards, renewal-window estimates, hiring, and transformation signals;
-- professional organization mapping and decision-role identification;
-- evidence-backed need detection and explainable opportunity scoring;
-- saved searches and approved dork templates;
-- freshness, confidence, provenance, retention, suppression, and deletion controls;
-- human-reviewed export and CRM workflows.
+- live opportunity-generation rules connected to the UI;
+- a durable background scheduler or distributed queue;
+- Chromium/browser workers and download quarantine runtime;
+- OpenSearch, Redis, object storage, CRM integration, or autonomous outreach;
+- active LinkedIn collection;
+- any executable BrixHub integration.
+
+## Local setup
+
+Requirements:
+
+- Python 3.12;
+- Docker with Compose;
+- Node.js 24 for the current frontend toolchain.
+
+```bash
+cp .env.example .env
+docker compose up -d postgres
+python -m venv .venv
+. .venv/bin/activate
+python -m pip install -e '.[dev]'
+alembic upgrade head
+cip-api
+```
+
+On PowerShell:
+
+```powershell
+Copy-Item .env.example .env
+docker compose up -d postgres
+py -3.12 -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install -e ".[dev]"
+alembic upgrade head
+cip-api
+```
+
+Start the UI separately:
+
+```bash
+cd apps/web
+npm install
+npm run dev
+```
+
+The API is available on `http://127.0.0.1:8000` by default. The frontend uses demonstration opportunity records until the opportunity read API is implemented.
+
+## Validation
+
+```bash
+python -m pip check
+pip-audit --strict --skip-editable
+ruff check .
+mypy
+alembic upgrade head
+alembic downgrade base
+alembic upgrade head
+pytest --cov=cip --cov-branch --cov-fail-under=90
+
+cd apps/web
+npm install
+npm audit --audit-level=high
+npm run typecheck
+npm run build
+```
+
+## Architecture
+
+The system begins as a modular monolith with separate API, worker, scheduler, and frontend composition roots. Domain modules do not depend on FastAPI, SQLAlchemy, HTTP clients, Redis, or browser libraries.
+
+```text
+apps/
+  web/                         Next.js analyst application
+
+src/cip/
+  shared/                      time, configuration, persistence
+  modules/                     bounded business contexts
+  adapters/                    isolated external-source integrations
+
+infra/
+  migrations/                  reversible Alembic revisions
+
+policies/
+  sources.example.yml          source and authorization registry
+  retention.yml                executable retention and suppression policy
+  product_metrics.yml          quality and commercial-value targets
+
+tests/
+  unit/                        domain, adapter, governance, and persistence tests
+```
 
 ## Acquisition model
 
@@ -49,70 +133,23 @@ official API
 -> manual import
 ```
 
-The platform does not treat Chromium as a universal fallback. Browser jobs run in isolated workers with fresh contexts, source-specific network allowlists, time and page budgets, download restrictions, audit logs, and kill switches.
+The current executable adapter uses the official CISA KEV JSON feed. Chromium is intentionally deferred until API and static-HTTP acquisition, normalization, provenance, and value metrics are stable.
 
-Downloads enter a quarantine pipeline before parsing:
+CAPTCHA, bot challenges, MFA, changed terms, or account-security prompts must produce a safe pause and human task. They are not automatically bypassed. Temporary-account rotation, copied cookies, CAPTCHA-solving services, and access-control circumvention are out of scope.
 
-```text
-download
--> isolated temporary storage
--> hash, size, and type validation
--> archive and malware controls
--> sandboxed parser
--> redacted normalized output
--> evidence or rejection
-```
+## Source governance
 
-CAPTCHA, bot challenges, MFA, changed terms, or account-security prompts produce a safe pause and human task. They are not automatically bypassed.
+A collection request is permitted only when all applicable checks pass:
 
-## Architecture
+- source is enabled;
+- data category is allowed and not prohibited;
+- authorization is approved and unexpired;
+- automation and raw storage are explicitly permitted;
+- human review is complete when required;
+- quota remains available;
+- purpose, target host, and target path are approved.
 
-The initial system is a **modular monolith**, not a collection of premature microservices. The API, workers, scheduler, and web application are separate entry points over strongly isolated business modules.
-
-```text
-apps/
-  api/                         FastAPI composition root
-  worker/                      background processing
-  scheduler/                   recurring-job entry point
-  web/                         Next.js analyst interface
-
-src/cip/
-  shared/                      kernel, configuration, security, observability
-  modules/                     bounded business contexts
-  adapters/                    sources, browsers, search, storage, messaging
-
-packages/
-  contracts/                   generated API and event contracts
-  ui/                          reusable design-system components
-  source_sdk/                  adapter SDK and contract-test kit
-
-infra/                         containers, migrations, monitoring
-policies/                      machine-readable source and retention policies
-tests/                         architecture, integration, and end-to-end tests
-```
-
-Important module boundaries include source governance, collection, raw observations, normalization, organizations, professional intelligence, cyber intelligence, technologies, vulnerabilities, commercial intelligence, evidence, entity resolution, need detection, opportunities, research, notifications, and integrations.
-
-## Adapter architecture
-
-Every source or external tool is isolated under its own adapter and split by responsibility:
-
-```text
-adapters/sources/<source_id>/
-  manifest.yml
-  auth/
-  transport/
-  discovery/
-  extraction/
-  parsing/
-  mapping/
-  runtime/
-  fixtures/
-  tests/
-  README.md
-```
-
-A source adapter handles authentication, retrieval, parsing, mapping, checkpoints, and health for one provider. It never performs entity resolution or calculates commercial opportunities.
+LinkedIn entries remain disabled until the relevant application scopes or written authorization are recorded. BrixHub is present only as a quarantined governance record: no account creation, payment, network access, crawling, download, or import is enabled.
 
 ## Normalization layers
 
@@ -128,78 +165,35 @@ L7 commercial opportunity
 L8 UI and search read models
 ```
 
-Every UI value remains traceable to the source record, collection job, adapter version, and evidence that produced it.
+The CISA adapter currently implements L0 through L1. Later stages must consume canonical records rather than source-specific payloads.
 
-## Modularity rules
+## Code and test standards
 
-- Functions target 40 logical lines or fewer; review is mandatory above 70.
-- Handwritten Python and TypeScript files target 300 lines or fewer; review is mandatory above 500.
-- React components target 200 lines or fewer.
-- API routes contain transport logic only.
-- Domain code does not import FastAPI, SQLAlchemy, Redis, browser libraries, or HTTP clients.
-- Source adapters do not resolve organizations or calculate opportunities.
-- Opportunity rules consume canonical evidence-backed signals, not provider payloads.
-- Cross-module operations use application interfaces or events, never another module's repositories.
-
-## Test quality gates
-
-- at least 90% line coverage;
-- at least 90% branch coverage for handwritten backend code;
-- at least 95% changed-file coverage;
-- at least 95% line and branch coverage for critical policy and scoring modules;
-- parser fixtures and adapter contract tests for every source;
-- browser tests for login, session expiry, MFA, CAPTCHA detection, selector changes, downloads, crashes, and isolation;
-- security tests for SSRF, redirects, DNS rebinding, redaction, hostile files, archives, and authorization;
-- integration, migration, resilience, performance, data-quality, architecture, API, and UI end-to-end suites.
-
-The Python CI currently fails below 90% branch-aware coverage.
-
-## Operating principles
-
-1. **Human in the loop.** Automation collects and prioritizes; a human reviews conclusions and controls outreach.
-2. **Evidence before scoring.** Every alert, relationship, score, and recommendation links to provenance.
-3. **Freshness-aware.** Observations record first seen, last seen, collected, verified, and expiry timestamps.
-4. **Public, licensed, or explicitly authorized sources.** Each source has a machine-readable policy and activation state.
-5. **Passive by default.** No intrusive scan, exploitation, authentication attempt, or unsolicited security test.
-6. **No stolen-data repository.** Do not store credentials, victim files, private communications, or extorted datasets.
-7. **Professional-data minimization.** Collect only information relevant to a professional role and documented B2B purpose.
-8. **Reversible inference.** Entity merges, technology matches, and scores can be rejected and recomputed.
-9. **Safe browser automation.** Browser workers are isolated, allowlisted, rate-limited, audited, and kill-switch controlled.
-10. **No autonomous outreach.** No message leaves the system without explicit human action.
+- functions target at most 40 logical lines;
+- handwritten source files target at most 300 lines;
+- React components target at most 200 lines;
+- API routes contain transport concerns only;
+- source adapters never resolve organizations or calculate opportunities;
+- scores are calculated by the domain and include a reproducible hash;
+- timestamps must be timezone-aware;
+- every adapter requires policy-denial, schema, mapping, checkpoint, and failure tests;
+- backend line and branch coverage must remain at least 90%;
+- critical policy and scoring modules target 95%.
 
 ## Documentation
 
-- [`docs/PRODUCT.md`](docs/PRODUCT.md): initial product definition and workflows
-- [`docs/PRODUCT_ARCHITECTURE.md`](docs/PRODUCT_ARCHITECTURE.md): complete product, backend, pipeline, module, and repository architecture
-- [`docs/UI_UX.md`](docs/UI_UX.md): analyst navigation, screens, tables, timelines, alerts, and interaction rules
-- [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md): technical components and trust boundaries
-- [`docs/ACQUISITION_ARCHITECTURE.md`](docs/ACQUISITION_ARCHITECTURE.md): API, HTTP, Chromium, authentication, challenge handling, downloads, isolation, and updates
-- [`docs/SOURCE_ADAPTER_STANDARD.md`](docs/SOURCE_ADAPTER_STANDARD.md): standard source/tool folder structure, file responsibilities, checkpoints, account lifecycle, and adapter tests
-- [`docs/NORMALIZATION_PIPELINE.md`](docs/NORMALIZATION_PIPELINE.md): raw-to-canonical layers, deduplication, entity resolution, freshness, change processing, and lineage
-- [`docs/TEST_STRATEGY.md`](docs/TEST_STRATEGY.md): coverage targets and the complete test-suite design
-- [`docs/DEVELOPMENT_STANDARDS.md`](docs/DEVELOPMENT_STANDARDS.md): file-size budgets, dependency rules, testing, and code-review standards
-- [`docs/DATA_MODEL.md`](docs/DATA_MODEL.md): canonical entities and relationships
-- [`docs/SOURCE_POLICY.md`](docs/SOURCE_POLICY.md): source authorization and collection policy
-- [`docs/adr/0001-modular-monolith.md`](docs/adr/0001-modular-monolith.md): modular-monolith decision
-- [`docs/adr/0002-multi-mode-acquisition.md`](docs/adr/0002-multi-mode-acquisition.md): HTTP, browser, assisted session, and quarantine decision
-- [`SECURITY.md`](SECURITY.md): repository and platform security requirements
-
-## Initial implementation sequence
-
-1. Analyst application shell and navigation.
-2. Organization, evidence, signal, need, and opportunity backbone.
-3. Source registry, durable jobs, source SDK, and one official API or feed.
-4. Static HTTP and incremental-update framework.
-5. Isolated browser-worker and download-quarantine framework.
-6. Opportunity Inbox and Organization Workspace with live backend data.
-7. Research Workspace and analyst-assisted job handling.
-8. Tenders, contracts, renewals, jobs, and transformation signals.
-9. Professional roles, buying committees, contact provenance, and CRM export.
-
-## Current status
-
-Architecture and bootstrap phase. The repository contains the first FastAPI endpoint, canonical models, source-policy validation, tests, CI configuration, and detailed product, acquisition, normalization, adapter, UI, and testing architecture.
+- [`docs/PRODUCT_ARCHITECTURE.md`](docs/PRODUCT_ARCHITECTURE.md)
+- [`docs/UI_UX.md`](docs/UI_UX.md)
+- [`docs/ACQUISITION_ARCHITECTURE.md`](docs/ACQUISITION_ARCHITECTURE.md)
+- [`docs/SOURCE_ADAPTER_STANDARD.md`](docs/SOURCE_ADAPTER_STANDARD.md)
+- [`docs/NORMALIZATION_PIPELINE.md`](docs/NORMALIZATION_PIPELINE.md)
+- [`docs/TEST_STRATEGY.md`](docs/TEST_STRATEGY.md)
+- [`docs/DEVELOPMENT_STANDARDS.md`](docs/DEVELOPMENT_STANDARDS.md)
+- [`docs/DATA_MODEL.md`](docs/DATA_MODEL.md)
+- [`docs/SOURCE_POLICY.md`](docs/SOURCE_POLICY.md)
+- [`SECURITY.md`](SECURITY.md)
+- [`CONTRIBUTING.md`](CONTRIBUTING.md)
 
 ## Security
 
-Do not commit API keys, authentication material, personal-data exports, leaked datasets, or proprietary source content. The repository is currently public, so all runtime secrets and collected business data must remain outside Git.
+The repository is private, but secrets and collected data must still remain outside Git. Never commit API keys, passwords, cookies, tokens, private communications, victim files, leaked datasets, production contact exports, or proprietary provider content.
