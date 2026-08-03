@@ -19,6 +19,4 @@ _IMPORTED_MODELS = (
 def get_metadata() -> MetaData:
     """Return metadata after importing all module-owned persistence records."""
 
-    if not _IMPORTED_MODELS:
-        raise RuntimeError("persistence model registry is empty")
     return Base.metadata
