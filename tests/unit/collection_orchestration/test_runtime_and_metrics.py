@@ -90,7 +90,7 @@ def test_source_registry_sync_inserts_updates_and_then_stabilizes(tmp_path: Path
 
     changed_entry = replace(
         entries[0],
-        policy=entries[0].policy.model_copy(update={"name": "Updated source name"}),
+        policy=replace(entries[0].policy, name="Updated source name"),
     )
     with session_scope(factory) as session:
         assert sync_source_registry(session, (changed_entry, *entries[1:])) == 1
