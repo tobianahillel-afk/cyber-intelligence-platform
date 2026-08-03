@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass
+from datetime import datetime
 from enum import StrEnum
 from uuid import UUID
 
@@ -9,6 +10,7 @@ from sqlalchemy.orm import Session, sessionmaker
 
 from cip.modules.collection_orchestration.application.ports import (
     AdapterExecutionError,
+    ClaimedJob,
     CollectionAdapter,
 )
 from cip.modules.collection_orchestration.domain.models import JobStatus
@@ -19,7 +21,7 @@ from cip.modules.collection_orchestration.infrastructure.repository import (
     fail_job,
 )
 from cip.modules.data_governance.domain.retention import RetentionPolicy
-from cip.shared.kernel.time import utc_now
+from cip.shared.kernel.time import require_aware_utc, utc_now
 from cip.shared.persistence.session import session_scope
 
 
@@ -46,7 +48,7 @@ def run_worker_once(
     worker_id: str,
     adapters: Mapping[tuple[str, str], CollectionAdapter],
     retention_policy: RetentionPolicy,
-    clock: Callable[[], object] = utc_now,
+    clock: Callable[[], datetime] = utc_now,
 ) -> WorkerOutcome:
     claim_time = _read_clock(clock)
     with session_scope(factory) as session:
@@ -119,16 +121,12 @@ def run_worker_once(
 def _record_failure(
     factory: sessionmaker[Session],
     *,
-    claimed: object,
-    clock: Callable[[], object],
+    claimed: ClaimedJob,
+    clock: Callable[[], datetime],
     error_code: str,
     error_message: str,
     retryable: bool,
 ) -> WorkerOutcome:
-    from cip.modules.collection_orchestration.application.ports import ClaimedJob
-
-    if not isinstance(claimed, ClaimedJob):
-        raise TypeError("claimed must be a ClaimedJob")
     try:
         with session_scope(factory) as session:
             status = fail_job(
@@ -160,10 +158,5 @@ def _worker_status(status: JobStatus) -> WorkerStatus:
     raise ValueError(f"unsupported failure status: {status.value}")
 
 
-def _read_clock(clock: Callable[[], object]):
-    from datetime import datetime
-
-    value = clock()
-    if not isinstance(value, datetime):
-        raise TypeError("clock must return datetime")
-    return value
+def _read_clock(clock: Callable[[], datetime]) -> datetime:
+    return require_aware_utc(clock(), field_name="clock")
