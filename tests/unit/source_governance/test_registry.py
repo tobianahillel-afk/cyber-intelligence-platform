@@ -136,30 +136,41 @@ def test_duplicate_source_ids_are_rejected(tmp_path: Path) -> None:
 
 
 def test_invalid_authorization_and_economics_are_rejected(tmp_path: Path) -> None:
-    base = dedent(
-        """
-        version: 1
-        sources:
-          - id: example
-            name: Example
-            base_url: https://example.org
-            status: quarantined
-            source_type: browser
-            owner: Example
-            allowed_data_categories: []
-            prohibited_data_categories: []
-        """
+    missing_authorization = tmp_path / "missing-authorization.yml"
+    missing_authorization.write_text(
+        dedent(
+            """
+            version: 1
+            sources:
+              - id: example
+                name: Example
+                base_url: https://example.org
+                status: quarantined
+                source_type: browser
+                owner: Example
+                allowed_data_categories: []
+                prohibited_data_categories: []
+            """
+        ),
+        encoding="utf-8",
     )
-    no_authorization = tmp_path / "no-authorization.yml"
-    no_authorization.write_text(base, encoding="utf-8")
     with pytest.raises(ValueError, match="authorization"):
-        load_source_registry(no_authorization)
+        load_source_registry(missing_authorization)
 
     bad_economics = tmp_path / "bad-economics.yml"
     bad_economics.write_text(
-        base
-        + dedent(
+        dedent(
             """
+            version: 1
+            sources:
+              - id: example
+                name: Example
+                base_url: https://example.org
+                status: quarantined
+                source_type: browser
+                owner: Example
+                allowed_data_categories: []
+                prohibited_data_categories: []
                 authorization:
                   status: missing
                   approved_hosts: []
