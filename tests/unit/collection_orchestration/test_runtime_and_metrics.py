@@ -37,7 +37,12 @@ from cip.modules.source_governance.infrastructure.models import SourceRecord
 from cip.modules.source_governance.infrastructure.persistence import sync_source_registry
 from cip.modules.source_governance.infrastructure.registry import load_source_registry
 from cip.shared.config.settings import Settings
-from cip.shared.persistence.session import session_scope
+from cip.shared.persistence.metadata import get_metadata
+from cip.shared.persistence.session import (
+    create_database_engine,
+    create_session_factory,
+    session_scope,
+)
 
 NOW = datetime(2026, 8, 3, 18, 30, tzinfo=UTC)
 
@@ -56,12 +61,8 @@ def _settings(tmp_path: Path, *, schedule_path: Path | None = None) -> Settings:
 
 def test_runtime_syncs_sources_and_schedules_idempotently(tmp_path: Path) -> None:
     settings = _settings(tmp_path)
-    runtime = build_collection_runtime(settings)
-    runtime.factory.kw["bind"].metadata = None if False else runtime.factory.kw.get("bind")
+    get_metadata().create_all(create_database_engine(settings.database_url))
 
-    from cip.shared.persistence.metadata import get_metadata
-
-    get_metadata().create_all(runtime.factory.kw["bind"])
     runtime = build_collection_runtime(settings)
     assert run_scheduler_once(runtime, now=NOW) == 1
     assert run_scheduler_once(runtime, now=NOW) == 0
@@ -76,9 +77,6 @@ def test_runtime_syncs_sources_and_schedules_idempotently(tmp_path: Path) -> Non
 
 def test_source_registry_sync_inserts_updates_and_then_stabilizes(tmp_path: Path) -> None:
     settings = _settings(tmp_path)
-    from cip.shared.persistence.metadata import get_metadata
-    from cip.shared.persistence.session import create_database_engine, create_session_factory
-
     engine = create_database_engine(settings.database_url)
     get_metadata().create_all(engine)
     factory = create_session_factory(engine)
@@ -95,7 +93,9 @@ def test_source_registry_sync_inserts_updates_and_then_stabilizes(tmp_path: Path
     )
     with session_scope(factory) as session:
         assert sync_source_registry(session, (changed_entry, *entries[1:])) == 1
-        assert session.get(SourceRecord, entries[0].policy.id).name == "Updated source name"
+        record = session.get(SourceRecord, entries[0].policy.id)
+        assert record is not None
+        assert record.name == "Updated source name"
 
 
 def test_runtime_rejects_enabled_schedule_without_adapter(tmp_path: Path) -> None:
@@ -118,19 +118,14 @@ schedules:
         encoding="utf-8",
     )
     settings = _settings(tmp_path, schedule_path=schedule)
-    from cip.shared.persistence.metadata import get_metadata
-    from cip.shared.persistence.session import create_database_engine
-
     get_metadata().create_all(create_database_engine(settings.database_url))
+
     with pytest.raises(ValueError, match="no registered adapter"):
         build_collection_runtime(settings)
 
 
 def test_collection_metrics_report_freshness_lag_errors_and_volume(tmp_path: Path) -> None:
     settings = _settings(tmp_path)
-    from cip.shared.persistence.metadata import get_metadata
-    from cip.shared.persistence.session import create_database_engine, create_session_factory
-
     engine = create_database_engine(settings.database_url)
     get_metadata().create_all(engine)
     factory = create_session_factory(engine)
