@@ -143,10 +143,26 @@ def _create_dead_letters() -> None:
         sa.PrimaryKeyConstraint("id"),
         sa.UniqueConstraint("job_id", name="uq_collection_dead_letters_job_id"),
     )
-    op.create_index("ix_collection_dead_letters_job_id", "collection_dead_letters", ["job_id"])
-    op.create_index("ix_collection_dead_letters_source_id", "collection_dead_letters", ["source_id"])
-    op.create_index("ix_collection_dead_letters_adapter_id", "collection_dead_letters", ["adapter_id"])
-    op.create_index("ix_collection_dead_letters_failed_at", "collection_dead_letters", ["failed_at"])
+    op.create_index(
+        "ix_collection_dead_letters_job_id",
+        "collection_dead_letters",
+        ["job_id"],
+    )
+    op.create_index(
+        "ix_collection_dead_letters_source_id",
+        "collection_dead_letters",
+        ["source_id"],
+    )
+    op.create_index(
+        "ix_collection_dead_letters_adapter_id",
+        "collection_dead_letters",
+        ["adapter_id"],
+    )
+    op.create_index(
+        "ix_collection_dead_letters_failed_at",
+        "collection_dead_letters",
+        ["failed_at"],
+    )
     op.create_index(
         "ix_collection_dead_letters_source_failed",
         "collection_dead_letters",
