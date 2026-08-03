@@ -36,6 +36,7 @@ class CollectionJobRecord(Base):
     available_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)
     idempotency_key: Mapped[str] = mapped_column(String(64))
     attempt: Mapped[int] = mapped_column(Integer, default=0)
+    lease_seconds: Mapped[int] = mapped_column(Integer)
     max_attempts: Mapped[int] = mapped_column(Integer)
     base_delay_seconds: Mapped[int] = mapped_column(Integer)
     max_delay_seconds: Mapped[int] = mapped_column(Integer)
