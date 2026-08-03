@@ -182,9 +182,30 @@ def test_create_suppression_validates_retention_and_time() -> None:
 
 def test_suppression_entry_validation() -> None:
     with pytest.raises(ValueError, match="SHA-256"):
-        SuppressionEntry("bad", SuppressionChannel.EMAIL, SuppressionReason.OBJECTION, NOW, NOW + timedelta(days=1), "request")
+        SuppressionEntry(
+            "bad",
+            SuppressionChannel.EMAIL,
+            SuppressionReason.OBJECTION,
+            NOW,
+            NOW + timedelta(days=1),
+            "request",
+        )
     digest = "a" * 64
     with pytest.raises(ValueError, match="source"):
-        SuppressionEntry(digest, SuppressionChannel.EMAIL, SuppressionReason.OBJECTION, NOW, NOW + timedelta(days=1), "")
+        SuppressionEntry(
+            digest,
+            SuppressionChannel.EMAIL,
+            SuppressionReason.OBJECTION,
+            NOW,
+            NOW + timedelta(days=1),
+            "",
+        )
     with pytest.raises(ValueError, match="later"):
-        SuppressionEntry(digest, SuppressionChannel.EMAIL, SuppressionReason.OBJECTION, NOW, NOW, "request")
+        SuppressionEntry(
+            digest,
+            SuppressionChannel.EMAIL,
+            SuppressionReason.OBJECTION,
+            NOW,
+            NOW,
+            "request",
+        )
