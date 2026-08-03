@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from datetime import UTC, datetime
 from pathlib import Path
+from textwrap import dedent
 
 import pytest
 
@@ -104,41 +105,51 @@ def test_invalid_registry_structure_is_rejected(
 
 
 def test_duplicate_source_ids_are_rejected(tmp_path: Path) -> None:
-    source = """
-id: duplicate
-name: Duplicate
-base_url: https://example.org
-status: quarantined
-source_type: browser
-owner: Example
-allowed_data_categories: []
-prohibited_data_categories: []
-authorization:
-  status: missing
-  approved_hosts: []
-  approved_path_prefixes: []
-  approved_purposes: []
-"""
     path = tmp_path / "sources.yml"
-    path.write_text(f"version: 1\nsources:\n  - {source.lstrip().replace(chr(10), chr(10) + '    ')}  - {source.lstrip().replace(chr(10), chr(10) + '    ')}", encoding="utf-8")
+    path.write_text(
+        dedent(
+            """
+            version: 1
+            sources:
+              - &duplicate
+                id: duplicate
+                name: Duplicate
+                base_url: https://example.org
+                status: quarantined
+                source_type: browser
+                owner: Example
+                allowed_data_categories: []
+                prohibited_data_categories: []
+                authorization:
+                  status: missing
+                  approved_hosts: []
+                  approved_path_prefixes: []
+                  approved_purposes: []
+              - *duplicate
+            """
+        ),
+        encoding="utf-8",
+    )
 
     with pytest.raises(ValueError, match="duplicate ids"):
         load_source_registry(path)
 
 
 def test_invalid_authorization_and_economics_are_rejected(tmp_path: Path) -> None:
-    base = """
-version: 1
-sources:
-  - id: example
-    name: Example
-    base_url: https://example.org
-    status: quarantined
-    source_type: browser
-    owner: Example
-    allowed_data_categories: []
-    prohibited_data_categories: []
-"""
+    base = dedent(
+        """
+        version: 1
+        sources:
+          - id: example
+            name: Example
+            base_url: https://example.org
+            status: quarantined
+            source_type: browser
+            owner: Example
+            allowed_data_categories: []
+            prohibited_data_categories: []
+        """
+    )
     no_authorization = tmp_path / "no-authorization.yml"
     no_authorization.write_text(base, encoding="utf-8")
     with pytest.raises(ValueError, match="authorization"):
@@ -147,12 +158,16 @@ sources:
     bad_economics = tmp_path / "bad-economics.yml"
     bad_economics.write_text(
         base
-        + "    authorization:\n"
-        + "      status: missing\n"
-        + "      approved_hosts: []\n"
-        + "      approved_path_prefixes: []\n"
-        + "      approved_purposes: []\n"
-        + "    economics: invalid\n",
+        + dedent(
+            """
+                authorization:
+                  status: missing
+                  approved_hosts: []
+                  approved_path_prefixes: []
+                  approved_purposes: []
+                economics: invalid
+            """
+        ),
         encoding="utf-8",
     )
     with pytest.raises(ValueError, match="economics"):
