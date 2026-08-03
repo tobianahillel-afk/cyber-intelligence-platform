@@ -24,6 +24,10 @@ class Settings(BaseSettings):
     )
     source_registry_path: Path = Path("policies/sources.example.yml")
     retention_policy_path: Path = Path("policies/retention.yml")
+    collection_schedule_path: Path = Path("policies/collection_schedules.yml")
+    scheduler_poll_seconds: float = Field(default=5.0, gt=0, le=300)
+    worker_poll_seconds: float = Field(default=2.0, gt=0, le=300)
+    source_http_timeout_seconds: float = Field(default=30.0, gt=0, le=120)
     api_host: str = "127.0.0.1"
     api_port: int = Field(default=8000, ge=1, le=65_535)
     api_reload: bool = False
