@@ -49,9 +49,11 @@ class Evidence:
                     field_name,
                     require_aware_utc(value, field_name=field_name),
                 )
-        if self.content_hash_sha256 is not None:
-            if not fullmatch(r"[0-9a-f]{64}", self.content_hash_sha256):
-                raise ValueError("content_hash_sha256 must be a lowercase SHA-256 digest")
+        if self.content_hash_sha256 is not None and not fullmatch(
+            r"[0-9a-f]{64}",
+            self.content_hash_sha256,
+        ):
+            raise ValueError("content_hash_sha256 must be a lowercase SHA-256 digest")
         if self.raw_storage_uri is not None and not self.raw_storage_permitted:
             raise ValueError("raw_storage_uri requires raw_storage_permitted")
         if self.retention_until is not None and self.retention_until <= self.collected_at:
