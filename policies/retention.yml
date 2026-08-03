@@ -1,0 +1,56 @@
+version: 1
+reviewed_at: 2026-08-03
+
+rules:
+  organization_metadata:
+    retention_days: 730
+    review_interval_days: 180
+  professional_contact:
+    retention_days: 1095
+    review_interval_days: 180
+  public_incident_metadata:
+    retention_days: 1095
+    review_interval_days: 365
+  vulnerability_metadata:
+    retention_days: 1825
+    review_interval_days: 365
+  known_exploited_status:
+    retention_days: 1825
+    review_interval_days: 365
+  technology_observation:
+    retention_days: 365
+    review_interval_days: 90
+  public_tender:
+    retention_days: 1825
+    review_interval_days: 365
+  contract_award:
+    retention_days: 2555
+    review_interval_days: 365
+  public_job_posting:
+    retention_days: 365
+    review_interval_days: 90
+  public_result_metadata:
+    retention_days: 90
+    review_interval_days: 30
+  official_document_discovery:
+    retention_days: 365
+    review_interval_days: 90
+  public_security_contact_discovery:
+    retention_days: 180
+    review_interval_days: 90
+
+prohibited_categories:
+  - credential
+  - victim_file
+  - private_communication
+  - private_personal_data
+  - restricted_content
+
+suppression:
+  minimum_retention_days: 1095
+  hash_algorithm: hmac-sha256
+  raw_identifier_storage: false
+
+backups:
+  deletion_propagation_max_days: 30
+  restoration_requires_reapplication_of_suppressions: true
