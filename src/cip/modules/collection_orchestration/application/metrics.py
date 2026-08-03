@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
@@ -43,7 +43,7 @@ def read_source_collection_metrics(
     pending = _count_status(session, source_id, adapter_id, JobStatus.PENDING)
     running = _count_status(session, source_id, adapter_id, JobStatus.RUNNING)
     retry = _count_status(session, source_id, adapter_id, JobStatus.RETRY_SCHEDULED)
-    oldest_active = session.scalar(
+    oldest_active_raw = session.scalar(
         select(func.min(CollectionJobRecord.scheduled_for)).where(
             CollectionJobRecord.source_id == source_id,
             CollectionJobRecord.adapter_id == adapter_id,
@@ -56,6 +56,7 @@ def read_source_collection_metrics(
             ),
         )
     )
+    oldest_active = _database_utc(oldest_active_raw)
     errors_24h = int(
         session.scalar(
             select(func.count(CollectionJobRecord.id)).where(
@@ -85,12 +86,15 @@ def read_source_collection_metrics(
         )
         or 0
     )
-    last_success = checkpoint.last_success_at if checkpoint else None
+    last_success = _database_utc(checkpoint.last_success_at if checkpoint else None)
+    last_observation = _database_utc(
+        checkpoint.last_observation_at if checkpoint else None
+    )
     return SourceCollectionMetrics(
         source_id=source_id,
         adapter_id=adapter_id,
         last_success_at=last_success,
-        last_observation_at=checkpoint.last_observation_at if checkpoint else None,
+        last_observation_at=last_observation,
         freshness_seconds=(current - last_success).total_seconds() if last_success else None,
         queue_lag_seconds=(current - oldest_active).total_seconds() if oldest_active else None,
         pending_jobs=pending,
@@ -118,3 +122,11 @@ def _count_status(
         )
         or 0
     )
+
+
+def _database_utc(value: datetime | None) -> datetime | None:
+    if value is None:
+        return None
+    if value.tzinfo is None or value.utcoffset() is None:
+        return value.replace(tzinfo=UTC)
+    return value.astimezone(UTC)
