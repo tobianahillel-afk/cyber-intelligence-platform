@@ -15,7 +15,7 @@ from cip.shared.persistence.session import (
 
 
 def test_settings_have_safe_local_defaults() -> None:
-    settings = Settings(_env_file=None)
+    settings = Settings(environment="development", _env_file=None)
 
     assert settings.environment == "development"
     assert settings.api_host == "127.0.0.1"
