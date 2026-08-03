@@ -1,0 +1,24 @@
+from __future__ import annotations
+
+from sqlalchemy import MetaData
+
+from cip.modules.data_governance.infrastructure.models import SuppressionRecord
+from cip.modules.evidence.infrastructure.models import EvidenceRecord
+from cip.modules.organizations.infrastructure.models import OrganizationRecord
+from cip.modules.raw_observations.infrastructure.models import RawObservationRecord
+from cip.modules.source_governance.infrastructure.models import SourceRecord
+from cip.shared.persistence.base import Base
+
+_IMPORTED_MODELS = (
+    EvidenceRecord,
+    OrganizationRecord,
+    RawObservationRecord,
+    SourceRecord,
+    SuppressionRecord,
+)
+
+
+def get_metadata() -> MetaData:
+    """Return metadata after importing all module-owned persistence records."""
+
+    return Base.metadata

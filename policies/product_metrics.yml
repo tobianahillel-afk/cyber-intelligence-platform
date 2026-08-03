@@ -1,0 +1,33 @@
+version: 1
+reviewed_at: 2026-08-03
+
+metrics:
+  precision_at_10:
+    target: 0.70
+    minimum_sample_size: 30
+  opportunity_acceptance_rate:
+    target: 0.45
+    minimum_sample_size: 30
+  false_positive_rate:
+    maximum: 0.20
+    minimum_sample_size: 30
+  median_detection_latency_minutes:
+    maximum: 60
+  organization_resolution_accuracy:
+    target: 0.98
+    minimum_sample_size: 100
+  stale_contact_rate:
+    maximum: 0.10
+  duplicate_observation_rate:
+    maximum: 0.05
+  source_freshness_sla_rate:
+    target: 0.95
+  cost_per_qualified_opportunity_eur:
+    maximum: 50
+  source_maintenance_hours_per_month:
+    maximum_per_source: 8
+
+review:
+  cadence: monthly
+  owner: product-operator
+  action_when_threshold_missed: reduce scope and recalibrate rules before adding sources

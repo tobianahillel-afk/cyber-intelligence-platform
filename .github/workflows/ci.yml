@@ -8,29 +8,62 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
-  quality:
+  backend-quality:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_DB: cip_test
+          POSTGRES_USER: cip
+          POSTGRES_PASSWORD: cip
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U cip -d cip_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      CIP_ENVIRONMENT: test
+      CIP_DATABASE_URL: postgresql+psycopg://cip:cip@localhost:5432/cip_test
 
     steps:
       - name: Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@42375524e23c412d93fb67b49958b491fce71c38 # v5
         with:
           python-version: "3.12"
           cache: pip
 
       - name: Install project
-        run: python -m pip install --upgrade pip && python -m pip install -e '.[dev]'
+        run: python -m pip install -e '.[dev]'
+
+      - name: Verify dependency consistency
+        run: python -m pip check
+
+      - name: Audit installed Python dependencies
+        run: pip-audit --skip-editable
 
       - name: Ruff
         run: ruff check .
 
       - name: Mypy
         run: mypy
+
+      - name: Validate reversible migrations
+        run: |
+          alembic upgrade head
+          alembic downgrade base
+          alembic upgrade head
 
       - name: Tests and coverage
         run: >-
@@ -40,3 +73,34 @@ jobs:
           --cov-report=term-missing
           --cov-report=xml
           --cov-fail-under=90
+
+  frontend-quality:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: apps/web
+    env:
+      NEXT_TELEMETRY_DISABLED: "1"
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Set up Node.js
+        uses: actions/setup-node@e51e5fe84fc33b4c73ebe40526b2694712b5b858 # pinned 2026-07-29
+        with:
+          node-version: "24"
+          package-manager-cache: false
+
+      - name: Install frontend dependencies
+        run: npm install --no-audit --no-fund
+
+      - name: Audit frontend dependencies
+        run: npm audit --audit-level=high
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Build
+        run: npm run build

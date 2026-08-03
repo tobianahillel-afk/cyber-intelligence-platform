@@ -1,8 +1,11 @@
+version: 1
+reviewed_at: 2026-08-03
+
 sources:
   - id: cisa-kev
     name: CISA Known Exploited Vulnerabilities Catalog
-    base_url: https://www.cisa.gov/known-exploited-vulnerabilities-catalog
-    status: allowed
+    base_url: https://www.cisa.gov/sites/default/files/feeds/known_exploited_vulnerabilities.json
+    status: enabled
     source_type: feed
     owner: Cybersecurity and Infrastructure Security Agency
     terms_url: https://www.cisa.gov/about/website-policies
@@ -11,21 +14,40 @@ sources:
       - vulnerability_metadata
       - known_exploited_status
     prohibited_data_categories:
-      - credentials
-      - victim_files
-      - private_communications
+      - credential
+      - victim_file
+      - private_communication
+      - private_personal_data
     rate_limit_per_minute: 6
-    retention_days: null
+    retention_days: 1825
     attribution_required: true
     raw_content_storage: false
     human_review_required: false
-    notes: Confirm the exact machine-readable endpoint and current reuse terms before implementation.
+    authorization:
+      status: approved
+      document_reference: cisa-website-policies-2026-08-03
+      reviewed_at: 2026-08-03T16:00:00Z
+      expires_at: null
+      approved_hosts:
+        - www.cisa.gov
+      approved_path_prefixes:
+        - /sites/default/files/feeds/
+      approved_purposes:
+        - vulnerability-intelligence
+      automated_collection_allowed: true
+      raw_storage_allowed: false
+    economics:
+      commercial_value: high
+      monthly_cost: 0
+      implementation_cost: low
+      maintenance_cost: low
+      expected_stability: high
 
   - id: search-manual-review
-    name: Search-engine manual review
+    name: Search-engine analyst review
     base_url: https://www.google.com
     status: conditional
-    source_type: manual
+    source_type: search_provider
     owner: Search provider
     terms_url: https://policies.google.com/terms
     licence: null
@@ -34,8 +56,8 @@ sources:
       - official_document_discovery
       - public_security_contact_discovery
     prohibited_data_categories:
-      - credentials
-      - victim_files
+      - credential
+      - victim_file
       - private_personal_data
       - restricted_content
     rate_limit_per_minute: null
@@ -43,22 +65,135 @@ sources:
     attribution_required: true
     raw_content_storage: false
     human_review_required: true
-    notes: Generate queries and links for analyst review. Do not automate result-page scraping without an approved API or separate permission.
+    authorization:
+      status: pending_review
+      document_reference: null
+      reviewed_at: null
+      expires_at: null
+      approved_hosts: []
+      approved_path_prefixes: []
+      approved_purposes: []
+      automated_collection_allowed: false
+      raw_storage_allowed: false
+    economics:
+      commercial_value: medium
+      monthly_cost: unknown
+      implementation_cost: medium
+      maintenance_cost: high
+      expected_stability: medium
 
-  - id: unknown-brixab
-    name: Unresolved source mentioned as Brixab
-    base_url: https://example.invalid
-    status: blocked
-    source_type: website
-    owner: Unknown
+  - id: linkedin-official-api
+    name: LinkedIn Official API
+    base_url: https://api.linkedin.com
+    status: pending_review
+    source_type: api
+    owner: LinkedIn Corporation
+    terms_url: https://www.linkedin.com/legal/l/api-terms-of-use
+    licence: null
+    allowed_data_categories:
+      - organization_metadata
+      - professional_contact
+    prohibited_data_categories:
+      - credential
+      - private_communication
+      - private_personal_data
+      - restricted_content
+    rate_limit_per_minute: null
+    retention_days: 180
+    attribution_required: true
+    raw_content_storage: false
+    human_review_required: true
+    authorization:
+      status: missing
+      document_reference: null
+      reviewed_at: null
+      expires_at: null
+      approved_hosts: []
+      approved_path_prefixes: []
+      approved_purposes: []
+      automated_collection_allowed: false
+      raw_storage_allowed: false
+    economics:
+      commercial_value: high
+      monthly_cost: unknown
+      implementation_cost: high
+      maintenance_cost: medium
+      expected_stability: medium
+
+  - id: linkedin-authorized-browser
+    name: LinkedIn Authorized Browser Workflow
+    base_url: https://www.linkedin.com
+    status: pending_review
+    source_type: browser
+    owner: LinkedIn Corporation
+    terms_url: https://www.linkedin.com/legal/crawling-terms
+    licence: null
+    allowed_data_categories:
+      - organization_metadata
+      - professional_contact
+    prohibited_data_categories:
+      - credential
+      - private_communication
+      - private_personal_data
+      - restricted_content
+    rate_limit_per_minute: null
+    retention_days: 180
+    attribution_required: true
+    raw_content_storage: false
+    human_review_required: true
+    authorization:
+      status: missing
+      document_reference: null
+      reviewed_at: null
+      expires_at: null
+      approved_hosts: []
+      approved_path_prefixes: []
+      approved_purposes: []
+      automated_collection_allowed: false
+      raw_storage_allowed: false
+    economics:
+      commercial_value: high
+      monthly_cost: unknown
+      implementation_cost: high
+      maintenance_cost: high
+      expected_stability: low
+
+  - id: brixhub
+    name: BrixHub
+    base_url: https://brixhub.cc/login
+    status: quarantined
+    source_type: browser
+    owner: Unverified
     terms_url: null
     licence: null
     allowed_data_categories: []
     prohibited_data_categories:
-      - all
+      - credential
+      - victim_file
+      - private_communication
+      - private_personal_data
+      - restricted_content
     rate_limit_per_minute: null
     retention_days: null
     attribution_required: false
     raw_content_storage: false
     human_review_required: true
-    notes: Replace with the exact domain and review ownership, terms, access method, fields, and intended reuse before enabling.
+    authorization:
+      status: missing
+      document_reference: null
+      reviewed_at: null
+      expires_at: null
+      approved_hosts: []
+      approved_path_prefixes: []
+      approved_purposes: []
+      automated_collection_allowed: false
+      raw_storage_allowed: false
+    economics:
+      commercial_value: unassessed
+      monthly_cost: unknown
+      implementation_cost: blocked
+      maintenance_cost: blocked
+      expected_stability: unknown
+    notes: >-
+      Registered for governance visibility only. Network access, account creation,
+      payment, scraping, crawling, downloads, and data imports remain disabled.
