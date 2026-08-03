@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Iterable
+from datetime import UTC, datetime
 
 from sqlalchemy.orm import Session
 
@@ -22,7 +23,8 @@ def sync_source_registry(
             continue
         updated = False
         for name, value in values.items():
-            if getattr(record, name) != value:
+            current = getattr(record, name)
+            if not _values_equal(current, value):
                 setattr(record, name, value)
                 updated = True
         changed += int(updated)
@@ -62,3 +64,15 @@ def _record_values(entry: SourceRegistryEntry) -> dict[str, object]:
         "automated_collection_allowed": authorization.automated_collection_allowed,
         "raw_storage_allowed": authorization.raw_storage_allowed,
     }
+
+
+def _values_equal(current: object, desired: object) -> bool:
+    if isinstance(current, datetime) and isinstance(desired, datetime):
+        return _database_utc(current) == _database_utc(desired)
+    return current == desired
+
+
+def _database_utc(value: datetime) -> datetime:
+    if value.tzinfo is None or value.utcoffset() is None:
+        return value.replace(tzinfo=UTC)
+    return value.astimezone(UTC)
