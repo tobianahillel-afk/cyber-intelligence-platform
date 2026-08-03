@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import replace
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
+from types import SimpleNamespace
 from typing import cast
 from uuid import uuid4
 
@@ -199,7 +200,15 @@ def test_collection_metrics_report_freshness_lag_errors_and_volume(tmp_path: Pat
 def test_runtime_loops_are_bounded_and_sleep_only_when_needed(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    fake_runtime = cast(CollectionRuntime, object())
+    fake_runtime = cast(
+        CollectionRuntime,
+        SimpleNamespace(
+            factory=object(),
+            schedules=(),
+            adapters={},
+            retention_policy=object(),
+        ),
+    )
     settings = Settings(_env_file=None, scheduler_poll_seconds=0.5, worker_poll_seconds=0.25)
     monkeypatch.setattr(runtime_module, "build_collection_runtime", lambda settings: fake_runtime)
 
