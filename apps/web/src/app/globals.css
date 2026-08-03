@@ -1,0 +1,279 @@
+:root {
+  color-scheme: dark;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  background: #0b0f17;
+  color: #edf2f7;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-width: 1120px;
+  background: #0b0f17;
+}
+
+button,
+input {
+  font: inherit;
+}
+
+button:disabled,
+input:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
+}
+
+.app-shell {
+  display: grid;
+  grid-template-columns: 232px minmax(0, 1fr);
+  min-height: 100vh;
+}
+
+.sidebar {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  padding: 24px 18px;
+  border-right: 1px solid #242b38;
+  background: #101620;
+}
+
+.brand {
+  display: grid;
+  width: 42px;
+  height: 42px;
+  margin-bottom: 28px;
+  place-items: center;
+  border: 1px solid #4a80ff;
+  border-radius: 12px;
+  color: #9fbaff;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+}
+
+.sidebar ul {
+  display: grid;
+  gap: 5px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.sidebar span {
+  display: block;
+  padding: 10px 12px;
+  border-radius: 8px;
+  color: #aeb8c7;
+}
+
+.sidebar .nav-active {
+  background: #1c2b48;
+  color: #ffffff;
+}
+
+.workspace {
+  min-width: 0;
+}
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 72px;
+  padding: 0 28px;
+  border-bottom: 1px solid #242b38;
+  background: rgb(11 15 23 / 92%);
+}
+
+.global-search {
+  width: min(620px, 60vw);
+}
+
+.global-search input {
+  width: 100%;
+  padding: 11px 14px;
+  border: 1px solid #303949;
+  border-radius: 9px;
+  background: #131a25;
+  color: #dce5f2;
+}
+
+.topbar-status {
+  display: flex;
+  gap: 18px;
+  color: #8f9bad;
+  font-size: 0.86rem;
+}
+
+.page-stack {
+  display: grid;
+  gap: 24px;
+  padding: 30px;
+}
+
+.page-heading,
+.panel-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+.page-heading h1,
+.panel-heading h2 {
+  margin: 0;
+}
+
+.page-heading p,
+.panel-heading p {
+  max-width: 760px;
+  margin: 8px 0 0;
+  color: #9ca8b8;
+  line-height: 1.55;
+}
+
+.eyebrow {
+  margin: 0 0 8px !important;
+  color: #7aa2ff !important;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.fixture-label,
+.badge {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  padding: 4px 8px;
+  border: 1px solid #35558f;
+  border-radius: 999px;
+  background: #15233e;
+  color: #a8c2ff;
+  font-size: 0.76rem;
+  text-transform: capitalize;
+}
+
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.summary-card,
+.panel {
+  border: 1px solid #252d3a;
+  border-radius: 12px;
+  background: #111823;
+}
+
+.summary-card {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  min-height: 100px;
+  padding: 18px;
+}
+
+.summary-card span {
+  color: #9ca8b8;
+}
+
+.summary-card strong {
+  font-size: 2rem;
+}
+
+.panel {
+  overflow: hidden;
+}
+
+.panel-heading {
+  padding: 20px;
+  border-bottom: 1px solid #252d3a;
+}
+
+.panel-heading button {
+  padding: 9px 12px;
+  border: 1px solid #3a4557;
+  border-radius: 8px;
+  background: #18202d;
+  color: #d5ddea;
+}
+
+.table-wrapper {
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.88rem;
+}
+
+th,
+td {
+  padding: 15px 14px;
+  border-bottom: 1px solid #222a36;
+  text-align: left;
+  vertical-align: top;
+}
+
+th {
+  background: #0f151f;
+  color: #8f9bad;
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+tbody tr:hover {
+  background: #151d29;
+}
+
+.cell-secondary,
+.warning {
+  display: block;
+  margin-top: 6px;
+  color: #939fb0;
+  line-height: 1.4;
+}
+
+.warning {
+  color: #ffbd7a;
+}
+
+.badge-muted {
+  border-color: #414a5a;
+  background: #202735;
+  color: #c3cad5;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+@media (max-width: 1180px) {
+  body {
+    min-width: 960px;
+  }
+
+  .app-shell {
+    grid-template-columns: 196px minmax(0, 1fr);
+  }
+
+  .summary-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
