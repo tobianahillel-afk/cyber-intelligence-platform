@@ -10,6 +10,13 @@ from cip.modules.raw_observations.domain.entities import RawObservation
 from cip.modules.source_governance.domain.models import DataCategory
 
 
+class AdapterExecutionError(RuntimeError):
+    def __init__(self, message: str, *, error_code: str, retryable: bool) -> None:
+        super().__init__(message)
+        self.error_code = error_code
+        self.retryable = retryable
+
+
 @dataclass(frozen=True, slots=True)
 class AdapterCollectionBatch:
     observations: tuple[RawObservation, ...]
