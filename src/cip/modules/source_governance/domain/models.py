@@ -179,9 +179,14 @@ class SourcePolicy:
             SourceStatus.QUARANTINED,
             SourceStatus.BLOCKED,
         }
-        if self.source_type is not SourceType.MANUAL_IMPORT and self.status not in non_runnable:
-            if self.terms_url is None and self.licence is None:
-                raise ValueError("runnable automated sources require terms or a documented licence")
+        needs_automation_terms = (
+            self.source_type is not SourceType.MANUAL_IMPORT
+            and self.status not in non_runnable
+            and self.terms_url is None
+            and self.licence is None
+        )
+        if needs_automation_terms:
+            raise ValueError("runnable automated sources require terms or a documented licence")
 
     def evaluate(
         self,
@@ -205,9 +210,11 @@ class SourcePolicy:
             return authorization_decision
         if request.automated and not authorization.automated_collection_allowed:
             return CollectionDecision(False, DecisionReason.AUTOMATION_NOT_ALLOWED)
-        if request.store_raw_content:
-            if not self.raw_content_storage or not authorization.raw_storage_allowed:
-                return CollectionDecision(False, DecisionReason.RAW_STORAGE_NOT_ALLOWED)
+        raw_storage_denied = request.store_raw_content and (
+            not self.raw_content_storage or not authorization.raw_storage_allowed
+        )
+        if raw_storage_denied:
+            return CollectionDecision(False, DecisionReason.RAW_STORAGE_NOT_ALLOWED)
         if self.human_review_required and not request.human_review_completed:
             return CollectionDecision(
                 False,
