@@ -2,6 +2,12 @@ from __future__ import annotations
 
 from sqlalchemy import MetaData
 
+from cip.modules.collection_orchestration.infrastructure.models import (
+    CollectionCheckpointRecord,
+    CollectionCircuitRecord,
+    CollectionDeadLetterRecord,
+    CollectionJobRecord,
+)
 from cip.modules.data_governance.infrastructure.models import SuppressionRecord
 from cip.modules.evidence.infrastructure.models import EvidenceRecord
 from cip.modules.organizations.infrastructure.models import OrganizationRecord
@@ -10,6 +16,10 @@ from cip.modules.source_governance.infrastructure.models import SourceRecord
 from cip.shared.persistence.base import Base
 
 _IMPORTED_MODELS = (
+    CollectionCheckpointRecord,
+    CollectionCircuitRecord,
+    CollectionDeadLetterRecord,
+    CollectionJobRecord,
     EvidenceRecord,
     OrganizationRecord,
     RawObservationRecord,
