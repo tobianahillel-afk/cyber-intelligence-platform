@@ -75,6 +75,7 @@ select = ["E", "F", "I", "B", "UP", "SIM", "RUF"]
 
 [tool.ruff.lint.per-file-ignores]
 "infra/migrations/versions/*.py" = ["I001"]
+"tests/unit/source_governance/test_policy.py" = ["E501"]
 
 [tool.mypy]
 python_version = "3.12"
