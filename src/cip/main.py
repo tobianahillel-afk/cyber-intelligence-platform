@@ -8,7 +8,7 @@ from cip.modules.source_governance.api.routes import router as source_governance
 def create_app() -> FastAPI:
     application = FastAPI(
         title="Cyber Intelligence Platform",
-        version="0.2.0",
+        version="0.3.0",
         description=(
             "Human-operated cyber revenue intelligence API with explicit source governance, "
             "provenance, and evidence-backed opportunity discovery."
