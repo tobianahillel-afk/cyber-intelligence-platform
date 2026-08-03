@@ -1,0 +1,64 @@
+sources:
+  - id: cisa-kev
+    name: CISA Known Exploited Vulnerabilities Catalog
+    base_url: https://www.cisa.gov/known-exploited-vulnerabilities-catalog
+    status: allowed
+    source_type: feed
+    owner: Cybersecurity and Infrastructure Security Agency
+    terms_url: https://www.cisa.gov/about/website-policies
+    licence: null
+    allowed_data_categories:
+      - vulnerability_metadata
+      - known_exploited_status
+    prohibited_data_categories:
+      - credentials
+      - victim_files
+      - private_communications
+    rate_limit_per_minute: 6
+    retention_days: null
+    attribution_required: true
+    raw_content_storage: false
+    human_review_required: false
+    notes: Confirm the exact machine-readable endpoint and current reuse terms before implementation.
+
+  - id: search-manual-review
+    name: Search-engine manual review
+    base_url: https://www.google.com
+    status: conditional
+    source_type: manual
+    owner: Search provider
+    terms_url: https://policies.google.com/terms
+    licence: null
+    allowed_data_categories:
+      - public_result_metadata
+      - official_document_discovery
+      - public_security_contact_discovery
+    prohibited_data_categories:
+      - credentials
+      - victim_files
+      - private_personal_data
+      - restricted_content
+    rate_limit_per_minute: null
+    retention_days: 90
+    attribution_required: true
+    raw_content_storage: false
+    human_review_required: true
+    notes: Generate queries and links for analyst review. Do not automate result-page scraping without an approved API or separate permission.
+
+  - id: unknown-brixab
+    name: Unresolved source mentioned as Brixab
+    base_url: https://example.invalid
+    status: blocked
+    source_type: website
+    owner: Unknown
+    terms_url: null
+    licence: null
+    allowed_data_categories: []
+    prohibited_data_categories:
+      - all
+    rate_limit_per_minute: null
+    retention_days: null
+    attribution_required: false
+    raw_content_storage: false
+    human_review_required: true
+    notes: Replace with the exact domain and review ownership, terms, access method, fields, and intended reuse before enabling.
