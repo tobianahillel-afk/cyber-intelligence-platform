@@ -128,25 +128,27 @@ def test_invalid_schedule_structure_is_rejected(
 
 
 def test_duplicate_and_invalid_schedule_fields_are_rejected(tmp_path: Path) -> None:
-    schedule = dedent(
-        """
-          - &schedule
-            source_id: cisa-kev
-            adapter_id: cisa-kev-feed
-            enabled: true
-            interval_seconds: 900
-            lease_seconds: 120
-            retry:
-              max_attempts: 4
-              base_delay_seconds: 30
-              max_delay_seconds: 900
-              circuit_failure_threshold: 3
-              circuit_reset_seconds: 900
-        """
-    )
     duplicate = tmp_path / "duplicate.yml"
     duplicate.write_text(
-        "version: 1\nschedules:\n" + schedule + "  - *schedule\n",
+        dedent(
+            """
+            version: 1
+            schedules:
+              - &schedule
+                source_id: cisa-kev
+                adapter_id: cisa-kev-feed
+                enabled: true
+                interval_seconds: 900
+                lease_seconds: 120
+                retry:
+                  max_attempts: 4
+                  base_delay_seconds: 30
+                  max_delay_seconds: 900
+                  circuit_failure_threshold: 3
+                  circuit_reset_seconds: 900
+              - *schedule
+            """
+        ),
         encoding="utf-8",
     )
     with pytest.raises(ValueError, match="duplicate"):
@@ -154,7 +156,23 @@ def test_duplicate_and_invalid_schedule_fields_are_rejected(tmp_path: Path) -> N
 
     invalid = tmp_path / "invalid.yml"
     invalid.write_text(
-        "version: 1\nschedules:\n" + schedule.replace("enabled: true", "enabled: yes"),
+        dedent(
+            """
+            version: 1
+            schedules:
+              - source_id: cisa-kev
+                adapter_id: cisa-kev-feed
+                enabled: 1
+                interval_seconds: 900
+                lease_seconds: 120
+                retry:
+                  max_attempts: 4
+                  base_delay_seconds: 30
+                  max_delay_seconds: 900
+                  circuit_failure_threshold: 3
+                  circuit_reset_seconds: 900
+            """
+        ),
         encoding="utf-8",
     )
     with pytest.raises(ValueError, match="enabled must be a boolean"):
