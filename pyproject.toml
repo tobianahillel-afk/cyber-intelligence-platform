@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "cyber-intelligence-platform"
-version = "0.2.0"
+version = "0.3.0"
 description = "Human-operated cyber revenue intelligence and opportunity platform"
 readme = "README.md"
 requires-python = ">=3.12,<3.13"
@@ -33,6 +33,8 @@ dev = [
 
 [project.scripts]
 cip-api = "cip.cli:run_api"
+cip-scheduler = "cip.cli:run_scheduler"
+cip-worker = "cip.cli:run_worker"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/cip"]

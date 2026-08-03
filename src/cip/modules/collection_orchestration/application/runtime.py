@@ -1,0 +1,140 @@
+from __future__ import annotations
+
+import logging
+from collections.abc import Callable
+from dataclasses import dataclass
+from datetime import datetime
+from os import getpid
+from socket import gethostname
+from time import sleep
+
+from sqlalchemy.orm import Session, sessionmaker
+
+from cip.modules.collection_orchestration.application.adapters import CisaKevAdapter
+from cip.modules.collection_orchestration.application.ports import CollectionAdapter
+from cip.modules.collection_orchestration.application.scheduler import schedule_due_jobs
+from cip.modules.collection_orchestration.application.worker import (
+    WorkerOutcome,
+    WorkerStatus,
+    run_worker_once,
+)
+from cip.modules.collection_orchestration.domain.models import SourceSchedule
+from cip.modules.collection_orchestration.infrastructure.schedule_loader import (
+    load_collection_schedules,
+)
+from cip.modules.data_governance.domain.retention import RetentionPolicy
+from cip.modules.data_governance.infrastructure.retention_loader import load_retention_policy
+from cip.modules.source_governance.infrastructure.persistence import sync_source_registry
+from cip.modules.source_governance.infrastructure.registry import load_source_registry
+from cip.shared.config.settings import Settings
+from cip.shared.kernel.time import utc_now
+from cip.shared.persistence.session import (
+    create_database_engine,
+    create_session_factory,
+    session_scope,
+)
+
+LOGGER = logging.getLogger(__name__)
+
+
+@dataclass(frozen=True, slots=True)
+class CollectionRuntime:
+    factory: sessionmaker[Session]
+    schedules: tuple[SourceSchedule, ...]
+    adapters: dict[tuple[str, str], CollectionAdapter]
+    retention_policy: RetentionPolicy
+
+
+def build_collection_runtime(settings: Settings) -> CollectionRuntime:
+    engine = create_database_engine(settings.database_url)
+    factory = create_session_factory(engine)
+    entries = load_source_registry(settings.source_registry_path)
+    with session_scope(factory) as session:
+        sync_source_registry(session, entries)
+    entries_by_id = {entry.policy.id: entry for entry in entries}
+    adapters: dict[tuple[str, str], CollectionAdapter] = {}
+    cisa_entry = entries_by_id.get(CisaKevAdapter.source_id)
+    if cisa_entry is not None:
+        adapter = CisaKevAdapter(
+            cisa_entry,
+            timeout_seconds=settings.source_http_timeout_seconds,
+        )
+        adapters[(adapter.source_id, adapter.adapter_id)] = adapter
+    schedules = load_collection_schedules(settings.collection_schedule_path)
+    _validate_registered_schedules(schedules, adapters)
+    return CollectionRuntime(
+        factory=factory,
+        schedules=schedules,
+        adapters=adapters,
+        retention_policy=load_retention_policy(settings.retention_policy_path),
+    )
+
+
+def run_scheduler_once(runtime: CollectionRuntime, *, now: datetime | None = None) -> int:
+    current = now or utc_now()
+    with session_scope(runtime.factory) as session:
+        return schedule_due_jobs(session, runtime.schedules, now=current)
+
+
+def run_scheduler_forever(
+    settings: Settings,
+    *,
+    sleep_fn: Callable[[float], None] = sleep,
+    max_iterations: int | None = None,
+) -> None:
+    runtime = build_collection_runtime(settings)
+    iterations = 0
+    while max_iterations is None or iterations < max_iterations:
+        created = run_scheduler_once(runtime)
+        LOGGER.info("collection scheduler created %s job(s)", created)
+        iterations += 1
+        if max_iterations is None or iterations < max_iterations:
+            sleep_fn(settings.scheduler_poll_seconds)
+
+
+def run_worker_forever(
+    settings: Settings,
+    *,
+    worker_id: str | None = None,
+    sleep_fn: Callable[[float], None] = sleep,
+    max_iterations: int | None = None,
+) -> None:
+    runtime = build_collection_runtime(settings)
+    identity = worker_id or f"{gethostname()}:{getpid()}"
+    iterations = 0
+    while max_iterations is None or iterations < max_iterations:
+        outcome = run_worker_once(
+            runtime.factory,
+            worker_id=identity,
+            adapters=runtime.adapters,
+            retention_policy=runtime.retention_policy,
+        )
+        _log_worker_outcome(outcome)
+        iterations += 1
+        if outcome.status is WorkerStatus.IDLE and (
+            max_iterations is None or iterations < max_iterations
+        ):
+            sleep_fn(settings.worker_poll_seconds)
+
+
+def _validate_registered_schedules(
+    schedules: tuple[SourceSchedule, ...],
+    adapters: dict[tuple[str, str], CollectionAdapter],
+) -> None:
+    missing = [
+        f"{schedule.source_id}/{schedule.adapter_id}"
+        for schedule in schedules
+        if schedule.enabled and (schedule.source_id, schedule.adapter_id) not in adapters
+    ]
+    if missing:
+        raise ValueError(f"enabled schedules have no registered adapter: {', '.join(missing)}")
+
+
+def _log_worker_outcome(outcome: WorkerOutcome) -> None:
+    LOGGER.info(
+        "collection worker status=%s job_id=%s observations=%s error=%s",
+        outcome.status.value,
+        outcome.job_id,
+        outcome.observations_written,
+        outcome.error_code,
+    )

@@ -1,0 +1,14 @@
+version: 1
+
+schedules:
+  - source_id: cisa-kev
+    adapter_id: cisa-kev-feed
+    enabled: true
+    interval_seconds: 900
+    lease_seconds: 120
+    retry:
+      max_attempts: 4
+      base_delay_seconds: 30
+      max_delay_seconds: 900
+      circuit_failure_threshold: 3
+      circuit_reset_seconds: 900

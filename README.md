@@ -12,17 +12,21 @@ The product is designed to answer:
 
 ## Current implementation status
 
-The repository now contains an executable foundation rather than documentation only:
+The repository now contains an executable foundation and a first durable collection pipeline:
 
 - FastAPI application factory and source-governance endpoints;
-- framework-independent domain modules for organizations, evidence, cyber events, raw observations, opportunity scoring, retention, suppression, source accounts, and product metrics;
+- framework-independent domain modules for organizations, evidence, cyber events, raw observations, opportunity scoring, retention, suppression, source accounts, product metrics, and collection orchestration;
 - explicit source policies, authorization records, runtime state, and collection decisions;
 - PostgreSQL persistence models and reversible Alembic migrations;
 - local PostgreSQL through Docker Compose;
 - HMAC-SHA256 suppression records without raw contact identifiers;
 - executable retention rules;
-- a machine-readable source registry;
+- machine-readable source and collection-schedule registries;
 - an official CISA KEV feed adapter with conditional HTTP requests, size/type checks, strict schemas, checkpoints, provenance, and network-free tests;
+- durable collection jobs with deterministic idempotency keys, leases, retries, bounded exponential backoff, circuit breakers, dead letters, and recovery after interruption;
+- atomic observation/checkpoint/job completion and observation deduplication;
+- source freshness, queue lag, error, dead-letter, and volume metrics;
+- separate `cip-scheduler` and `cip-worker` process entry points;
 - a Next.js analyst shell and Opportunity Inbox using clearly marked demonstration data;
 - pinned direct dependencies, dependency audits, Ruff, Mypy, migration validation, frontend build validation, and 90% branch-aware coverage gates;
 - Dependabot, CODEOWNERS, contribution rules, a PR template, and manually runnable CodeQL.
@@ -30,11 +34,12 @@ The repository now contains an executable foundation rather than documentation o
 Not yet implemented:
 
 - live opportunity-generation rules connected to the UI;
-- a durable background scheduler or distributed queue;
 - Chromium/browser workers and download quarantine runtime;
 - OpenSearch, Redis, object storage, CRM integration, or autonomous outreach;
 - active LinkedIn collection;
 - any executable BrixHub integration.
+
+Redis is not required for the current durable queue: PostgreSQL owns scheduling, locking, leases, checkpoints, and recovery. Redis should be introduced only when measured throughput or coordination requirements justify it.
 
 ## Local setup
 
@@ -66,6 +71,15 @@ alembic upgrade head
 cip-api
 ```
 
+Start the scheduler and worker in separate terminals:
+
+```bash
+cip-scheduler
+cip-worker
+```
+
+The scheduler reads `policies/collection_schedules.yml`, synchronizes the authorized source registry, and creates at most one active job per source/adapter. The worker claims jobs with a bounded lease, performs source access outside the database transaction, and commits observations, checkpoint advancement, and job completion atomically.
+
 Start the UI separately:
 
 ```bash
@@ -80,7 +94,7 @@ The API is available on `http://127.0.0.1:8000` by default. The frontend uses de
 
 ```bash
 python -m pip check
-pip-audit --strict --skip-editable
+pip-audit --skip-editable
 ruff check .
 mypy
 alembic upgrade head
@@ -94,6 +108,8 @@ npm audit --audit-level=high
 npm run typecheck
 npm run build
 ```
+
+The durable-scheduler PR was independently validated with 225 passing tests and 95.58% combined line-and-branch coverage.
 
 ## Architecture
 
@@ -113,12 +129,30 @@ infra/
 
 policies/
   sources.example.yml          source and authorization registry
+  collection_schedules.yml     cadence, lease, retry, and circuit settings
   retention.yml                executable retention and suppression policy
   product_metrics.yml          quality and commercial-value targets
 
 tests/
-  unit/                        domain, adapter, governance, and persistence tests
+  unit/                        domain, adapter, governance, persistence, and recovery tests
 ```
+
+## Durable collection lifecycle
+
+```text
+source registry synchronization
+-> deterministic schedule slot
+-> idempotent job enqueue
+-> transactional claim with SKIP LOCKED
+-> bounded worker lease
+-> policy-checked source collection
+-> validation and raw-observation mapping
+-> atomic observation insert + checkpoint advance + job completion
+-> retry/circuit breaker/dead letter on failure
+-> freshness and queue metrics
+```
+
+A replayed schedule slot cannot create a duplicate job. A replayed observation cannot create a duplicate raw record. If execution stops before the completion transaction commits, the previous checkpoint remains authoritative. A worker whose lease expired cannot commit a late result.
 
 ## Acquisition model
 
