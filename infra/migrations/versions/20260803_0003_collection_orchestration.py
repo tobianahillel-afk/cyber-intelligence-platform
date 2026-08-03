@@ -35,6 +35,7 @@ def _create_jobs() -> None:
         sa.Column("available_at", sa.DateTime(timezone=True), nullable=False),
         sa.Column("idempotency_key", sa.String(length=64), nullable=False),
         sa.Column("attempt", sa.Integer(), nullable=False),
+        sa.Column("lease_seconds", sa.Integer(), nullable=False),
         sa.Column("max_attempts", sa.Integer(), nullable=False),
         sa.Column("base_delay_seconds", sa.Integer(), nullable=False),
         sa.Column("max_delay_seconds", sa.Integer(), nullable=False),
