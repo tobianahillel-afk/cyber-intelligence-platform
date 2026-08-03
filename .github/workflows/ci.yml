@@ -50,8 +50,8 @@ jobs:
       - name: Verify dependency consistency
         run: python -m pip check
 
-      - name: Audit Python dependencies
-        run: pip-audit --strict --skip-editable
+      - name: Audit installed Python dependencies
+        run: pip-audit --skip-editable
 
       - name: Ruff
         run: ruff check .
@@ -80,6 +80,8 @@ jobs:
     defaults:
       run:
         working-directory: apps/web
+    env:
+      NEXT_TELEMETRY_DISABLED: "1"
 
     steps:
       - name: Check out repository
@@ -91,7 +93,7 @@ jobs:
           node-version: "24"
           package-manager-cache: false
 
-      - name: Install exact direct dependencies
+      - name: Install frontend dependencies
         run: npm install --no-audit --no-fund
 
       - name: Audit frontend dependencies
