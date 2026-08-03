@@ -126,11 +126,13 @@ def test_client_rejects_unsafe_response_metadata(
     transport = httpx.MockTransport(
         lambda request: httpx.Response(200, content=b"{}", headers=headers)
     )
-    with httpx.Client(transport=transport) as http_client:
+    with (
+        httpx.Client(transport=transport) as http_client,
+        pytest.raises(SourceResponseError, match=message),
+    ):
         client = CisaKevClient(http_client, feed_url=FEED_URL)
         client.MAX_RESPONSE_BYTES = 10
-        with pytest.raises(SourceResponseError, match=message):
-            client.fetch()
+        client.fetch()
 
 
 def test_client_rejects_actual_oversized_body() -> None:
@@ -141,11 +143,13 @@ def test_client_rejects_actual_oversized_body() -> None:
             headers={"content-type": "application/json"},
         )
     )
-    with httpx.Client(transport=transport) as http_client:
+    with (
+        httpx.Client(transport=transport) as http_client,
+        pytest.raises(SourceResponseError, match="body exceeds"),
+    ):
         client = CisaKevClient(http_client, feed_url=FEED_URL)
         client.MAX_RESPONSE_BYTES = 10
-        with pytest.raises(SourceResponseError, match="body exceeds"):
-            client.fetch()
+        client.fetch()
 
 
 def test_collector_maps_observation_and_checkpoint() -> None:
@@ -195,15 +199,17 @@ def test_collector_denies_source_before_network() -> None:
     denied = replace(entry, policy=replace(entry.policy, status="paused"))
     transport = httpx.MockTransport(lambda request: pytest.fail("network must not be used"))
 
-    with httpx.Client(transport=transport) as http_client:
-        with pytest.raises(CollectionDeniedError, match="source_not_enabled"):
-            collect_cisa_kev(
-                CisaKevClient(http_client, feed_url=FEED_URL),
-                denied,
-                collection_job_id=uuid4(),
-                collected_at=NOW,
-                retention_until=LATER,
-            )
+    with (
+        httpx.Client(transport=transport) as http_client,
+        pytest.raises(CollectionDeniedError, match="source_not_enabled"),
+    ):
+        collect_cisa_kev(
+            CisaKevClient(http_client, feed_url=FEED_URL),
+            denied,
+            collection_job_id=uuid4(),
+            collected_at=NOW,
+            retention_until=LATER,
+        )
 
 
 def test_collector_reports_schema_drift() -> None:
@@ -214,15 +220,17 @@ def test_collector_reports_schema_drift() -> None:
             headers={"content-type": "application/json"},
         )
     )
-    with httpx.Client(transport=transport) as http_client:
-        with pytest.raises(SourceSchemaError, match="schema validation"):
-            collect_cisa_kev(
-                CisaKevClient(http_client, feed_url=FEED_URL),
-                cisa_entry(),
-                collection_job_id=uuid4(),
-                collected_at=NOW,
-                retention_until=LATER,
-            )
+    with (
+        httpx.Client(transport=transport) as http_client,
+        pytest.raises(SourceSchemaError, match="schema validation"),
+    ):
+        collect_cisa_kev(
+            CisaKevClient(http_client, feed_url=FEED_URL),
+            cisa_entry(),
+            collection_job_id=uuid4(),
+            collected_at=NOW,
+            retention_until=LATER,
+        )
 
 
 def test_collector_rejects_empty_modified_response() -> None:
