@@ -72,10 +72,12 @@ def test_session_scope_commits_and_rolls_back() -> None:
     with session_scope(factory) as session:
         session.execute(text("INSERT INTO tx_test (value) VALUES (1)"))
 
-    with pytest.raises(RuntimeError, match="rollback"):
-        with session_scope(factory) as session:
-            session.execute(text("INSERT INTO tx_test (value) VALUES (2)"))
-            raise RuntimeError("rollback")
+    with (
+        pytest.raises(RuntimeError, match="rollback"),
+        session_scope(factory) as session,
+    ):
+        session.execute(text("INSERT INTO tx_test (value) VALUES (2)"))
+        raise RuntimeError("rollback")
 
     with engine.connect() as connection:
         count = connection.scalar(text("SELECT COUNT(*) FROM tx_test"))
