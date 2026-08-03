@@ -46,6 +46,7 @@ def test_database_metadata_contains_foundation_tables() -> None:
         "organizations",
         "raw_observations",
         "sources",
+        "suppressions",
     }
 
 
