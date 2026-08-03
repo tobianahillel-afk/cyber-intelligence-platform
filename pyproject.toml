@@ -1,29 +1,37 @@
 [build-system]
-requires = ["hatchling>=1.25"]
+requires = ["hatchling==1.27.0"]
 build-backend = "hatchling.build"
 
 [project]
 name = "cyber-intelligence-platform"
-version = "0.1.0"
-description = "Compliance-first cyber intelligence and B2B opportunity platform"
+version = "0.2.0"
+description = "Human-operated cyber revenue intelligence and opportunity platform"
 readme = "README.md"
-requires-python = ">=3.12"
+requires-python = ">=3.12,<3.13"
 authors = [{ name = "Hillel Tobiana" }]
 dependencies = [
-  "fastapi>=0.116,<1.0",
-  "pydantic>=2.11,<3.0",
-  "pydantic-settings>=2.10,<3.0",
-  "uvicorn[standard]>=0.35,<1.0",
+  "alembic==1.16.5",
+  "fastapi==0.116.1",
+  "psycopg[binary]==3.2.9",
+  "pydantic==2.11.7",
+  "pydantic-settings==2.10.1",
+  "PyYAML==6.0.2",
+  "SQLAlchemy==2.0.43",
+  "uvicorn[standard]==0.35.0",
 ]
 
 [project.optional-dependencies]
 dev = [
-  "httpx>=0.28,<1.0",
-  "mypy>=1.17,<2.0",
-  "pytest>=8.4,<9.0",
-  "pytest-cov>=6.2,<7.0",
-  "ruff>=0.12,<1.0",
+  "httpx==0.28.1",
+  "mypy==1.17.1",
+  "pip-audit==2.9.0",
+  "pytest==8.4.1",
+  "pytest-cov==6.2.1",
+  "ruff==0.12.7",
 ]
+
+[project.scripts]
+cip-api = "cip.cli:run_api"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/cip"]
@@ -32,6 +40,10 @@ packages = ["src/cip"]
 addopts = "-q --strict-markers --strict-config"
 testpaths = ["tests"]
 pythonpath = ["src"]
+markers = [
+  "integration: requires local infrastructure or database",
+  "e2e: exercises a complete product workflow",
+]
 
 [tool.coverage.run]
 branch = true
