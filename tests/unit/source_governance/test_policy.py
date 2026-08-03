@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from dataclasses import replace
 from datetime import UTC, datetime, timedelta
 
 import pytest
@@ -118,14 +117,12 @@ def test_non_enabled_sources_are_denied(
     assert evaluate(policy=policy).reason is expected_reason
 
 
-def test_prohibited_category_wins_over_allowed_category() -> None:
-    policy = enabled_policy(
-        allowed_data_categories=frozenset({DataCategory.CREDENTIAL}),
-        prohibited_data_categories=frozenset({DataCategory.CREDENTIAL}),
-    )
-
+def test_overlapping_categories_are_rejected() -> None:
     with pytest.raises(ValueError, match="both allowed and prohibited"):
-        replace(policy)
+        enabled_policy(
+            allowed_data_categories=frozenset({DataCategory.CREDENTIAL}),
+            prohibited_data_categories=frozenset({DataCategory.CREDENTIAL}),
+        )
 
 
 def test_prohibited_category_is_denied() -> None:
@@ -241,7 +238,7 @@ def test_path_allowlist_is_enforced() -> None:
     assert evaluate(request=request).reason is DecisionReason.PATH_NOT_ALLOWED
 
 
-def test_invalid_target_scheme_is_denied_as_host() -> None:
+def test_invalid_target_scheme_is_denied() -> None:
     request = collection_request(target_url="ftp://api.example.org/v1/incidents")
 
     assert evaluate(request=request).reason is DecisionReason.PATH_NOT_ALLOWED
@@ -315,6 +312,14 @@ def test_authorization_rejects_naive_timestamps() -> None:
         )
 
 
+def test_authorization_normalizes_expiry_timestamp() -> None:
+    authorization = approved_authorization()
+
+    assert authorization.reviewed_at is not None
+    assert authorization.expires_at is not None
+    assert authorization.expires_at.tzinfo is UTC
+
+
 def test_runtime_rejects_negative_quota() -> None:
     with pytest.raises(ValueError, match="cannot be negative"):
         SourceRuntimeState(remaining_requests=-1)
@@ -323,6 +328,12 @@ def test_runtime_rejects_negative_quota() -> None:
 def test_runtime_rejects_naive_timestamp() -> None:
     with pytest.raises(ValueError, match="last_success_at must be timezone-aware"):
         SourceRuntimeState(last_success_at=datetime(2026, 8, 3, 16, 0))
+
+
+def test_runtime_normalizes_timestamp() -> None:
+    runtime = SourceRuntimeState(last_success_at=NOW)
+
+    assert runtime.last_success_at == NOW
 
 
 def test_evaluation_rejects_naive_now() -> None:
