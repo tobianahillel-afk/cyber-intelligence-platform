@@ -173,9 +173,15 @@ class SourcePolicy:
             raise ValueError("rate_limit_per_minute must be positive")
         if self.retention_days is not None and self.retention_days < 1:
             raise ValueError("retention_days must be positive")
-        if self.source_type is not SourceType.MANUAL_IMPORT:
+        non_runnable = {
+            SourceStatus.DRAFT,
+            SourceStatus.PENDING_REVIEW,
+            SourceStatus.QUARANTINED,
+            SourceStatus.BLOCKED,
+        }
+        if self.source_type is not SourceType.MANUAL_IMPORT and self.status not in non_runnable:
             if self.terms_url is None and self.licence is None:
-                raise ValueError("automated sources require terms or a documented licence")
+                raise ValueError("runnable automated sources require terms or a documented licence")
 
     def evaluate(
         self,
