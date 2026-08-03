@@ -32,5 +32,11 @@ jobs:
       - name: Mypy
         run: mypy
 
-      - name: Tests
-        run: pytest --cov=cip --cov-report=term-missing
+      - name: Tests and coverage
+        run: >-
+          pytest
+          --cov=cip
+          --cov-branch
+          --cov-report=term-missing
+          --cov-report=xml
+          --cov-fail-under=90
