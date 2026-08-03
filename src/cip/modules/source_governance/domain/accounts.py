@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import dataclass, replace
+from dataclasses import dataclass, field, replace
 from datetime import datetime
 from enum import StrEnum
 from uuid import UUID, uuid4
@@ -79,8 +79,8 @@ class SourceAccount:
     status: SourceAccountStatus
     authorization_document_reference: str | None
     approved_purposes: frozenset[str]
-    id: UUID = uuid4()
-    created_at: datetime = utc_now()
+    id: UUID = field(default_factory=uuid4)
+    created_at: datetime = field(default_factory=utc_now)
     verified_at: datetime | None = None
     expires_at: datetime | None = None
     last_used_at: datetime | None = None
