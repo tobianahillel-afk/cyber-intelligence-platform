@@ -145,7 +145,7 @@ def test_client_rejects_actual_oversized_body() -> None:
     )
     with (
         httpx.Client(transport=transport) as http_client,
-        pytest.raises(SourceResponseError, match="body exceeds"),
+        pytest.raises(SourceResponseError, match="size limit"),
     ):
         client = CisaKevClient(http_client, feed_url=FEED_URL)
         client.MAX_RESPONSE_BYTES = 10
