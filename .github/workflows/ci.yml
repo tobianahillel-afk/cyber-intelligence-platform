@@ -51,7 +51,7 @@ jobs:
         run: python -m pip check
 
       - name: Audit Python dependencies
-        run: pip-audit --strict
+        run: pip-audit --strict --skip-editable
 
       - name: Ruff
         run: ruff check .
