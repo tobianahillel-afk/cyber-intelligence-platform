@@ -71,14 +71,18 @@ def enqueue_job(session: Session, job: CollectionJob) -> bool:
     }
     dialect = session.get_bind().dialect.name
     if dialect == "postgresql":
-        statement = postgresql_insert(CollectionJobRecord).values(**values)
-        statement = statement.on_conflict_do_nothing(index_elements=["idempotency_key"])
-        result = session.execute(statement)
+        postgres_statement = postgresql_insert(CollectionJobRecord).values(**values)
+        postgres_statement = postgres_statement.on_conflict_do_nothing(
+            index_elements=["idempotency_key"]
+        )
+        result = session.execute(postgres_statement)
         return bool(getattr(result, "rowcount", 0))
     if dialect == "sqlite":
-        statement = sqlite_insert(CollectionJobRecord).values(**values)
-        statement = statement.on_conflict_do_nothing(index_elements=["idempotency_key"])
-        result = session.execute(statement)
+        sqlite_statement = sqlite_insert(CollectionJobRecord).values(**values)
+        sqlite_statement = sqlite_statement.on_conflict_do_nothing(
+            index_elements=["idempotency_key"]
+        )
+        result = session.execute(sqlite_statement)
         return bool(getattr(result, "rowcount", 0))
     if session.scalar(
         select(CollectionJobRecord.id).where(
@@ -469,18 +473,18 @@ def _insert_observations(
     values = [_observation_values(observation) for observation in observations]
     dialect = session.get_bind().dialect.name
     if dialect == "postgresql":
-        statement = postgresql_insert(RawObservationRecord).values(values)
-        statement = statement.on_conflict_do_nothing(
+        postgres_statement = postgresql_insert(RawObservationRecord).values(values)
+        postgres_statement = postgres_statement.on_conflict_do_nothing(
             constraint="uq_raw_observation_deduplication"
         )
-        result = session.execute(statement)
+        result = session.execute(postgres_statement)
         return int(getattr(result, "rowcount", 0) or 0)
     if dialect == "sqlite":
-        statement = sqlite_insert(RawObservationRecord).values(values)
-        statement = statement.on_conflict_do_nothing(
+        sqlite_statement = sqlite_insert(RawObservationRecord).values(values)
+        sqlite_statement = sqlite_statement.on_conflict_do_nothing(
             index_elements=["source_id", "source_record_key", "payload_hash_sha256"]
         )
-        result = session.execute(statement)
+        result = session.execute(sqlite_statement)
         return int(getattr(result, "rowcount", 0) or 0)
     written = 0
     for observation, record_values in zip(observations, values, strict=True):
