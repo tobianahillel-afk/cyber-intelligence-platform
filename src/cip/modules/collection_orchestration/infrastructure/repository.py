@@ -424,6 +424,7 @@ def _dead_letter(
     record.lease_expires_at = None
     record.error_code = error_code
     record.error_message = error_message
+    session.flush()
 
 
 def _advance_checkpoint(
