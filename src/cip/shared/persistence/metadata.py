@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from sqlalchemy import MetaData
 
+from cip.modules.data_governance.infrastructure.models import SuppressionRecord
 from cip.modules.evidence.infrastructure.models import EvidenceRecord
 from cip.modules.organizations.infrastructure.models import OrganizationRecord
 from cip.modules.raw_observations.infrastructure.models import RawObservationRecord
@@ -13,6 +14,7 @@ _IMPORTED_MODELS = (
     OrganizationRecord,
     RawObservationRecord,
     SourceRecord,
+    SuppressionRecord,
 )
 
 
