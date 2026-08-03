@@ -1,9 +1,9 @@
 from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from typing import Any
-from uuid import UUID, uuid4
+from uuid import uuid4
 
 from sqlalchemy import select
 from sqlalchemy.dialects.postgresql import insert as postgresql_insert
@@ -100,6 +100,7 @@ def claim_next_job(
     if not worker_id.strip():
         raise ValueError("worker_id is required")
     recover_expired_leases(session, now=current)
+    session.flush()
     statement = (
         select(CollectionJobRecord)
         .where(
@@ -263,7 +264,7 @@ def _record_failure(
         )
         available_at = now + timedelta(seconds=delay_seconds)
         if circuit.state == CircuitState.OPEN.value and circuit.reopen_at is not None:
-            available_at = max(available_at, circuit.reopen_at)
+            available_at = max(available_at, _database_utc(circuit.reopen_at))
         record.status = JobStatus.RETRY_SCHEDULED.value
         record.available_at = available_at
         record.lease_owner = None
@@ -293,9 +294,12 @@ def _owned_running_job(
         raise LeaseLostError("job is no longer running")
     if record.lease_owner != claimed.lease_owner:
         raise LeaseLostError("job lease is owned by another worker")
-    if require_unexpired and (
-        record.lease_expires_at is None or record.lease_expires_at <= now
-    ):
+    lease_expires_at = (
+        _database_utc(record.lease_expires_at)
+        if record.lease_expires_at is not None
+        else None
+    )
+    if require_unexpired and (lease_expires_at is None or lease_expires_at <= now):
         raise LeaseLostError("job lease has expired")
     return record
 
@@ -313,8 +317,9 @@ def _circuit_allows_claim(
     )
     if circuit is None or circuit.state == CircuitState.CLOSED.value:
         return True
-    if circuit.reopen_at is not None and circuit.reopen_at > now:
-        record.available_at = max(record.available_at, circuit.reopen_at)
+    reopen_at = _database_utc(circuit.reopen_at) if circuit.reopen_at is not None else None
+    if reopen_at is not None and reopen_at > now:
+        record.available_at = max(_database_utc(record.available_at), reopen_at)
         return False
     circuit.state = CircuitState.HALF_OPEN.value
     circuit.updated_at = now
@@ -514,3 +519,9 @@ def _observation_values(observation: RawObservation) -> dict[str, Any]:
         "classification": observation.classification,
         "retention_until": observation.retention_until,
     }
+
+
+def _database_utc(value: datetime) -> datetime:
+    if value.tzinfo is None or value.utcoffset() is None:
+        return value.replace(tzinfo=UTC)
+    return value.astimezone(UTC)
