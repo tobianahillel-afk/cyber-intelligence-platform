@@ -56,3 +56,66 @@ export interface ProviderOnboardingPage {
   items: readonly ProviderOnboarding[];
   total: number;
 }
+
+export type SourcePortfolioStatus =
+  | "candidate"
+  | "executable"
+  | "paused"
+  | "disabled";
+
+export interface SourceAdapterCapability {
+  adapter_id: string;
+  adapter_version: string;
+  provider_schema_version: string;
+  modes: readonly string[];
+  canonical_output_types: readonly string[];
+  supports_corrections: boolean;
+  supports_tombstones: boolean;
+  supports_retractions: boolean;
+  max_page_size: number | null;
+  max_window_days: number | null;
+  cost_per_request: number;
+}
+
+export interface SourcePortfolioHealth {
+  freshness_state: string;
+  schema_state: string;
+  volume_state: string;
+  field_population_state: string;
+  circuit_state: string;
+  last_attempt_at: string | null;
+  last_success_at: string | null;
+  last_source_record_at: string | null;
+  consecutive_failures: number;
+  quota_remaining: number | null;
+  monthly_cost_used: number;
+  current_backfill_state: string | null;
+  last_error_code: string | null;
+}
+
+export interface SourcePortfolioEntry {
+  source_id: string;
+  display_name: string;
+  canonical_url: string;
+  category: string;
+  status: SourcePortfolioStatus;
+  executable: boolean;
+  freshness_max_age_seconds: number;
+  commercial_use_cases: readonly string[];
+  authorization_expires_at: string | null;
+  review_due_at: string | null;
+  candidate_origin: string | null;
+  monthly_cost_limit: number | null;
+  adapter: SourceAdapterCapability | null;
+  health: SourcePortfolioHealth;
+}
+
+export interface SourcePortfolioPage {
+  items: readonly SourcePortfolioEntry[];
+  total: number;
+}
+
+export interface PriorityRefreshResult {
+  job_id: string;
+  created: boolean;
+}
