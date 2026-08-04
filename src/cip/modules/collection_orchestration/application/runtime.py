@@ -55,6 +55,7 @@ from cip.modules.source_governance.infrastructure.registry import SourceRegistry
 from cip.modules.source_governance.infrastructure.registry_bundle import (
     load_source_registry_bundle,
 )
+from cip.modules.source_portfolio.application.execution import source_execution_allowed
 from cip.modules.source_portfolio.application.service import sync_source_portfolio
 from cip.modules.source_portfolio.domain.models import SourceCatalogEntry
 from cip.modules.source_portfolio.infrastructure.registry import load_source_portfolio
@@ -189,7 +190,12 @@ def _register(
 def run_scheduler_once(runtime: CollectionRuntime, *, now: datetime | None = None) -> int:
     current = now or utc_now()
     with session_scope(runtime.factory) as session:
-        return schedule_due_jobs(session, runtime.schedules, now=current)
+        eligible = tuple(
+            schedule
+            for schedule in runtime.schedules
+            if source_execution_allowed(session, schedule.source_id, now=current)
+        )
+        return schedule_due_jobs(session, eligible, now=current)
 
 
 def run_scheduler_forever(
