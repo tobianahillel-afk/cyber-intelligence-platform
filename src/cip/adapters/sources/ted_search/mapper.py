@@ -31,12 +31,36 @@ SIGNAL_TERMS = (
     "security monitoring",
 )
 COUNTRY_CODES = {
-    "AUT": "AT", "BEL": "BE", "BGR": "BG", "HRV": "HR", "CYP": "CY",
-    "CZE": "CZ", "DNK": "DK", "EST": "EE", "FIN": "FI", "FRA": "FR",
-    "DEU": "DE", "GRC": "GR", "HUN": "HU", "IRL": "IE", "ITA": "IT",
-    "LVA": "LV", "LTU": "LT", "LUX": "LU", "MLT": "MT", "NLD": "NL",
-    "POL": "PL", "PRT": "PT", "ROU": "RO", "SVK": "SK", "SVN": "SI",
-    "ESP": "ES", "SWE": "SE", "NOR": "NO", "ISL": "IS", "CHE": "CH",
+    "AUT": "AT",
+    "BEL": "BE",
+    "BGR": "BG",
+    "CHE": "CH",
+    "CYP": "CY",
+    "CZE": "CZ",
+    "DEU": "DE",
+    "DNK": "DK",
+    "ESP": "ES",
+    "EST": "EE",
+    "FIN": "FI",
+    "FRA": "FR",
+    "GRC": "GR",
+    "HRV": "HR",
+    "HUN": "HU",
+    "IRL": "IE",
+    "ISL": "IS",
+    "ITA": "IT",
+    "LTU": "LT",
+    "LUX": "LU",
+    "LVA": "LV",
+    "MLT": "MT",
+    "NLD": "NL",
+    "NOR": "NO",
+    "POL": "PL",
+    "PRT": "PT",
+    "ROU": "RO",
+    "SVK": "SK",
+    "SVN": "SI",
+    "SWE": "SE",
 }
 
 
@@ -56,7 +80,11 @@ def map_ted_notice(
     country = COUNTRY_CODES.get(notice.country() or "")
     notice_url = f"https://ted.europa.eu/en/notice/{notice.publication_number}/html"
     payload = notice.model_dump(mode="json", by_alias=True)
-    payload_bytes = json.dumps(payload, sort_keys=True, separators=(",", ":")).encode()
+    payload_bytes = json.dumps(
+        payload,
+        sort_keys=True,
+        separators=(",", ":"),
+    ).encode()
     payload_hash = sha256(payload_bytes).hexdigest()
     published_at = _aware(notice.publication_timestamp())
     deadline = _aware(notice.deadline_timestamp())
