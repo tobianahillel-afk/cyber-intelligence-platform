@@ -35,9 +35,18 @@ from cip.modules.provider_onboarding.infrastructure.models import (
 )
 from cip.modules.raw_observations.infrastructure.models import RawObservationRecord
 from cip.modules.source_governance.infrastructure.models import SourceRecord
+from cip.modules.source_portfolio.infrastructure.models import (
+    AdapterCapabilityRecord,
+    BackfillPartitionRecord,
+    SourceHealthRecord,
+    SourcePortfolioAuditRecord,
+    SourcePortfolioRecord,
+)
 from cip.shared.persistence.base import Base
 
 _IMPORTED_MODELS = (
+    AdapterCapabilityRecord,
+    BackfillPartitionRecord,
     CollectionCheckpointRecord,
     CollectionCircuitRecord,
     CollectionDeadLetterRecord,
@@ -61,6 +70,9 @@ _IMPORTED_MODELS = (
     ProviderOnboardingAuditRecord,
     ProviderOnboardingRecord,
     RawObservationRecord,
+    SourceHealthRecord,
+    SourcePortfolioAuditRecord,
+    SourcePortfolioRecord,
     SourceRecord,
     SuppressionRecord,
 )
