@@ -43,12 +43,16 @@ def test_client_requests_bounded_selected_window() -> None:
 
 
 def test_client_rejects_negative_offset() -> None:
-    with httpx.Client(transport=httpx.MockTransport(lambda _: httpx.Response(200))) as client:
-        with pytest.raises(ValueError, match="offset"):
-            BoampClient(client, records_url="https://boamp.example/records").fetch_page(
-                since_date=date(2026, 8, 3),
-                offset=-1,
-            )
+    with (
+        httpx.Client(
+            transport=httpx.MockTransport(lambda _: httpx.Response(200))
+        ) as client,
+        pytest.raises(ValueError, match="offset"),
+    ):
+        BoampClient(client, records_url="https://boamp.example/records").fetch_page(
+            since_date=date(2026, 8, 3),
+            offset=-1,
+        )
 
 
 def test_client_rejects_non_json_and_invalid_or_oversized_lengths() -> None:
