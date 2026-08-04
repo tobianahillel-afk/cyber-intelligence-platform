@@ -7,6 +7,7 @@ from hashlib import sha256
 from uuid import NAMESPACE_URL, UUID, uuid5
 
 from cip.adapters.sources.gleif.schemas import (
+    GleifAddress,
     GleifRecordResponse,
     GleifRelationshipResponse,
 )
@@ -266,7 +267,10 @@ def _local_identifier(
         return None
 
 
-def _country_code(jurisdiction: str | None, address) -> str:  # type: ignore[no-untyped-def]
+def _country_code(
+    jurisdiction: str | None,
+    address: GleifAddress | None,
+) -> str:
     if address is not None and address.country:
         value = address.country.strip().upper()
         if len(value) == 2:
