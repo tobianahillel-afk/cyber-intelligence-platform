@@ -39,6 +39,8 @@ def persist_identity_projections(
     *,
     now: datetime,
 ) -> tuple[UUID, ...]:
+    if not projections:
+        return ()
     persisted_at = require_aware_utc(now, field_name="now")
     for projection in projections:
         for organization in projection.projected_organizations:
@@ -95,6 +97,8 @@ def review_merge_candidate(
 def _upsert_organization(session: Session, organization: Organization) -> None:
     record = session.get(OrganizationRecord, organization.id)
     if record is None:
+        record = _pending_organization(session, organization.id)
+    if record is None:
         session.add(
             OrganizationRecord(
                 id=organization.id,
@@ -109,12 +113,23 @@ def _upsert_organization(session: Session, organization: Organization) -> None:
         )
         return
     record.canonical_name = organization.canonical_name
-    record.legal_name = organization.legal_name
-    record.country_code = organization.country_code
-    record.updated_at = organization.updated_at
+    record.legal_name = organization.legal_name or record.legal_name
+    record.country_code = organization.country_code or record.country_code
+    record.website_url = organization.website_url or record.website_url
+    record.updated_at = max(record.updated_at, organization.updated_at)
     record.registration_ids = list(
         dict.fromkeys([*record.registration_ids, *organization.registration_ids])
     )
+
+
+def _pending_organization(
+    session: Session,
+    organization_id: UUID,
+) -> OrganizationRecord | None:
+    for record in session.new:
+        if isinstance(record, OrganizationRecord) and record.id == organization_id:
+            return record
+    return None
 
 
 def _upsert_evidence(session: Session, evidence: Evidence) -> None:
