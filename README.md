@@ -1,10 +1,23 @@
 # Cyber Intelligence Platform
 
-Cyber Intelligence Platform is a standalone, human-operated cyber revenue-intelligence and commercial-operations system. It collects authorized public or licensed evidence, converts it into normalized signals, and lets analysts discover, investigate, qualify, assign, and track organizations that may need cybersecurity services or products.
+Cyber Intelligence Platform is a standalone cyber revenue-intelligence and commercial-operations system. It collects approved public or licensed evidence, resolves it to organizations, converts it into explainable cybersecurity need hypotheses, and lets analysts discover, investigate, qualify, assign, and track potential clients.
 
-The platform is not a Salesforce, HubSpot, or external-CRM extension. Its target product owns company records, professional organization maps, business contacts, alert rules, saved searches, opportunities, tasks, notes, assignments, engagement history, and reporting.
+The product is not a Salesforce, HubSpot, or external-CRM extension. It owns company intelligence, evidence, alerts, saved searches, professional organization maps, contacts, opportunities, tasks, notes, assignments, engagement history, and reporting.
 
-The system is evidence-first: every material fact, alert, and opportunity exposes its source, timestamps, confidence, freshness, claim type, conflicts, and review history. It does not autonomously contact prospects, validate credentials, exploit systems, ingest leaked victim data, or retain private-life information.
+The product is evidence-first. A material statement must expose its source, observed time, event time, confidence, freshness, claim type, contradictions, and review history. An attacker claim is not an official confirmation. A technology observation is not proof of a vulnerable deployment. A public professional discussion is not automatically an employer fact.
+
+## Product objective
+
+The platform should answer:
+
+- Which organizations show a current or emerging cybersecurity need?
+- What evidence supports that need?
+- Is the signal explicit buying intent, urgency, transformation, renewal timing, product risk, provider displacement, or a weak lead?
+- Which services or products fit the evidence?
+- Which professional roles and business contact channels are relevant?
+- What should the analyst do next?
+
+Source breadth is useful only when it improves reliable client discovery. A source that adds records but no unique commercial value should be deprioritized or removed.
 
 ## Accountless product access
 
@@ -12,60 +25,109 @@ The ordinary product experience requires no visitor registration, login, passwor
 
 That anonymous session is never reused as an identity on external providers. Collection is performed centrally by approved public feeds, official APIs, open-data sources, licensed providers, and governed platform service identities.
 
-The product is database-first: normal page views read stored and indexed evidence. They do not crawl every source again. Schedulers refresh sources periodically according to freshness, cost, quota, and change frequency. A stale entity may enqueue a bounded priority refresh while the interface continues to show the latest stored evidence with a visible freshness state.
+The product is database-first. Normal page views read stored and indexed evidence. They do not crawl every source again. Schedulers refresh sources according to freshness, value, cost, quota, and change frequency. A stale entity may enqueue a bounded priority refresh while the interface continues to show the latest stored evidence with a visible freshness state.
 
 See [`docs/ANONYMOUS_ACCESS_AND_REFRESH_MODEL.md`](docs/ANONYMOUS_ACCESS_AND_REFRESH_MODEL.md).
 
-## Current scope
+## Current validated baseline
 
-Version `0.8.0` includes six durable official-source adapters:
+The merged validated baseline is version `0.9.0`, covering lots `00` through `08`.
+
+Implemented source adapters include:
 
 - **CISA KEV** for known-exploited vulnerability metadata;
-- **TED Search API** for active European cyber procurement notices;
-- **BOAMP/DILA Explore API** for actionable French procurement notices;
+- **TED Search API** for European procurement notices;
+- **BOAMP/DILA Explore API** for French procurement notices;
 - **Greenhouse Job Board API** for public cyber hiring signals;
 - **Lever Postings API** for public published jobs;
-- **SmartRecruiters Posting API** for public job lists and job details.
+- **SmartRecruiters Posting API** for public job lists and details;
+- **API Recherche d'entreprises** for French legal-unit and establishment identity;
+- **GLEIF** for LEI and parent relationship data;
+- **BODACC** for selected legal-event identity claims.
 
-The three ATS paths are GET-only and run only for explicitly configured boards, sites, or companies. They store no candidate, application, resume, candidate email, screening answer, or raw HTML content. Job descriptions are normalized in memory, relevant terms are extracted, and changed postings update one deterministic signal instead of creating duplicates.
+Lot `08` separates legal units, establishments, groups, aliases, statuses, exact identifiers, registry claims, conflicts, and review candidates. Exact identifiers can link automatically; ambiguous matches remain reviewable.
 
-## Product direction
+The current branch targets version `0.10.0` and implements lot `09`: official provider onboarding and secret lifecycle.
 
-The complete native workspace will consolidate:
-
-- companies, establishments, brands, subsidiaries, groups, domains, assets, and relationships;
-- open tenders, historical awards, contracts, published incumbents, providers, end dates, and estimated renewals;
-- technologies, products, versions, vulnerabilities, advisories, public exposures, and confidence;
-- incidents, claims, confirmations, regulatory events, news, recruitment, and business changes;
-- professional roles, organization charts, buying committees, public or licensed business emails, switchboards, direct business numbers, contact forms, and role mailboxes;
-- alerts, watchlists, saved searches, opportunities, tasks, notes, assignments, engagement history, and dashboards.
-
-Professional contact records require provenance, permitted purpose, freshness, retention, correction, objection, and suppression state. Home addresses, family details, private phones, private emails, credentials, private messages, and leaked personal datasets are excluded.
-
-## Product flow
+## Source-to-opportunity flow
 
 ```text
-approved source registry
-  -> scheduled policy decision before network
-  -> bounded transport and strict provider schema
-  -> immutable observation metadata
-  -> normalized organization, evidence, and signal
-  -> PostgreSQL and search projections
-  -> versioned need hypothesis and score
-  -> accountless read interface and native opportunity lifecycle
+source candidate
+  -> source governance and onboarding
+  -> scheduled backfill or incremental collection
+  -> immutable source record and provenance
+  -> canonical observation or claim
+  -> organization, event, product, provider, asset, or role resolution
+  -> contradiction and corroboration processing
+  -> commercial signal
+  -> need hypothesis
+  -> explainable score
+  -> alert, research task, company workspace, or opportunity
+  -> analyst decision and outcome feedback
 ```
+
+Provider payloads remain inside adapter packages. Adapters never write directly to company, score, alert, or opportunity projections.
+
+## Planned source portfolio
+
+The project catalogs and prioritizes:
+
+- official company registries, procurement, awards, contracts, and renewals;
+- corporate websites, documents, sitemaps, archives, public repositories, and approved search APIs;
+- vulnerability, advisory, KEV, EPSS, and exploitation-state sources;
+- ransomware claims, official incident confirmations, regulator notices, and public disclosures;
+- IOC, phishing, malicious infrastructure, C2, attack telemetry, and threat intelligence;
+- passive exposure, certificates, DNS, ASN, service, and technographic providers;
+- provider, partner, customer, supplier, integrator, MSSP, auditor, insurer, and supply-chain relationships;
+- governed public professional roles, business contacts, forums, and community signals;
+- licensed and conditional providers, including official LinkedIn paths, consented Discord connectors, commercial CTI, and BrixHub after explicit approval.
+
+The broad catalogs are planning inputs, not automatic permission to crawl:
+
+- [`docs/OSINT_COLLECTION_CATALOG.md`](docs/OSINT_COLLECTION_CATALOG.md)
+- [`docs/LIVE_CYBER_THREAT_SOURCE_CATALOG.md`](docs/LIVE_CYBER_THREAT_SOURCE_CATALOG.md)
 
 ## Architecture
 
 The backend is a Python 3.12 modular monolith using FastAPI, SQLAlchemy, PostgreSQL, Alembic, Pydantic, and durable scheduler/worker orchestration. The analyst UI is a Next.js application under `apps/web`.
 
-The architecture separates an accountless public data plane from a deployment-protected administrative control plane. Anonymous visitors can read approved product data and request bounded refreshes, but cannot access provider secrets, mutate source policy, change collection schedules, or perform administrative operations.
+The architecture separates:
 
-Provider payloads stay inside adapter packages. Domain modules do not import frameworks or infrastructure implementations. External adapters produce approved observations and projections through application contracts rather than importing canonical persistence implementations.
+- an accountless public data plane for approved stored intelligence;
+- a deployment-protected control plane for source governance, provider onboarding, schedules, secrets, retention, correction, deletion, and operations.
 
-The public-job subsystem now uses one canonical provider-independent contract. Greenhouse, Lever, and SmartRecruiters retain their own strict transport schemas but produce the same organization, evidence, observation, signal, checkpoint, and opportunity behavior.
+The canonical data layers are:
 
-## Development quality gates
+1. source catalog and authorization;
+2. provider onboarding and adapter capabilities;
+3. collection runs and immutable source records;
+4. evidence, observations, and claims;
+5. resolved entities, events, technologies, providers, roles, and temporal relationships;
+6. commercial signals and need hypotheses;
+7. scores, alerts, opportunities, tasks, and analyst decisions.
+
+See:
+
+- [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)
+- [`docs/DATA_MODEL.md`](docs/DATA_MODEL.md)
+- [`docs/COMMERCIAL_INTELLIGENCE_INTEGRATION_ARCHITECTURE.md`](docs/COMMERCIAL_INTELLIGENCE_INTEGRATION_ARCHITECTURE.md)
+
+## Delivery roadmap
+
+[`docs/PROJECT_DELIVERY_PLAN.md`](docs/PROJECT_DELIVERY_PLAN.md) is authoritative.
+
+Completed and current sequence:
+
+- lots `00–08`: validated foundations, durable collection, opportunities, procurement, hiring, and organization identity;
+- lot `09`: provider onboarding and secret lifecycle, currently in progress;
+- lot `10`: common source portfolio runtime, backfill, freshness, source health, and machine-readable catalog;
+- lots `11–23`: procurement history, public corporate footprint, vulnerabilities, live incidents, telemetry, exposure, relationships, professional context, conditional sources, and research orchestration;
+- lots `24–27`: signal fusion, calibrated scoring, native commercial operations, and Company 360;
+- lots `28–32`: data quality, release security, resilience, optional isolated browser runtime, and controlled production pilot.
+
+BrixHub is explicitly assigned to lot `22`. It remains non-executable until its exact access path, allowed fields, provenance, licence, retention, security, and authorization are approved. If approved, its adapter must support a controlled historical import, incremental refresh, corrections, deletion, provenance, and unique-value measurement.
+
+## Testing and quality gates
 
 Every pull request must pass on one final SHA:
 
@@ -74,8 +136,26 @@ Every pull request must pass on one final SHA:
 3. Mypy strict;
 4. architecture, complexity, dependency, release, and roadmap contracts;
 5. reversible PostgreSQL migrations;
-6. complete backend line and branch coverage with a 90% minimum;
+6. backend line and branch coverage at or above the configured threshold;
 7. frontend dependency audit, TypeScript checking, and production build.
+
+Every source integration must additionally prove:
+
+- policy denial before network access;
+- strict provider schemas and bounded transport;
+- durable backfill and incremental convergence;
+- deterministic mapping and provenance;
+- entity resolution and false-merge prevention;
+- cross-source deduplication and contradiction handling;
+- correction, retraction, suppression, and deletion propagation;
+- source-to-signal and signal-to-opportunity behavior;
+- measurable incremental commercial value.
+
+See:
+
+- [`docs/TEST_STRATEGY.md`](docs/TEST_STRATEGY.md)
+- [`docs/SOURCE_INTEGRATION_TEST_MATRIX.md`](docs/SOURCE_INTEGRATION_TEST_MATRIX.md)
+- [`docs/DEVELOPMENT_STANDARDS.md`](docs/DEVELOPMENT_STANDARDS.md)
 
 Executable rules include:
 
@@ -87,20 +167,8 @@ Executable rules include:
 - no duplicate definitions or wildcard imports;
 - one authoritative package and API version;
 - unit tests cannot open live network connections;
-- UTC-aware persistence is normalized across SQLite and PostgreSQL;
-- roadmap lots must be continuous and status-consistent.
-
-See [`docs/DEVELOPMENT_STANDARDS.md`](docs/DEVELOPMENT_STANDARDS.md) and [`docs/TEST_STRATEGY.md`](docs/TEST_STRATEGY.md).
-
-## Delivery roadmap
-
-[`docs/PROJECT_DELIVERY_PLAN.md`](docs/PROJECT_DELIVERY_PLAN.md) defines lots `00` through `26` with dependencies, deliverables, tests, exit gates, and non-goals.
-
-Lots `00` through `07` are implemented and validated. They cover governance, persistence, durable orchestration, opportunities, TED, BOAMP, executable architecture gates, and canonical public hiring signals from Greenhouse, Lever, and SmartRecruiters.
-
-The next locked lot is `08`: French and European organization identity through official company registries, with legal-unit, establishment, alias, status, parent-group, and non-diffusion handling.
-
-The roadmap explicitly treats Cyber Intelligence Platform as the authoritative commercial workspace. Lot 20 implements native alerts, tasks, queues, opportunity stages, assignments, notes, and engagement history rather than synchronizing Salesforce or HubSpot.
+- UTC-aware persistence across SQLite and PostgreSQL;
+- roadmap lots remain continuous and status-consistent.
 
 ## Local development
 
@@ -156,13 +224,13 @@ npm run build
 
 ## Source and data safety
 
-Never commit API keys, sessions, prospect lists, collected personal data, proprietary datasets, or production evidence. Tests use synthetic, provider-published, minimized, or redistributable fixtures.
+Never commit API keys, sessions, prospect lists, collected personal data, proprietary datasets, or production evidence. Tests use synthetic, provider-published, minimized, licensed, or redistributable fixtures.
 
-The source registry is authoritative. Quarantined or unapproved sources have no executable collection path. Browser automation remains deferred until structured APIs are insufficient and an isolated browser plus download-quarantine runtime has passed its own gate.
+The source registry is authoritative. Quarantined or unapproved sources have no executable collection path. Browser automation remains deferred until structured APIs and bounded static HTTP are insufficient and an isolated runtime passes its own gate.
 
-OSINT Framework and other tool catalogs are discovery inputs only. Every imported entry must pass source-owner, terms, licence, privacy, security, provenance, rate, retention, and purpose review before an adapter can execute it.
+The platform may ingest lawful public or licensed incident metadata and published anonymized research. It does not interact with threat actors, enter victim negotiation portals, download victim files, validate leaked credentials, or store stolen datasets or private communications.
 
-LinkedIn collection remains disabled unless official API scopes or reviewed written authorization covers the exact method, hosts, paths, fields, and purpose. A warning checkbox is not an authorization mechanism.
+LinkedIn collection remains disabled unless official API scopes, a licensed product, or reviewed written authorization covers the exact method and purpose. Discord collection requires an administrator-installed connector, authorized export, or equivalent consented integration.
 
 ## Project documents
 
@@ -170,10 +238,12 @@ LinkedIn collection remains disabled unless official API scopes or reviewed writ
 - [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)
 - [`docs/ANONYMOUS_ACCESS_AND_REFRESH_MODEL.md`](docs/ANONYMOUS_ACCESS_AND_REFRESH_MODEL.md)
 - [`docs/DATA_MODEL.md`](docs/DATA_MODEL.md)
+- [`docs/COMMERCIAL_INTELLIGENCE_INTEGRATION_ARCHITECTURE.md`](docs/COMMERCIAL_INTELLIGENCE_INTEGRATION_ARCHITECTURE.md)
 - [`docs/SOURCE_POLICY.md`](docs/SOURCE_POLICY.md)
 - [`docs/OSINT_COLLECTION_CATALOG.md`](docs/OSINT_COLLECTION_CATALOG.md)
 - [`docs/LIVE_CYBER_THREAT_SOURCE_CATALOG.md`](docs/LIVE_CYBER_THREAT_SOURCE_CATALOG.md)
 - [`docs/DEVELOPMENT_STANDARDS.md`](docs/DEVELOPMENT_STANDARDS.md)
 - [`docs/TEST_STRATEGY.md`](docs/TEST_STRATEGY.md)
+- [`docs/SOURCE_INTEGRATION_TEST_MATRIX.md`](docs/SOURCE_INTEGRATION_TEST_MATRIX.md)
 - [`docs/PROJECT_DELIVERY_PLAN.md`](docs/PROJECT_DELIVERY_PLAN.md)
 - [`SECURITY.md`](SECURITY.md)
