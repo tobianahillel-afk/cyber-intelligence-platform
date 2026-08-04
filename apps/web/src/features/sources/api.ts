@@ -1,12 +1,16 @@
 import "server-only";
 
 import type {
+  PriorityRefreshResult,
   ProviderOnboarding,
   ProviderOnboardingPage,
   ProviderOnboardingState,
+  SourcePortfolioEntry,
+  SourcePortfolioPage,
 } from "./types";
 
 const DEFAULT_API_BASE_URL = "http://127.0.0.1:8000";
+const DEFAULT_CONTROL_TOKEN = "development-control-token";
 
 export class ProviderOnboardingApiError extends Error {
   constructor(
@@ -33,6 +37,41 @@ interface SecretReferencePayload extends ActorPayload {
 
 export async function loadProviderCatalog(): Promise<ProviderOnboardingPage> {
   return requestJson<ProviderOnboardingPage>("/v1/provider-onboarding/providers");
+}
+
+export async function loadSourcePortfolio(): Promise<SourcePortfolioPage> {
+  return controlRequestJson<SourcePortfolioPage>("/v1/source-portfolio/sources");
+}
+
+export async function requestSourcePriorityRefresh(
+  sourceId: string,
+  payload: ActorPayload,
+): Promise<PriorityRefreshResult> {
+  return controlRequestJson<PriorityRefreshResult>(
+    `/v1/source-portfolio/sources/${encodeURIComponent(sourceId)}/priority-refresh`,
+    { method: "POST", body: JSON.stringify(payload) },
+  );
+}
+
+export async function changeSourcePortfolioState(
+  sourceId: string,
+  action: "pause" | "resume" | "disable",
+  payload: ActorPayload,
+): Promise<SourcePortfolioEntry> {
+  return controlRequestJson<SourcePortfolioEntry>(
+    `/v1/source-portfolio/sources/${encodeURIComponent(sourceId)}/${action}`,
+    { method: "POST", body: JSON.stringify(payload) },
+  );
+}
+
+export async function cancelSourceBackfill(
+  sourceId: string,
+  payload: ActorPayload,
+): Promise<SourcePortfolioEntry> {
+  return controlRequestJson<SourcePortfolioEntry>(
+    `/v1/source-portfolio/sources/${encodeURIComponent(sourceId)}/backfills/cancel`,
+    { method: "POST", body: JSON.stringify(payload) },
+  );
 }
 
 export async function startProvider(
@@ -92,6 +131,20 @@ function apiBaseUrl(): string {
   return (process.env.CIP_API_BASE_URL ?? DEFAULT_API_BASE_URL).replace(/\/$/, "");
 }
 
+function controlPlaneToken(): string {
+  return process.env.CIP_CONTROL_PLANE_TOKEN ?? DEFAULT_CONTROL_TOKEN;
+}
+
+async function controlRequestJson<T>(path: string, init: RequestInit = {}): Promise<T> {
+  return requestJson<T>(path, {
+    ...init,
+    headers: {
+      "X-CIP-Control-Token": controlPlaneToken(),
+      ...init.headers,
+    },
+  });
+}
+
 async function requestJson<T>(path: string, init: RequestInit = {}): Promise<T> {
   let response: Response;
   try {
@@ -105,7 +158,7 @@ async function requestJson<T>(path: string, init: RequestInit = {}): Promise<T> 
       },
     });
   } catch {
-    throw new ProviderOnboardingApiError("Provider onboarding API is unavailable", 503);
+    throw new ProviderOnboardingApiError("Source control API is unavailable", 503);
   }
   if (!response.ok) {
     throw new ProviderOnboardingApiError(await responseMessage(response), response.status);
@@ -116,8 +169,8 @@ async function requestJson<T>(path: string, init: RequestInit = {}): Promise<T> 
 async function responseMessage(response: Response): Promise<string> {
   try {
     const payload = (await response.json()) as { detail?: string };
-    return payload.detail ?? `Provider onboarding API returned ${response.status}`;
+    return payload.detail ?? `Source control API returned ${response.status}`;
   } catch {
-    return `Provider onboarding API returned ${response.status}`;
+    return `Source control API returned ${response.status}`;
   }
 }
