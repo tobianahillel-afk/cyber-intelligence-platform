@@ -16,7 +16,6 @@ from cip.adapters.sources.gleif.client import (
     GleifSourceResponseError,
 )
 from cip.adapters.sources.gleif.collector import (
-    GleifCheckpoint,
     GleifCollectionDeniedError,
     GleifSourceSchemaError,
     collect_gleif_identities,
@@ -192,12 +191,14 @@ def test_http_client_builds_exact_record_and_relationship_urls() -> None:
     assert fetched.request_url.endswith(CHILD_LEI)
     assert missing is None
     assert calls[1].endswith("direct-parent-relationship")
-    with httpx.Client(transport=httpx.MockTransport(handler)) as http_client:
-        with pytest.raises(ValueError, match="unsupported"):
-            GleifClient(
-                http_client,
-                api_base_url="https://api.gleif.org/api/v1",
-            ).relationship_url(CHILD_LEI, "invalid")
+    with (
+        httpx.Client(transport=httpx.MockTransport(handler)) as http_client,
+        pytest.raises(ValueError, match="unsupported"),
+    ):
+        GleifClient(
+            http_client,
+            api_base_url="https://api.gleif.org/api/v1",
+        ).relationship_url(CHILD_LEI, "invalid")
 
 
 def test_http_client_rejects_unsafe_responses() -> None:
