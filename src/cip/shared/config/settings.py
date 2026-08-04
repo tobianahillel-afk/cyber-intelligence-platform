@@ -28,6 +28,9 @@ class Settings(BaseSettings):
     smartrecruiters_company_registry_path: Path = Path(
         "policies/smartrecruiters_companies.yml"
     )
+    organization_identity_target_registry_path: Path = Path(
+        "policies/organization_identity_targets.yml"
+    )
     retention_policy_path: Path = Path("policies/retention.yml")
     collection_schedule_path: Path = Path("policies/collection_schedules.yml")
     scheduler_poll_seconds: float = Field(default=5.0, gt=0, le=300)
