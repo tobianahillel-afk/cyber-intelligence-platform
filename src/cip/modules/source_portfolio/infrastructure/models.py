@@ -97,6 +97,8 @@ class SourceHealthRecord(Base):
     source_id: Mapped[str] = mapped_column(String(100), primary_key=True)
     freshness_state: Mapped[str] = mapped_column(String(50), index=True)
     schema_state: Mapped[str] = mapped_column(String(40), index=True)
+    volume_state: Mapped[str] = mapped_column(String(40), index=True)
+    field_population_state: Mapped[str] = mapped_column(String(40), index=True)
     last_attempt_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     last_success_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     last_source_record_at: Mapped[datetime | None] = mapped_column(
