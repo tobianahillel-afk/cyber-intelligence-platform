@@ -54,7 +54,10 @@ jobs:
         run: pip-audit --skip-editable
 
       - name: Ruff
-        run: ruff check .
+        run: |
+          ruff check . --fix
+          git diff -- tests/unit/modules/collection_orchestration/test_identity_adapters.py
+          git diff --exit-code
 
       - name: Mypy
         run: mypy
