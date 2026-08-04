@@ -116,7 +116,11 @@ class ProviderProfile:
             raise ValueError("required secret names must be non-empty and bounded")
         if self.auth_mode is AuthMode.NONE and names:
             raise ValueError("no-auth providers cannot require secrets")
-        if self.auth_mode is not AuthMode.NONE and not names and self.auth_mode is not AuthMode.MANUAL:
+        if (
+            self.auth_mode is not AuthMode.NONE
+            and not names
+            and self.auth_mode is not AuthMode.MANUAL
+        ):
             raise ValueError("authenticated providers require at least one secret name")
         if self.blocked_reason and self.automatic_onboarding:
             raise ValueError("blocked providers cannot support automatic onboarding")
@@ -136,6 +140,7 @@ class ProviderProfile:
 @dataclass(frozen=True, slots=True)
 class ProviderOnboarding:
     source_id: str
+    display_name: str
     auth_mode: AuthMode
     state: OnboardingState
     documentation_url: str
@@ -153,6 +158,7 @@ class ProviderOnboarding:
     updated_at: datetime | None = None
 
     def __post_init__(self) -> None:
+        _required_text(self.display_name, "display_name", maximum=200)
         if self.last_verified_at is not None:
             object.__setattr__(
                 self,
