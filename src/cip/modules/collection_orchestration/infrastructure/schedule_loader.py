@@ -3,7 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
-import yaml  # type: ignore[import-untyped]
+import yaml
 
 from cip.modules.collection_orchestration.domain.models import RetryPolicy, SourceSchedule
 

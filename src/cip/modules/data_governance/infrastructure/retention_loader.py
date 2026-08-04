@@ -3,7 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
-import yaml  # type: ignore[import-untyped]
+import yaml
 
 from cip.modules.data_governance.domain.retention import RetentionPolicy, RetentionRule
 from cip.modules.source_governance.domain.models import DataCategory

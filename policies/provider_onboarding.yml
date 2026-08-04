@@ -1,0 +1,174 @@
+version: 1
+reviewed_at: 2026-08-04
+
+providers:
+  - source_id: cisa-kev
+    display_name: CISA Known Exploited Vulnerabilities
+    auth_mode: none
+    documentation_url: https://www.cisa.gov/known-exploited-vulnerabilities-catalog
+    signup_url: null
+    console_url: null
+    required_secret_names: []
+    human_actions: []
+    automatic_onboarding: true
+    blocked_reason: null
+
+  - source_id: ted-search
+    display_name: TED Search API
+    auth_mode: none
+    documentation_url: https://docs.ted.europa.eu/api/latest/index.html
+    signup_url: null
+    console_url: null
+    required_secret_names: []
+    human_actions: []
+    automatic_onboarding: true
+    blocked_reason: null
+
+  - source_id: boamp
+    display_name: BOAMP Explore API
+    auth_mode: none
+    documentation_url: https://www.data.gouv.fr/dataservices/api-bulletin-officiel-des-annonces-des-marches-publics-boamp
+    signup_url: null
+    console_url: null
+    required_secret_names: []
+    human_actions: []
+    automatic_onboarding: true
+    blocked_reason: null
+
+  - source_id: greenhouse-job-board
+    display_name: Greenhouse Job Board API
+    auth_mode: none
+    documentation_url: https://developers.greenhouse.io/job-board.html
+    signup_url: null
+    console_url: null
+    required_secret_names: []
+    human_actions: []
+    automatic_onboarding: true
+    blocked_reason: null
+
+  - source_id: lever-job-board
+    display_name: Lever Postings API
+    auth_mode: none
+    documentation_url: https://github.com/lever/postings-api
+    signup_url: null
+    console_url: null
+    required_secret_names: []
+    human_actions: []
+    automatic_onboarding: true
+    blocked_reason: null
+
+  - source_id: smartrecruiters-job-board
+    display_name: SmartRecruiters Posting API
+    auth_mode: none
+    documentation_url: https://developers.smartrecruiters.com/docs/posting-api
+    signup_url: null
+    console_url: null
+    required_secret_names: []
+    human_actions: []
+    automatic_onboarding: true
+    blocked_reason: null
+
+  - source_id: recherche-entreprises
+    display_name: API Recherche d'entreprises
+    auth_mode: none
+    documentation_url: https://recherche-entreprises.api.gouv.fr/docs/
+    signup_url: null
+    console_url: null
+    required_secret_names: []
+    human_actions: []
+    automatic_onboarding: true
+    blocked_reason: null
+
+  - source_id: gleif
+    display_name: GLEIF API
+    auth_mode: none
+    documentation_url: https://www.gleif.org/en/lei-data/gleif-api
+    signup_url: null
+    console_url: null
+    required_secret_names: []
+    human_actions: []
+    automatic_onboarding: true
+    blocked_reason: null
+
+  - source_id: bodacc-identity
+    display_name: BODACC company events
+    auth_mode: none
+    documentation_url: https://www.data.gouv.fr/fr/dataservices/api-bodacc/
+    signup_url: null
+    console_url: null
+    required_secret_names: []
+    human_actions: []
+    automatic_onboarding: true
+    blocked_reason: null
+
+  - source_id: sirene-api
+    display_name: Insee Sirene API
+    auth_mode: none
+    documentation_url: https://www.insee.fr/fr/information/8184146
+    signup_url: https://portail-api.insee.fr/
+    console_url: https://portail-api.insee.fr/
+    required_secret_names: []
+    human_actions:
+      - enable_source_policy
+    automatic_onboarding: true
+    blocked_reason: null
+
+  - source_id: inpi-rne
+    display_name: INPI Registre national des entreprises
+    auth_mode: basic
+    documentation_url: https://data.inpi.fr/content/editorial/Acces_API_Entreprises
+    signup_url: https://data.inpi.fr/
+    console_url: https://data.inpi.fr/
+    required_secret_names:
+      - username
+      - password
+    human_actions:
+      - open_official_signup
+      - sign_in
+      - verify_email
+      - accept_provider_terms
+      - request_provider_access
+      - wait_for_provider_approval
+      - retrieve_technical_credentials
+      - register_secret_reference
+    automatic_onboarding: false
+    blocked_reason: null
+
+  - source_id: linkedin-official-api
+    display_name: LinkedIn Official API
+    auth_mode: manual
+    documentation_url: https://learn.microsoft.com/en-us/linkedin/shared/authentication/authentication
+    signup_url: https://www.linkedin.com/developers/apps
+    console_url: https://www.linkedin.com/developers/apps
+    required_secret_names: []
+    human_actions:
+      - open_official_signup
+      - sign_in
+      - complete_mfa
+      - accept_provider_terms
+      - request_provider_access
+      - wait_for_provider_approval
+    automatic_onboarding: false
+    blocked_reason: null
+
+  - source_id: linkedin-authorized-browser
+    display_name: LinkedIn Authorized Browser Workflow
+    auth_mode: manual
+    documentation_url: https://www.linkedin.com/legal/crawling-terms
+    signup_url: https://www.linkedin.com/
+    console_url: null
+    required_secret_names: []
+    human_actions: []
+    automatic_onboarding: false
+    blocked_reason: Browser execution remains disabled until the isolated runtime in issue 3 is delivered and exact written authorization is reviewed.
+
+  - source_id: brixhub
+    display_name: BrixHub
+    auth_mode: manual
+    documentation_url: https://brixhub.cc/login
+    signup_url: null
+    console_url: null
+    required_secret_names: []
+    human_actions: []
+    automatic_onboarding: false
+    blocked_reason: Source is quarantined; account creation, authentication, scraping, downloads, and imports are prohibited.

@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "cyber-intelligence-platform"
-version = "0.9.0"
+version = "0.10.0"
 description = "Standalone cyber revenue intelligence and commercial operations platform"
 readme = "README.md"
 requires-python = ">=3.12,<3.13"
@@ -29,6 +29,7 @@ dev = [
   "pytest==9.1.1",
   "pytest-cov==6.2.1",
   "ruff==0.12.7",
+  "types-PyYAML==6.0.12.20250516",
 ]
 
 [project.scripts]
