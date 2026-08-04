@@ -189,9 +189,11 @@ class IdentityMergeCandidate:
             and self.method is not MatchMethod.EXACT_IDENTIFIER
         ):
             raise ValueError("only exact identifier matches can be auto-confirmed")
-        if self.state in {MatchState.CONFIRMED, MatchState.REJECTED}:
-            if self.reviewed_at is None or not self.reviewed_by:
-                raise ValueError("reviewed candidates require reviewer and timestamp")
+        if (
+            self.state in {MatchState.CONFIRMED, MatchState.REJECTED}
+            and (self.reviewed_at is None or not self.reviewed_by)
+        ):
+            raise ValueError("reviewed candidates require reviewer and timestamp")
 
 
 def _set_required_text(instance: object, field_name: str, *, maximum: int) -> None:
