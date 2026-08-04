@@ -4,6 +4,7 @@ from cip.modules.collection_orchestration.infrastructure.repository_common impor
     LeaseLostError,
 )
 from cip.modules.collection_orchestration.infrastructure.repository_completion import (
+    cancel_claimed_job,
     complete_job,
 )
 from cip.modules.collection_orchestration.infrastructure.repository_failures import (
@@ -19,6 +20,7 @@ from cip.modules.collection_orchestration.infrastructure.repository_queue import
 
 __all__ = [
     "LeaseLostError",
+    "cancel_claimed_job",
     "claim_next_job",
     "complete_job",
     "enqueue_job",
