@@ -30,6 +30,7 @@ from cip.modules.organizations.infrastructure.identity_claims import (
 from cip.modules.organizations.infrastructure.identity_persistence import (
     persist_identity_projections,
 )
+from cip.modules.raw_observations.domain.entities import RawObservation
 from cip.modules.source_portfolio.application.service import (
     SourcePortfolioNotFoundError,
     record_collection_failure,
@@ -193,7 +194,7 @@ def _record_failure(
 def _record_success_health(
     session: Session,
     source_id: str,
-    observations: tuple[object, ...],
+    observations: tuple[RawObservation, ...],
     *,
     now: datetime,
 ) -> None:
