@@ -44,7 +44,11 @@ class AliasResponse(BaseModel):
 
     @classmethod
     def from_domain(cls, item: AliasView) -> AliasResponse:
-        return cls(**item.__dict__)
+        return cls(
+            value=item.value,
+            source_id=item.source_id,
+            observed_at=item.observed_at,
+        )
 
 
 class RelationshipResponse(BaseModel):
