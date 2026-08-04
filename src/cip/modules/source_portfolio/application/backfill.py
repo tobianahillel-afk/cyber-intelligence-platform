@@ -4,7 +4,7 @@ from collections.abc import Sequence
 from datetime import datetime
 from uuid import UUID, uuid4
 
-from sqlalchemy import select
+from sqlalchemy import select, update
 from sqlalchemy.orm import Session
 
 from cip.modules.source_portfolio.application.errors import SourcePortfolioStateError
@@ -177,7 +177,7 @@ def pause_pending_backfills(
     now: datetime,
 ) -> None:
     session.execute(
-        BackfillPartitionRecord.__table__.update()
+        update(BackfillPartitionRecord)
         .where(
             BackfillPartitionRecord.source_id == source_id,
             BackfillPartitionRecord.state.in_(
