@@ -13,6 +13,7 @@ from cip.modules.source_portfolio.api.schemas import (
     ActorRequest,
     BackfillRequest,
     BackfillResponse,
+    PriorityRefreshResponse,
     SourcePortfolioPageResponse,
     SourcePortfolioResponse,
 )
@@ -27,6 +28,7 @@ from cip.modules.source_portfolio.application.service import (
     pause_source,
     refresh_freshness,
     request_backfill,
+    request_priority_refresh,
     resume_source,
 )
 from cip.shared.config.settings import Settings, get_settings
@@ -110,6 +112,33 @@ def cancel_source_backfill(
     except ValueError as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
     return _response(session, source_id)
+
+
+@router.post(
+    "/sources/{source_id}/priority-refresh",
+    response_model=PriorityRefreshResponse,
+)
+def create_priority_refresh(
+    source_id: str,
+    payload: ActorRequest,
+    session: SessionDependency,
+    settings: SettingsDependency,
+) -> PriorityRefreshResponse:
+    _prepare(session, settings)
+    try:
+        result = request_priority_refresh(
+            session,
+            source_id,
+            actor=payload.actor,
+            now=utc_now(),
+        )
+    except SourcePortfolioNotFoundError as exc:
+        raise HTTPException(status_code=404, detail="source not found") from exc
+    except SourcePortfolioStateError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    return PriorityRefreshResponse(job_id=result.job_id, created=result.created)
 
 
 @router.post("/sources/{source_id}/pause", response_model=SourcePortfolioResponse)
