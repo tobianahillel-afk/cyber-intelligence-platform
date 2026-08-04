@@ -120,10 +120,12 @@ sources:
     display_name: API Recherche d'entreprises
     canonical_url: https://recherche-entreprises.api.gouv.fr
     category: organization_identity
-    status: executable
+    status: paused
     freshness_max_age_seconds: 86400
     commercial_use_cases: [organization_resolution]
     monthly_cost_limit: 0
+    metadata:
+      activation_requires: enabled_identity_target
     adapter:
       adapter_id: recherche-entreprises-search
       adapter_version: "1"
@@ -138,10 +140,12 @@ sources:
     display_name: GLEIF LEI API
     canonical_url: https://api.gleif.org/api/v1
     category: organization_identity
-    status: executable
+    status: paused
     freshness_max_age_seconds: 86400
     commercial_use_cases: [organization_resolution, corporate_relationships]
     monthly_cost_limit: 0
+    metadata:
+      activation_requires: enabled_lei_target
     adapter:
       adapter_id: gleif-lei-api
       adapter_version: "1"
@@ -156,10 +160,12 @@ sources:
     display_name: BODACC identity claims
     canonical_url: https://bodacc-datadila.opendatasoft.com
     category: organization_identity
-    status: executable
+    status: paused
     freshness_max_age_seconds: 86400
     commercial_use_cases: [organization_resolution, legal_event_context]
     monthly_cost_limit: 0
+    metadata:
+      activation_requires: enabled_french_siren_target
     adapter:
       adapter_id: bodacc-commercial-announcements
       adapter_version: "1"
