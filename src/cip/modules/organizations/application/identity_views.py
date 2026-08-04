@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from datetime import date, datetime
 from uuid import UUID
 
+from cip.modules.organizations.domain.identifiers import IdentifierScheme
 from cip.modules.organizations.domain.identity import (
     IdentityKind,
     IdentityStatus,
@@ -11,7 +12,6 @@ from cip.modules.organizations.domain.identity import (
     MatchState,
     RelationshipType,
 )
-from cip.modules.organizations.domain.identifiers import IdentifierScheme
 
 
 @dataclass(frozen=True, slots=True)
@@ -46,6 +46,19 @@ class RelationshipView:
 
 
 @dataclass(frozen=True, slots=True)
+class IdentityClaimView:
+    id: UUID
+    source_id: str
+    source_record_key: str
+    source_url: str
+    selected_fields: dict[str, object]
+    confidence: float
+    observed_at: datetime
+    content_hash_sha256: str | None
+    conflict_fields: tuple[str, ...]
+
+
+@dataclass(frozen=True, slots=True)
 class IdentityView:
     id: UUID
     organization_id: UUID | None
@@ -70,6 +83,8 @@ class IdentityView:
     aliases: tuple[AliasView, ...]
     evidence_ids: tuple[UUID, ...]
     relationships: tuple[RelationshipView, ...]
+    claims: tuple[IdentityClaimView, ...]
+    conflict_fields: tuple[str, ...]
 
 
 @dataclass(frozen=True, slots=True)
