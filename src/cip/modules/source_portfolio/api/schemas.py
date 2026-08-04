@@ -29,6 +29,11 @@ class BackfillResponse(BaseModel):
     partition_ids: list[UUID]
 
 
+class PriorityRefreshResponse(BaseModel):
+    job_id: UUID
+    created: bool
+
+
 class AdapterCapabilityResponse(BaseModel):
     adapter_id: str
     adapter_version: str
