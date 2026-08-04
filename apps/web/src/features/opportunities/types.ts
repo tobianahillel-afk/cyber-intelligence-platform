@@ -5,6 +5,13 @@ export type OpportunityState =
   | "snoozed"
   | "enrichment_requested";
 
+export type OpportunityReviewAction =
+  | "qualify"
+  | "reject"
+  | "snooze"
+  | "request_enrichment"
+  | "reopen";
+
 export type OpportunityDataQuality = "complete" | "partial";
 
 export interface OpportunityListItem {
