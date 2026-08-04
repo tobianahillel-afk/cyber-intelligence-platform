@@ -24,6 +24,9 @@ from cip.modules.data_governance.domain.retention import RetentionPolicy
 from cip.modules.opportunities.infrastructure.projections import (
     persist_commercial_projections,
 )
+from cip.modules.organizations.infrastructure.identity_claims import (
+    persist_identity_claims,
+)
 from cip.modules.organizations.infrastructure.identity_persistence import (
     persist_identity_projections,
 )
@@ -117,6 +120,7 @@ def run_worker_once(
                 batch.identity_projections,
                 now=completion_time,
             )
+            persist_identity_claims(session, batch.identity_projections)
             persist_commercial_projections(
                 session,
                 batch.commercial_projections,
