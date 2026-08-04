@@ -9,12 +9,12 @@ import pytest
 
 from cip.adapters.sources.organization_identity.registry import OrganizationIdentityTarget
 from cip.modules.collection_orchestration.application.bodacc_identity_adapter import (
-    BodaccIdentityAdapter,
     _checkpoint_from_payload as bodacc_checkpoint,
+    BodaccIdentityAdapter,
 )
 from cip.modules.collection_orchestration.application.gleif_adapter import (
-    GleifAdapter,
     _checkpoint_from_payload as gleif_checkpoint,
+    GleifAdapter,
 )
 from cip.modules.collection_orchestration.application.identity_adapters import (
     register_identity_adapters,
@@ -24,8 +24,8 @@ from cip.modules.collection_orchestration.application.ports import (
     CollectionAdapter,
 )
 from cip.modules.collection_orchestration.application.recherche_entreprises_adapter import (
-    RechercheEntreprisesAdapter,
     _checkpoint_from_payload as recherche_checkpoint,
+    RechercheEntreprisesAdapter,
 )
 from cip.modules.source_governance.infrastructure.registry import (
     SourceRegistryEntry,
