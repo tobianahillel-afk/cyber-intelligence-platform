@@ -1,0 +1,8 @@
+version: 1
+
+companies:
+  - id: smartrecruiters-inc
+    company_identifier: smartrecruiters
+    canonical_name: SmartRecruiters, Inc.
+    country_code: US
+    enabled: true
