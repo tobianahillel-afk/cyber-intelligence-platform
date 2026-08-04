@@ -1,0 +1,221 @@
+version: 1
+
+sources:
+  - source_id: cisa-kev
+    display_name: CISA Known Exploited Vulnerabilities
+    canonical_url: https://www.cisa.gov/known-exploited-vulnerabilities-catalog
+    category: vulnerability_intelligence
+    status: executable
+    freshness_max_age_seconds: 3600
+    commercial_use_cases: [vulnerability_prioritization, exposure_context]
+    monthly_cost_limit: 0
+    adapter:
+      adapter_id: cisa-kev-feed
+      adapter_version: "1"
+      provider_schema_version: cisa-kev-json
+      modes: [conditional_refresh, priority_refresh]
+      canonical_output_types: [raw_observation]
+      supports_corrections: true
+      max_page_size: 2000
+      cost_per_request: 0
+
+  - source_id: ted-search
+    display_name: TED Search API
+    canonical_url: https://api.ted.europa.eu/v3/notices/search
+    category: procurement
+    status: executable
+    freshness_max_age_seconds: 7200
+    commercial_use_cases: [explicit_procurement, contract_discovery]
+    monthly_cost_limit: 0
+    adapter:
+      adapter_id: ted-search-api
+      adapter_version: "1"
+      provider_schema_version: ted-search-v3
+      modes: [historical_backfill, incremental_cursor, priority_refresh]
+      canonical_output_types: [raw_observation, commercial_signal]
+      supports_corrections: true
+      supports_tombstones: true
+      max_page_size: 100
+      max_window_days: 31
+      cost_per_request: 0
+
+  - source_id: boamp
+    display_name: BOAMP Explore API
+    canonical_url: https://boamp-datadila.opendatasoft.com
+    category: procurement
+    status: executable
+    freshness_max_age_seconds: 7200
+    commercial_use_cases: [explicit_procurement, contract_discovery]
+    monthly_cost_limit: 0
+    adapter:
+      adapter_id: boamp-explore-api
+      adapter_version: "1"
+      provider_schema_version: opendatasoft-v2.1
+      modes: [historical_backfill, incremental_cursor, priority_refresh]
+      canonical_output_types: [raw_observation, commercial_signal]
+      supports_corrections: true
+      supports_tombstones: true
+      max_page_size: 100
+      max_window_days: 31
+      cost_per_request: 0
+
+  - source_id: greenhouse-job-board
+    display_name: Greenhouse Job Board API
+    canonical_url: https://boards-api.greenhouse.io
+    category: public_hiring
+    status: executable
+    freshness_max_age_seconds: 7200
+    commercial_use_cases: [program_transformation, capability_gap]
+    monthly_cost_limit: 0
+    adapter:
+      adapter_id: greenhouse-job-board-api
+      adapter_version: "1"
+      provider_schema_version: greenhouse-v1
+      modes: [incremental_cursor, priority_refresh]
+      canonical_output_types: [raw_observation, commercial_signal]
+      supports_corrections: true
+      supports_tombstones: true
+      max_page_size: 500
+      cost_per_request: 0
+
+  - source_id: lever-job-board
+    display_name: Lever Postings API
+    canonical_url: https://api.lever.co/v0/postings
+    category: public_hiring
+    status: executable
+    freshness_max_age_seconds: 7200
+    commercial_use_cases: [program_transformation, capability_gap]
+    monthly_cost_limit: 0
+    adapter:
+      adapter_id: lever-postings-api
+      adapter_version: "1"
+      provider_schema_version: lever-v0
+      modes: [incremental_cursor, priority_refresh]
+      canonical_output_types: [raw_observation, commercial_signal]
+      supports_corrections: true
+      supports_tombstones: true
+      max_page_size: 100
+      cost_per_request: 0
+
+  - source_id: smartrecruiters-job-board
+    display_name: SmartRecruiters Posting API
+    canonical_url: https://api.smartrecruiters.com/v1/companies
+    category: public_hiring
+    status: executable
+    freshness_max_age_seconds: 7200
+    commercial_use_cases: [program_transformation, capability_gap]
+    monthly_cost_limit: 0
+    adapter:
+      adapter_id: smartrecruiters-posting-api
+      adapter_version: "1"
+      provider_schema_version: smartrecruiters-v1
+      modes: [incremental_cursor, priority_refresh]
+      canonical_output_types: [raw_observation, commercial_signal]
+      supports_corrections: true
+      supports_tombstones: true
+      max_page_size: 100
+      cost_per_request: 0
+
+  - source_id: recherche-entreprises
+    display_name: API Recherche d'entreprises
+    canonical_url: https://recherche-entreprises.api.gouv.fr
+    category: organization_identity
+    status: executable
+    freshness_max_age_seconds: 86400
+    commercial_use_cases: [organization_resolution]
+    monthly_cost_limit: 0
+    adapter:
+      adapter_id: recherche-entreprises-search
+      adapter_version: "1"
+      provider_schema_version: recherche-entreprises-v1
+      modes: [entity_lookup, priority_refresh]
+      canonical_output_types: [identity_claim]
+      supports_corrections: true
+      max_page_size: 25
+      cost_per_request: 0
+
+  - source_id: gleif
+    display_name: GLEIF LEI API
+    canonical_url: https://api.gleif.org/api/v1
+    category: organization_identity
+    status: executable
+    freshness_max_age_seconds: 86400
+    commercial_use_cases: [organization_resolution, corporate_relationships]
+    monthly_cost_limit: 0
+    adapter:
+      adapter_id: gleif-lei-api
+      adapter_version: "1"
+      provider_schema_version: gleif-api-v1
+      modes: [entity_lookup, priority_refresh]
+      canonical_output_types: [identity_claim]
+      supports_corrections: true
+      max_page_size: 200
+      cost_per_request: 0
+
+  - source_id: bodacc-identity
+    display_name: BODACC identity claims
+    canonical_url: https://bodacc-datadila.opendatasoft.com
+    category: organization_identity
+    status: executable
+    freshness_max_age_seconds: 86400
+    commercial_use_cases: [organization_resolution, legal_event_context]
+    monthly_cost_limit: 0
+    adapter:
+      adapter_id: bodacc-commercial-announcements
+      adapter_version: "1"
+      provider_schema_version: bodacc-opendatasoft-v2.1
+      modes: [entity_lookup, incremental_cursor]
+      canonical_output_types: [identity_claim]
+      supports_corrections: true
+      max_page_size: 100
+      cost_per_request: 0
+
+  - source_id: reference-synthetic
+    display_name: Synthetic reference adapter
+    canonical_url: https://example.invalid/source-portfolio-reference
+    category: test_reference
+    status: executable
+    freshness_max_age_seconds: 300
+    commercial_use_cases: [runtime_contract_validation]
+    monthly_cost_limit: 0
+    metadata:
+      network_access: false
+      fixture_only: true
+    adapter:
+      adapter_id: reference-synthetic-adapter
+      adapter_version: "1"
+      provider_schema_version: synthetic-v1
+      modes: [historical_backfill, incremental_cursor, conditional_refresh, priority_refresh]
+      canonical_output_types: [source_record]
+      supports_corrections: true
+      supports_tombstones: true
+      supports_retractions: true
+      max_page_size: 50
+      max_window_days: 7
+      cost_per_request: 0
+
+  - source_id: osint-framework-import
+    display_name: OSINT Framework imported candidates
+    canonical_url: https://osintframework.com
+    category: catalog_candidate
+    status: candidate
+    freshness_max_age_seconds: 2592000
+    commercial_use_cases: [source_discovery]
+    candidate_origin: osint-framework
+    monthly_cost_limit: 0
+    metadata:
+      executable: false
+      authorization_required: true
+
+  - source_id: brixhub
+    display_name: BrixHub candidate
+    canonical_url: https://brixhub.cc
+    category: conditional_candidate
+    status: candidate
+    freshness_max_age_seconds: 2592000
+    commercial_use_cases: [unassessed]
+    candidate_origin: governed-roadmap
+    metadata:
+      executable: false
+      quarantine: true
+      blocker: provider_access_and_data_review
