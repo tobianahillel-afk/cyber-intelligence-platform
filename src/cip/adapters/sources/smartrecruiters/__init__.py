@@ -1,0 +1,1 @@
+"""SmartRecruiters public postings adapter."""
