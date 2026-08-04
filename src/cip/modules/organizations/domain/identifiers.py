@@ -84,7 +84,11 @@ def identifier_from_registration_id(
             scheme = IdentifierScheme(prefix.casefold())
         except ValueError:
             return None
-        country = "FR" if scheme in {IdentifierScheme.SIREN, IdentifierScheme.SIRET} else None
+        country = (
+            "FR"
+            if scheme in {IdentifierScheme.SIREN, IdentifierScheme.SIRET}
+            else None
+        )
         return OfficialIdentifier(
             scheme=scheme,
             value=identifier,
@@ -101,7 +105,9 @@ def identifier_from_registration_id(
         scheme = IdentifierScheme.LEI
     else:
         return None
-    country = "FR" if scheme in {IdentifierScheme.SIREN, IdentifierScheme.SIRET} else None
+    country = (
+        "FR" if scheme in {IdentifierScheme.SIREN, IdentifierScheme.SIRET} else None
+    )
     return OfficialIdentifier(
         scheme=scheme,
         value=digits,
@@ -128,7 +134,10 @@ def _validate_siret(value: str) -> None:
 def _validate_lei(value: str) -> None:
     if len(value) != 20 or not value.isalnum():
         raise ValueError("LEI must contain exactly 20 alphanumeric characters")
-    expanded = "".join(str(ord(character) - 55) if character.isalpha() else character for character in value)
+    expanded = "".join(
+        str(ord(character) - 55) if character.isalpha() else character
+        for character in value
+    )
     if _mod97(expanded) != 1:
         raise ValueError("LEI checksum is invalid")
 
