@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session
 from cip.modules.source_portfolio.application.errors import SourcePortfolioNotFoundError
 from cip.modules.source_portfolio.domain.models import (
     AdapterCapabilityManifest,
+    AnomalyState,
     BackfillState,
     CatalogStatus,
     CollectionMode,
@@ -93,11 +94,18 @@ def to_manifest(record: AdapterCapabilityRecord) -> AdapterCapabilityManifest:
     )
 
 
-def to_health(record: SourceHealthRecord) -> SourceHealth:
+def to_health(
+    record: SourceHealthRecord,
+    *,
+    circuit_state: str = "unknown",
+) -> SourceHealth:
     return SourceHealth(
         source_id=record.source_id,
         freshness_state=FreshnessState(record.freshness_state),
         schema_state=SchemaState(record.schema_state),
+        volume_state=AnomalyState(record.volume_state),
+        field_population_state=AnomalyState(record.field_population_state),
+        circuit_state=circuit_state,
         last_attempt_at=persistence_utc(record.last_attempt_at),
         last_success_at=persistence_utc(record.last_success_at),
         last_source_record_at=persistence_utc(record.last_source_record_at),
