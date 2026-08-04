@@ -49,7 +49,7 @@ def test_health_reports_phase_version(client_and_session: tuple[TestClient, Sess
     response = client.get("/health")
 
     assert response.status_code == 200
-    assert response.json() == {"status": "ok", "version": "0.6.0"}
+    assert response.json() == {"status": "ok", "version": "0.7.0"}
 
 
 def test_empty_opportunity_list(client_and_session: tuple[TestClient, Session]) -> None:
