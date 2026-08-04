@@ -9,7 +9,9 @@ from sqlalchemy.orm import Session
 from cip.modules.collection_orchestration.application.ports import CommercialProjection
 from cip.modules.evidence.domain.entities import Evidence
 from cip.modules.evidence.infrastructure.models import EvidenceRecord
-from cip.modules.opportunities.infrastructure.generation import generate_siem_soc_opportunity
+from cip.modules.opportunities.infrastructure.generation import (
+    generate_siem_soc_opportunity,
+)
 from cip.modules.opportunities.infrastructure.signals import store_commercial_signal
 from cip.modules.organizations.domain.entities import Organization
 from cip.modules.organizations.infrastructure.models import OrganizationRecord
@@ -61,7 +63,7 @@ def _upsert_organization(session: Session, organization: Organization) -> None:
     record.canonical_name = organization.canonical_name
     record.legal_name = organization.legal_name
     record.country_code = organization.country_code
-    record.updated_at = max(record.updated_at, organization.updated_at)
+    record.updated_at = organization.updated_at
 
 
 def _upsert_evidence(session: Session, evidence: Evidence) -> None:
