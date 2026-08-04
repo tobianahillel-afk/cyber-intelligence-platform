@@ -27,7 +27,10 @@ from cip.modules.provider_onboarding.application.service import (
     start_provider_onboarding,
     verify_provider_configuration,
 )
-from cip.modules.provider_onboarding.domain.models import SecretReference
+from cip.modules.provider_onboarding.domain.models import (
+    ProviderOnboarding,
+    SecretReference,
+)
 from cip.shared.config.settings import Settings, get_settings
 from cip.shared.kernel.time import utc_now
 from cip.shared.persistence.dependencies import get_database_session
@@ -75,6 +78,8 @@ def start_provider(
             actor=payload.actor,
             now=utc_now(),
         )
+    except ProviderOnboardingNotFoundError as exc:
+        raise HTTPException(status_code=404, detail="provider not found") from exc
     except ProviderOnboardingBlockedError as exc:
         raise HTTPException(status_code=409, detail=str(exc)) from exc
     except ValueError as exc:
@@ -102,10 +107,10 @@ def record_human_checkpoint(
             now=utc_now(),
             note=payload.note,
         )
-    except ProviderOnboardingBlockedError as exc:
-        raise HTTPException(status_code=409, detail=str(exc)) from exc
     except ProviderOnboardingNotFoundError as exc:
         raise HTTPException(status_code=404, detail="provider not found") from exc
+    except ProviderOnboardingBlockedError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
     except ValueError as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
     return ProviderOnboardingResponse.from_domain(result)
@@ -131,10 +136,10 @@ def add_secret_reference(
             actor=payload.actor,
             now=utc_now(),
         )
-    except ProviderOnboardingBlockedError as exc:
-        raise HTTPException(status_code=409, detail=str(exc)) from exc
     except ProviderOnboardingNotFoundError as exc:
         raise HTTPException(status_code=404, detail="provider not found") from exc
+    except ProviderOnboardingBlockedError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
     except ValueError as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
     return ProviderOnboardingResponse.from_domain(result)
@@ -156,10 +161,10 @@ def verify_provider(
             actor=payload.actor,
             now=utc_now(),
         )
-    except ProviderOnboardingBlockedError as exc:
-        raise HTTPException(status_code=409, detail=str(exc)) from exc
     except ProviderOnboardingNotFoundError as exc:
         raise HTTPException(status_code=404, detail="provider not found") from exc
+    except ProviderOnboardingBlockedError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
     except ValueError as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
     return ProviderOnboardingResponse.from_domain(result)
@@ -191,7 +196,7 @@ def _prepare(session: Session, settings: Settings) -> None:
     ensure_provider_catalog(session, settings)
 
 
-def _get(session: Session, source_id: str):  # type: ignore[no-untyped-def]
+def _get(session: Session, source_id: str) -> ProviderOnboarding:
     try:
         return get_provider_onboarding(session, source_id)
     except ProviderOnboardingNotFoundError as exc:
