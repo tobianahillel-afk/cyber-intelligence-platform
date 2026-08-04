@@ -36,3 +36,15 @@ schedules:
       max_delay_seconds: 1800
       circuit_failure_threshold: 3
       circuit_reset_seconds: 1800
+
+  - source_id: greenhouse-job-board
+    adapter_id: greenhouse-job-board-api
+    enabled: true
+    interval_seconds: 1800
+    lease_seconds: 120
+    retry:
+      max_attempts: 4
+      base_delay_seconds: 60
+      max_delay_seconds: 1800
+      circuit_failure_threshold: 3
+      circuit_reset_seconds: 1800

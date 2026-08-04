@@ -1,274 +1,160 @@
 # Cyber Intelligence Platform
 
-Cyber Intelligence Platform is a human-operated cyber revenue intelligence workspace. It collects authorized public or licensed cyber, company, technology, commercial, and professional-role signals to identify organizations that may currently or soon need cybersecurity services or products.
+Cyber Intelligence Platform is a human-operated cyber revenue intelligence workspace. It collects authorized public or licensed evidence, converts it into normalized commercial signals, and helps analysts identify organizations that may need cybersecurity services or products.
 
-The product is designed to answer:
+The platform is deliberately evidence-first: every opportunity must expose its source, timestamps, confidence, freshness, claim type, and review history. It does not autonomously contact prospects, validate credentials, exploit systems, or ingest leaked victim data.
 
-1. Which organization should be reviewed?
-2. What cybersecurity need or buying signal was detected?
-3. Which evidence supports the conclusion?
-4. Which professional roles are relevant?
-5. Which offer should be proposed, and why now?
+## Current validated scope
 
-## Current implementation status
+Version `0.7.0` includes four durable official-source adapters:
 
-The repository contains an executable foundation, a durable collection pipeline, three official-source adapters, and a live opportunity workflow:
+- **CISA KEV** for known-exploited vulnerability metadata;
+- **TED Search API** for active European cyber procurement notices;
+- **BOAMP/DILA Explore API** for actionable French procurement notices;
+- **Greenhouse Job Board API** for public cyber hiring signals from explicitly configured boards.
 
-- FastAPI application factory, source-governance endpoints, and opportunity list/detail/action APIs;
-- framework-independent domain modules for organizations, evidence, cyber events, raw observations, opportunity scoring, retention, suppression, source accounts, product metrics, collection orchestration, and analyst-reviewed opportunities;
-- explicit source policies, authorization records, runtime state, and collection decisions;
-- PostgreSQL persistence models and reversible Alembic migrations;
-- local PostgreSQL through Docker Compose;
-- HMAC-SHA256 suppression records without raw contact identifiers;
-- executable retention rules;
-- machine-readable source and collection-schedule registries;
-- an official CISA KEV feed adapter with conditional HTTP requests, size/type checks, strict schemas, checkpoints, provenance, and network-free tests;
-- an official anonymous TED Search API adapter for active European SIEM/SOC procurement notices;
-- an official BOAMP/DILA Explore API adapter for recent French public-procurement notices, with a dated paginated window, checkpointing, and explicit handling of notices, rectifications, cancellations, results, and expired deadlines;
-- selected-field collection only: full procurement documents and embedded contact blocks are not stored;
-- local defensive filtering before a remote result can become a commercial signal;
-- deterministic buyer, evidence, observation, signal, hypothesis, and opportunity identifiers;
-- durable collection jobs with leases, retries, bounded exponential backoff, circuit breakers, dead letters, and recovery after interruption;
-- atomic observation/checkpoint/job completion and observation deduplication;
-- transactional commercial projection: a collection job cannot be marked successful if organization, evidence, signal, or opportunity persistence fails;
-- source freshness, queue lag, error, dead-letter, and volume metrics;
-- separate `cip-scheduler` and `cip-worker` process entry points;
-- normalized commercial signals, need hypotheses, evidence links, and persistent opportunity lifecycle;
-- a versioned SIEM/SOC buying-intent rule using public-tender and security-operations hiring signals;
-- explainable score components for tender intent, hiring, corroboration, freshness, confidence, and single-source uncertainty;
-- analyst qualification, rejection, snooze, enrichment request, reopen, score-component override, and immutable review history;
-- a Next.js Opportunity Inbox and detail workspace backed by FastAPI and PostgreSQL, with no demonstration fixtures;
-- loading, empty, backend-unavailable, and not-found UI states;
-- automated architecture tests that reject Python application files above 400 lines and duplicate function or class definitions in a scope;
-- a previously monolithic 532-line collection repository split into queue, completion, failure, circuit, and shared-invariant modules behind a stable facade;
-- pinned direct dependencies, dependency audits, Ruff, Mypy, migration validation, frontend build validation, and 90% branch-aware coverage gates;
-- Dependabot, CODEOWNERS, contribution rules, a PR template, and manually runnable CodeQL.
+The Greenhouse path is GET-only. It stores no candidate, application, resume, email, or raw HTML content. Job descriptions are normalized in memory, relevant terms are extracted, and changed listings update the same deterministic signal and opportunity instead of creating duplicates.
 
-Not yet implemented:
+## Product flow
 
-- DECP, careers/ATS, or other production commercial-signal adapters beyond TED and BOAMP;
-- Chromium/browser workers and download quarantine runtime;
-- named professional-contact enrichment and organization-chart workflows;
-- OpenSearch, Redis, object storage, CRM integration, or autonomous outreach;
-- active LinkedIn collection;
-- any executable BrixHub integration.
+```text
+approved source registry
+  -> policy decision before network
+  -> bounded transport and strict provider schema
+  -> immutable raw observation metadata
+  -> normalized organization, evidence, and commercial signal
+  -> versioned need hypothesis and score
+  -> human-operated Opportunity Inbox
+```
 
-The live Opportunity Inbox can now receive real TED and BOAMP public-tender signals. It does not claim that DECP, job boards, LinkedIn, Chromium sources, or other future sources are already connected.
+The current Inbox combines procurement intent and hiring evidence for SIEM/SOC-related needs. Analyst decisions remain explicit and auditable.
 
-Redis is not required for the current durable queue: PostgreSQL owns scheduling, locking, leases, checkpoints, and recovery. Redis should be introduced only when measured throughput or coordination requirements justify it.
+## Architecture
 
-## Local setup
+The backend is a Python 3.12 modular monolith using FastAPI, SQLAlchemy, PostgreSQL, Alembic, Pydantic, and durable scheduler/worker orchestration. The analyst UI is a Next.js application in `apps/web`.
+
+Core boundaries include:
+
+- source and authorization governance;
+- collection scheduling, leases, checkpoints, retries, circuits, and dead letters;
+- raw observations and evidence provenance;
+- organization and opportunity persistence;
+- versioned scoring and analyst review;
+- retention and suppression;
+- product and source-health metrics.
+
+Provider schemas stay inside adapter packages. Domain modules cannot import frameworks or infrastructure implementations. External connectors cannot import canonical persistence implementations directly.
+
+## Development quality gates
+
+Every pull request must pass on one final SHA:
+
+1. dependency consistency and security audits;
+2. Ruff;
+3. Mypy strict;
+4. architecture, complexity, dependency, release, and roadmap contracts;
+5. reversible PostgreSQL migrations;
+6. complete backend line and branch coverage with a 90% minimum;
+7. frontend dependency audit, TypeScript checking, and production build.
+
+Additional executable rules include:
+
+- application Python files: maximum 400 lines;
+- functions/methods: maximum 120 lines;
+- classes: maximum 300 lines;
+- function parameters: maximum 10;
+- control-flow nesting: maximum 6;
+- no duplicate definitions in a module or class;
+- no wildcard imports;
+- one authoritative application/package/API version;
+- unit tests cannot open live network connections;
+- UTC-aware persistence is normalized consistently across SQLite and PostgreSQL.
+
+See [`docs/DEVELOPMENT_STANDARDS.md`](docs/DEVELOPMENT_STANDARDS.md) and [`docs/TEST_STRATEGY.md`](docs/TEST_STRATEGY.md).
+
+## Delivery roadmap
+
+The authoritative roadmap is [`docs/PROJECT_DELIVERY_PLAN.md`](docs/PROJECT_DELIVERY_PLAN.md). It defines lots `00` through `26`, including dependencies, detailed deliverables, test suites, exit gates, and non-goals.
+
+Validated lots:
+
+- `00` product, legal, and source governance;
+- `01` modular core, persistence, provenance, and retention;
+- `02` durable scheduler, worker, checkpoints, and recovery;
+- `03` evidence-backed opportunity engine and Inbox;
+- `04` TED procurement;
+- `05` BOAMP procurement and executable architecture gates;
+- `06` Greenhouse public cyber hiring signals.
+
+The next locked lot is `07`: multi-ATS hiring-source expansion through separately reviewed official public APIs.
+
+## Local development
 
 Requirements:
 
 - Python 3.12;
-- Docker with Compose;
-- Node.js 24 for the current frontend toolchain.
+- Node.js 24;
+- Docker with Compose.
 
 ```bash
 cp .env.example .env
 docker compose up -d postgres
-python -m venv .venv
-. .venv/bin/activate
 python -m pip install -e '.[dev]'
 alembic upgrade head
-cip-api
+uvicorn cip.main:app --reload
 ```
 
-On PowerShell:
-
-```powershell
-Copy-Item .env.example .env
-docker compose up -d postgres
-py -3.12 -m venv .venv
-.\.venv\Scripts\Activate.ps1
-python -m pip install -e ".[dev]"
-alembic upgrade head
-cip-api
-```
-
-Start the scheduler and worker in separate terminals:
+In separate terminals:
 
 ```bash
 cip-scheduler
 cip-worker
 ```
 
-The scheduler reads `policies/collection_schedules.yml`, synchronizes the authorized source registry, and creates at most one active job per source/adapter. The worker claims jobs with a bounded lease, performs source access outside the database transaction, and commits observations, checkpoints, job completion, and commercial projections atomically.
-
-Start the UI separately:
+Frontend:
 
 ```bash
 cd apps/web
-cp .env.example .env.local
 npm install
 npm run dev
 ```
 
-The API is available on `http://127.0.0.1:8000` by default. The Next.js server uses `CIP_API_BASE_URL` to load and update the Opportunity Inbox. With no matching commercial signals in PostgreSQL, the UI displays an explicit empty state rather than synthetic records.
-
-## Validation
+## Validation commands
 
 ```bash
 python -m pip check
 pip-audit --skip-editable
 ruff check .
 mypy
+pytest tests/architecture
 alembic upgrade head
 alembic downgrade base
 alembic upgrade head
-pytest --cov=cip --cov-branch --cov-fail-under=90
+pytest --cov=cip --cov-branch --cov-report=term-missing --cov-fail-under=90
+```
 
+```bash
 cd apps/web
-npm install
 npm audit --audit-level=high
 npm run typecheck
 npm run build
 ```
 
-The BOAMP and structure-guardrail phase was independently validated with 302 passing tests and 94.51% combined line-and-branch coverage. Mypy strict passed on 113 source files, the PostgreSQL upgrade/downgrade/upgrade cycle passed, the BOAMP orchestration adapter reached 100% coverage, the architecture test suite passed, and the Next.js audit, typecheck, and production build passed.
+The phase-6 pre-closing validation passed **344 backend tests**, **94.62% line/branch coverage**, Mypy strict on **123 source files**, reversible PostgreSQL migrations, dependency audits, architecture gates, TypeScript, and the Next.js production build.
 
-## Architecture
+## Source and data safety
 
-The system begins as a modular monolith with separate API, worker, scheduler, and frontend composition roots. Domain modules do not depend on FastAPI, SQLAlchemy, HTTP clients, Redis, or browser libraries.
+The repository is public. Never commit API keys, session material, real prospect lists, CRM exports, collected personal data, proprietary datasets, or production evidence. Use only synthetic, minimized, provider-published, or explicitly redistributable fixtures.
 
-```text
-apps/
-  web/                         Next.js analyst application
+The source registry is authoritative. Quarantined or unapproved sources have no executable collection path. Browser automation remains deferred until structured APIs are insufficient and an isolated browser plus download-quarantine runtime has been validated.
 
-src/cip/
-  shared/                      time, configuration, persistence
-  modules/                     bounded business contexts
-  adapters/                    isolated external-source integrations
+## Project documents
 
-infra/
-  migrations/                  reversible Alembic revisions
-
-policies/
-  sources.example.yml          source and authorization registry
-  collection_schedules.yml     cadence, lease, retry, and circuit settings
-  retention.yml                executable retention and suppression policy
-  product_metrics.yml          quality and commercial-value targets
-
-tests/
-  architecture/                file-size and duplicate-definition gates
-  unit/                        domain, adapter, governance, persistence, and recovery tests
-  integration/                 persisted source-to-opportunity workflows
-```
-
-## Durable collection lifecycle
-
-```text
-source registry synchronization
--> deterministic schedule slot
--> idempotent job enqueue
--> transactional claim with SKIP LOCKED
--> bounded worker lease
--> policy-checked source collection
--> validation and raw-observation mapping
--> atomic observation + checkpoint + commercial projection + job completion
--> retry/circuit breaker/dead letter on failure
--> freshness and queue metrics
-```
-
-A replayed schedule slot cannot create a duplicate job. A replayed observation cannot create a duplicate raw record. If execution stops before the completion transaction commits, the previous checkpoint remains authoritative. A worker whose lease expired cannot commit a late result. A TED or BOAMP job is not successful unless its associated projections are persisted in the same transaction.
-
-BOAMP uses a dated, paginated window. If the number of records exceeds the configured safe pagination budget, the job fails visibly and its checkpoint does not advance; partial success is never presented as complete collection.
-
-## Opportunity lifecycle
-
-```text
-normalized commercial signal
--> idempotent signal persistence
--> versioned SIEM/SOC need rule
--> explainable score and freshness
--> persistent need hypothesis
--> Opportunity Inbox and detail API
--> analyst qualification, rejection, snooze, enrichment, or reopen
--> immutable review history
--> automatic recalculation preserving analyst overrides
-```
-
-The first rule family detects possible SIEM/SOC buying intent from normalized public-tender and security-operations hiring signals. A single source remains visible as `partial`, receives a score penalty, and requires analyst validation. Corroborating evidence from independent source families raises confidence and data quality.
-
-The browser cannot directly create an opportunity. Opportunities are produced by the backend from evidence-linked normalized signals. Analyst score overrides are retained during later automatic recalculations, while the latest generated baseline remains visible.
-
-## Acquisition model
-
-A source uses the least complex authorized method that can reliably retrieve the required evidence:
-
-```text
-official API
--> feed or bulk export
--> static HTTP
--> isolated Chromium browser
--> analyst-assisted browser session
--> manual import
-```
-
-The current executable adapters use the official CISA KEV JSON feed, the official TED Search API, and the official BOAMP/DILA Explore API. Chromium remains deferred until structured API and static-HTTP collection, provenance, normalization, and value metrics are stable.
-
-CAPTCHA, bot challenges, MFA, changed terms, or account-security prompts must produce a safe pause and human task. They are not automatically bypassed. Temporary-account rotation, copied cookies, CAPTCHA-solving services, and access-control circumvention are out of scope.
-
-## Source governance
-
-A collection request is permitted only when all applicable checks pass:
-
-- source is enabled;
-- data category is allowed and not prohibited;
-- authorization is approved and unexpired;
-- automation and raw storage are explicitly permitted;
-- human review is complete when required;
-- quota remains available;
-- purpose, target host, and target path are approved.
-
-LinkedIn entries remain disabled until the relevant application scopes or written authorization are recorded. BrixHub is present only as a quarantined governance record: no account creation, payment, network access, crawling, download, or import is enabled.
-
-## Normalization layers
-
-```text
-L0 source response or artifact
-L1 immutable raw observation envelope
-L2 typed provider record
-L3 canonical observation
-L4 resolved entity links
-L5 evidence-backed signal
-L6 need hypothesis
-L7 commercial opportunity
-L8 UI and search read models
-```
-
-The CISA adapter currently implements L0 through L1. TED and BOAMP implement L0 through L5 and feed the live SIEM/SOC workflow, which implements L5 through L8. Future sources cannot bypass source governance, evidence provenance, deterministic identifiers, or entity-resolution controls.
-
-## Code and test standards
-
-- functions target at most 40 logical lines;
-- handwritten source files target at most 300 lines and are rejected above 400 lines;
-- React components target at most 200 lines;
-- duplicate function or class definitions in a module or class scope are rejected by AST-based tests;
-- API routes contain transport concerns only;
-- source adapters do not calculate opportunity scores;
-- scores are calculated by the domain and include a reproducible hash;
-- timestamps must be timezone-aware;
-- every adapter requires policy-denial, schema, mapping, checkpoint, HTTP classification, and failure tests;
-- test suites are separated into architecture, unit, integration, and end-to-end concerns;
-- backend line and branch coverage must remain at least 90%;
-- critical policy and scoring modules target 95%.
-
-## Documentation
-
-- [`docs/PRODUCT_ARCHITECTURE.md`](docs/PRODUCT_ARCHITECTURE.md)
-- [`docs/UI_UX.md`](docs/UI_UX.md)
-- [`docs/ACQUISITION_ARCHITECTURE.md`](docs/ACQUISITION_ARCHITECTURE.md)
-- [`docs/SOURCE_ADAPTER_STANDARD.md`](docs/SOURCE_ADAPTER_STANDARD.md)
-- [`docs/NORMALIZATION_PIPELINE.md`](docs/NORMALIZATION_PIPELINE.md)
-- [`docs/TEST_STRATEGY.md`](docs/TEST_STRATEGY.md)
-- [`docs/DEVELOPMENT_STANDARDS.md`](docs/DEVELOPMENT_STANDARDS.md)
+- [`docs/PRODUCT.md`](docs/PRODUCT.md)
+- [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)
 - [`docs/DATA_MODEL.md`](docs/DATA_MODEL.md)
 - [`docs/SOURCE_POLICY.md`](docs/SOURCE_POLICY.md)
+- [`docs/DEVELOPMENT_STANDARDS.md`](docs/DEVELOPMENT_STANDARDS.md)
+- [`docs/TEST_STRATEGY.md`](docs/TEST_STRATEGY.md)
+- [`docs/PROJECT_DELIVERY_PLAN.md`](docs/PROJECT_DELIVERY_PLAN.md)
 - [`SECURITY.md`](SECURITY.md)
-- [`CONTRIBUTING.md`](CONTRIBUTING.md)
-
-## Security
-
-The repository is private, but secrets and collected data must still remain outside Git. Never commit API keys, passwords, cookies, tokens, private communications, victim files, leaked datasets, production contact exports, or proprietary provider content.

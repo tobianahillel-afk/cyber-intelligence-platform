@@ -134,6 +134,54 @@ sources:
       Uses the official DILA Explore API with a dated bounded window and selected
       public metadata. Full notice documents and embedded contact blocks are not stored.
 
+  - id: greenhouse-job-board
+    name: Greenhouse Job Board API
+    base_url: https://boards-api.greenhouse.io/v1/boards
+    status: enabled
+    source_type: api
+    owner: Greenhouse Software
+    terms_url: https://developers.greenhouse.io/job-board.html
+    licence: Public job board API documentation
+    allowed_data_categories:
+      - public_job_posting
+      - organization_metadata
+    prohibited_data_categories:
+      - professional_contact
+      - credential
+      - victim_file
+      - private_communication
+      - private_personal_data
+      - restricted_content
+    rate_limit_per_minute: 4
+    retention_days: 365
+    attribution_required: true
+    raw_content_storage: false
+    human_review_required: false
+    authorization:
+      status: approved
+      document_reference: greenhouse-public-job-board-api-2026-08-04
+      reviewed_at: 2026-08-04T11:10:00Z
+      expires_at: null
+      approved_hosts:
+        - boards-api.greenhouse.io
+      approved_path_prefixes:
+        - /v1/boards/
+      approved_purposes:
+        - commercial-hiring-intelligence
+      automated_collection_allowed: true
+      raw_storage_allowed: false
+    economics:
+      commercial_value: high
+      monthly_cost: 0
+      implementation_cost: medium
+      maintenance_cost: medium
+      expected_stability: high
+    notes: >-
+      Reads only published jobs from explicitly configured public boards. Job HTML
+      is converted to bounded text in memory for matching and is never stored raw.
+      Application forms, questions, candidates, resumes, emails and POST endpoints
+      are excluded.
+
   - id: search-manual-review
     name: Search-engine analyst review
     base_url: https://www.google.com

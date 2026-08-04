@@ -6,7 +6,6 @@ from uuid import UUID
 from sqlalchemy import (
     JSON,
     Boolean,
-    DateTime,
     Float,
     ForeignKey,
     Index,
@@ -17,6 +16,7 @@ from sqlalchemy import (
 from sqlalchemy.orm import Mapped, mapped_column
 
 from cip.shared.persistence.base import Base
+from cip.shared.persistence.types import UTCDateTime
 
 
 class CommercialSignalRecord(Base):
@@ -40,12 +40,12 @@ class CommercialSignalRecord(Base):
     summary: Mapped[str] = mapped_column(Text)
     confidence: Mapped[float] = mapped_column(Float)
     matched_terms: Mapped[list[str]] = mapped_column(JSON, default=list)
-    published_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
-    collected_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)
+    published_at: Mapped[datetime | None] = mapped_column(UTCDateTime(), nullable=True)
+    collected_at: Mapped[datetime] = mapped_column(UTCDateTime(), index=True)
     expires_at: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True), nullable=True, index=True
+        UTCDateTime(), nullable=True, index=True
     )
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    created_at: Mapped[datetime] = mapped_column(UTCDateTime())
     idempotency_key: Mapped[str] = mapped_column(String(64))
 
 
@@ -63,8 +63,8 @@ class NeedHypothesisRecord(Base):
     rule_id: Mapped[str] = mapped_column(String(100))
     rule_version: Mapped[str] = mapped_column(String(50))
     rationale: Mapped[str] = mapped_column(Text)
-    generated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)
-    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)
+    generated_at: Mapped[datetime] = mapped_column(UTCDateTime(), index=True)
+    expires_at: Mapped[datetime] = mapped_column(UTCDateTime(), index=True)
     idempotency_key: Mapped[str] = mapped_column(String(64))
 
 
@@ -101,16 +101,16 @@ class OpportunityRecord(Base):
     score_version: Mapped[str] = mapped_column(String(50))
     config_version: Mapped[str] = mapped_column(String(100))
     calculation_hash: Mapped[str] = mapped_column(String(64), index=True)
-    generated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    generated_at: Mapped[datetime] = mapped_column(UTCDateTime())
     expires_at: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True), nullable=True, index=True
+        UTCDateTime(), nullable=True, index=True
     )
-    last_evidence_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)
+    last_evidence_at: Mapped[datetime] = mapped_column(UTCDateTime(), index=True)
     data_quality: Mapped[str] = mapped_column(String(32), index=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
-    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)
+    created_at: Mapped[datetime] = mapped_column(UTCDateTime())
+    updated_at: Mapped[datetime] = mapped_column(UTCDateTime(), index=True)
     snoozed_until: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True), nullable=True, index=True
+        UTCDateTime(), nullable=True, index=True
     )
     review_note: Mapped[str | None] = mapped_column(Text, nullable=True)
     rejected_reason: Mapped[str | None] = mapped_column(Text, nullable=True)
@@ -164,7 +164,7 @@ class OpportunityReviewRecord(Base):
     new_state: Mapped[str] = mapped_column(String(32))
     actor: Mapped[str] = mapped_column(String(200), index=True)
     note: Mapped[str | None] = mapped_column(Text, nullable=True)
-    occurred_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)
+    occurred_at: Mapped[datetime] = mapped_column(UTCDateTime(), index=True)
     snoozed_until: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True), nullable=True
+        UTCDateTime(), nullable=True
     )

@@ -26,17 +26,24 @@ def test_repository_source_registry_loads() -> None:
         "boamp",
         "brixhub",
         "cisa-kev",
+        "greenhouse-job-board",
         "linkedin-authorized-browser",
         "linkedin-official-api",
         "search-manual-review",
         "ted-search",
     }
-    for source_id in ("boamp", "cisa-kev", "ted-search"):
+    for source_id in ("boamp", "cisa-kev", "greenhouse-job-board", "ted-search"):
         assert entries_by_id[source_id].policy.status is SourceStatus.ENABLED
     for source_id in ("boamp", "ted-search"):
         assert entries_by_id[source_id].policy.allowed_data_categories == frozenset(
             {DataCategory.PUBLIC_TENDER, DataCategory.ORGANIZATION_METADATA}
         )
+    greenhouse = entries_by_id["greenhouse-job-board"].policy
+    assert greenhouse.allowed_data_categories == frozenset(
+        {DataCategory.PUBLIC_JOB_POSTING, DataCategory.ORGANIZATION_METADATA}
+    )
+    assert DataCategory.PROFESSIONAL_CONTACT in greenhouse.prohibited_data_categories
+    assert greenhouse.raw_content_storage is False
     assert entries_by_id["boamp"].policy.licence == "Licence Ouverte 2.0"
     assert entries_by_id["brixhub"].policy.status is SourceStatus.QUARANTINED
     assert entries_by_id["brixhub"].policy.allowed_data_categories == frozenset()

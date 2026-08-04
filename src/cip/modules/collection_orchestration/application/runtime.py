@@ -10,8 +10,13 @@ from time import sleep
 
 from sqlalchemy.orm import Session, sessionmaker
 
+from cip.adapters.sources.greenhouse.registry import (
+    GreenhouseBoard,
+    load_greenhouse_boards,
+)
 from cip.modules.collection_orchestration.application.adapters import CisaKevAdapter
 from cip.modules.collection_orchestration.application.boamp_adapter import BoampAdapter
+from cip.modules.collection_orchestration.application.greenhouse_adapter import GreenhouseAdapter
 from cip.modules.collection_orchestration.application.ports import CollectionAdapter
 from cip.modules.collection_orchestration.application.scheduler import schedule_due_jobs
 from cip.modules.collection_orchestration.application.ted_adapter import TedSearchAdapter
@@ -54,10 +59,12 @@ def build_collection_runtime(settings: Settings) -> CollectionRuntime:
     engine = create_database_engine(settings.database_url)
     factory = create_session_factory(engine)
     entries = load_source_registry(settings.source_registry_path)
+    boards = load_greenhouse_boards(settings.greenhouse_board_registry_path)
     with session_scope(factory) as session:
         sync_source_registry(session, entries)
     adapters = _build_adapters(
         entries,
+        boards,
         timeout_seconds=settings.source_http_timeout_seconds,
     )
     schedules = load_collection_schedules(settings.collection_schedule_path)
@@ -72,6 +79,7 @@ def build_collection_runtime(settings: Settings) -> CollectionRuntime:
 
 def _build_adapters(
     entries: tuple[SourceRegistryEntry, ...],
+    boards: tuple[GreenhouseBoard, ...],
     *,
     timeout_seconds: float,
 ) -> dict[tuple[str, str], CollectionAdapter]:
@@ -86,6 +94,16 @@ def _build_adapters(
     boamp_entry = entries_by_id.get(BoampAdapter.source_id)
     if boamp_entry is not None:
         _register(adapters, BoampAdapter(boamp_entry, timeout_seconds=timeout_seconds))
+    greenhouse_entry = entries_by_id.get(GreenhouseAdapter.source_id)
+    if greenhouse_entry is not None and any(board.enabled for board in boards):
+        _register(
+            adapters,
+            GreenhouseAdapter(
+                greenhouse_entry,
+                boards,
+                timeout_seconds=timeout_seconds,
+            ),
+        )
     return adapters
 
 
