@@ -11,6 +11,7 @@ from time import sleep
 from sqlalchemy.orm import Session, sessionmaker
 
 from cip.modules.collection_orchestration.application.adapters import CisaKevAdapter
+from cip.modules.collection_orchestration.application.boamp_adapter import BoampAdapter
 from cip.modules.collection_orchestration.application.ports import CollectionAdapter
 from cip.modules.collection_orchestration.application.scheduler import schedule_due_jobs
 from cip.modules.collection_orchestration.application.ted_adapter import TedSearchAdapter
@@ -76,19 +77,38 @@ def _build_adapters(
 ) -> dict[tuple[str, str], CollectionAdapter]:
     entries_by_id = {entry.policy.id: entry for entry in entries}
     adapters: dict[tuple[str, str], CollectionAdapter] = {}
-    cisa_entry = entries_by_id.get(CisaKevAdapter.source_id)
-    if cisa_entry is not None:
-        _register(adapters, CisaKevAdapter(cisa_entry, timeout_seconds=timeout_seconds))
-    ted_entry = entries_by_id.get(TedSearchAdapter.source_id)
-    if ted_entry is not None:
-        _register(adapters, TedSearchAdapter(ted_entry, timeout_seconds=timeout_seconds))
+    _register_if_present(
+        adapters,
+        entries_by_id,
+        CisaKevAdapter,
+        timeout_seconds=timeout_seconds,
+    )
+    _register_if_present(
+        adapters,
+        entries_by_id,
+        TedSearchAdapter,
+        timeout_seconds=timeout_seconds,
+    )
+    _register_if_present(
+        adapters,
+        entries_by_id,
+        BoampAdapter,
+        timeout_seconds=timeout_seconds,
+    )
     return adapters
 
 
-def _register(
+def _register_if_present(
     adapters: dict[tuple[str, str], CollectionAdapter],
-    adapter: CollectionAdapter,
+    entries_by_id: dict[str, SourceRegistryEntry],
+    adapter_type: type[CisaKevAdapter] | type[TedSearchAdapter] | type[BoampAdapter],
+    *,
+    timeout_seconds: float,
 ) -> None:
+    entry = entries_by_id.get(adapter_type.source_id)
+    if entry is None:
+        return
+    adapter = adapter_type(entry, timeout_seconds=timeout_seconds)
     adapters[(adapter.source_id, adapter.adapter_id)] = adapter
 
 
