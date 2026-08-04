@@ -94,7 +94,10 @@ def test_board_registry_validates_fields(tmp_path: Path) -> None:
 
 
 def test_html_to_text_removes_markup_scripts_and_bounds_output() -> None:
-    value = "<h1>SOC &amp; SIEM</h1><script>secret()</script><p>Detection&nbsp;engineering</p>"
+    value = (
+        "<h1>SOC &amp; SIEM</h1><script>secret()</script>"
+        "<p>Detection&nbsp;engineering</p>"
+    )
 
     assert html_to_text(value) == "SOC & SIEM Detection engineering"
     assert html_to_text(None) == ""
@@ -127,14 +130,20 @@ def test_client_fetches_public_jobs_with_content() -> None:
 
 
 def test_client_rejects_unsafe_responses() -> None:
-    responses = iter(
-        [
+    cases = (
+        (
             httpx.Response(200, headers={"content-type": "text/html"}, text="no"),
+            "content type",
+        ),
+        (
             httpx.Response(
                 200,
                 headers={"content-type": "application/json", "content-length": "invalid"},
                 content=b"{}",
             ),
+            "Content-Length",
+        ),
+        (
             httpx.Response(
                 200,
                 headers={
@@ -143,19 +152,21 @@ def test_client_rejects_unsafe_responses() -> None:
                 },
                 content=b"{}",
             ),
-        ]
+            "size limit",
+        ),
     )
 
-    with httpx.Client(
-        transport=httpx.MockTransport(lambda _: next(responses))
-    ) as http_client:
-        client = GreenhouseClient(http_client, boards_base_url="https://example.test")
-        with pytest.raises(GreenhouseSourceResponseError, match="content type"):
-            client.fetch_jobs("board")
-        with pytest.raises(GreenhouseSourceResponseError, match="Content-Length"):
-            client.fetch_jobs("board")
-        with pytest.raises(GreenhouseSourceResponseError, match="size limit"):
-            client.fetch_jobs("board")
+    for response, message in cases:
+        with (
+            httpx.Client(
+                transport=httpx.MockTransport(lambda _, item=response: item)
+            ) as http_client,
+            pytest.raises(GreenhouseSourceResponseError, match=message),
+        ):
+            GreenhouseClient(
+                http_client,
+                boards_base_url="https://example.test",
+            ).fetch_jobs("board")
 
 
 def test_schema_normalizes_nodes_and_requires_aware_timestamp() -> None:
