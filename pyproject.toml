@@ -29,6 +29,7 @@ dev = [
   "pytest==9.1.1",
   "pytest-cov==6.2.1",
   "ruff==0.12.7",
+  "types-PyYAML==6.0.12.20250516",
 ]
 
 [project.scripts]
