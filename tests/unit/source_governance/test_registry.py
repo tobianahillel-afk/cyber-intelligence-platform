@@ -27,26 +27,75 @@ def test_repository_source_registry_loads() -> None:
         "brixhub",
         "cisa-kev",
         "greenhouse-job-board",
+        "lever-job-board",
         "linkedin-authorized-browser",
         "linkedin-official-api",
         "search-manual-review",
+        "smartrecruiters-job-board",
         "ted-search",
     }
-    for source_id in ("boamp", "cisa-kev", "greenhouse-job-board", "ted-search"):
+    enabled_sources = (
+        "boamp",
+        "cisa-kev",
+        "greenhouse-job-board",
+        "lever-job-board",
+        "smartrecruiters-job-board",
+        "ted-search",
+    )
+    for source_id in enabled_sources:
         assert entries_by_id[source_id].policy.status is SourceStatus.ENABLED
     for source_id in ("boamp", "ted-search"):
         assert entries_by_id[source_id].policy.allowed_data_categories == frozenset(
             {DataCategory.PUBLIC_TENDER, DataCategory.ORGANIZATION_METADATA}
         )
-    greenhouse = entries_by_id["greenhouse-job-board"].policy
-    assert greenhouse.allowed_data_categories == frozenset(
-        {DataCategory.PUBLIC_JOB_POSTING, DataCategory.ORGANIZATION_METADATA}
-    )
-    assert DataCategory.PROFESSIONAL_CONTACT in greenhouse.prohibited_data_categories
-    assert greenhouse.raw_content_storage is False
+    for source_id in (
+        "greenhouse-job-board",
+        "lever-job-board",
+        "smartrecruiters-job-board",
+    ):
+        job_source = entries_by_id[source_id].policy
+        assert job_source.allowed_data_categories == frozenset(
+            {DataCategory.PUBLIC_JOB_POSTING, DataCategory.ORGANIZATION_METADATA}
+        )
+        assert DataCategory.PROFESSIONAL_CONTACT in job_source.prohibited_data_categories
+        assert job_source.raw_content_storage is False
     assert entries_by_id["boamp"].policy.licence == "Licence Ouverte 2.0"
     assert entries_by_id["brixhub"].policy.status is SourceStatus.QUARANTINED
     assert entries_by_id["brixhub"].policy.allowed_data_categories == frozenset()
+
+
+def test_enabled_job_sources_allow_approved_public_get_targets() -> None:
+    entries = {
+        entry.policy.id: entry
+        for entry in load_source_registry(Path("policies/sources.example.yml"))
+    }
+    targets = {
+        "greenhouse-job-board": (
+            "https://boards-api.greenhouse.io/v1/boards/example/jobs",
+        ),
+        "lever-job-board": ("https://api.lever.co/v0/postings/example",),
+        "smartrecruiters-job-board": (
+            "https://api.smartrecruiters.com/v1/companies/example/postings",
+            "https://api.smartrecruiters.com/v1/companies/example/postings/job-1",
+        ),
+    }
+
+    for source_id, urls in targets.items():
+        entry = entries[source_id]
+        for url in urls:
+            decision = entry.policy.evaluate(
+                CollectionRequest(
+                    data_category=DataCategory.PUBLIC_JOB_POSTING,
+                    target_url=url,
+                    purpose="commercial-hiring-intelligence",
+                    automated=True,
+                    store_raw_content=False,
+                ),
+                entry.authorization,
+                SourceRuntimeState(remaining_requests=1),
+                now=NOW,
+            )
+            assert decision.allowed is True
 
 
 def test_cisa_registry_entry_allows_approved_feed_request() -> None:

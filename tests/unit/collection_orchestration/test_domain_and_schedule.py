@@ -106,6 +106,8 @@ def test_repository_collection_schedule_loads() -> None:
         ("boamp", "boamp-explore-api"),
         ("cisa-kev", "cisa-kev-feed"),
         ("greenhouse-job-board", "greenhouse-job-board-api"),
+        ("lever-job-board", "lever-postings-api"),
+        ("smartrecruiters-job-board", "smartrecruiters-posting-api"),
         ("ted-search", "ted-search-api"),
     }
     cisa = schedules_by_identity[("cisa-kev", "cisa-kev-feed")]
@@ -113,6 +115,10 @@ def test_repository_collection_schedule_loads() -> None:
     boamp = schedules_by_identity[("boamp", "boamp-explore-api")]
     greenhouse = schedules_by_identity[
         ("greenhouse-job-board", "greenhouse-job-board-api")
+    ]
+    lever = schedules_by_identity[("lever-job-board", "lever-postings-api")]
+    smart = schedules_by_identity[
+        ("smartrecruiters-job-board", "smartrecruiters-posting-api")
     ]
     assert cisa.interval_seconds == 900
     assert cisa.retry_policy.max_attempts == 4
@@ -122,6 +128,10 @@ def test_repository_collection_schedule_loads() -> None:
     assert boamp.retry_policy.max_delay_seconds == 1800
     assert greenhouse.interval_seconds == 1800
     assert greenhouse.retry_policy.circuit_failure_threshold == 3
+    assert lever.interval_seconds == 1800
+    assert lever.lease_seconds == 120
+    assert smart.interval_seconds == 1800
+    assert smart.lease_seconds == 180
 
 
 @pytest.mark.parametrize(

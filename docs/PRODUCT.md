@@ -2,96 +2,162 @@
 
 ## Product statement
 
-Cyber Intelligence Platform is an analyst-oriented system that transforms public or licensed cyber, company, technology, vulnerability, and professional-role data into evidence-backed commercial opportunities for cybersecurity services and products.
+Cyber Intelligence Platform is a complete, standalone cyber revenue-intelligence and commercial-operations system. It discovers organizations with current or emerging cybersecurity needs, explains the evidence behind those needs, maps the relevant professional buying committee, and lets users manage the entire investigation and opportunity lifecycle inside the product.
 
-It does not decide that a company is vulnerable merely because it appears in one source. It gathers evidence, resolves entities, assigns confidence, and presents a reviewable timeline.
+The platform is not a data plug-in for Salesforce, HubSpot, or another CRM. It owns its native company records, people and role records, alerts, saved searches, opportunities, tasks, notes, assignments, review history, engagement history, and reporting.
+
+It remains evidence-first. A company is never presented as vulnerable, compromised, using a technology, nearing a contract renewal, or working with a provider merely because one source suggested it. Claims, observations, confirmations, and analyst inferences are stored separately with provenance, time, confidence, and corrections.
 
 ## Primary users
 
-- Independent cybersecurity consultant
-- Cybersecurity services sales engineer
-- Threat-intelligence analyst
-- SOC or incident-response business development team
-- Security-product founder
+- cybersecurity service providers and integrators;
+- penetration-testing and audit firms;
+- SOC, SIEM, MDR, incident-response, governance, risk, and compliance teams;
+- cybersecurity product vendors;
+- cyber revenue-intelligence and business-development analysts;
+- independent cybersecurity consultants.
+
+## Native product capabilities
+
+### Opportunity discovery and alerts
+
+Users define versioned rules and saved searches such as:
+
+- organizations publishing SIEM or SOC tenders;
+- companies recruiting detection, response, or security-operations roles;
+- contracts approaching an estimated renewal period;
+- newly observed technologies affected by material advisories;
+- public incidents, regulatory notices, acquisitions, expansions, or leadership changes;
+- passive public-exposure observations requiring analyst review.
+
+A rule produces a native alert linked to the matching evidence, affected organization, confidence, urgency, service fit, and next review date. Alerts can be filtered, assigned, snoozed, grouped, dismissed, corrected, or converted into an opportunity.
+
+### Company intelligence workspace
+
+Each company record is intended to consolidate:
+
+- legal entities, establishments, brands, subsidiaries, parent groups, domains, IP ranges, certificates, and public identifiers;
+- business units, locations, markets, customers and partners only where publicly and lawfully documented;
+- open tenders, historical awards, contracts, published incumbents, amendments, end dates, and estimated renewal windows;
+- technologies, security products, cloud providers, public services, first/last-seen dates, version precision, and confidence;
+- relevant vulnerabilities and vendor advisories without claiming exposure beyond the supporting observation;
+- incidents, ransomware claims, official confirmations, corrections, regulatory actions, and news events;
+- recruitment activity and capability gaps;
+- current and historical cybersecurity providers, auditors, integrators, insurers, consultants, and other business relationships where supported by public or licensed evidence;
+- every source, timestamp, confidence score, conflict, and analyst decision.
+
+### Professional organization map
+
+The platform builds an evidence-backed professional organization map containing:
+
+- business units and reporting relationships when publicly documented;
+- current and former professional roles;
+- role category, seniority, department, geography, and employment dates;
+- likely buying-committee position such as sponsor, technical evaluator, procurement, legal, privacy, finance, executive approver, or operational user;
+- public or licensed professional email addresses, company switchboards, direct business numbers, contact forms, and role-based mailboxes;
+- source, collection date, last verification date, confidence, permitted purpose, retention rule, correction state, and objection/suppression state for every contact channel.
+
+The product prioritizes professional relevance and business channels. It does not collect home addresses, family details, private phone numbers, private email addresses, personal accounts, sensitive traits, credentials, private messages, or data taken from leaked victim files. A public page does not automatically make every personal detail necessary or appropriate to retain.
+
+### Native commercial operations
+
+The system provides its own commercial workspace:
+
+- company and account ownership;
+- opportunity stages and qualification state;
+- tasks, reminders, due dates, queues, service-level targets, and assignments;
+- research requests and enrichment tasks;
+- analyst notes with immutable history;
+- contact and buying-committee records;
+- interaction and outreach history entered or imported through approved product workflows;
+- alerts generated from changed evidence;
+- saved views, filters, segments, watchlists, and priority lists;
+- dashboards for freshness, coverage, opportunity quality, analyst throughput, and conversion;
+- complete audit trail and reversible state transitions.
+
+Salesforce, HubSpot, or third-party CRM synchronization is not a product dependency or roadmap goal. Controlled exports may exist for reporting or portability, but the authoritative operational state remains inside Cyber Intelligence Platform.
 
 ## Core workflows
 
-### 1. Investigate a company
+### Investigate a company
 
-Input: company name, legal identifier, domain, or public URL.
+Input: company name, legal identifier, domain, public URL, technology, tender, incident, or professional role.
 
 Output:
 
-- resolved company identity and domains;
-- public technology and infrastructure observations;
-- relevant vulnerabilities and vendor advisories;
-- public incident timeline;
-- professional decision-maker roles;
-- evidence list with timestamps and confidence;
-- suitable service offers and factual outreach angles.
+- resolved legal and corporate identity;
+- company graph and professional organization map;
+- technologies, providers, vulnerabilities, tenders, contracts, recruitment, incidents, and business changes;
+- professional contact channels with provenance and permitted use;
+- evidence timeline with conflicts and confidence;
+- relevant cybersecurity needs and suitable offers;
+- native tasks, alert rules, watchlists, and opportunity state.
 
-### 2. Monitor public cyber events
+### Monitor markets and needs
 
-The platform ingests public or licensed incident-event feeds, official disclosures, ransomware trackers, CERT publications, regulatory notices, vendor advisories, and news sources.
+The platform continuously evaluates approved public or licensed sources against saved rules. New evidence can create or update alerts, company facts, needs, and opportunities without duplicating the underlying entity.
 
-It normalizes claims without treating attacker statements as verified facts. Each event records who made the claim, when it was observed, whether it was independently confirmed, and which organizations may be affected.
+A change is not silently overwritten. Material changes retain previous values, observed dates, supporting evidence, and the rule version that produced the alert.
 
-### 3. Run lawful dork research
+### Research public information safely
 
-Users may define reusable search-query templates to locate publicly indexed material. The system records the query, search provider, execution date, result URL, result type, and review state.
+Users may create reusable search-query templates and analyst research cases for public company documents, tenders, hiring pages, vendor references, conference material, support forums, public code, professional pages, and other authorized sources.
 
-Discovery does not authorize access. Results that appear to expose secrets, personal files, credentials, restricted consoles, or non-public information are quarantined as metadata only and require manual review.
+Discovery does not authorize access. Authentication bypass, CAPTCHA evasion, copied sessions, secret validation, intrusive scanning, private-account access, restricted downloads, and collection of leaked credentials or victim files are prohibited. Potentially sensitive accidental exposures are quarantined as minimal metadata for human review rather than collected as prospect intelligence.
 
-### 4. Build an organization map
+### Build and verify an organization map
 
-The platform links public professional roles to organizations and business units. It prioritizes roles rather than unnecessary personal detail.
+The platform links people to organizations through public or licensed professional evidence, preserves role history, and supports competing or uncertain reporting relationships. Ambiguous identity or employment matches remain candidates until reviewed.
 
-Relevant roles may include CISO, CIO, CTO, DPO, SOC manager, infrastructure manager, procurement, risk, compliance, and executive management for smaller organizations.
+### Score and manage an opportunity
 
-### 5. Score an opportunity
+Opportunity scoring is explainable and versioned. Dimensions may include:
 
-Opportunity scoring is explainable and evidence-driven. Initial dimensions:
+- evidence confidence and independence;
+- event and observation recency;
+- explicit buying intent;
+- service and product fit;
+- company fit and strategic priority;
+- contract timing and procurement state;
+- technology relevance;
+- incident or vulnerability urgency;
+- availability of relevant professional roles and business contact channels;
+- uncertainty, legal risk, staleness, and single-source penalties.
 
-- event recency;
-- relevance to offered services;
-- company fit;
-- evidence confidence;
-- public buying signals;
-- role availability;
-- data freshness;
-- compliance risk;
-- source reliability.
+The user can qualify, reject, snooze, reassign, request research, add tasks, override components with a reason, and retain the generated baseline for audit.
 
-Scores must not rely on private vulnerabilities, personal distress, sensitive traits, or coercive pressure.
+## Product data model direction
 
-## MVP
+The complete product is expected to own canonical records for:
 
-The first usable release will provide:
+- organizations, establishments, brands, groups, domains, assets, and relationships;
+- people, professional identities, roles, reporting relationships, and business contact channels;
+- sources, authorizations, observations, claims, evidence, corrections, and lineage;
+- technologies, products, versions, vendors, providers, contracts, tenders, awards, and renewal estimates;
+- vulnerabilities, advisories, incidents, regulatory events, recruitment, and business events;
+- rules, saved searches, alerts, watchlists, needs, opportunities, stages, tasks, notes, assignments, and engagement history;
+- suppression, objection, correction, retention, access, and audit records.
 
-1. source registry and policy engine;
-2. company, domain, person-role, event, evidence, technology, and vulnerability entities;
-3. ingestion from selected official/public feeds;
-4. company search and event timeline;
-5. passive technology-to-vulnerability correlation;
-6. saved dork templates and manually reviewed results;
-7. explainable opportunity score;
-8. exportable evidence brief;
-9. no autonomous outreach.
+## Product boundaries
 
-## Out of scope for the MVP
+The platform may use approved official APIs, public feeds, licensed datasets, public professional pages, and isolated analyst-assisted research where terms and authorization permit it.
 
-- active vulnerability scanning;
-- exploitation or proof-of-concept execution against third parties;
-- direct access to attacker infrastructure;
-- automated interaction with ransomware actors or victims;
-- storage of leaked files, credentials, or private negotiation transcripts;
-- automated LinkedIn scraping that bypasses platform controls;
-- autonomous bulk email or phone outreach.
+It does not:
+
+- actively scan or exploit third-party systems without a separate explicit authorization;
+- validate passwords, tokens, cookies, or leaked credentials;
+- store stolen files, private communications, or ransomware-victim data;
+- access private LinkedIn data or automate LinkedIn collection without official scopes or reviewed written permission;
+- bypass authentication, paywalls, access controls, rate limits, CAPTCHA, or bot protections;
+- use personal distress, sensitive traits, or private-life information to pressure a prospect;
+- autonomously send bulk email, place calls, or make a sales decision.
 
 ## Success criteria
 
-- Every displayed claim links to evidence and provenance.
-- Duplicate companies and events are resolved reliably.
-- The system distinguishes claim, observation, confirmation, and inference.
-- Data retention and deletion rules are enforceable.
-- A user can review why an opportunity was scored and reject any signal.
+- Every material fact and alert links to provenance and observed time.
+- The product distinguishes observation, source claim, confirmation, inference, correction, and retraction.
+- Company, person, role, technology, contract, and provider identities are deduplicated without unsafe automatic merges.
+- A user can complete discovery, investigation, qualification, prioritization, task management, and history review without another CRM.
+- Professional contact data has a permitted purpose, provenance, freshness, retention, correction, and suppression state.
+- Every score and rule match is explainable and rejectable.
+- Data retention, deletion, correction, and objection rules are enforceable across alerts, opportunities, exports, and derived data.

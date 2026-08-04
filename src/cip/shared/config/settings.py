@@ -24,6 +24,10 @@ class Settings(BaseSettings):
     )
     source_registry_path: Path = Path("policies/sources.example.yml")
     greenhouse_board_registry_path: Path = Path("policies/greenhouse_boards.yml")
+    lever_site_registry_path: Path = Path("policies/lever_sites.yml")
+    smartrecruiters_company_registry_path: Path = Path(
+        "policies/smartrecruiters_companies.yml"
+    )
     retention_policy_path: Path = Path("policies/retention.yml")
     collection_schedule_path: Path = Path("policies/collection_schedules.yml")
     scheduler_poll_seconds: float = Field(default=5.0, gt=0, le=300)

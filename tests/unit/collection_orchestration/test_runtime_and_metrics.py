@@ -54,6 +54,10 @@ def _settings(tmp_path: Path, *, schedule_path: Path | None = None) -> Settings:
         database_url=f"sqlite+pysqlite:///{tmp_path / 'runtime.db'}",
         source_registry_path=Path("policies/sources.example.yml"),
         greenhouse_board_registry_path=Path("policies/greenhouse_boards.yml"),
+        lever_site_registry_path=Path("policies/lever_sites.yml"),
+        smartrecruiters_company_registry_path=Path(
+            "policies/smartrecruiters_companies.yml"
+        ),
         retention_policy_path=Path("policies/retention.yml"),
         collection_schedule_path=schedule_path or Path("policies/collection_schedules.yml"),
         scheduler_poll_seconds=0.01,
@@ -66,13 +70,15 @@ def test_runtime_syncs_sources_and_schedules_idempotently(tmp_path: Path) -> Non
     get_metadata().create_all(create_database_engine(settings.database_url))
 
     runtime = build_collection_runtime(settings)
-    assert run_scheduler_once(runtime, now=NOW) == 4
+    assert run_scheduler_once(runtime, now=NOW) == 6
     assert run_scheduler_once(runtime, now=NOW) == 0
 
     expected_sources = (
         "boamp",
         "cisa-kev",
         "greenhouse-job-board",
+        "lever-job-board",
+        "smartrecruiters-job-board",
         "ted-search",
     )
     with session_scope(runtime.factory) as session:
@@ -89,6 +95,8 @@ def test_runtime_syncs_sources_and_schedules_idempotently(tmp_path: Path) -> Non
         ("boamp", "boamp-explore-api"),
         ("cisa-kev", "cisa-kev-feed"),
         ("greenhouse-job-board", "greenhouse-job-board-api"),
+        ("lever-job-board", "lever-postings-api"),
+        ("smartrecruiters-job-board", "smartrecruiters-posting-api"),
         ("ted-search", "ted-search-api"),
     }
 

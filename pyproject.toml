@@ -4,8 +4,8 @@ build-backend = "hatchling.build"
 
 [project]
 name = "cyber-intelligence-platform"
-version = "0.7.0"
-description = "Human-operated cyber revenue intelligence and opportunity platform"
+version = "0.8.0"
+description = "Standalone cyber revenue intelligence and commercial operations platform"
 readme = "README.md"
 requires-python = ">=3.12,<3.13"
 authors = [{ name = "Hillel Tobiana" }]

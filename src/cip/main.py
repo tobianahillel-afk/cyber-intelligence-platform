@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from fastapi import FastAPI
 
+from cip import __version__
 from cip.modules.opportunities.api.routes import router as opportunities_router
 from cip.modules.source_governance.api.routes import router as source_governance_router
 
@@ -9,10 +10,11 @@ from cip.modules.source_governance.api.routes import router as source_governance
 def create_app() -> FastAPI:
     application = FastAPI(
         title="Cyber Intelligence Platform",
-        version="0.7.0",
+        version=__version__,
         description=(
-            "Human-operated cyber revenue intelligence API with explicit source governance, "
-            "provenance, and evidence-backed opportunity discovery."
+            "Standalone human-operated cyber revenue intelligence and commercial "
+            "operations API with explicit source governance, provenance, and "
+            "evidence-backed opportunity discovery."
         ),
     )
     application.include_router(source_governance_router)

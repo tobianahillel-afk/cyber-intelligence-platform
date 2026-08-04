@@ -21,6 +21,10 @@ def test_settings_have_safe_local_defaults() -> None:
     assert settings.api_host == "127.0.0.1"
     assert settings.source_registry_path == Path("policies/sources.example.yml")
     assert settings.greenhouse_board_registry_path == Path("policies/greenhouse_boards.yml")
+    assert settings.lever_site_registry_path == Path("policies/lever_sites.yml")
+    assert settings.smartrecruiters_company_registry_path == Path(
+        "policies/smartrecruiters_companies.yml"
+    )
     assert settings.collection_schedule_path == Path("policies/collection_schedules.yml")
     assert settings.scheduler_poll_seconds == 5.0
     assert settings.worker_poll_seconds == 2.0
@@ -29,11 +33,13 @@ def test_settings_have_safe_local_defaults() -> None:
 def test_settings_read_prefixed_environment(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("CIP_ENVIRONMENT", "test")
     monkeypatch.setenv("CIP_API_PORT", "9000")
+    monkeypatch.setenv("CIP_LEVER_SITE_REGISTRY_PATH", "custom/lever.yml")
 
     settings = Settings(_env_file=None)
 
     assert settings.environment == "test"
     assert settings.api_port == 9000
+    assert settings.lever_site_registry_path == Path("custom/lever.yml")
 
 
 def test_cached_settings_can_be_loaded() -> None:

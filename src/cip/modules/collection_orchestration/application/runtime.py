@@ -14,11 +14,20 @@ from cip.adapters.sources.greenhouse.registry import (
     GreenhouseBoard,
     load_greenhouse_boards,
 )
+from cip.adapters.sources.lever.registry import LeverSite, load_lever_sites
+from cip.adapters.sources.smartrecruiters.registry import (
+    SmartRecruitersCompany,
+    load_smartrecruiters_companies,
+)
 from cip.modules.collection_orchestration.application.adapters import CisaKevAdapter
 from cip.modules.collection_orchestration.application.boamp_adapter import BoampAdapter
 from cip.modules.collection_orchestration.application.greenhouse_adapter import GreenhouseAdapter
+from cip.modules.collection_orchestration.application.lever_adapter import LeverAdapter
 from cip.modules.collection_orchestration.application.ports import CollectionAdapter
 from cip.modules.collection_orchestration.application.scheduler import schedule_due_jobs
+from cip.modules.collection_orchestration.application.smartrecruiters_adapter import (
+    SmartRecruitersAdapter,
+)
 from cip.modules.collection_orchestration.application.ted_adapter import TedSearchAdapter
 from cip.modules.collection_orchestration.application.worker import (
     WorkerOutcome,
@@ -59,12 +68,18 @@ def build_collection_runtime(settings: Settings) -> CollectionRuntime:
     engine = create_database_engine(settings.database_url)
     factory = create_session_factory(engine)
     entries = load_source_registry(settings.source_registry_path)
-    boards = load_greenhouse_boards(settings.greenhouse_board_registry_path)
+    greenhouse_boards = load_greenhouse_boards(settings.greenhouse_board_registry_path)
+    lever_sites = load_lever_sites(settings.lever_site_registry_path)
+    smartrecruiters_companies = load_smartrecruiters_companies(
+        settings.smartrecruiters_company_registry_path
+    )
     with session_scope(factory) as session:
         sync_source_registry(session, entries)
     adapters = _build_adapters(
         entries,
-        boards,
+        greenhouse_boards,
+        lever_sites,
+        smartrecruiters_companies,
         timeout_seconds=settings.source_http_timeout_seconds,
     )
     schedules = load_collection_schedules(settings.collection_schedule_path)
@@ -79,7 +94,9 @@ def build_collection_runtime(settings: Settings) -> CollectionRuntime:
 
 def _build_adapters(
     entries: tuple[SourceRegistryEntry, ...],
-    boards: tuple[GreenhouseBoard, ...],
+    greenhouse_boards: tuple[GreenhouseBoard, ...],
+    lever_sites: tuple[LeverSite, ...],
+    smartrecruiters_companies: tuple[SmartRecruitersCompany, ...],
     *,
     timeout_seconds: float,
 ) -> dict[tuple[str, str], CollectionAdapter]:
@@ -95,12 +112,34 @@ def _build_adapters(
     if boamp_entry is not None:
         _register(adapters, BoampAdapter(boamp_entry, timeout_seconds=timeout_seconds))
     greenhouse_entry = entries_by_id.get(GreenhouseAdapter.source_id)
-    if greenhouse_entry is not None and any(board.enabled for board in boards):
+    if greenhouse_entry is not None and any(board.enabled for board in greenhouse_boards):
         _register(
             adapters,
             GreenhouseAdapter(
                 greenhouse_entry,
-                boards,
+                greenhouse_boards,
+                timeout_seconds=timeout_seconds,
+            ),
+        )
+    lever_entry = entries_by_id.get(LeverAdapter.source_id)
+    if lever_entry is not None and any(site.enabled for site in lever_sites):
+        _register(
+            adapters,
+            LeverAdapter(
+                lever_entry,
+                lever_sites,
+                timeout_seconds=timeout_seconds,
+            ),
+        )
+    smartrecruiters_entry = entries_by_id.get(SmartRecruitersAdapter.source_id)
+    if smartrecruiters_entry is not None and any(
+        company.enabled for company in smartrecruiters_companies
+    ):
+        _register(
+            adapters,
+            SmartRecruitersAdapter(
+                smartrecruiters_entry,
+                smartrecruiters_companies,
                 timeout_seconds=timeout_seconds,
             ),
         )
