@@ -189,16 +189,16 @@ def _sync_score_components(
     }
     generated_components = tuple(generated)
     generated_rules = {component.rule_id for component in generated_components}
-    for rule_id, record in existing.items():
+    for rule_id, stored_record in existing.items():
         if rule_id not in generated_rules:
-            session.delete(record)
+            session.delete(stored_record)
     for component in generated_components:
-        record = existing.get(component.rule_id)
-        if record is None:
-            record = _new_component_record(opportunity_id, component)
-            session.add(record)
+        stored_record = existing.get(component.rule_id)
+        if stored_record is None:
+            new_record = _new_component_record(opportunity_id, component)
+            session.add(new_record)
         else:
-            _refresh_component(record, component)
+            _refresh_component(stored_record, component)
     session.flush()
     return tuple(
         session.scalars(
