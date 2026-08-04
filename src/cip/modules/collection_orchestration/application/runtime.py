@@ -48,9 +48,9 @@ from cip.modules.collection_orchestration.infrastructure.schedule_loader import 
 from cip.modules.data_governance.domain.retention import RetentionPolicy
 from cip.modules.data_governance.infrastructure.retention_loader import load_retention_policy
 from cip.modules.source_governance.infrastructure.persistence import sync_source_registry
-from cip.modules.source_governance.infrastructure.registry import (
-    SourceRegistryEntry,
-    load_source_registry,
+from cip.modules.source_governance.infrastructure.registry import SourceRegistryEntry
+from cip.modules.source_governance.infrastructure.registry_bundle import (
+    load_source_registry_bundle,
 )
 from cip.shared.config.settings import Settings
 from cip.shared.kernel.time import utc_now
@@ -74,7 +74,10 @@ class CollectionRuntime:
 def build_collection_runtime(settings: Settings) -> CollectionRuntime:
     engine = create_database_engine(settings.database_url)
     factory = create_session_factory(engine)
-    entries = load_source_registry(settings.source_registry_path)
+    entries = load_source_registry_bundle(
+        settings.source_registry_path,
+        settings.identity_source_registry_path,
+    )
     greenhouse_boards = load_greenhouse_boards(settings.greenhouse_board_registry_path)
     lever_sites = load_lever_sites(settings.lever_site_registry_path)
     smartrecruiters_companies = load_smartrecruiters_companies(
