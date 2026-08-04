@@ -1,18 +1,6 @@
-import Link from "next/link";
 import type { ReactNode } from "react";
 
-const navigation = [
-  "Command Center",
-  "Opportunities",
-  "Organizations",
-  "Research",
-  "Alerts",
-  "Contacts",
-  "Offers",
-  "Sources",
-  "Tasks",
-  "Settings",
-] as const;
+import { PrimaryNavigation } from "./primary-navigation";
 
 interface AppShellProps {
   children: ReactNode;
@@ -23,21 +11,7 @@ export function AppShell({ children }: AppShellProps) {
     <div className="app-shell">
       <aside className="sidebar" aria-label="Primary navigation">
         <div className="brand">CIP</div>
-        <nav>
-          <ul>
-            {navigation.map((item) => (
-              <li key={item}>
-                {item === "Opportunities" ? (
-                  <Link className="nav-active" href="/">
-                    {item}
-                  </Link>
-                ) : (
-                  <span aria-disabled="true">{item}</span>
-                )}
-              </li>
-            ))}
-          </ul>
-        </nav>
+        <PrimaryNavigation />
       </aside>
       <div className="workspace">
         <header className="topbar">
