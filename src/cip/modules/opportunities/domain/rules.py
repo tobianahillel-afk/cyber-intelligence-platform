@@ -62,6 +62,9 @@ class SiemSocRuleConfig:
             raise ValueError("rule windows must be positive")
 
 
+DEFAULT_SIEM_SOC_RULE_CONFIG = SiemSocRuleConfig()
+
+
 @dataclass(frozen=True, slots=True)
 class OpportunityEvaluation:
     hypothesis: NeedHypothesis
@@ -73,7 +76,7 @@ def evaluate_siem_soc_buying_intent(
     signals: tuple[CommercialSignal, ...],
     *,
     now: datetime,
-    config: SiemSocRuleConfig = SiemSocRuleConfig(),
+    config: SiemSocRuleConfig = DEFAULT_SIEM_SOC_RULE_CONFIG,
 ) -> OpportunityEvaluation | None:
     evaluated_at = require_aware_utc(now, field_name="now")
     eligible = tuple(
