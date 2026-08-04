@@ -83,7 +83,9 @@ See [`docs/DEVELOPMENT_STANDARDS.md`](docs/DEVELOPMENT_STANDARDS.md) and [`docs/
 
 [`docs/PROJECT_DELIVERY_PLAN.md`](docs/PROJECT_DELIVERY_PLAN.md) defines lots `00` through `26` with dependencies, deliverables, tests, exit gates, and non-goals.
 
-Completed foundation through lot 06 includes governance, persistence, durable orchestration, opportunities, TED, BOAMP, Greenhouse, and executable architecture gates. Lot 07 expands the same hiring-signal contract across Lever and SmartRecruiters.
+Lots `00` through `07` are implemented and validated. They cover governance, persistence, durable orchestration, opportunities, TED, BOAMP, executable architecture gates, and canonical public hiring signals from Greenhouse, Lever, and SmartRecruiters.
+
+The next locked lot is `08`: French and European organization identity through official company registries, with legal-unit, establishment, alias, status, parent-group, and non-diffusion handling.
 
 The roadmap explicitly treats Cyber Intelligence Platform as the authoritative commercial workspace. Lot 20 implements native alerts, tasks, queues, opportunity stages, assignments, notes, and engagement history rather than synchronizing Salesforce or HubSpot.
 
