@@ -69,7 +69,11 @@ def collect_recherche_entreprises(
     checkpoint: RechercheEntreprisesCheckpoint | None = None,
 ) -> RechercheEntreprisesCollectionBatch:
     collected = require_aware_utc(collected_at, field_name="collected_at")
-    enabled_targets = tuple(target for target in targets if target.enabled and target.country_code == "FR")
+    enabled_targets = tuple(
+        target
+        for target in targets
+        if target.enabled and target.country_code == "FR"
+    )
     if not enabled_targets:
         raise ValueError("at least one French organization identity target must be enabled")
     previous = checkpoint.fingerprints if checkpoint else {}
