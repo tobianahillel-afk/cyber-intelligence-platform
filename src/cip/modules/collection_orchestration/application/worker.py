@@ -30,6 +30,12 @@ from cip.modules.organizations.infrastructure.identity_claims import (
 from cip.modules.organizations.infrastructure.identity_persistence import (
     persist_identity_projections,
 )
+from cip.modules.source_portfolio.application.service import (
+    SourcePortfolioNotFoundError,
+    record_collection_failure,
+    record_collection_success,
+)
+from cip.modules.source_portfolio.domain.models import SchemaState
 from cip.shared.kernel.time import require_aware_utc, utc_now
 from cip.shared.persistence.session import session_scope
 
@@ -126,6 +132,12 @@ def run_worker_once(
                 batch.commercial_projections,
                 now=completion_time,
             )
+            _record_success_health(
+                session,
+                claimed.source_id,
+                batch.observations,
+                now=completion_time,
+            )
     except LeaseLostError:
         return WorkerOutcome(
             WorkerStatus.LEASE_LOST,
@@ -150,13 +162,20 @@ def _record_failure(
 ) -> WorkerOutcome:
     try:
         with session_scope(factory) as session:
+            failure_time = _read_clock(clock)
             status = fail_job(
                 session,
                 claimed,
-                now=_read_clock(clock),
+                now=failure_time,
                 error_code=error_code,
                 error_message=error_message,
                 retryable=retryable,
+            )
+            _record_failure_health(
+                session,
+                claimed.source_id,
+                error_code=error_code,
+                now=failure_time,
             )
     except LeaseLostError:
         return WorkerOutcome(
@@ -169,6 +188,53 @@ def _record_failure(
         job_id=claimed.id,
         error_code=error_code,
     )
+
+
+def _record_success_health(
+    session: Session,
+    source_id: str,
+    observations: tuple[object, ...],
+    *,
+    now: datetime,
+) -> None:
+    source_record_at = max(
+        (
+            observation.source_updated_at or observation.observed_at or observation.collected_at
+            for observation in observations
+        ),
+        default=None,
+    )
+    try:
+        record_collection_success(
+            session,
+            source_id,
+            source_record_at=source_record_at,
+            schema_state=SchemaState.STABLE,
+            quota_remaining=None,
+            cost=0.0,
+            now=now,
+        )
+    except SourcePortfolioNotFoundError:
+        return
+
+
+def _record_failure_health(
+    session: Session,
+    source_id: str,
+    *,
+    error_code: str,
+    now: datetime,
+) -> None:
+    try:
+        record_collection_failure(
+            session,
+            source_id,
+            error_code=error_code,
+            schema_drift=error_code == "source_schema_drift",
+            now=now,
+        )
+    except SourcePortfolioNotFoundError:
+        return
 
 
 def _worker_status(status: JobStatus) -> WorkerStatus:
