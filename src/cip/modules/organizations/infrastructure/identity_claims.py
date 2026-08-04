@@ -116,7 +116,7 @@ def _selected_fields(projection: IdentityProjection) -> dict[str, object]:
 
 
 def _conflict_fields(
-    claims: list[OrganizationIdentityClaimRecord],
+    claims: Sequence[OrganizationIdentityClaimRecord],
 ) -> tuple[str, ...]:
     conflicts: list[str] = []
     for field_name in _CONFLICT_FIELDS:
