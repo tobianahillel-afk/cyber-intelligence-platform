@@ -12,10 +12,10 @@ The product is designed to answer:
 
 ## Current implementation status
 
-The repository now contains an executable foundation and a first durable collection pipeline:
+The repository contains an executable foundation, a durable collection pipeline, and the first live opportunity workflow:
 
-- FastAPI application factory and source-governance endpoints;
-- framework-independent domain modules for organizations, evidence, cyber events, raw observations, opportunity scoring, retention, suppression, source accounts, product metrics, and collection orchestration;
+- FastAPI application factory, source-governance endpoints, and opportunity list/detail/action APIs;
+- framework-independent domain modules for organizations, evidence, cyber events, raw observations, opportunity scoring, retention, suppression, source accounts, product metrics, collection orchestration, and analyst-reviewed opportunities;
 - explicit source policies, authorization records, runtime state, and collection decisions;
 - PostgreSQL persistence models and reversible Alembic migrations;
 - local PostgreSQL through Docker Compose;
@@ -27,17 +27,25 @@ The repository now contains an executable foundation and a first durable collect
 - atomic observation/checkpoint/job completion and observation deduplication;
 - source freshness, queue lag, error, dead-letter, and volume metrics;
 - separate `cip-scheduler` and `cip-worker` process entry points;
-- a Next.js analyst shell and Opportunity Inbox using clearly marked demonstration data;
+- normalized commercial signals, need hypotheses, evidence links, and persistent opportunity lifecycle;
+- a versioned SIEM/SOC buying-intent rule using public-tender and security-operations hiring signals;
+- explainable score components for tender intent, hiring, corroboration, freshness, confidence, and single-source uncertainty;
+- analyst qualification, rejection, snooze, enrichment request, reopen, score-component override, and immutable review history;
+- a Next.js Opportunity Inbox and detail workspace backed by FastAPI and PostgreSQL, with no demonstration fixtures;
+- loading, empty, stale-context, backend-unavailable, and not-found UI states;
 - pinned direct dependencies, dependency audits, Ruff, Mypy, migration validation, frontend build validation, and 90% branch-aware coverage gates;
 - Dependabot, CODEOWNERS, contribution rules, a PR template, and manually runnable CodeQL.
 
 Not yet implemented:
 
-- live opportunity-generation rules connected to the UI;
+- production adapters that produce the MVP tender and job-posting commercial signals, such as BOAMP, TED, or authorized careers/ATS sources;
 - Chromium/browser workers and download quarantine runtime;
+- named professional-contact enrichment and organization-chart workflows;
 - OpenSearch, Redis, object storage, CRM integration, or autonomous outreach;
 - active LinkedIn collection;
 - any executable BrixHub integration.
+
+The live opportunity pipeline currently consumes normalized commercial signals. It does not claim that BOAMP, TED, job boards, LinkedIn, or other future sources are already connected.
 
 Redis is not required for the current durable queue: PostgreSQL owns scheduling, locking, leases, checkpoints, and recovery. Redis should be introduced only when measured throughput or coordination requirements justify it.
 
@@ -84,11 +92,12 @@ Start the UI separately:
 
 ```bash
 cd apps/web
+cp .env.example .env.local
 npm install
 npm run dev
 ```
 
-The API is available on `http://127.0.0.1:8000` by default. The frontend uses demonstration opportunity records until the opportunity read API is implemented.
+The API is available on `http://127.0.0.1:8000` by default. The Next.js server uses `CIP_API_BASE_URL` to load and update the Opportunity Inbox. With no commercial signals in PostgreSQL, the UI displays an explicit empty state rather than synthetic records.
 
 ## Validation
 
@@ -109,7 +118,7 @@ npm run typecheck
 npm run build
 ```
 
-The durable-scheduler PR was independently validated with 225 passing tests and 95.58% combined line-and-branch coverage.
+The live-opportunity phase was independently validated with 256 passing tests and 94.94% combined line-and-branch coverage. Mypy strict passed on 94 source files, migration `0004` passed the PostgreSQL upgrade/downgrade/upgrade cycle, and the Next.js audit, typecheck, and production build passed.
 
 ## Architecture
 
@@ -135,6 +144,7 @@ policies/
 
 tests/
   unit/                        domain, adapter, governance, persistence, and recovery tests
+  integration/                 persisted signal-to-opportunity workflows
 ```
 
 ## Durable collection lifecycle
@@ -154,6 +164,24 @@ source registry synchronization
 
 A replayed schedule slot cannot create a duplicate job. A replayed observation cannot create a duplicate raw record. If execution stops before the completion transaction commits, the previous checkpoint remains authoritative. A worker whose lease expired cannot commit a late result.
 
+## Opportunity lifecycle
+
+```text
+normalized commercial signal
+-> idempotent signal persistence
+-> versioned SIEM/SOC need rule
+-> explainable score and freshness
+-> persistent need hypothesis
+-> Opportunity Inbox and detail API
+-> analyst qualification, rejection, snooze, enrichment, or reopen
+-> immutable review history
+-> automatic recalculation preserving analyst overrides
+```
+
+The first rule family detects possible SIEM/SOC buying intent from normalized public-tender and security-operations hiring signals. A single source remains visible as `partial`, receives a score penalty, and requires analyst validation. Corroborating evidence from independent source families raises confidence and data quality.
+
+The browser cannot directly create an opportunity. Opportunities are produced by the backend from evidence-linked normalized signals. Analyst score overrides are retained during later automatic recalculations, while the latest generated baseline remains visible.
+
 ## Acquisition model
 
 A source uses the least complex authorized method that can reliably retrieve the required evidence:
@@ -167,7 +195,7 @@ official API
 -> manual import
 ```
 
-The current executable adapter uses the official CISA KEV JSON feed. Chromium is intentionally deferred until API and static-HTTP acquisition, normalization, provenance, and value metrics are stable.
+The current executable source adapter uses the official CISA KEV JSON feed. Chromium is intentionally deferred until API and static-HTTP acquisition, normalization, provenance, and value metrics are stable.
 
 CAPTCHA, bot challenges, MFA, changed terms, or account-security prompts must produce a safe pause and human task. They are not automatically bypassed. Temporary-account rotation, copied cookies, CAPTCHA-solving services, and access-control circumvention are out of scope.
 
@@ -199,7 +227,7 @@ L7 commercial opportunity
 L8 UI and search read models
 ```
 
-The CISA adapter currently implements L0 through L1. Later stages must consume canonical records rather than source-specific payloads.
+The CISA adapter currently implements L0 through L1. The live SIEM/SOC workflow implements L5 through L8 for normalized commercial signals. Future tender and job adapters must implement L0 through L5 and cannot bypass source governance, evidence provenance, or entity resolution.
 
 ## Code and test standards
 
