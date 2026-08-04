@@ -45,9 +45,9 @@ def test_ted_projection_is_idempotent_and_visible_in_inbox() -> None:
         assert first_ids == second_ids
         assert len(first_ids) == 1
         detail = get_opportunity_detail(session, first_ids[0])
-        assert detail.organization.canonical_name == "Ville Exemple"
+        assert detail.opportunity.organization == "Ville Exemple"
         assert detail.opportunity.evidence_count == 1
-        assert detail.opportunity.trigger_summary.startswith("1 public tender")
+        assert detail.opportunity.trigger.startswith("1 public tender")
         assert detail.evidence[0].source_id == "ted-search"
         assert detail.evidence[0].source_url.endswith("987654-2026/html")
 
