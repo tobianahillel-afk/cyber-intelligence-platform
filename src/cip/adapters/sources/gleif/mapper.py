@@ -18,6 +18,7 @@ from cip.modules.organizations.domain.entities import Organization
 from cip.modules.organizations.domain.identifiers import IdentifierScheme, OfficialIdentifier
 from cip.modules.organizations.domain.identity import (
     IdentityKind,
+    IdentityMergeCandidate,
     IdentityRelationship,
     IdentityStatus,
     MatchState,
@@ -42,6 +43,13 @@ class GleifMappedRecord:
     fingerprint: str
 
 
+@dataclass(frozen=True, slots=True)
+class _TargetResolution:
+    attached: Organization | None
+    candidates: tuple[Organization, ...]
+    merge_candidates: tuple[IdentityMergeCandidate, ...]
+
+
 def map_gleif_record(
     response: GleifRecordResponse,
     *,
@@ -52,81 +60,122 @@ def map_gleif_record(
     target: OrganizationIdentityTarget | None = None,
 ) -> GleifMappedRecord:
     collected = require_aware_utc(collected_at, field_name="collected_at")
+    identity, lei = _build_identity(response, request_url=request_url, collected_at=collected)
+    resolution = _resolve_target(identity, target=target, collected_at=collected)
+    fingerprint = _fingerprint(response)
+    evidence = _build_evidence(
+        identity,
+        lei=lei,
+        request_url=request_url,
+        fingerprint=fingerprint,
+        collected_at=collected,
+        retention_until=retention_until,
+    )
+    observation = _build_observation(
+        response,
+        identity=identity,
+        request_url=request_url,
+        collection_job_id=collection_job_id,
+        fingerprint=fingerprint,
+        collected_at=collected,
+        retention_until=retention_until,
+    )
+    return GleifMappedRecord(
+        observation=observation,
+        projection=IdentityProjection(
+            identity=identity,
+            evidence=evidence,
+            attached_organization=resolution.attached,
+            candidate_organizations=resolution.candidates,
+            merge_candidates=resolution.merge_candidates,
+        ),
+        fingerprint=fingerprint,
+    )
+
+
+def _build_identity(
+    response: GleifRecordResponse,
+    *,
+    request_url: str,
+    collected_at: datetime,
+) -> tuple[OrganizationIdentity, OfficialIdentifier]:
     attributes = response.data.attributes
+    entity = attributes.entity
     lei = OfficialIdentifier(
         scheme=IdentifierScheme.LEI,
         value=attributes.lei,
         source_id=SOURCE_ID,
-        verified_at=collected,
+        verified_at=collected_at,
     )
-    country = _country_code(attributes.entity.jurisdiction, attributes.entity.legalAddress)
-    identifiers = [lei]
+    country = _country_code(entity.jurisdiction, entity.legalAddress)
     local_identifier = _local_identifier(
-        attributes.entity.registeredAs,
+        entity.registeredAs,
         country=country,
-        verified_at=collected,
+        verified_at=collected_at,
     )
-    if local_identifier is not None:
-        identifiers.append(local_identifier)
+    identifiers = (lei, local_identifier) if local_identifier is not None else (lei,)
+    canonical_identifier = local_identifier or lei
+    address = entity.legalAddress
     identity = OrganizationIdentity(
-        id=OrganizationIdentity.deterministic_id(lei.exact_key),
+        id=OrganizationIdentity.deterministic_id(canonical_identifier.exact_key),
         kind=IdentityKind.LEGAL_UNIT,
-        official_name=attributes.entity.legalName.name,
+        official_name=entity.legalName.name,
         country_code=country,
         source_id=SOURCE_ID,
         source_record_key=f"lei:{lei.value}",
         source_url=request_url,
         confidence=0.99,
-        observed_at=collected,
-        status=_status(attributes.entity.status),
-        identifiers=tuple(identifiers),
-        aliases=tuple(name.name for name in attributes.entity.otherNames),
-        legal_form=(
-            attributes.entity.legalForm.label()
-            if attributes.entity.legalForm is not None
-            else None
-        ),
-        address=(
-            attributes.entity.legalAddress.formatted()
-            if attributes.entity.legalAddress is not None
-            else None
-        ),
-        postal_code=(
-            attributes.entity.legalAddress.postalCode
-            if attributes.entity.legalAddress is not None
-            else None
-        ),
-        city=(
-            attributes.entity.legalAddress.city
-            if attributes.entity.legalAddress is not None
-            else None
-        ),
-        valid_from=attributes.entity.creationDate,
+        observed_at=collected_at,
+        status=_status(entity.status),
+        identifiers=identifiers,
+        aliases=tuple(name.name for name in entity.otherNames),
+        legal_form=entity.legalForm.label() if entity.legalForm is not None else None,
+        address=address.formatted() if address is not None else None,
+        postal_code=address.postalCode if address is not None else None,
+        city=address.city if address is not None else None,
+        valid_from=entity.creationDate,
     )
-    target_organization = _target_organization(target, collected) if target else None
-    candidate = (
-        build_merge_candidate(
-            identity,
-            target_organization,
-            known_identifiers=target.known_identifiers(
-                source_id="target-registry",
-                verified_at=collected,
-            ),
-            target_postal_code=target.postal_code,
-        )
-        if target and target_organization
-        else None
+    return identity, lei
+
+
+def _resolve_target(
+    identity: OrganizationIdentity,
+    *,
+    target: OrganizationIdentityTarget | None,
+    collected_at: datetime,
+) -> _TargetResolution:
+    if target is None:
+        return _TargetResolution(None, (), ())
+    organization = _target_organization(target, collected_at)
+    candidate = build_merge_candidate(
+        identity,
+        organization,
+        known_identifiers=target.known_identifiers(
+            source_id="target-registry",
+            verified_at=collected_at,
+        ),
+        target_postal_code=target.postal_code,
     )
     attached = (
-        target_organization
+        organization
         if candidate is not None and candidate.state is MatchState.AUTO_CONFIRMED
         else None
     )
-    candidate_organizations = (
-        (target_organization,) if target_organization is not None and attached is None else ()
-    )
-    fingerprint = _fingerprint(response)
-    evidence = Evidence(
+    candidates = (organization,) if attached is None else ()
+    merge_candidates = (candidate,) if candidate is not None else ()
+    return _TargetResolution(attached, candidates, merge_candidates)
+
+
+def _build_evidence(
+    identity: OrganizationIdentity,
+    *,
+    lei: OfficialIdentifier,
+    request_url: str,
+    fingerprint: str,
+    collected_at: datetime,
+    retention_until: datetime,
+) -> Evidence:
+    return Evidence(
         id=uuid5(NAMESPACE_URL, f"{SOURCE_ID}:evidence:{lei.value}"),
         source_id=SOURCE_ID,
         source_record_key=identity.source_record_key,
@@ -136,13 +185,25 @@ def map_gleif_record(
             f"with LEI {lei.value}."
         ),
         confidence=0.99,
-        collected_at=collected,
-        observed_at=collected,
+        collected_at=collected_at,
+        observed_at=collected_at,
         content_hash_sha256=fingerprint,
         raw_storage_permitted=False,
         retention_until=retention_until,
     )
-    observation = RawObservation(
+
+
+def _build_observation(
+    response: GleifRecordResponse,
+    *,
+    identity: OrganizationIdentity,
+    request_url: str,
+    collection_job_id: UUID,
+    fingerprint: str,
+    collected_at: datetime,
+    retention_until: datetime,
+) -> RawObservation:
+    return RawObservation(
         source_id=SOURCE_ID,
         adapter_id=ADAPTER_ID,
         adapter_version=ADAPTER_VERSION,
@@ -152,23 +213,12 @@ def map_gleif_record(
         source_url=request_url,
         payload_hash_sha256=fingerprint,
         data_categories=frozenset({DataCategory.ORGANIZATION_METADATA}),
-        collected_at=collected,
-        source_updated_at=_source_updated_at(response, collected),
+        collected_at=collected_at,
+        source_updated_at=_source_updated_at(response, collected_at),
         schema_fingerprint=SCHEMA_FINGERPRINT,
-        content_language=attributes.entity.legalName.language,
+        content_language=response.data.attributes.entity.legalName.language,
         classification="internal",
         retention_until=retention_until,
-    )
-    return GleifMappedRecord(
-        observation=observation,
-        projection=IdentityProjection(
-            identity=identity,
-            evidence=evidence,
-            attached_organization=attached,
-            candidate_organizations=candidate_organizations,
-            merge_candidates=(candidate,) if candidate else (),
-        ),
-        fingerprint=fingerprint,
     )
 
 
