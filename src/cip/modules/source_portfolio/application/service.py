@@ -1,8 +1,10 @@
 """Stable public facade for source portfolio application services."""
 
 from cip.modules.source_portfolio.application.backfill import (
+    cancel_backfill,
     claim_backfill_partition,
     complete_backfill_partition,
+    fail_backfill_partition,
     request_backfill,
 )
 from cip.modules.source_portfolio.application.catalog import (
@@ -27,9 +29,11 @@ from cip.modules.source_portfolio.application.health import (
 __all__ = [
     "SourcePortfolioNotFoundError",
     "SourcePortfolioStateError",
+    "cancel_backfill",
     "claim_backfill_partition",
     "complete_backfill_partition",
     "disable_source",
+    "fail_backfill_partition",
     "get_source_health",
     "get_source_portfolio",
     "list_source_portfolio",
