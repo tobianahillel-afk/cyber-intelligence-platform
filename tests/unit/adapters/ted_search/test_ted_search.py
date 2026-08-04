@@ -45,9 +45,11 @@ def test_client_rejects_non_json_and_oversized_responses() -> None:
     def wrong_type(_: httpx.Request) -> httpx.Response:
         return httpx.Response(200, headers={"content-type": "text/html"}, text="no")
 
-    with httpx.Client(transport=httpx.MockTransport(wrong_type)) as http_client:
-        with pytest.raises(TedSourceResponseError, match="content type"):
-            TedSearchClient(http_client, search_url="https://example.test/search").fetch()
+    with (
+        httpx.Client(transport=httpx.MockTransport(wrong_type)) as http_client,
+        pytest.raises(TedSourceResponseError, match="content type"),
+    ):
+        TedSearchClient(http_client, search_url="https://example.test/search").fetch()
 
     def oversized(_: httpx.Request) -> httpx.Response:
         return httpx.Response(
@@ -59,9 +61,11 @@ def test_client_rejects_non_json_and_oversized_responses() -> None:
             content=b"{}",
         )
 
-    with httpx.Client(transport=httpx.MockTransport(oversized)) as http_client:
-        with pytest.raises(TedSourceResponseError, match="size limit"):
-            TedSearchClient(http_client, search_url="https://example.test/search").fetch()
+    with (
+        httpx.Client(transport=httpx.MockTransport(oversized)) as http_client,
+        pytest.raises(TedSourceResponseError, match="size limit"),
+    ):
+        TedSearchClient(http_client, search_url="https://example.test/search").fetch()
 
 
 def test_schema_normalizes_localized_fields_and_dates() -> None:
