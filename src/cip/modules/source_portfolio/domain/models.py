@@ -40,6 +40,12 @@ class SchemaState(StrEnum):
     DRIFTED = "drifted"
 
 
+class AnomalyState(StrEnum):
+    UNKNOWN = "unknown"
+    NORMAL = "normal"
+    ANOMALOUS = "anomalous"
+
+
 class BackfillState(StrEnum):
     PENDING = "pending"
     RUNNING = "running"
@@ -156,6 +162,9 @@ class SourceHealth:
     source_id: str
     freshness_state: FreshnessState
     schema_state: SchemaState
+    volume_state: AnomalyState = AnomalyState.UNKNOWN
+    field_population_state: AnomalyState = AnomalyState.UNKNOWN
+    circuit_state: str = "unknown"
     last_attempt_at: datetime | None = None
     last_success_at: datetime | None = None
     last_source_record_at: datetime | None = None
@@ -168,6 +177,8 @@ class SourceHealth:
     def __post_init__(self) -> None:
         if not self.source_id.strip():
             raise ValueError("source_id is required")
+        if not self.circuit_state.strip():
+            raise ValueError("circuit_state is required")
         if self.consecutive_failures < 0:
             raise ValueError("consecutive_failures cannot be negative")
         if self.quota_remaining is not None and self.quota_remaining < 0:
