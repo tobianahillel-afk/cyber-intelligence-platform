@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from uuid import UUID
 
 from cip.modules.evidence.domain.entities import Evidence
 from cip.modules.organizations.domain.entities import Organization
@@ -43,7 +44,7 @@ class IdentityProjection:
             raise ValueError("auto-confirmed identity requires a target organization")
 
     @property
-    def attached_organization_id(self):  # type: ignore[no-untyped-def]
+    def attached_organization_id(self) -> UUID | None:
         if self.target_organization is not None:
             return self.target_organization.id
         return self.identity.organization_id
