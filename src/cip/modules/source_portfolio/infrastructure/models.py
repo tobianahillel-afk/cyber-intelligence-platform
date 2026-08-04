@@ -3,7 +3,17 @@ from __future__ import annotations
 from datetime import datetime
 from uuid import UUID
 
-from sqlalchemy import JSON, Boolean, DateTime, Float, Index, Integer, String, Text, UniqueConstraint
+from sqlalchemy import (
+    JSON,
+    Boolean,
+    DateTime,
+    Float,
+    Index,
+    Integer,
+    String,
+    Text,
+    UniqueConstraint,
+)
 from sqlalchemy.orm import Mapped, mapped_column
 
 from cip.shared.persistence.base import Base
@@ -57,7 +67,10 @@ class BackfillPartitionRecord(Base):
     __tablename__ = "backfill_partitions"
     __table_args__ = (
         UniqueConstraint(
-            "source_id", "adapter_id", "partition_key", name="uq_backfill_partition_identity"
+            "source_id",
+            "adapter_id",
+            "partition_key",
+            name="uq_backfill_partition_identity",
         ),
         Index("ix_backfill_partition_claim", "state", "source_id", "created_at"),
     )
