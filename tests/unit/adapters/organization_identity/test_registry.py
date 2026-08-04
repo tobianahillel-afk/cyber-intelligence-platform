@@ -140,8 +140,10 @@ def test_source_registry_bundle_loads_identity_sources_and_rejects_duplicates(
     ids = {entry.policy.id for entry in entries}
 
     assert {"recherche-entreprises", "gleif", "bodacc-identity"} <= ids
-    assert next(entry for entry in entries if entry.policy.id == "sirene-api").policy.status.value == "conditional"
-    assert next(entry for entry in entries if entry.policy.id == "inpi-rne").authorization.status.value == "pending_review"
+    sirene = next(entry for entry in entries if entry.policy.id == "sirene-api")
+    inpi = next(entry for entry in entries if entry.policy.id == "inpi-rne")
+    assert sirene.policy.status.value == "conditional"
+    assert inpi.authorization.status.value == "pending_review"
 
     duplicate = tmp_path / "duplicate.yml"
     duplicate.write_text(
