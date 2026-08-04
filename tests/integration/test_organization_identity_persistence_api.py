@@ -29,11 +29,9 @@ from cip.modules.organizations.infrastructure.identity_claims import (
 from cip.modules.organizations.infrastructure.identity_models import (
     OrganizationIdentityClaimRecord,
     OrganizationIdentityRecord,
-    OrganizationMergeCandidateRecord,
 )
 from cip.modules.organizations.infrastructure.identity_persistence import (
     IdentityPersistenceConflictError,
-    IdentityReviewConflictError,
     persist_identity_projections,
     review_merge_candidate,
 )
@@ -185,7 +183,8 @@ def test_name_candidate_requires_explicit_api_review(
     )
     assert response.status_code == 200
     assert response.json()["state"] == "confirmed"
-    assert get_organization_identity(session, projection.identity.id).organization_id == ORGANIZATION_ID
+    reviewed_identity = get_organization_identity(session, projection.identity.id)
+    assert reviewed_identity.organization_id == ORGANIZATION_ID
 
     second = client.post(
         f"/v1/organizations/identity-merge-candidates/{candidate_id}/review",
@@ -305,9 +304,7 @@ def test_direct_review_function_validates_not_found_actor_and_conflict(
             reviewed_at=NOW,
         )
 
-    session.delete(
-        session.get(OrganizationIdentityRecord, projection.identity.id)
-    )
+    session.delete(session.get(OrganizationIdentityRecord, projection.identity.id))
     session.flush()
     with pytest.raises(LookupError, match="identity"):
         review_merge_candidate(
