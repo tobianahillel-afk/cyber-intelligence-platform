@@ -91,7 +91,10 @@ def build_merge_candidate(
             organization_id=organization.id,
             method=MatchMethod.EXACT_NAME_AND_POSTCODE,
             score=0.92,
-            reasons=("Normalized legal name matches", "Business postal code matches"),
+            reasons=(
+                "Normalized legal name matches",
+                "Business postal code matches",
+            ),
             state=MatchState.NEEDS_REVIEW,
             created_at=identity.observed_at,
         )
@@ -121,7 +124,8 @@ def review_candidate(
     if not reviewer:
         raise ValueError("actor is required")
     reviewed = require_aware_utc(reviewed_at, field_name="reviewed_at")
-    if candidate.state not in {MatchState.NEEDS_REVIEW, MatchState.AUTO_CONFIRMED}:
+    reviewable_states = {MatchState.NEEDS_REVIEW, MatchState.AUTO_CONFIRMED}
+    if candidate.state not in reviewable_states:
         raise ValueError("candidate has already been reviewed")
     return replace(
         candidate,
@@ -143,7 +147,8 @@ def _identifier_conflicts(
     observed_by_scheme = _values_by_scheme(observed)
     known_by_scheme = _values_by_scheme(known)
     conflicts: list[str] = []
-    for scheme in sorted(observed_by_scheme.keys() & known_by_scheme.keys()):
+    shared_schemes = observed_by_scheme.keys() & known_by_scheme.keys()
+    for scheme in sorted(shared_schemes):
         if observed_by_scheme[scheme].isdisjoint(known_by_scheme[scheme]):
             conflicts.append(
                 f"Conflicting {scheme} values: observed "
@@ -164,8 +169,16 @@ def _values_by_scheme(
 
 def _normalize_name(value: str) -> str:
     decomposed = unicodedata.normalize("NFKD", value)
-    ascii_value = "".join(character for character in decomposed if not unicodedata.combining(character))
-    tokens = [token for token in _NON_WORD.sub(" ", ascii_value.upper()).split() if token]
+    ascii_value = "".join(
+        character
+        for character in decomposed
+        if not unicodedata.combining(character)
+    )
+    tokens = [
+        token
+        for token in _NON_WORD.sub(" ", ascii_value.upper()).split()
+        if token
+    ]
     while tokens and tokens[-1] in _LEGAL_SUFFIXES:
         tokens.pop()
     return " ".join(tokens)
