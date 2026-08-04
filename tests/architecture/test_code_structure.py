@@ -39,7 +39,7 @@ def _duplicate_definitions(
     definitions = [
         child
         for child in node.body
-        if isinstance(child, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef))
+        if isinstance(child, ast.FunctionDef | ast.AsyncFunctionDef | ast.ClassDef)
     ]
     counts = Counter(definition.name for definition in definitions)
     duplicates = [
