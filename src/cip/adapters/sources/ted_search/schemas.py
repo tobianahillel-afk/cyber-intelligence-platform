@@ -77,20 +77,20 @@ def _flatten_text(value: object) -> list[str]:
         stripped = value.strip()
         return [stripped] if stripped else []
     if isinstance(value, list):
-        result: list[str] = []
+        list_values: list[str] = []
         for item in value:
-            result.extend(_flatten_text(item))
-        return result
+            list_values.extend(_flatten_text(item))
+        return list_values
     if isinstance(value, dict):
         preferred = ("eng", "en", "fra", "fr")
-        result: list[str] = []
+        localized_values: list[str] = []
         for key in preferred:
             if key in value:
-                result.extend(_flatten_text(value[key]))
+                localized_values.extend(_flatten_text(value[key]))
         for key, item in value.items():
             if key not in preferred:
-                result.extend(_flatten_text(item))
-        return result
+                localized_values.extend(_flatten_text(item))
+        return localized_values
     return []
 
 
