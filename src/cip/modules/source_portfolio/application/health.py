@@ -4,8 +4,12 @@ from datetime import datetime, timedelta
 
 from sqlalchemy.orm import Session
 
+from cip.modules.collection_orchestration.infrastructure.models import (
+    CollectionCircuitRecord,
+)
 from cip.modules.source_portfolio.application.records import (
     bounded_value,
+    capability_record,
     get_health_record,
     get_portfolio_record,
     non_negative,
@@ -13,6 +17,7 @@ from cip.modules.source_portfolio.application.records import (
     to_health,
 )
 from cip.modules.source_portfolio.domain.models import (
+    AnomalyState,
     BackfillState,
     CollectionMode,
     FreshnessState,
@@ -43,6 +48,8 @@ def ensure_health(session: Session, entry: SourceCatalogEntry, now: datetime) ->
             source_id=entry.source_id,
             freshness_state=state.value,
             schema_state=SchemaState.UNKNOWN.value,
+            volume_state=AnomalyState.UNKNOWN.value,
+            field_population_state=AnomalyState.UNKNOWN.value,
             last_attempt_at=None,
             last_success_at=None,
             last_source_record_at=None,
@@ -57,7 +64,7 @@ def ensure_health(session: Session, entry: SourceCatalogEntry, now: datetime) ->
 
 
 def get_source_health(session: Session, source_id: str) -> SourceHealth:
-    return to_health(get_health_record(session, source_id))
+    return _health_projection(session, get_health_record(session, source_id))
 
 
 def set_backfill_health(
@@ -80,6 +87,8 @@ def record_collection_success(
     quota_remaining: int | None,
     cost: float,
     now: datetime,
+    volume_state: AnomalyState = AnomalyState.NORMAL,
+    field_population_state: AnomalyState = AnomalyState.NORMAL,
 ) -> SourceHealth:
     changed_at = require_aware_utc(now, field_name="now")
     if quota_remaining is not None and quota_remaining < 0:
@@ -93,6 +102,8 @@ def record_collection_success(
             field_name="source_record_at",
         )
     record.schema_state = schema_state.value
+    record.volume_state = volume_state.value
+    record.field_population_state = field_population_state.value
     record.consecutive_failures = 0
     record.quota_remaining = quota_remaining
     record.monthly_cost_used += non_negative(cost, "cost")
@@ -100,7 +111,7 @@ def record_collection_success(
     record.freshness_state = _freshness_for_success(session, source_id, changed_at).value
     record.updated_at = changed_at
     session.flush()
-    return to_health(record)
+    return _health_projection(session, record)
 
 
 def record_collection_failure(
@@ -121,7 +132,7 @@ def record_collection_failure(
     record.freshness_state = FreshnessState.SOURCE_UNAVAILABLE.value
     record.updated_at = changed_at
     session.flush()
-    return to_health(record)
+    return _health_projection(session, record)
 
 
 def refresh_freshness(session: Session, source_id: str, *, now: datetime) -> SourceHealth:
@@ -149,7 +160,7 @@ def refresh_freshness(session: Session, source_id: str, *, now: datetime) -> Sou
     record.freshness_state = state.value
     record.updated_at = changed_at
     session.flush()
-    return to_health(record)
+    return _health_projection(session, record)
 
 
 def _freshness_for_success(
@@ -161,3 +172,16 @@ def _freshness_for_success(
     if entry.authorization_expires_at is not None and entry.authorization_expires_at <= now:
         return FreshnessState.AUTHORIZATION_EXPIRED
     return FreshnessState.FRESH
+
+
+def _health_projection(session: Session, record: SourceHealthRecord) -> SourceHealth:
+    capability = capability_record(session, record.source_id)
+    if capability is None:
+        circuit_state = "not_applicable"
+    else:
+        circuit = session.get(
+            CollectionCircuitRecord,
+            (record.source_id, capability.adapter_id),
+        )
+        circuit_state = circuit.state if circuit is not None else "closed"
+    return to_health(record, circuit_state=circuit_state)
