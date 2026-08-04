@@ -93,8 +93,11 @@ class OrganizationIdentity:
             require_aware_utc(self.observed_at, field_name="observed_at"),
         )
         aliases = _unique_text(self.aliases, maximum=300)
-        if self.official_name.casefold() in {alias.casefold() for alias in aliases}:
-            aliases = tuple(alias for alias in aliases if alias.casefold() != self.official_name.casefold())
+        official_key = self.official_name.casefold()
+        if official_key in {alias.casefold() for alias in aliases}:
+            aliases = tuple(
+                alias for alias in aliases if alias.casefold() != official_key
+            )
         object.__setattr__(self, "aliases", aliases)
         _validate_optional_text(self, "legal_form", maximum=300)
         _validate_optional_text(self, "activity_code", maximum=20)
@@ -110,8 +113,7 @@ class OrganizationIdentity:
     @property
     def deterministic_key(self) -> str:
         if self.identifiers:
-            preferred = sorted(identifier.exact_key for identifier in self.identifiers)[0]
-            return preferred
+            return sorted(identifier.exact_key for identifier in self.identifiers)[0]
         return f"{self.source_id}:{self.source_record_key}"
 
     @classmethod
@@ -182,7 +184,10 @@ class IdentityMergeCandidate:
                 "reviewed_at",
                 require_aware_utc(self.reviewed_at, field_name="reviewed_at"),
             )
-        if self.state is MatchState.AUTO_CONFIRMED and self.method is not MatchMethod.EXACT_IDENTIFIER:
+        if (
+            self.state is MatchState.AUTO_CONFIRMED
+            and self.method is not MatchMethod.EXACT_IDENTIFIER
+        ):
             raise ValueError("only exact identifier matches can be auto-confirmed")
         if self.state in {MatchState.CONFIRMED, MatchState.REJECTED}:
             if self.reviewed_at is None or not self.reviewed_by:
@@ -198,7 +203,12 @@ def _set_required_text(instance: object, field_name: str, *, maximum: int) -> No
     object.__setattr__(instance, field_name, value)
 
 
-def _validate_optional_text(instance: object, field_name: str, *, maximum: int) -> None:
+def _validate_optional_text(
+    instance: object,
+    field_name: str,
+    *,
+    maximum: int,
+) -> None:
     value = getattr(instance, field_name)
     if value is None:
         return
