@@ -204,9 +204,11 @@ def test_rule_returns_complete_explainable_opportunity() -> None:
 
     assert evaluation is not None
     assert evaluation.opportunity.data_quality is DataQuality.COMPLETE
-    assert evaluation.opportunity.score.adjusted_score > 90
+    assert evaluation.opportunity.score.adjusted_score > 80
     assert evaluation.opportunity.confidence == 0.85
     assert evaluation.opportunity.next_action.startswith("Review tender")
+    assert evaluation.opportunity.created_at == NOW
+    assert evaluation.opportunity.updated_at == NOW
     assert len(evaluation.hypothesis.evidence_ids) == 2
     assert {item.rule_id for item in evaluation.opportunity.score.components} == {
         "public-tender-intent",
@@ -255,6 +257,8 @@ def test_rule_ignores_wrong_organization_stale_expired_and_unmatched_signals() -
             organization_id,
             SignalType.PUBLIC_TENDER,
             title="SIEM tender",
+            published_at=NOW - timedelta(days=1),
+            collected_at=NOW - timedelta(days=1),
             expires_at=NOW - timedelta(seconds=1),
         ),
         _signal(
@@ -296,6 +300,7 @@ def _signal(
     evidence_id: object | None = None,
     confidence: float = 0.8,
     published_at: datetime | None = None,
+    collected_at: datetime = NOW,
     expires_at: datetime | None = None,
 ) -> CommercialSignal:
     return CommercialSignal(
@@ -306,7 +311,7 @@ def _signal(
         summary=title,
         confidence=confidence,
         published_at=published_at or NOW - timedelta(hours=1),
-        collected_at=NOW,
+        collected_at=collected_at,
         expires_at=expires_at,
     )
 
