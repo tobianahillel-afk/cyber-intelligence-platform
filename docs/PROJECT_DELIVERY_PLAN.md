@@ -8,7 +8,7 @@ The product is a standalone cyber revenue-intelligence and commercial-operations
 
 A lot is complete only when one final commit passes every applicable backend, frontend, architecture, migration, security, privacy, source-governance, data-quality, documentation, and rollback gate.
 
-The source-to-opportunity design is defined in [`COMMERCIAL_INTELLIGENCE_INTEGRATION_ARCHITECTURE.md`](COMMERCIAL_INTELLIGENCE_INTEGRATION_ARCHITECTURE.md). The OSINT source families are defined in [`OSINT_COLLECTION_CATALOG.md`](OSINT_COLLECTION_CATALOG.md) and [`LIVE_CYBER_THREAT_SOURCE_CATALOG.md`](LIVE_CYBER_THREAT_SOURCE_CATALOG.md).
+The source-to-opportunity design is defined in [`COMMERCIAL_INTELLIGENCE_INTEGRATION_ARCHITECTURE.md`](COMMERCIAL_INTELLIGENCE_INTEGRATION_ARCHITECTURE.md). The complete cybersecurity offer and need model is defined in [`CYBER_SERVICE_NEED_TAXONOMY.md`](CYBER_SERVICE_NEED_TAXONOMY.md). The OSINT source families are defined in [`OSINT_COLLECTION_CATALOG.md`](OSINT_COLLECTION_CATALOG.md) and [`LIVE_CYBER_THREAT_SOURCE_CATALOG.md`](LIVE_CYBER_THREAT_SOURCE_CATALOG.md).
 
 ## Status vocabulary
 
@@ -28,10 +28,11 @@ The source-to-opportunity design is defined in [`COMMERCIAL_INTELLIGENCE_INTEGRA
 - A source catalog entry is not an executable adapter.
 - Every executable adapter declares backfill, incremental, lookup, webhook, and refresh capabilities explicitly.
 - Provider payloads never write directly to company, score, alert, or opportunity tables.
-- Evidence, claims, observations, resolved facts, signals, hypotheses, and analyst decisions remain distinct.
+- Evidence, claims, observations, resolved facts, service mappings, signals, hypotheses, and analyst decisions remain distinct.
 - Duplicate reporting increases corroboration; it does not duplicate entities, incidents, signals, alerts, or opportunities.
 - Corrections, retractions, suppression, deletion, and authorization expiry propagate to all derived data.
 - Every source lot includes commercial-usefulness tests, not only parser and coverage tests.
+- Every commercial lot covers the canonical service taxonomy rather than treating SIEM or SOC as the default cybersecurity need.
 - Historical backfills must not flood the current analyst Inbox.
 - Public or licensed data is minimized. Credentials, victim files, private communications, private-life data, and access-control bypasses are excluded.
 - Any later commit invalidates an earlier validation result.
@@ -52,7 +53,7 @@ Lots 20–23 build the temporal knowledge graph, professional organization conte
 
 ### Stage D — commercial intelligence and analyst operations
 
-Lots 24–27 fuse evidence into need hypotheses, calibrate scoring, deliver native commercial operations, and present the complete company workspace.
+Lots 24–27 fuse evidence into need hypotheses across the complete cybersecurity service portfolio, calibrate scoring, deliver native commercial operations, and present the complete company workspace.
 
 ### Stage E — production assurance
 
@@ -190,15 +191,15 @@ Lots 28–32 enforce data quality, supply-chain security, resilience, optional b
 
 **Status:** `PLANNED_LOCKED`
 
-**Primary business outcome:** Identify explicit current demand, incumbents, provider displacement opportunities, and evidence-backed renewal windows.
+**Primary business outcome:** Identify explicit current demand, incumbents, provider displacement opportunities, and evidence-backed renewal windows across the complete cybersecurity service portfolio.
 
 **Dependencies:** Lots 04–05, 08, and 10.
 
-**Deliverables:** DECP; TED and BOAMP awards, results, amendments, cancellations, and chronology; buyers, lots, amounts, currencies, awardees, subcontractors, incumbent hypotheses, contract start/end dates, renewal estimates, and cyber service classification.
+**Deliverables:** DECP; TED and BOAMP awards, results, amendments, cancellations, and chronology; buyers, lots, amounts, currencies, awardees, subcontractors, incumbent hypotheses, contract start/end dates, renewal estimates, and classification against the canonical service taxonomy rather than a SIEM-only keyword list.
 
-**Required tests:** Notice-to-award linkage; amendment chronology; duplicate publication; provider identity; currency; cancellation; renewal uncertainty; current opportunity versus historical contract separation.
+**Required tests:** Notice-to-award linkage; amendment chronology; duplicate publication; provider identity; currency; cancellation; renewal uncertainty; current opportunity versus historical contract separation; one contract containing several service families without duplicate opportunities.
 
-**Exit gate:** Analysts can distinguish open procurement, confirmed contract history, published provider relationship, and estimated renewal with provenance and confidence.
+**Exit gate:** Analysts can distinguish open procurement, confirmed contract history, published provider relationship, and estimated renewal with provenance, confidence, and service-family explanation.
 
 **Commercial value:** Highest-priority signals for organizations already buying or preparing to buy cybersecurity services.
 
@@ -206,17 +207,17 @@ Lots 28–32 enforce data quality, supply-chain security, resilience, optional b
 
 **Status:** `PLANNED_LOCKED`
 
-**Primary business outcome:** Build a reproducible public evidence map of each organization and discover projects, technologies, providers, changes, and contact paths not present in structured registries.
+**Primary business outcome:** Build a reproducible public evidence map of each organization and discover contracts, projects, technologies, providers, changes, and contact paths not present in structured registries.
 
 **Dependencies:** Lots 08 and 10.
 
-**Deliverables:** Approved sitemaps, RSS, Atom, structured data, public corporate pages, career pages, engineering blogs, public documentation, GitHub/GitLab organizations, reports, presentations, public PDFs, Common Crawl, Wayback/CDX, approved search APIs, dork templates, bounded domain/path crawl, content hashes, copyright-minimized extraction, and historical page evidence.
+**Deliverables:** Approved sitemaps, RSS, Atom, structured data, public corporate pages, career pages, engineering blogs, public documentation, GitHub/GitLab organizations, reports, presentations, public PDFs, Common Crawl, Wayback/CDX, approved search APIs, versioned Google and equivalent dork templates, analyst search links when no approved API exists, bounded domain/path crawl, content hashes, copyright-minimized extraction, and historical page evidence.
 
-**Required tests:** Crawl scope and depth; canonical URLs; robots/terms policy; MIME and size; duplicate pages; redirects; archive chronology; changed document; restricted result quarantine; no accidental-secret download; source-to-organization resolution.
+**Required tests:** Crawl scope and depth; canonical URLs; robots/terms policy; MIME and size; duplicate pages; redirects; archive chronology; changed document; restricted result quarantine; no accidental-secret download; source-to-organization resolution; search-result metadata cannot become a confirmed fact before approved retrieval of the referenced page; Google result and target page cannot count as independent corroboration.
 
-**Exit gate:** An organization workspace can show its public footprint and extracted business/cyber claims without indiscriminate mirroring or page-view crawling.
+**Exit gate:** An organization workspace can show its public footprint and extracted business/cyber claims without indiscriminate mirroring, search-engine bypass, or page-view crawling.
 
-**Commercial value:** Reveals transformations, named products, public architecture, support needs, projects, and professional contact routes.
+**Commercial value:** Reveals public contracts, transformations, named products, architecture, audit and compliance objectives, support needs, projects, providers, and professional contact routes across all service families.
 
 ## Lot 13 — Vulnerability knowledge and exploitation-state reconciliation
 
@@ -248,7 +249,7 @@ Lots 28–32 enforce data quality, supply-chain security, resilience, optional b
 
 **Exit gate:** Every incident displays claim type, source, confidence, corroboration, chronology, and current resolution without storing stolen files or private negotiations.
 
-**Commercial value:** High-urgency incident response, recovery, hardening, resilience, monitoring, audit, and regulatory-support opportunities.
+**Commercial value:** High-urgency incident response, recovery, hardening, resilience, monitoring, audit, regulatory-support, identity, cloud, application-security and third-party-risk opportunities according to the evidence.
 
 ## Lot 15 — Malicious infrastructure, phishing, IOC, and attack telemetry
 
@@ -296,7 +297,7 @@ Lots 28–32 enforce data quality, supply-chain security, resilience, optional b
 
 **Exit gate:** Every product-risk result exposes match precision and never presents family evidence as an exact vulnerable installation.
 
-**Commercial value:** Patch governance, exposure review, compensating controls, architecture, managed detection, and remediation opportunities.
+**Commercial value:** Patch governance, exposure review, compensating controls, architecture, managed detection, migration and remediation opportunities.
 
 ## Lot 18 — News, regulatory, corporate-disclosure, and change signals
 
@@ -376,9 +377,9 @@ Lots 28–32 enforce data quality, supply-chain security, resilience, optional b
 
 **Dependencies:** Lots 10, 12, and 20–22.
 
-**Deliverables:** Research cases; reusable queries; saved results; OSINT Framework candidate import; source classification queue; research plans by organization; approved search APIs; bounded document discovery; manual-review tasks; accidental-sensitive-result quarantine; catalog health; duplicate/replacement tools; source-value comparison.
+**Deliverables:** Research cases; reusable queries; saved results; OSINT Framework candidate import; source classification queue; research plans by organization; approved search APIs; bounded document discovery; manual-review tasks; accidental-sensitive-result quarantine; catalog health; duplicate/replacement tools; source-value comparison; service-family coverage gaps that can recommend the next approved query or source.
 
-**Required tests:** Query templates; candidate deduplication; dead/redirected tool; ownership change; restricted result quarantine; no secret or exposed-file download; authorization expiry; research history; source recommendation based on entity gaps.
+**Required tests:** Query templates; candidate deduplication; dead/redirected tool; ownership change; restricted result quarantine; no secret or exposed-file download; authorization expiry; research history; source recommendation based on entity and service-family gaps.
 
 **Exit gate:** An analyst can reproduce why a source or query was used, what it found, what remains uncertain, and how it affected a commercial hypothesis.
 
@@ -386,15 +387,15 @@ Lots 28–32 enforce data quality, supply-chain security, resilience, optional b
 
 **Status:** `PLANNED_LOCKED`
 
-**Primary business outcome:** Convert the complete evidence portfolio into non-duplicated, service-specific, explainable cybersecurity needs.
+**Primary business outcome:** Convert the complete evidence portfolio into non-duplicated, service-specific, explainable cybersecurity needs across the full canonical service taxonomy.
 
 **Dependencies:** Lots 03 and 11–23.
 
-**Deliverables:** Canonical signal taxonomy; event clustering; corroboration and contradiction engine; source independence; active intervals; service/product fit; need hypotheses for procurement, renewal, incident response, SOC/SIEM, IAM, cloud, GRC, exposure, vulnerability remediation, integration, provider replacement, and transformation; deterministic signal and hypothesis identities; recalculation and invalidation.
+**Deliverables:** Executable canonical taxonomy from `CYBER_SERVICE_NEED_TAXONOMY.md`; event clustering; corroboration and contradiction engine; source independence; active intervals; service/product fit; need hypotheses for strategy and vCISO, audit and risk assessment, GRC and compliance, penetration testing, red and purple teaming, vulnerability and attack-surface management, SOC/SIEM/MDR/XDR/SOAR and detection engineering, incident response and DFIR, resilience and crisis readiness, IAM/IGA/PAM and Zero Trust, cloud and container security, AppSec and DevSecOps, network and SASE security, data protection, third-party and supply-chain security, OT/ICS/IoT security, awareness and training, product integration and migration, and cyber-insurance readiness; deterministic signal, hypothesis and commercial-motion identities; recalculation and invalidation.
 
-**Required tests:** Same event from many sources; contradictory claims; stale decay; retraction; one event with several service fits; no duplicate opportunities; weak community or actor claim cannot independently confirm urgent need; explanation and evidence completeness.
+**Required tests:** Positive, negative and ambiguous cases for every service family; multilingual synonyms and product aliases; same event from many sources; contradictory claims; stale decay; retraction; one event with several compatible service fits; unrelated needs remain separate; SIEM-heavy evidence cannot suppress pentest, audit, IAM, cloud, AppSec, GRC or incident-response needs; no duplicate opportunities; weak community or actor claim cannot independently confirm urgent need; Google or search metadata cannot confirm a need before source retrieval; explanation and evidence completeness.
 
-**Exit gate:** Every commercial hypothesis explains why it exists, which evidence supports or contradicts it, when it expires, and which service motion it enables.
+**Exit gate:** Every commercial hypothesis explains why it exists, which evidence supports or contradicts it, when it expires, which canonical service family it maps to, and which distinct or grouped commercial motion it enables.
 
 ## Lot 25 — Advanced scoring, calibration, explainability, and feedback
 
@@ -404,11 +405,11 @@ Lots 28–32 enforce data quality, supply-chain security, resilience, optional b
 
 **Dependencies:** Lot 24.
 
-**Deliverables:** Buying intent; urgency; service fit; contract timing; company fit; product risk; incident confidence; role/contact availability; evidence quality; source independence; freshness; uncertainty; legal-risk, contradiction, weak-source, and single-source penalties; calibration datasets; source incremental-value metrics; analyst outcomes; rollbackable score versions.
+**Deliverables:** Buying intent; urgency; service fit; contract timing; company fit; product risk; incident confidence; role/contact availability; evidence quality; source independence; freshness; uncertainty; legal-risk, contradiction, weak-source, and single-source penalties; calibration datasets and thresholds by service family; source incremental-value metrics; analyst outcomes; rollbackable score versions.
 
-**Required tests:** Bounds; monotonicity; stale decay; contradiction; source independence; benchmark precision/recall; false urgency; source ablation; calibration; override preservation; explanation completeness.
+**Required tests:** Bounds; monotonicity; stale decay; contradiction; source independence; benchmark precision/recall and false-positive rate per service family; false urgency; source ablation; cross-service bias; calibration; override preservation; explanation completeness.
 
-**Exit gate:** A scoring version beats the previous benchmark, can be explained and rolled back, and does not optimize ingestion volume over accepted opportunity quality.
+**Exit gate:** A scoring version improves its per-service and global benchmarks, can be explained and rolled back, and does not optimize ingestion volume or SIEM-heavy signals over accepted opportunity quality.
 
 ## Lot 26 — Native commercial operations, alerts, tasks, and engagement
 
@@ -418,11 +419,11 @@ Lots 28–32 enforce data quality, supply-chain security, resilience, optional b
 
 **Dependencies:** Lots 03, 08, 21, and 25.
 
-**Deliverables:** Rules; alerts; saved searches; watchlists; opportunity stages; ownership; assignments; tasks; reminders; queues; service-level targets; notes; research requests; buying-committee views; approved interaction and engagement history; audit; reversible transitions; dashboards; controlled import/export.
+**Deliverables:** Rules; alerts; saved searches; watchlists; opportunity stages; ownership; assignments; tasks; reminders; queues; service-level targets; notes; research requests; buying-committee views; service-family and commercial-motion views; approved interaction and engagement history; audit; reversible transitions; dashboards; controlled import/export.
 
-**Required tests:** Alert deduplication/reopening; stage transitions; task recurrence; assignment; concurrent edits; immutable history; suppression before contact use; deletion; dashboard consistency; anonymous public access versus protected operations.
+**Required tests:** Alert deduplication/reopening; stage transitions; task recurrence; assignment; concurrent edits; immutable history; suppression before contact use; unrelated service motions remain separate; deletion; dashboard consistency; anonymous public access versus protected operations.
 
-**Exit gate:** A team can discover, qualify, assign, research, track, and close an opportunity with complete history and no external CRM dependency.
+**Exit gate:** A team can discover, qualify, assign, research, track, and close opportunities across the service portfolio with complete history and no external CRM dependency.
 
 ## Lot 27 — Complete company intelligence and analyst workspace
 
@@ -432,11 +433,11 @@ Lots 28–32 enforce data quality, supply-chain security, resilience, optional b
 
 **Dependencies:** Lots 20–26.
 
-**Deliverables:** Company 360; public footprint; legal/corporate graph; domains/assets; technologies/providers; vulnerabilities; incidents; tenders/contracts; recruitment; events; professional org map; contacts; evidence timeline; conflicts; source freshness; alerts; hypotheses; score explanation; opportunity; tasks; notes; engagement; saved layouts and filters.
+**Deliverables:** Company 360; public footprint; legal/corporate graph; domains/assets; technologies/providers; vulnerabilities; incidents; tenders/contracts; recruitment; events; professional org map; contacts; evidence timeline; conflicts; source freshness; service-family coverage; alerts; hypotheses; score explanation; distinct commercial motions and opportunities; tasks; notes; engagement; saved layouts and filters.
 
-**Required tests:** Loading, empty, partial, stale, conflicting, suppressed, unavailable, unauthorized, and success states; graph/timeline navigation; deep links; keyboard/responsive access; end-to-end alert-to-opportunity investigation.
+**Required tests:** Loading, empty, partial, stale, conflicting, suppressed, unavailable, unauthorized, and success states; graph/timeline navigation; service-family filters; deep links; keyboard/responsive access; end-to-end alert-to-opportunity investigation across several offer types.
 
-**Exit gate:** An analyst can understand what happened, why it matters commercially, who may be relevant, and what action is next without direct database or log access.
+**Exit gate:** An analyst can understand what happened, why it matters commercially, which services fit, who may be relevant, and what action is next without direct database or log access.
 
 ## Lot 28 — Data quality, reconciliation, lineage, and publication gates
 
@@ -446,11 +447,11 @@ Lots 28–32 enforce data quality, supply-chain security, resilience, optional b
 
 **Dependencies:** Lots 10–27.
 
-**Deliverables:** Expected volume and field baselines; freshness thresholds; duplicate rates; lineage validation; source reconciliation; golden datasets; schema-drift alerts; quarantine; replay/backfill; correction propagation; derived-data invalidation; source incremental-value and false-urgency dashboards; publication gates.
+**Deliverables:** Expected volume and field baselines; freshness thresholds; duplicate rates; lineage validation; source reconciliation; golden datasets; schema-drift alerts; quarantine; replay/backfill; correction propagation; derived-data invalidation; source incremental-value, service-family coverage and false-urgency dashboards; publication gates.
 
-**Required tests:** Parser regression; volume anomaly; missing fields; stale source; duplicate entity/signal/opportunity; broken lineage; false merge; replay; correction; deletion; score drift; source-ablation benchmark.
+**Required tests:** Parser regression; volume anomaly; missing fields; stale source; duplicate entity/signal/opportunity; broken lineage; false merge; replay; correction; deletion; score drift; service-family coverage regression; source-ablation benchmark.
 
-**Exit gate:** A silent data regression blocks publication and can be replayed, diagnosed, corrected, and audited.
+**Exit gate:** A silent data or commercial-classification regression blocks publication and can be replayed, diagnosed, corrected, and audited.
 
 ## Lot 29 — Supply-chain, release provenance, and repository protection
 
@@ -474,7 +475,7 @@ Lots 28–32 enforce data quality, supply-chain security, resilience, optional b
 
 **Dependencies:** Lots 02–29.
 
-**Deliverables:** Structured logs; traces; metrics; source freshness, cost, quota, queue, backfill, schema, and opportunity-value dashboards; alerts; backups; restore runbooks; load/soak tests; fault injection; degraded modes; capacity thresholds; recovery objectives.
+**Deliverables:** Structured logs; traces; metrics; source freshness, cost, quota, queue, backfill, schema, service-family coverage and opportunity-value dashboards; alerts; backups; restore runbooks; load/soak tests; fault injection; degraded modes; capacity thresholds; recovery objectives.
 
 **Required tests:** Provider outage; quota exhaustion; worker/database crash; duplicate delivery; large backfill; index failure; backup restore; degraded UI; recovery time; no false-success state.
 
@@ -500,14 +501,14 @@ Lots 28–32 enforce data quality, supply-chain security, resilience, optional b
 
 **Status:** `PLANNED_LOCKED`
 
-**Primary business outcome:** Prove that the complete product finds useful clients and can be operated safely and reliably.
+**Primary business outcome:** Prove that the complete product finds useful clients across the cybersecurity service portfolio and can be operated safely and reliably.
 
 **Dependencies:** Lots 00–30. Lot 31 must be completed only if a pilot source requires it; otherwise it is explicitly excluded.
 
-**Deliverables:** Controlled deployment; approved source portfolio; accountless public data plane where intended; protected administrative and commercial operations; privacy and retention review; analyst training; source and opportunity quality metrics; end-to-end workflows; operational runbooks; rollback; premium-source evaluation; explicit GO/CONDITIONAL_GO/NO_GO decision.
+**Deliverables:** Controlled deployment; approved source portfolio; accountless public data plane where intended; protected administrative and commercial operations; privacy and retention review; analyst training; source, service-family and opportunity quality metrics; end-to-end workflows; operational runbooks; rollback; premium-source evaluation; explicit GO/CONDITIONAL_GO/NO_GO decision.
 
-**Required tests:** Source-to-opportunity flow; accepted/rejected opportunity benchmarks; duplicate and false-urgency review; suppression/correction; source outage; restore; permissions; contact-purpose review; rollback; analyst acceptance.
+**Required tests:** Source-to-opportunity flow; accepted/rejected opportunity benchmarks by service family; duplicate and false-urgency review; suppression/correction; source outage; restore; permissions; contact-purpose review; rollback; analyst acceptance.
 
-**Exit gate:** Governance, evidence quality, commercial usefulness, security, resilience, and operating metrics support an explicit production decision.
+**Exit gate:** Governance, evidence quality, multi-service commercial usefulness, security, resilience, and operating metrics support an explicit production decision.
 
-**Non-goals:** Broad rollout based on record volume, unsupported coverage claims, or unresolved source and data-quality blockers.
+**Non-goals:** Broad rollout based on record volume, unsupported coverage claims, SIEM-only success metrics, or unresolved source and data-quality blockers.
