@@ -25,8 +25,13 @@ from cip.modules.source_portfolio.application.health import (
     record_collection_success,
     refresh_freshness,
 )
+from cip.modules.source_portfolio.application.priority import (
+    PriorityRefreshResult,
+    request_priority_refresh,
+)
 
 __all__ = [
+    "PriorityRefreshResult",
     "SourcePortfolioNotFoundError",
     "SourcePortfolioStateError",
     "cancel_backfill",
@@ -42,6 +47,7 @@ __all__ = [
     "record_collection_success",
     "refresh_freshness",
     "request_backfill",
+    "request_priority_refresh",
     "resume_source",
     "sync_source_portfolio",
 ]
