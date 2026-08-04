@@ -4,6 +4,7 @@ from fastapi import FastAPI
 
 from cip import __version__
 from cip.modules.opportunities.api.routes import router as opportunities_router
+from cip.modules.organizations.api.routes import router as organizations_router
 from cip.modules.source_governance.api.routes import router as source_governance_router
 
 
@@ -13,11 +14,12 @@ def create_app() -> FastAPI:
         version=__version__,
         description=(
             "Standalone human-operated cyber revenue intelligence and commercial "
-            "operations API with explicit source governance, provenance, and "
-            "evidence-backed opportunity discovery."
+            "operations API with explicit source governance, provenance, official "
+            "organization identity, and evidence-backed opportunity discovery."
         ),
     )
     application.include_router(source_governance_router)
+    application.include_router(organizations_router)
     application.include_router(opportunities_router)
 
     @application.get("/health", tags=["system"])

@@ -8,6 +8,7 @@ from uuid import UUID
 
 from cip.modules.evidence.domain.entities import Evidence
 from cip.modules.opportunities.domain.entities import CommercialSignal
+from cip.modules.organizations.application.identity import IdentityProjection
 from cip.modules.organizations.domain.entities import Organization
 from cip.modules.raw_observations.domain.entities import RawObservation
 from cip.modules.source_governance.domain.models import DataCategory
@@ -39,6 +40,7 @@ class AdapterCollectionBatch:
     checkpoint_payload: Mapping[str, object]
     not_modified: bool
     commercial_projections: tuple[CommercialProjection, ...] = ()
+    identity_projections: tuple[IdentityProjection, ...] = ()
 
 
 class CollectionAdapter(Protocol):

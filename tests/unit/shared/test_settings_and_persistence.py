@@ -20,10 +20,14 @@ def test_settings_have_safe_local_defaults() -> None:
     assert settings.environment == "development"
     assert settings.api_host == "127.0.0.1"
     assert settings.source_registry_path == Path("policies/sources.example.yml")
+    assert settings.identity_source_registry_path == Path("policies/identity_sources.yml")
     assert settings.greenhouse_board_registry_path == Path("policies/greenhouse_boards.yml")
     assert settings.lever_site_registry_path == Path("policies/lever_sites.yml")
     assert settings.smartrecruiters_company_registry_path == Path(
         "policies/smartrecruiters_companies.yml"
+    )
+    assert settings.organization_identity_target_registry_path == Path(
+        "policies/organization_identity_targets.yml"
     )
     assert settings.collection_schedule_path == Path("policies/collection_schedules.yml")
     assert settings.scheduler_poll_seconds == 5.0
@@ -64,6 +68,13 @@ def test_database_metadata_contains_foundation_tables() -> None:
         "opportunity_evidence",
         "opportunity_reviews",
         "opportunity_score_components",
+        "organization_aliases",
+        "organization_identifiers",
+        "organization_identities",
+        "organization_identity_claims",
+        "organization_identity_evidence",
+        "organization_merge_candidates",
+        "organization_relationships",
         "organizations",
         "raw_observations",
         "sources",
@@ -80,6 +91,8 @@ def test_metadata_creates_on_sqlite() -> None:
     assert get_metadata().tables["collection_jobs"].foreign_keys
     assert get_metadata().tables["opportunities"].foreign_keys
     assert get_metadata().tables["commercial_signals"].foreign_keys
+    assert get_metadata().tables["organization_identities"].foreign_keys
+    assert get_metadata().tables["organization_identity_claims"].foreign_keys
 
 
 def test_database_url_is_required() -> None:

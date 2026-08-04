@@ -15,6 +15,10 @@ from cip.adapters.sources.greenhouse.registry import (
     load_greenhouse_boards,
 )
 from cip.adapters.sources.lever.registry import LeverSite, load_lever_sites
+from cip.adapters.sources.organization_identity.registry import (
+    OrganizationIdentityTarget,
+    load_organization_identity_targets,
+)
 from cip.adapters.sources.smartrecruiters.registry import (
     SmartRecruitersCompany,
     load_smartrecruiters_companies,
@@ -22,6 +26,9 @@ from cip.adapters.sources.smartrecruiters.registry import (
 from cip.modules.collection_orchestration.application.adapters import CisaKevAdapter
 from cip.modules.collection_orchestration.application.boamp_adapter import BoampAdapter
 from cip.modules.collection_orchestration.application.greenhouse_adapter import GreenhouseAdapter
+from cip.modules.collection_orchestration.application.identity_adapters import (
+    register_identity_adapters,
+)
 from cip.modules.collection_orchestration.application.lever_adapter import LeverAdapter
 from cip.modules.collection_orchestration.application.ports import CollectionAdapter
 from cip.modules.collection_orchestration.application.scheduler import schedule_due_jobs
@@ -41,9 +48,9 @@ from cip.modules.collection_orchestration.infrastructure.schedule_loader import 
 from cip.modules.data_governance.domain.retention import RetentionPolicy
 from cip.modules.data_governance.infrastructure.retention_loader import load_retention_policy
 from cip.modules.source_governance.infrastructure.persistence import sync_source_registry
-from cip.modules.source_governance.infrastructure.registry import (
-    SourceRegistryEntry,
-    load_source_registry,
+from cip.modules.source_governance.infrastructure.registry import SourceRegistryEntry
+from cip.modules.source_governance.infrastructure.registry_bundle import (
+    load_source_registry_bundle,
 )
 from cip.shared.config.settings import Settings
 from cip.shared.kernel.time import utc_now
@@ -67,11 +74,17 @@ class CollectionRuntime:
 def build_collection_runtime(settings: Settings) -> CollectionRuntime:
     engine = create_database_engine(settings.database_url)
     factory = create_session_factory(engine)
-    entries = load_source_registry(settings.source_registry_path)
+    entries = load_source_registry_bundle(
+        settings.source_registry_path,
+        settings.identity_source_registry_path,
+    )
     greenhouse_boards = load_greenhouse_boards(settings.greenhouse_board_registry_path)
     lever_sites = load_lever_sites(settings.lever_site_registry_path)
     smartrecruiters_companies = load_smartrecruiters_companies(
         settings.smartrecruiters_company_registry_path
+    )
+    identity_targets = load_organization_identity_targets(
+        settings.organization_identity_target_registry_path
     )
     with session_scope(factory) as session:
         sync_source_registry(session, entries)
@@ -80,6 +93,7 @@ def build_collection_runtime(settings: Settings) -> CollectionRuntime:
         greenhouse_boards,
         lever_sites,
         smartrecruiters_companies,
+        identity_targets,
         timeout_seconds=settings.source_http_timeout_seconds,
     )
     schedules = load_collection_schedules(settings.collection_schedule_path)
@@ -97,6 +111,7 @@ def _build_adapters(
     greenhouse_boards: tuple[GreenhouseBoard, ...],
     lever_sites: tuple[LeverSite, ...],
     smartrecruiters_companies: tuple[SmartRecruitersCompany, ...],
+    identity_targets: tuple[OrganizationIdentityTarget, ...],
     *,
     timeout_seconds: float,
 ) -> dict[tuple[str, str], CollectionAdapter]:
@@ -143,6 +158,12 @@ def _build_adapters(
                 timeout_seconds=timeout_seconds,
             ),
         )
+    register_identity_adapters(
+        adapters,
+        entries_by_id,
+        identity_targets,
+        timeout_seconds=timeout_seconds,
+    )
     return adapters
 
 

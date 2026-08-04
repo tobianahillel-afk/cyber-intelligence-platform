@@ -19,6 +19,15 @@ from cip.modules.opportunities.infrastructure.models import (
     OpportunityReviewRecord,
     OpportunityScoreComponentRecord,
 )
+from cip.modules.organizations.infrastructure.identity_models import (
+    OrganizationAliasRecord,
+    OrganizationIdentifierRecord,
+    OrganizationIdentityClaimRecord,
+    OrganizationIdentityEvidenceRecord,
+    OrganizationIdentityRecord,
+    OrganizationMergeCandidateRecord,
+    OrganizationRelationshipRecord,
+)
 from cip.modules.organizations.infrastructure.models import OrganizationRecord
 from cip.modules.raw_observations.infrastructure.models import RawObservationRecord
 from cip.modules.source_governance.infrastructure.models import SourceRecord
@@ -37,7 +46,14 @@ _IMPORTED_MODELS = (
     OpportunityRecord,
     OpportunityReviewRecord,
     OpportunityScoreComponentRecord,
+    OrganizationAliasRecord,
+    OrganizationIdentifierRecord,
+    OrganizationIdentityClaimRecord,
+    OrganizationIdentityEvidenceRecord,
+    OrganizationIdentityRecord,
+    OrganizationMergeCandidateRecord,
     OrganizationRecord,
+    OrganizationRelationshipRecord,
     RawObservationRecord,
     SourceRecord,
     SuppressionRecord,

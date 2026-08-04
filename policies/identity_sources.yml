@@ -1,0 +1,230 @@
+version: 1
+reviewed_at: 2026-08-04
+
+sources:
+  - id: recherche-entreprises
+    name: API Recherche d'entreprises
+    base_url: https://recherche-entreprises.api.gouv.fr/search
+    status: enabled
+    source_type: api
+    owner: Direction interministérielle du numérique
+    terms_url: https://recherche-entreprises.api.gouv.fr/docs/
+    licence: Licence Ouverte 2.0
+    allowed_data_categories:
+      - organization_metadata
+    prohibited_data_categories:
+      - professional_contact
+      - credential
+      - victim_file
+      - private_communication
+      - private_personal_data
+      - restricted_content
+    rate_limit_per_minute: 30
+    retention_days: 1825
+    attribution_required: true
+    raw_content_storage: false
+    human_review_required: false
+    authorization:
+      status: approved
+      document_reference: recherche-entreprises-public-api-2026-08-04
+      reviewed_at: 2026-08-04T15:00:00Z
+      expires_at: null
+      approved_hosts:
+        - recherche-entreprises.api.gouv.fr
+      approved_path_prefixes:
+        - /search
+      approved_purposes:
+        - organization-identity-resolution
+      automated_collection_allowed: true
+      raw_storage_allowed: false
+    economics:
+      commercial_value: high
+      monthly_cost: 0
+      implementation_cost: medium
+      maintenance_cost: medium
+      expected_stability: high
+    notes: >-
+      Uses only the public company-search fields required for legal-unit and
+      establishment identity. Directors and natural-person data are not requested.
+      Non-diffusible entities are excluded by the public API and rejected again by
+      the mapper if a non-public record appears.
+
+  - id: gleif
+    name: GLEIF LEI API
+    base_url: https://api.gleif.org/api/v1
+    status: enabled
+    source_type: api
+    owner: Global Legal Entity Identifier Foundation
+    terms_url: https://www.gleif.org/en/lei-data/gleif-api/
+    licence: GLEIF LEI data terms
+    allowed_data_categories:
+      - organization_metadata
+    prohibited_data_categories:
+      - professional_contact
+      - credential
+      - victim_file
+      - private_communication
+      - private_personal_data
+      - restricted_content
+    rate_limit_per_minute: 20
+    retention_days: 1825
+    attribution_required: true
+    raw_content_storage: false
+    human_review_required: false
+    authorization:
+      status: approved
+      document_reference: gleif-public-lei-api-2026-08-04
+      reviewed_at: 2026-08-04T15:00:00Z
+      expires_at: null
+      approved_hosts:
+        - api.gleif.org
+      approved_path_prefixes:
+        - /api/v1/lei-records/
+      approved_purposes:
+        - organization-identity-resolution
+      automated_collection_allowed: true
+      raw_storage_allowed: false
+    economics:
+      commercial_value: high
+      monthly_cost: 0
+      implementation_cost: medium
+      maintenance_cost: medium
+      expected_stability: high
+    notes: >-
+      Reads exact LEI records plus direct and ultimate accounting-consolidating
+      parent relationships. Fuzzy entity-name matching is not used for automatic
+      attachment.
+
+  - id: bodacc-identity
+    name: BODACC commercial announcements identity view
+    base_url: https://bodacc-datadila.opendatasoft.com/api/explore/v2.1/catalog/datasets/annonces-commerciales/records
+    status: enabled
+    source_type: api
+    owner: Direction de l'information légale et administrative
+    terms_url: https://www.data.gouv.fr/fr/datasets/bodacc/
+    licence: Licence Ouverte 2.0
+    allowed_data_categories:
+      - organization_metadata
+    prohibited_data_categories:
+      - professional_contact
+      - credential
+      - victim_file
+      - private_communication
+      - private_personal_data
+      - restricted_content
+    rate_limit_per_minute: 4
+    retention_days: 1825
+    attribution_required: true
+    raw_content_storage: false
+    human_review_required: false
+    authorization:
+      status: approved
+      document_reference: bodacc-open-data-lo2-2026-08-04
+      reviewed_at: 2026-08-04T15:00:00Z
+      expires_at: null
+      approved_hosts:
+        - bodacc-datadila.opendatasoft.com
+      approved_path_prefixes:
+        - /api/explore/v2.1/catalog/datasets/annonces-commerciales/records
+      approved_purposes:
+        - organization-identity-resolution
+      automated_collection_allowed: true
+      raw_storage_allowed: false
+    economics:
+      commercial_value: high
+      monthly_cost: 0
+      implementation_cost: medium
+      maintenance_cost: medium
+      expected_stability: high
+    notes: >-
+      Queries only explicitly configured SIREN values and selected company-level
+      commercial-announcement fields. Person lists and full announcement documents
+      are excluded. BODACC status claims have lower canonical precedence than Sirene
+      and RNE identity claims.
+
+  - id: sirene-api
+    name: INSEE Sirene API
+    base_url: https://api.insee.fr
+    status: conditional
+    source_type: api
+    owner: Institut national de la statistique et des études économiques
+    terms_url: https://www.insee.fr/fr/information/3591226
+    licence: Licence Ouverte 2.0
+    allowed_data_categories:
+      - organization_metadata
+    prohibited_data_categories:
+      - professional_contact
+      - credential
+      - victim_file
+      - private_communication
+      - private_personal_data
+      - restricted_content
+    rate_limit_per_minute: 30
+    retention_days: 1825
+    attribution_required: true
+    raw_content_storage: false
+    human_review_required: true
+    authorization:
+      status: pending_review
+      document_reference: null
+      reviewed_at: null
+      expires_at: null
+      approved_hosts: []
+      approved_path_prefixes: []
+      approved_purposes: []
+      automated_collection_allowed: false
+      raw_storage_allowed: false
+    economics:
+      commercial_value: high
+      monthly_cost: 0
+      implementation_cost: medium
+      maintenance_cost: medium
+      expected_stability: high
+    notes: >-
+      The direct connector remains non-executable until the deployed API version,
+      exact base path, connection mode and approved fields are recorded. The public
+      Recherche d'entreprises adapter supplies the executable Sirene-backed path in
+      this lot.
+
+  - id: inpi-rne
+    name: INPI Registre national des entreprises
+    base_url: https://data.inpi.fr
+    status: pending_review
+    source_type: licensed_dataset
+    owner: Institut national de la propriété industrielle
+    terms_url: https://data.inpi.fr/content/editorial/Acces_API_Entreprises
+    licence: Access terms require review
+    allowed_data_categories:
+      - organization_metadata
+    prohibited_data_categories:
+      - professional_contact
+      - credential
+      - victim_file
+      - private_communication
+      - private_personal_data
+      - restricted_content
+    rate_limit_per_minute: null
+    retention_days: 1825
+    attribution_required: true
+    raw_content_storage: false
+    human_review_required: true
+    authorization:
+      status: pending_review
+      document_reference: null
+      reviewed_at: null
+      expires_at: null
+      approved_hosts: []
+      approved_path_prefixes: []
+      approved_purposes: []
+      automated_collection_allowed: false
+      raw_storage_allowed: false
+    economics:
+      commercial_value: high
+      monthly_cost: unknown
+      implementation_cost: medium
+      maintenance_cost: medium
+      expected_stability: medium
+    notes: >-
+      No executable network path is registered. Future use is limited to reviewed
+      company-level identity fields. Beneficial-owner, private-person, home-address,
+      credential and non-diffusible data are excluded.
