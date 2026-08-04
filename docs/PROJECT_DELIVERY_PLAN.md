@@ -2,25 +2,28 @@
 
 ## Purpose
 
-This is the authoritative production roadmap for Cyber Intelligence Platform. Delivery is divided into continuous lots with explicit dependencies, deliverables, test suites, non-goals, and exit gates. A lot is complete only when one final commit passes every applicable backend, frontend, architecture, migration, security, and documentation gate.
+This is the authoritative production roadmap for Cyber Intelligence Platform. The product is a standalone cyber revenue-intelligence and commercial-operations system. It owns alerts, company intelligence, professional organization maps, contacts, opportunities, tasks, notes, assignments, engagement history, and reporting instead of depending on Salesforce, HubSpot, or another external CRM.
+
+A lot is complete only when one final commit passes every applicable backend, frontend, architecture, migration, security, compliance, and documentation gate.
 
 ## Status vocabulary
 
-- `IMPLEMENTED_VALIDATED`: implementation has passed its complete exit gate and is ready to merge or already merged.
-- `IN_PROGRESS`: implementation is active but has not passed its final gate.
-- `PLANNED_LOCKED`: scope and exit criteria are defined; implementation has not started.
-- `BLOCKED`: an external legal, authorization, product, or technical dependency prevents execution.
-- `DEFERRED`: intentionally postponed because a simpler or safer mechanism has priority.
+- `IMPLEMENTED_VALIDATED`: implementation passed its complete exit gate.
+- `IN_PROGRESS`: implementation is active but not finally validated.
+- `PLANNED_LOCKED`: scope and exit criteria are defined; code has not started.
+- `BLOCKED`: an external authorization, legal, product, or technical dependency prevents execution.
+- `DEFERRED`: intentionally postponed because a simpler or safer capability has priority.
 
 ## Delivery rules
 
 - Lot numbers are continuous and never reused.
 - Each lot has one primary business outcome.
-- New source access requires an approved source-policy record before any network request.
-- Public or licensed data is minimized; credentials, leaked data, victim files, and private communications are excluded.
-- Code, tests, architecture, operations, compliance, and documentation move together.
-- Any later commit invalidates earlier validation; the closing report always names the final SHA and CI run.
-- Code for the next lot starts only from the merged `main` commit of the current lot.
+- Source governance is approved before any network request.
+- Public or licensed data is minimized; credentials, victim files, private communications, private-life data, and access-control bypasses are excluded.
+- Professional contacts require provenance, permitted purpose, freshness, retention, correction, and suppression state.
+- Code, tests, data policy, operations, documentation, and rollback behavior move together.
+- Any later commit invalidates an earlier validation result.
+- Code for a new lot starts from the merged `main` commit of the previous lot.
 
 ## Status overview
 
@@ -33,102 +36,102 @@ This is the authoritative production roadmap for Cyber Intelligence Platform. De
 | 04 | TED European procurement signals | `IMPLEMENTED_VALIDATED` |
 | 05 | BOAMP French procurement and executable architecture gates | `IMPLEMENTED_VALIDATED` |
 | 06 | Greenhouse public cyber hiring signals | `IMPLEMENTED_VALIDATED` |
-| 07 | Multi-ATS hiring-source expansion | `PLANNED_LOCKED` |
+| 07 | Lever and SmartRecruiters multi-ATS expansion | `IN_PROGRESS` |
 | 08 | French and European organization identity foundation | `PLANNED_LOCKED` |
-| 09 | Public-procurement expansion and buyer history | `PLANNED_LOCKED` |
+| 09 | Procurement history, providers, and contract timing | `PLANNED_LOCKED` |
 | 10 | Vulnerability intelligence enrichment | `PLANNED_LOCKED` |
-| 11 | Vendor advisories and product-to-organization matching | `PLANNED_LOCKED` |
+| 11 | Vendor advisories and product-version matching | `PLANNED_LOCKED` |
 | 12 | Incident and ransomware claim evidence | `PLANNED_LOCKED` |
 | 13 | News, regulatory, and corporate-disclosure signals | `PLANNED_LOCKED` |
 | 14 | Passive Internet-exposure observations | `PLANNED_LOCKED` |
-| 15 | Technographics and technology-confidence model | `PLANNED_LOCKED` |
-| 16 | Entity resolution and corporate graph | `PLANNED_LOCKED` |
-| 17 | Professional-role enrichment and compliance controls | `PLANNED_LOCKED` |
-| 18 | Analyst research and safe search-query workflows | `PLANNED_LOCKED` |
+| 15 | Technographics and security-provider intelligence | `PLANNED_LOCKED` |
+| 16 | Entity resolution and corporate relationship graph | `PLANNED_LOCKED` |
+| 17 | Professional organization maps and contact governance | `PLANNED_LOCKED` |
+| 18 | Analyst research and authorized public-search workflows | `PLANNED_LOCKED` |
 | 19 | Advanced scoring, calibration, and explainability | `PLANNED_LOCKED` |
-| 20 | CRM synchronization and commercial workflow | `PLANNED_LOCKED` |
-| 21 | Full analyst workspace and operational UX | `PLANNED_LOCKED` |
+| 20 | Native commercial operations, alerts, tasks, and engagement | `PLANNED_LOCKED` |
+| 21 | Complete company intelligence and analyst workspace | `PLANNED_LOCKED` |
 | 22 | Data quality, reconciliation, and lineage controls | `PLANNED_LOCKED` |
 | 23 | Isolated browser and download-quarantine runtime | `DEFERRED` |
 | 24 | Supply-chain, release provenance, and repository protection | `PLANNED_LOCKED` |
 | 25 | Observability, performance, resilience, and recovery | `PLANNED_LOCKED` |
-| 26 | Controlled pilot, production gate, and premium scale | `PLANNED_LOCKED` |
+| 26 | Controlled pilot and production gate | `PLANNED_LOCKED` |
 
 ## Lot 00 — Product, legal, and source-governance foundation
 
 **Status:** `IMPLEMENTED_VALIDATED`
 
-**Objective:** Define the lawful, human-operated product boundary and make source authorization executable.
+**Objective:** Define the lawful human-operated product boundary and make source authorization executable.
 
 **Dependencies:** None.
 
-**Deliverables:** Product charter; allowed/conditional/quarantined source states; purpose, host, path, automation, quota, raw-storage, attribution, retention, and economics fields; prohibited data categories; LinkedIn-like sources disabled without official permission; BrixHub quarantined with no executable access.
+**Deliverables:** Product charter; source states; approved purpose, host, path, automation, quota, retention, attribution, and raw-storage fields; prohibited data categories; quarantine behavior; explicit controls for platform APIs and browser workflows.
 
-**Tests:** Policy allow/deny matrix; expired authorization; unapproved host/path; raw-storage denial; automated-access denial; quota exhaustion; registry-schema validation.
+**Tests:** Policy allow/deny matrix; expired authorization; wrong host/path/purpose; quota exhaustion; prohibited category; raw-storage denial; registry validation.
 
-**Exit gate:** No collector can perform a request without a positive policy decision and every executable source has a reviewed registry entry.
+**Exit gate:** No collector can execute without a positive source-policy decision and every executable source has a reviewed registry record.
 
-**Non-goals:** Autonomous outreach, credential validation, access-control bypass, restricted datasets, or indiscriminate scraping.
+**Non-goals:** Credential validation, private-account access, leaked datasets, intrusive collection, autonomous outreach, or indiscriminate scraping.
 
 ## Lot 01 — Modular core, persistence, provenance, and retention
 
 **Status:** `IMPLEMENTED_VALIDATED`
 
-**Objective:** Establish the canonical model and persistence foundation shared by all later workflows.
+**Objective:** Establish canonical entities and persistence shared by later workflows.
 
 **Dependencies:** Lot 00.
 
-**Deliverables:** Modular-monolith boundaries; organization, evidence, observation, suppression, retention, and metrics modules; PostgreSQL models; reversible Alembic migrations; UTC timestamp rules; deterministic IDs; provenance envelope; API factory; local Docker environment.
+**Deliverables:** Modular-monolith boundaries; organizations, evidence, observations, suppression, retention, and metrics modules; PostgreSQL models; reversible Alembic migrations; deterministic IDs; UTC timestamps; provenance envelopes; local development environment.
 
-**Tests:** Domain invariants; persistence constraints; identity stability; retention and suppression; API health; migration `upgrade -> downgrade -> upgrade`.
+**Tests:** Domain invariants; persistence constraints; deterministic identity; retention and suppression; API health; migration upgrade/downgrade/upgrade.
 
-**Exit gate:** A clean installation starts, persists evidence with lineage, and removes or suppresses governed data without exposing raw identifiers.
+**Exit gate:** A clean installation persists evidence with lineage and can remove or suppress governed data without exposing raw identifiers.
 
-**Non-goals:** External commercial connectors, browser automation, search indexing, or CRM synchronization.
+**Non-goals:** External source breadth, browser automation, or commercial workflow depth.
 
 ## Lot 02 — Durable scheduler, worker, checkpoints, and recovery
 
 **Status:** `IMPLEMENTED_VALIDATED`
 
-**Objective:** Convert collection into a durable, idempotent, observable, and recoverable execution pipeline.
+**Objective:** Make collection durable, idempotent, observable, and recoverable.
 
 **Dependencies:** Lots 00–01.
 
-**Deliverables:** Versioned schedules; deterministic slots; PostgreSQL queue; bounded leases; transactional claims; checkpoints; retry policy; circuit breaker; dead letters; lease recovery; scheduler/worker commands; operational metrics; durable CISA KEV path.
+**Deliverables:** Versioned schedules; deterministic slots; PostgreSQL queue; leases; transactional claims; checkpoints; bounded retries; circuits; dead letters; interruption recovery; worker and scheduler entry points; source-health metrics.
 
-**Tests:** Duplicate scheduling; concurrent claim; expired lease; late completion; retry timing; circuit lifecycle; dead letter; rollback preserving checkpoint; worker interruption.
+**Tests:** Duplicate scheduling; concurrent claim; lease expiry; late completion; retry timing; circuit lifecycle; dead letter; checkpoint rollback; worker interruption.
 
 **Exit gate:** Replay or interruption cannot duplicate observations, lose checkpoints, or record false success.
 
-**Non-goals:** Premature Redis, microservices, or unbounded parallel collection.
+**Non-goals:** Premature microservices, Redis without measured need, or unbounded concurrency.
 
 ## Lot 03 — Evidence-backed opportunity engine and analyst Inbox
 
 **Status:** `IMPLEMENTED_VALIDATED`
 
-**Objective:** Turn normalized evidence into explainable, persistent, human-reviewed commercial opportunities.
+**Objective:** Convert normalized evidence into explainable, persistent, human-reviewed opportunities.
 
 **Dependencies:** Lots 00–02.
 
-**Deliverables:** Commercial signals; need hypotheses; versioned SIEM/SOC score; opportunity persistence; review actions; immutable review history; list/detail APIs; Next.js Inbox; partial/stale/error states; preservation of analyst overrides.
+**Deliverables:** Commercial signals; need hypotheses; versioned SIEM/SOC rule; score components; persistent opportunities; analyst state transitions; immutable review history; APIs; Next.js Inbox; partial, stale, empty, and unavailable states.
 
-**Tests:** Signal-to-opportunity workflow; scoring bounds; explanations; freshness decay; corroboration; idempotent recalculation; state preservation; API contracts; persisted UI behavior.
+**Tests:** Signal-to-opportunity flow; score bounds; freshness; corroboration; single-source penalty; idempotent recalculation; analyst-state preservation; API and UI contracts.
 
-**Exit gate:** Every visible opportunity is linked to evidence, explainable, reviewable, and impossible to create directly from the browser without backend evidence.
+**Exit gate:** Every opportunity is evidence-linked, explainable, reviewable, and cannot be created directly by the browser without backend evidence.
 
-**Non-goals:** Autonomous emails, hidden scoring, or automatic sales decisions.
+**Non-goals:** Hidden scoring, automatic sales decisions, or autonomous contact.
 
 ## Lot 04 — TED European procurement signals
 
 **Status:** `IMPLEMENTED_VALIDATED`
 
-**Objective:** Produce real buying-intent signals from the official European procurement API.
+**Objective:** Produce commercial intent signals from official European procurement notices.
 
 **Dependencies:** Lots 00–03.
 
-**Deliverables:** TED Search API client; selected fields; content-type and size limits; strict schemas; bounded queries; local cyber relevance; deterministic identities; checkpoint; transactional Inbox projection; typed errors; no full-document storage.
+**Deliverables:** Official TED Search API client; selected metadata; strict schemas; bounded queries; local cyber relevance; deterministic identities; checkpoints; transactional opportunity projection; typed failures; no full-document storage.
 
-**Tests:** Client; schema; query; mapper; irrelevant notice; checkpoint; HTTP classification; policy-before-network; rollback; idempotent persistent projection.
+**Tests:** Client; schema; mapper; irrelevant notice; HTTP failures; policy-before-network; checkpoint; rollback; replay; persistent projection.
 
 **Exit gate:** A relevant TED notice creates exactly one traceable opportunity and projection failure cannot advance its checkpoint.
 
@@ -138,111 +141,111 @@ This is the authoritative production roadmap for Cyber Intelligence Platform. De
 
 **Status:** `IMPLEMENTED_VALIDATED`
 
-**Objective:** Add official French procurement signals and prevent maintainability regressions automatically.
+**Objective:** Add French procurement signals and enforce maintainability automatically.
 
 **Dependencies:** Lots 00–04.
 
-**Deliverables:** BOAMP/DILA Explore connector; bounded dated pagination; overflow refusal; notice/rectification/cancellation/result/deadline logic; actionable-only projection; shared procurement taxonomy; repository split; duplicate-definition gate; 400-line application-file gate; separated test suites.
+**Deliverables:** BOAMP/DILA connector; bounded dated pagination; overflow refusal; notice, rectification, cancellation, result, and deadline handling; actionable-only projection; repository refactor; AST duplicate-definition and file-size gates.
 
-**Tests:** Schema variants; pagination; overflow; notice types; deadlines; cancellation/result exclusion; checkpoint rollback; Inbox integration; architecture constraints.
+**Tests:** Schema variants; pagination; overflow; notice types; deadlines; cancellation/result exclusion; checkpoint rollback; persistent Inbox integration; architecture contracts.
 
-**Exit gate:** BOAMP produces traceable actionable opportunities and CI blocks duplicate definitions or oversized application modules.
+**Exit gate:** BOAMP produces traceable opportunities and CI prevents duplicate definitions or oversized application modules.
 
-**Non-goals:** DECP history, every French buyer portal, or weakened architecture standards.
+**Non-goals:** Every French procurement portal, historical contract graph, or reduced architecture standards.
 
 ## Lot 06 — Greenhouse public cyber hiring signals
 
 **Status:** `IMPLEMENTED_VALIDATED`
 
-**Objective:** Add the first official ATS connector and use hiring evidence without collecting candidate data.
+**Objective:** Add the first official ATS connector without collecting candidate data.
 
 **Dependencies:** Lots 00–05.
 
-**Deliverables:** Approved-board registry; public GET-only Greenhouse client; strict schemas; bounded JSON; in-memory HTML normalization; cyber-role taxonomy; deterministic job fingerprints and IDs; per-board/job checkpoint; new/changed observation logic; active-job refresh; removed-job expiry; mutable idempotent signal upsert; transaction-safe Inbox projection; dialect-safe UTC persistence; explicit architecture, complexity, layering, release, roadmap, and network-free unit-test gates.
+**Deliverables:** Approved-board registry; GET-only public client; strict schemas; bounded response; in-memory HTML cleanup; cyber-role taxonomy; job fingerprints; nested checkpoints; active-job refresh; removed-job expiry; mutable idempotent signal upsert; UTC-safe persistence; architecture, complexity, version, layering, and network-free unit-test gates.
 
-**Tests:** Registry; invalid/duplicate tokens; HTML cleanup; unsafe response; strict timestamp schema; false-positive rejection; new/changed/unchanged/removed jobs; nested checkpoints; HTTP 404/429/5xx; mutable upsert; ORM refresh; UTC across SQLite/PostgreSQL; rollback; persistent Inbox projection; architecture contracts.
+**Tests:** Registry; transport; schema; HTML; mapping; false-positive rejection; new, changed, unchanged, and removed jobs; checkpoint; HTTP classification; mutable upsert; rollback; SQLite/PostgreSQL UTC; persistent Inbox integration.
 
-**Exit gate:** One final SHA passes all backend/frontend gates; a modified job updates one signal and one opportunity; no candidate, application, email, resume, or raw HTML is persisted.
+**Exit gate:** One final SHA passes all backend and frontend gates; a modified job updates one signal and no candidate, application, email, resume, or raw HTML is retained.
 
-**Non-goals:** Application submission, candidate records, arbitrary career-page crawling, or inferring a named decision maker from a listing.
+**Non-goals:** Application submission, candidate records, arbitrary career-page crawling, or named-person inference from a listing.
 
-## Lot 07 — Multi-ATS hiring-source expansion
+## Lot 07 — Lever and SmartRecruiters multi-ATS expansion
 
-**Status:** `PLANNED_LOCKED`
+**Status:** `IN_PROGRESS`
 
-**Objective:** Add additional approved ATS providers behind one canonical job-signal contract.
+**Objective:** Add two official public ATS providers behind one canonical public-job contract.
 
 **Dependencies:** Lot 06.
 
-**Deliverables:** Provider reviews for Lever, SmartRecruiters, Teamtailor, Workable, and other documented APIs; provider registries; common canonical job model; shared contract suite; normalized location/department/type/seniority; checkpoint/removal logic; cross-provider deduplication; source-health metrics.
+**Deliverables:** Canonical provider-independent job model; shared bounded HTML normalization; Lever registry, schemas, paginated GET client, mapper, collector, checkpoint, and orchestration adapter; SmartRecruiters company registry, public list/detail clients, schemas, mapper, collector, checkpoint, and adapter; common signal taxonomy; provider-safe identity; exact-only cross-provider match candidates; source-health and schema-drift failures; thirty-minute schedules.
 
-**Tests:** Common adapter contract; provider fixtures; redirects; pagination; removal; duplicate posting; provider migration; policy denial; schema drift; cross-source deduplication.
+**Tests:** Registry validation; client URLs and response bounds; provider schemas; location, department, employment, and seniority normalization; pagination; new, changed, unchanged, and removed jobs; duplicates; detail/list mismatch; policy denial; invalid checkpoints; HTTP and transport classification; canonical mapping; exact and ambiguous cross-provider matches; runtime registration; complete CI.
 
-**Exit gate:** At least two additional approved ATS providers produce identical canonical behavior without provider schemas entering scoring or persistence.
+**Exit gate:** Lever and SmartRecruiters produce identical canonical behavior, replay is idempotent, changed postings update one signal, removed postings stop refreshing, ambiguous cross-provider records remain separate, and one final SHA passes all quality gates.
 
-**Non-goals:** Unsupported-page scraping or candidate/profile collection.
+**Non-goals:** Candidate or application data, write endpoints, unsupported-page scraping, automatic ambiguous deduplication, or collection of private profiles.
 
 ## Lot 08 — French and European organization identity foundation
 
 **Status:** `PLANNED_LOCKED`
 
-**Objective:** Resolve buyers and employers to reliable legal entities and group identifiers.
+**Objective:** Resolve buyers and employers to reliable legal entities, establishments, brands, and groups.
 
-**Dependencies:** Lots 01, 04–07.
+**Dependencies:** Lots 01 and 04–07.
 
-**Deliverables:** SIRENE/API Recherche Entreprises; approved INPI/RNE data; BODACC metadata; GLEIF; SIREN/SIRET/LEI/company-number fields; aliases; legal status; non-diffusion handling; evidence-backed merge candidates.
+**Deliverables:** SIRENE and API Recherche Entreprises; approved INPI/RNE data; BODACC metadata; GLEIF; SIREN, SIRET, LEI, and foreign identifiers; legal-unit versus establishment model; aliases; status; parent relationships; non-diffusion handling; evidence-backed merge candidates.
 
-**Tests:** Identifier validation; legal-unit versus establishment; non-diffusion; dissolved entity; registry conflict; alias lineage; false-merge prevention.
+**Tests:** Identifier validation; establishment/legal-unit distinction; non-diffusion; dissolved entities; conflicting registries; aliases; false-merge prevention.
 
-**Exit gate:** Organizations link to official identities with explainable confidence and ambiguous candidates remain human-reviewed.
+**Exit gate:** Organizations link to official identities with explainable confidence and ambiguous candidates require human review.
 
-**Non-goals:** Unnecessary personal shareholder enrichment.
+**Non-goals:** Unnecessary shareholder or private-person enrichment.
 
-## Lot 09 — Public-procurement expansion and buyer history
+## Lot 09 — Procurement history, providers, and contract timing
 
 **Status:** `PLANNED_LOCKED`
 
-**Objective:** Distinguish current buying intent from historical contracts and likely renewal context.
+**Objective:** Distinguish current buying intent from historical contracts, incumbents, providers, and likely renewal context.
 
 **Dependencies:** Lots 04–05 and 08.
 
-**Deliverables:** DECP review/connector; BOAMP results; TED awards/amendments; buyer history; amount/currency/lot/incumbent fields where published; renewal estimates; optional PLACE, UK, SAM.gov, and regional sources after separate approval; notice-award-contract graph.
+**Deliverables:** DECP review and connector; TED and BOAMP award/result/amendment linkage; buyer history; lots, amounts, currencies, published incumbents and subcontractors; contract start/end dates; renewal estimates with confidence; provider/service classification for audit, SOC, SIEM, incident response, compliance, integration, insurance, and consulting.
 
-**Tests:** Notice-to-award linkage; chronology; currency; duplicate publication; amendment; cancellation; renewal estimate; missing buyer ID; conflicting sources.
+**Tests:** Notice-to-award linkage; chronology; currency; amendments; cancellation; duplicate publication; provider identity; service classification; estimated renewal; missing identifiers; source conflict.
 
-**Exit gate:** Current opportunities and historical context are clearly separated and estimates are labeled as estimates.
+**Exit gate:** Current opportunity, confirmed contract history, published provider relationship, and estimated renewal are clearly separated and traceable.
 
-**Non-goals:** Automatic bidding or restricted-document downloads.
+**Non-goals:** Automatic bidding, restricted-document access, or presenting an estimate as a confirmed deadline.
 
 ## Lot 10 — Vulnerability intelligence enrichment
 
 **Status:** `PLANNED_LOCKED`
 
-**Objective:** Build a reconciled vulnerability knowledge layer for later technology and incident correlation.
+**Objective:** Build a reconciled vulnerability knowledge layer.
 
 **Dependencies:** Lots 01–03.
 
-**Deliverables:** NVD; CVE.org; CISA KEV history; FIRST EPSS history; OSV; GitHub advisories; canonical aliases; CVSS/CWE/products/references; affected ranges; updates/retractions; source precedence.
+**Deliverables:** NVD; CVE.org; CISA KEV history; FIRST EPSS history; OSV; GitHub advisories; aliases; CVSS, CWE, products, ranges, references, exploitation state, updates, and retractions.
 
-**Tests:** Alias merge; conflicting CVSS; EPSS history; KEV changes; range parsing; malformed records; freshness; precedence; retraction.
+**Tests:** Alias merge; conflicting CVSS; EPSS history; KEV changes; affected ranges; malformed records; source precedence; retraction.
 
-**Exit gate:** Vulnerability facts reconcile across primary sources without implying that any organization is exposed.
+**Exit gate:** Vulnerability facts reconcile across primary sources without implying that an organization is exposed.
 
 **Non-goals:** Exploit execution, credential testing, or intrusive validation.
 
-## Lot 11 — Vendor advisories and product-to-organization matching
+## Lot 11 — Vendor advisories and product-version matching
 
 **Status:** `PLANNED_LOCKED`
 
-**Objective:** Add vendor-specific affected-version precision and explicit match uncertainty.
+**Objective:** Add vendor-specific affected-version precision and explicit uncertainty.
 
 **Dependencies:** Lots 10 and 15.
 
-**Deliverables:** Prioritized PSIRT connectors; advisory/CVE/product mapping; fixed versions and workarounds; supersession/retraction; product identifiers; version-range evaluator; family/exact-product/exact-version confidence levels.
+**Deliverables:** Prioritized PSIRT connectors; advisory-to-CVE and product mapping; fixed versions; workarounds; supersession; product identifiers; range evaluator; family, product, and exact-version confidence levels.
 
-**Tests:** Version ranges; affected/not-affected/unknown; aliases; superseded advisory; malformed version; confidence downgrade; family-only false certainty prevention.
+**Tests:** Version ranges; affected, unaffected, and unknown states; aliases; superseded advisory; malformed versions; confidence downgrade; family-only false certainty prevention.
 
-**Exit gate:** Risk signals expose exact match level and never present a family-level observation as a confirmed vulnerable version.
+**Exit gate:** Every risk result exposes its match precision and never presents family evidence as an exact vulnerable version.
 
 **Non-goals:** Active scanning or proof-of-concept exploitation.
 
@@ -250,29 +253,29 @@ This is the authoritative production roadmap for Cyber Intelligence Platform. De
 
 **Status:** `PLANNED_LOCKED`
 
-**Objective:** Track public incident and extortion claims with corrections and evidence levels.
+**Objective:** Track public incident and extortion claims with evidence levels and corrections.
 
 **Dependencies:** Lots 00–03, 08, and 13.
 
-**Deliverables:** Approved aggregators; official statements; authority/regulatory confirmation; claim states for allegation, report, confirmation, inference, dispute, retraction, duplicate, and false attribution; timelines; actor aliases; minimal metadata; analyst review.
+**Deliverables:** Approved public or licensed aggregators; official statements; regulatory confirmations; allegation, report, confirmation, inference, dispute, retraction, duplicate, and false-attribution states; timelines; actor aliases; minimal metadata; analyst review.
 
-**Tests:** Claim transitions; conflicts; duplicate victim; ambiguous organization; retraction; confirmation; stale claim; source ranking; forbidden-content rejection.
+**Tests:** Claim transitions; conflicts; duplicate victim; ambiguous organization; correction; retraction; confirmation; staleness; source ranking; forbidden-content rejection.
 
 **Exit gate:** Every incident distinguishes allegation from confirmation and stores no stolen or victim content.
 
-**Non-goals:** Criminal-portal access, leaked data, negotiations, or credential material.
+**Non-goals:** Criminal-portal access, leaked files, negotiations, private messages, or credentials.
 
 ## Lot 13 — News, regulatory, and corporate-disclosure signals
 
 **Status:** `PLANNED_LOCKED`
 
-**Objective:** Detect material public events that affect cyber need, urgency, budget, or governance.
+**Objective:** Detect public events affecting cyber need, urgency, budget, governance, or organizational change.
 
 **Dependencies:** Lots 08 and 12.
 
-**Deliverables:** Company pressrooms/RSS; SEC cyber disclosures; CNIL/ICO/HHS and sector regulators; licensed news metadata; event taxonomy; copyright-minimized summaries; clustering; corrections; event versus publication time.
+**Deliverables:** Company pressrooms and RSS; SEC cyber disclosures; CNIL, ICO, HHS, and sector regulators; licensed news metadata; event taxonomy; short copyright-minimized summaries; clustering; corrections; event-time versus publication-time distinction.
 
-**Tests:** Filing extraction; duplicate stories; event classification; correction; date distinction; storage limits; organization resolution; conflicting reports.
+**Tests:** Filing extraction; duplicate stories; classification; correction; date distinction; storage limits; organization resolution; conflicting reports.
 
 **Exit gate:** Material events become evidence without full-text mirroring or unqualified factual claims.
 
@@ -282,210 +285,206 @@ This is the authoritative production roadmap for Cyber Intelligence Platform. De
 
 **Status:** `PLANNED_LOCKED`
 
-**Objective:** Add lawful indexed observations of public assets without probing prospects directly.
+**Objective:** Add authorized passive observations of public assets without probing prospects directly.
 
 **Dependencies:** Lots 00, 08, 10–11, and 16.
 
-**Deliverables:** Approved passive providers; domain/certificate/IP/ASN/service/banner observations; quotas and retention; asset-to-organization confidence; last-seen decay; indexed-observation versus current-state distinction; direct-scan prohibition.
+**Deliverables:** Approved passive providers; domains, certificates, IPs, ASNs, services, and banner observations; quotas; retention; asset-to-organization confidence; last-seen decay; indexed-observation versus current-state distinction; direct-scan prohibition.
 
-**Tests:** Policy and quota; pagination; stale data; certificate/domain linkage; shared hosting/CDN ambiguity; provider conflict; redirect block; no direct target connection.
+**Tests:** Policy and quota; pagination; stale data; certificate and domain linkage; shared hosting/CDN ambiguity; provider conflicts; redirect block; no direct target connection.
 
 **Exit gate:** Exposure hypotheses show provider, observation time, confidence, and uncertainty.
 
 **Non-goals:** Port scans, vulnerability scans, authentication, or exploit validation.
 
-## Lot 15 — Technographics and technology-confidence model
+## Lot 15 — Technographics and security-provider intelligence
 
 **Status:** `PLANNED_LOCKED`
 
-**Objective:** Build a time-aware and evidence-ranked view of organizational technologies.
+**Objective:** Build a time-aware view of technologies, vendors, service providers, and cybersecurity relationships.
 
-**Dependencies:** Lots 08, 11, and 14.
+**Dependencies:** Lots 08, 09, 11, and 14.
 
-**Deliverables:** Approved technographic sources; canonical technology taxonomy; version precision; first/last seen; confidence by evidence type; contradictions; replacement history; lifecycle/end-of-support; distinction between website, exposed service, job requirement, and confirmed deployment.
+**Deliverables:** Approved technographic sources; canonical technology and provider taxonomies; versions; first/last seen; confidence by evidence type; replacement history; lifecycle and end-of-support; public references to SOC, MSSP, integrator, auditor, consultant, cloud, insurer, and incident-response providers; relationship start/end evidence where published.
 
-**Tests:** Alias normalization; conflicting observations; stale replacement; shared infrastructure; version precision; weighting; false positive; vulnerable-version evidence requirement.
+**Tests:** Alias normalization; conflicting observations; stale replacement; shared infrastructure; version precision; provider classification; relationship chronology; false positives; vulnerable-version evidence requirement.
 
-**Exit gate:** Analysts can see why a technology is believed present, when it was seen, and how strong the conclusion is.
+**Exit gate:** Analysts can see why a technology or provider relationship is believed present, when it was observed, and how strong the evidence is.
 
-**Non-goals:** Tracking-code installation or private-system fingerprinting.
+**Non-goals:** Tracking-code installation, private-system fingerprinting, or unsupported relationship inference.
 
-## Lot 16 — Entity resolution and corporate graph
+## Lot 16 — Entity resolution and corporate relationship graph
 
 **Status:** `PLANNED_LOCKED`
 
-**Objective:** Reconcile legal entities, brands, subsidiaries, domains, assets, and groups reversibly.
+**Objective:** Link legal entities, brands, groups, domains, assets, providers, contracts, and people without unsafe merges.
 
 **Dependencies:** Lots 08–09 and 14–15.
 
-**Deliverables:** Canonical identifiers; exact and scored matches; parent/subsidiary/brand/domain/certificate/ASN/acquisition relationships; review queue; reversible merge/split history; graph read model; lineage.
+**Deliverables:** Candidate generation; evidence-weighted matching; corporate hierarchy; acquisitions; aliases; domain and asset ownership; relationship validity intervals; reversible merge and split operations; conflict queues.
 
-**Tests:** Similar names; shared address/domain; subsidiary; rename; acquisition; identifier conflict; merge reversal; benchmark precision/recall; false-merge threshold.
+**Tests:** Exact and fuzzy identifiers; brand/legal conflicts; subsidiaries; acquisitions; shared domains; shared infrastructure; false-merge datasets; merge reversal; history preservation.
 
-**Exit gate:** Exact high-confidence links automate safely and ambiguous links remain evidence-backed and reversible.
+**Exit gate:** Ambiguous relations remain reviewable candidates and every accepted edge is evidence-backed and reversible.
 
-**Non-goals:** Opaque automatic merges without explanation or rollback.
+**Non-goals:** Silent automatic merging based on name similarity alone.
 
-## Lot 17 — Professional-role enrichment and compliance controls
+## Lot 17 — Professional organization maps and contact governance
 
 **Status:** `PLANNED_LOCKED`
 
-**Objective:** Identify relevant professional roles and permitted business channels with minimization and objection handling.
+**Objective:** Build current and historical professional organization maps and lawful business contact records.
 
 **Dependencies:** Lots 00, 08, and 16.
 
-**Deliverables:** Role taxonomy; approved official pages/reports/conferences/GitHub/licensed providers; isolated professional-contact model; source/legal basis/purpose/retention/confidence; suppression; generic mailbox preference; correction/deletion propagation; controlled exports.
+**Deliverables:** Person and professional-identity records; roles, departments, seniority, geography, and employment dates; reporting-line candidates; buying-committee roles; public or licensed professional emails, direct business numbers, switchboards, contact forms, and role mailboxes; source, verification, confidence, purpose, retention, correction, objection, and suppression fields; preference for company and role channels over personal details.
 
-**Tests:** Professional/private distinction; purpose compatibility; suppression; deletion; stale role; duplicate person; generic mailbox; export redaction; unauthorized provider block.
+**Tests:** Person and employment deduplication; role history; ambiguous names; reporting-line conflicts; professional/private classification; stale contacts; correction; suppression propagation; export denial; lawful-purpose checks.
 
-**Exit gate:** No contact enters an export without provenance, lawful purpose, retention, and suppression checks.
+**Exit gate:** Every visible contact channel has provenance, permitted purpose, freshness, and suppression state, and ambiguous identities are not merged automatically.
 
-**Non-goals:** Home addresses, family details, personal phones, dating/social profiles, or scraped LinkedIn profiles.
+**Non-goals:** Home addresses, family data, private phone numbers, private emails, personal accounts, sensitive traits, leaked data, or unauthorized platform scraping.
 
-## Lot 18 — Analyst research and safe search-query workflows
+## Lot 18 — Analyst research and authorized public-search workflows
 
 **Status:** `PLANNED_LOCKED`
 
-**Objective:** Make public research reproducible while preventing unsafe automation or sensitive ingestion.
+**Objective:** Make public research reproducible, scoped, and safe.
 
-**Dependencies:** Lots 00, 08, and 13–17.
+**Dependencies:** Lots 00, 08, 16, and 17.
 
-**Deliverables:** Research cases; hypotheses; approved search APIs/manual workflows; query templates; result metadata and hashes; sensitive-result review queue; OSINT Framework candidate classification; no automatic secret/private download; audit trail.
+**Deliverables:** Research cases; reusable queries; saved results; public document discovery; approved search APIs; source classification; analyst review tasks; quarantined metadata for accidental sensitive exposure; query and result provenance; OSINT catalog classification.
 
-**Tests:** Query escaping; host filtering; prohibited category; sensitive-result pause; duplicate result; source removal; analyst history; restricted-download prevention.
+**Tests:** Query templates; provider controls; duplicates; restricted-result quarantine; no secret download; case history; retention; authorization expiry; analyst decisions.
 
-**Exit gate:** Evidence discovery is reproducible and unsafe or sensitive paths stop for human review.
+**Exit gate:** Research is reproducible and any result suggesting private, secret, or restricted content stops before collection.
 
-**Non-goals:** Broad people enumeration, face search, account takeover research, or access-control circumvention.
+**Non-goals:** Search-engine abuse, credential discovery, private-account access, or automated collection of accidental exposures.
 
 ## Lot 19 — Advanced scoring, calibration, and explainability
 
 **Status:** `PLANNED_LOCKED`
 
-**Objective:** Prioritize opportunities using independent signal families with transparent uncertainty.
+**Objective:** Improve prioritization while preserving transparent human control.
 
-**Dependencies:** Lots 07–18.
+**Dependencies:** Lots 03 and 08–18.
 
-**Deliverables:** Versioned feature registry; service fit, urgency, exploitation, recency, importance, intent, contact, and evidence components; uncertainty/staleness/legal penalties; source-family independence; calibration dataset; drift monitoring; explanations; shadow evaluation.
+**Deliverables:** Service fit; urgency; buying intent; contract timing; technology and vulnerability relevance; company priority; role/contact availability; evidence quality; freshness; uncertainty; legal-risk and single-source penalties; calibration datasets; rule versions; analyst feedback loops.
 
-**Tests:** Bounds; monotonicity; stale decay; contradiction; corroboration; legal veto; replay; version migration; override preservation; regression benchmark.
+**Tests:** Score bounds; monotonicity; stale decay; uncertainty; source independence; override preservation; benchmark precision/recall; regression comparison; explanation completeness.
 
-**Exit gate:** A new score version improves the approved benchmark, remains explainable, and can be rolled back.
+**Exit gate:** A new scoring version beats its benchmark, remains explainable, and can be rolled back without losing analyst decisions.
 
-**Non-goals:** Opaque autonomous lead selection.
+**Non-goals:** Opaque autonomous ranking or sensitive-trait profiling.
 
-## Lot 20 — CRM synchronization and commercial workflow
-
-**Status:** `PLANNED_LOCKED`
-
-**Objective:** Synchronize analyst-approved opportunities with HubSpot or Salesforce safely and idempotently.
-
-**Dependencies:** Lots 03, 17, and 19.
-
-**Deliverables:** Provider clients and shared commands; secret isolation; organization/contact/opportunity mapping; external IDs; conflict policy; human-approved staged export; sync/replay/audit; suppression propagation; dry-run/sandbox.
-
-**Tests:** Authorization; mapping; idempotency; duplicate record; conflict; rate limit; partial failure; replay; suppression; sandbox; rollback.
-
-**Exit gate:** One reviewed opportunity reaches an approved CRM sandbox exactly once and no message is sent automatically.
-
-**Non-goals:** Autonomous sequences, covert tracking, or overriding CRM edits without policy.
-
-## Lot 21 — Full analyst workspace and operational UX
+## Lot 20 — Native commercial operations, alerts, tasks, and engagement
 
 **Status:** `PLANNED_LOCKED`
 
-**Objective:** Provide an end-to-end investigation, triage, source-health, and workflow interface.
+**Objective:** Provide the complete commercial operating layer inside Cyber Intelligence Platform.
+
+**Dependencies:** Lots 03, 08, 17, and 19.
+
+**Deliverables:** Native accounts and ownership; rule-generated alerts; saved searches and watchlists; opportunity stages; assignments; tasks; reminders; queues; due dates and service-level targets; notes; research requests; contact and buying-committee views; engagement records; interaction history; attachments limited to approved business content; audit trail; reversible transitions; dashboards and reports; product-controlled import/export for portability only.
+
+**Tests:** Alert deduplication and reopening; assignment; task recurrence; overdue state; stage transitions; immutable history; note revisions; suppression before contact use; concurrent edits; permissions; export minimization; deletion propagation; dashboard consistency.
+
+**Exit gate:** A team can discover, qualify, assign, research, track, and close an opportunity entirely inside the platform with complete audit history and no external CRM dependency.
+
+**Non-goals:** Salesforce or HubSpot synchronization, hidden outreach automation, autonomous messaging, or third-party CRM as source of truth.
+
+## Lot 21 — Complete company intelligence and analyst workspace
+
+**Status:** `PLANNED_LOCKED`
+
+**Objective:** Deliver one coherent workspace for full company investigation and commercial action.
 
 **Dependencies:** Lots 08–20.
 
-**Deliverables:** Organization 360; evidence timeline/graph; technology/vulnerability/incident/procurement/hiring/contact views; saved filters; bulk triage; research workspace; source/checkpoint health; score comparison; compliance indicators; accessible loading/partial/stale/error states.
+**Deliverables:** Company 360; corporate graph; professional org chart; people and role history; contacts; technologies; providers; vulnerabilities; incidents; tenders; contracts; recruitment; regulatory and business events; evidence timeline; alert center; opportunity workspace; tasks; notes; engagement history; source health; score explanation; saved layouts and filters.
 
-**Tests:** Components; API contracts; end-to-end workflows; accessibility; large timelines; stale data; source outage; concurrent analyst edits; audit display.
+**Tests:** Loading, empty, partial, stale, conflicting, suppressed, unavailable, unauthorized, and success states; graph navigation; timelines; filtering; keyboard access; responsive layout; deep links; audit visibility; end-to-end investigation.
 
-**Exit gate:** Analysts can qualify an opportunity without hidden database or log access.
+**Exit gate:** An analyst can move from alert to evidence, organization map, contact, task, opportunity, and history without direct database or log access.
 
-**Non-goals:** Replacing the CRM or exposing restricted raw payloads.
+**Non-goals:** Displaying raw restricted data, hiding uncertainty, or requiring another system to complete the workflow.
 
 ## Lot 22 — Data quality, reconciliation, and lineage controls
 
 **Status:** `PLANNED_LOCKED`
 
-**Objective:** Detect silent source drift, duplicates, missing data, and lineage breaks before publication.
+**Objective:** Detect silent source, parser, mapping, identity, and derived-data regressions.
 
 **Dependencies:** Lots 08–21.
 
-**Deliverables:** Quality rules; population/freshness/schema/volume baselines; observation-to-opportunity lineage validation; reconciliation reports; quarantine; backfill/replay controls; quality incidents; regression datasets.
+**Deliverables:** Quality rules; expected volumes; freshness thresholds; duplicate detection; lineage validation; source reconciliation; quarantine queues; replay; backfill; golden datasets; schema-drift alerts; correction propagation; derived-data invalidation.
 
-**Tests:** Volume drift; missing field; duplicate spike; lineage break; replay; backfill; contradiction; quarantine release; release regression.
+**Tests:** Parser regression; volume anomaly; missing fields; stale source; duplicate entity; broken lineage; replay idempotence; backfill; correction and deletion propagation.
 
-**Exit gate:** Parser or mapping regressions fail visibly before deployment or opportunity publication.
+**Exit gate:** A silent parser or mapping regression blocks publication before corrupting analyst-visible intelligence.
 
-**Non-goals:** Automatically lowering thresholds to hide problems.
+**Non-goals:** Accepting low-quality data because it increases record volume.
 
 ## Lot 23 — Isolated browser and download-quarantine runtime
 
 **Status:** `DEFERRED`
 
-**Objective:** Support an explicitly approved JavaScript/authenticated source only when API, feed, export, and static HTTP options are insufficient.
+**Objective:** Support approved browser-only sources after structured APIs and static HTTP are insufficient.
 
-**Dependencies:** Lots 00, 02, 22, and explicit source authorization.
+**Dependencies:** Lots 00, 18, 22, and 24–25.
 
-**Deliverables:** Isolated browser worker; narrow port; host/path/page/time/download budgets; MFA/CAPTCHA/terms safe pause; session isolation; quarantine; type validation; archive limits; scanning; redacted traces; kill switch.
+**Deliverables:** Isolated browser workers; allowlisted navigation; session separation; page and time budgets; MFA/CAPTCHA safe pause; download quarantine; archive limits; file validation; redacted evidence; kill switch; browser-specific source authorization.
 
-**Tests:** Local emulated pages; cross-domain block; expired session; MFA/CAPTCHA; selector drift; crash/restart; context isolation; spoofed file; archive bomb; scanner outage; cleanup.
+**Tests:** Host/path escape; redirects; CAPTCHA and MFA pause; timeout; download type and size; archive bomb; malware quarantine; session isolation; secret redaction; kill switch.
 
-**Exit gate:** One approved source runs without bypass behavior, unrestricted download, or hidden failure.
+**Exit gate:** Approved browser collection cannot bypass access controls, silently download unsafe content, or mix sessions.
 
-**Non-goals:** Generalized browser scraping, CAPTCHA solving, cookie reuse, or access-control bypass.
+**Non-goals:** Bot evasion, copied cookies, fake-account rotation, CAPTCHA bypass, private-area access, or unrestricted crawling.
 
 ## Lot 24 — Supply-chain, release provenance, and repository protection
 
 **Status:** `PLANNED_LOCKED`
 
-**Objective:** Make installs, builds, releases, and GitHub governance reproducible and tamper-evident.
+**Objective:** Make builds reproducible and releases verifiable.
 
-**Dependencies:** All implemented code lots.
+**Dependencies:** Lots 01–07.
 
-**Deliverables:** Deterministic Python lockfile; verified frontend lockfile; `npm ci`; Python/npm SBOMs; checksums/attestations; actions pinned by SHA; CODEOWNERS; protected `main`; secret scanning; release/rollback/dependency/secret runbooks.
+**Deliverables:** Reproducible Python lock; deterministic frontend install; SBOMs; checksums; attestations; pinned actions; CODEOWNERS; strict `main` protection; secret scanning; release procedure; rollback procedure; artifact retention.
 
-**Tests:** Two clean installs; lock drift; SBOM contents; artifact checksum; action pinning; rollback rehearsal; secret fixture detection.
+**Tests:** Clean rebuild; dependency integrity; SBOM generation; secret fixture detection; protected-branch rules; signed or attested artifact verification; rollback rehearsal.
 
-**Exit gate:** A release rebuilds from source with the same dependencies and required GitHub checks cannot be bypassed.
+**Exit gate:** A release can be rebuilt from source with the same dependencies and cannot bypass required checks.
 
-**Non-goals:** Claiming manual repository protections are active before verification.
+**Non-goals:** Manual undocumented production releases.
 
 ## Lot 25 — Observability, performance, resilience, and recovery
 
 **Status:** `PLANNED_LOCKED`
 
-**Objective:** Prove correctness, diagnosability, and recoverability under production load and dependency failure.
+**Objective:** Prove operational reliability under expected load and failure.
 
 **Dependencies:** Lots 02–24.
 
-**Deliverables:** Structured logs/metrics/traces; redaction; freshness/SLA dashboards; queue/retry/circuit/dead-letter metrics; latency budgets; quota monitoring; backups/restores; disaster recovery; chaos scenarios; capacity thresholds; alert ownership/runbooks.
+**Deliverables:** Structured logs; traces; metrics; freshness and queue dashboards; latency and quota views; alerts; backups; restore runbooks; capacity thresholds; load tests; fault injection; degraded modes; recovery objectives.
 
-**Tests:** Load; soak; worker kill; database interruption; provider 429/5xx; duplicate delivery; clock skew; backup restore; stale source; partial UI; resource limits.
+**Tests:** Load and soak; quota exhaustion; provider outage; database restart; worker crash; duplicate delivery; backup restore; degraded UI; alert delivery; recovery-time measurement.
 
-**Exit gate:** Service objectives are met, backup restoration succeeds, and injected failures preserve invariants.
+**Exit gate:** Restore succeeds, invariants survive injected failures, and capacity limits are measured rather than assumed.
 
-**Non-goals:** Redis, OpenSearch, or microservices without measured need.
+**Non-goals:** Production scale claims without repeatable evidence.
 
-## Lot 26 — Controlled pilot, production gate, and premium scale
+## Lot 26 — Controlled pilot and production gate
 
 **Status:** `PLANNED_LOCKED`
 
-**Objective:** Move from engineering validation to a governed analyst pilot and evidence-based production expansion.
+**Objective:** Validate the complete standalone product with controlled users and approved data.
 
-**Dependencies:** Lots 00–25, excluding deferred Lot 23 unless a pilot source requires it.
+**Dependencies:** Lots 00–25, with deferred capabilities either completed or explicitly excluded from the pilot.
 
-**Deliverables:** Pilot tenant and roles; approved source portfolio; privacy/retention review; analyst training; quality/precision/review-time/conversion/cost metrics; false-positive and false-merge review; go/no-go checklist; rollback; production deployment/support; premium-provider evaluation and scale plan.
+**Deliverables:** Pilot tenant; least-privilege roles; approved source portfolio; privacy and retention review; analyst training; native alert, investigation, org-map, contact, task, opportunity, and engagement workflows; quality and conversion metrics; operational runbooks; rollback plan; premium-source evaluation.
 
-**Tests:** Pilot replay; authorization; deletion/suppression; source outage; restore; load; analyst workflow; CRM dry run; quality benchmark; operational tabletop.
+**Tests:** End-to-end alert-to-opportunity workflow; suppression and correction exercise; source outage; backup restore; permissions; contact-purpose review; native commercial workflow; analyst acceptance; rollback rehearsal; go/no-go review.
 
-**Exit gate:** A formal `GO`, `CONDITIONAL_GO`, or `NO_GO` decision is recorded with evidence and rollback has been rehearsed.
+**Exit gate:** Governance, product, data-quality, security, resilience, and business-value evidence supports an explicit `GO`, `CONDITIONAL_GO`, or `NO_GO` decision.
 
-**Non-goals:** Uncontrolled source growth, autonomous prospecting, or premium purchases without measured value and legal review.
-
-## Phase promotion record
-
-For each lot promoted to `IMPLEMENTED_VALIDATED`, its closing pull request records the lot number, final SHA, CI run, test count, line/branch coverage, Mypy file count, migration result, dependency audits, frontend typecheck/build, data limitations, and next locked lot.
+**Non-goals:** Broad production rollout before blockers close or unsupported claims of complete coverage.
