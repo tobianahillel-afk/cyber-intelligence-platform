@@ -61,14 +61,14 @@ def test_health() -> None:
     response = client.get("/health")
 
     assert response.status_code == 200
-    assert response.json() == {"status": "ok", "version": "0.10.0"}
+    assert response.json() == {"status": "ok", "version": "0.11.0"}
 
 
 def test_application_factory_builds_independent_app() -> None:
     application = create_app()
 
     assert application is not app
-    assert application.version == "0.10.0"
+    assert application.version == "0.11.0"
 
 
 def test_validate_source_policy() -> None:
