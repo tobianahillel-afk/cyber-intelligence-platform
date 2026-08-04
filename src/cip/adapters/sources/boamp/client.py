@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from datetime import date
 
 import httpx
 
@@ -12,6 +13,7 @@ class BoampSourceResponseError(RuntimeError):
 @dataclass(frozen=True, slots=True)
 class BoampCheckpoint:
     latest_idweb: str | None = None
+    latest_publication_date: str | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -21,7 +23,7 @@ class BoampFetchResult:
 
 class BoampClient:
     MAX_RESPONSE_BYTES = 5_000_000
-    DEFAULT_LIMIT = 100
+    PAGE_SIZE = 100
     SELECT_FIELDS = (
         "idweb",
         "objet",
@@ -41,15 +43,18 @@ class BoampClient:
         self._client = client
         self._records_url = records_url
 
-    def fetch(self) -> BoampFetchResult:
+    def fetch_page(self, *, since_date: date, offset: int) -> BoampFetchResult:
+        if offset < 0:
+            raise ValueError("offset cannot be negative")
         response = self._client.get(
             self._records_url,
             headers={"Accept": "application/json"},
             params={
                 "select": ",".join(self.SELECT_FIELDS),
+                "where": f"dateparution >= date'{since_date.isoformat()}'",
                 "order_by": "dateparution desc,idweb desc",
-                "limit": self.DEFAULT_LIMIT,
-                "offset": 0,
+                "limit": self.PAGE_SIZE,
+                "offset": offset,
             },
         )
         response.raise_for_status()
