@@ -63,7 +63,7 @@ def test_worker_cancels_job_when_source_was_paused_after_queueing() -> None:
     )
 
     assert outcome.status is WorkerStatus.CANCELLED
-    with Session(factory.kw["bind"]) as session:
+    with factory() as session:
         job = session.scalar(select(CollectionJobRecord))
         assert job is not None
         assert job.status == "cancelled"
@@ -95,7 +95,7 @@ def test_scheduler_skips_expired_authorization_and_updates_health() -> None:
     )
 
     assert run_scheduler_once(runtime, now=NOW) == 0
-    with Session(factory.kw["bind"]) as session:
+    with factory() as session:
         assert session.scalar(select(func.count(CollectionJobRecord.id))) == 0
         health = get_source_health(session, "reference-synthetic")
         assert health.freshness_state is FreshnessState.AUTHORIZATION_EXPIRED
