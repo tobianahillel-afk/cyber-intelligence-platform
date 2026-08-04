@@ -396,6 +396,11 @@ def _detail(
         if relevant
         else "<p>Accounting and forecasting.</p>"
     )
+    qualifications = (
+        "<p>Detection engineering.</p>"
+        if relevant
+        else "<p>Financial reporting and budgeting.</p>"
+    )
     return {
         "id": identifier,
         "name": title,
@@ -408,7 +413,7 @@ def _detail(
         "jobAd": {
             "sections": {
                 "jobDescription": {"text": description},
-                "qualifications": {"text": "<p>Detection engineering.</p>"},
+                "qualifications": {"text": qualifications},
             }
         },
     }
