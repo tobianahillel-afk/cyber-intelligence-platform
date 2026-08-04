@@ -20,6 +20,7 @@ def test_settings_have_safe_local_defaults() -> None:
     assert settings.environment == "development"
     assert settings.api_host == "127.0.0.1"
     assert settings.source_registry_path == Path("policies/sources.example.yml")
+    assert settings.greenhouse_board_registry_path == Path("policies/greenhouse_boards.yml")
     assert settings.collection_schedule_path == Path("policies/collection_schedules.yml")
     assert settings.scheduler_poll_seconds == 5.0
     assert settings.worker_poll_seconds == 2.0
