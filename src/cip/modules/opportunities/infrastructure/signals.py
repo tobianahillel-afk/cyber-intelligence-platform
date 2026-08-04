@@ -26,19 +26,25 @@ def store_commercial_signal(session: Session, signal: CommercialSignal) -> UUID:
     values = _signal_values(signal)
     dialect = session.get_bind().dialect.name
     if dialect == "postgresql":
-        statement = postgresql_insert(CommercialSignalRecord).values(**values)
+        postgres_statement = postgresql_insert(CommercialSignalRecord).values(**values)
         session.execute(
-            statement.on_conflict_do_update(
+            postgres_statement.on_conflict_do_update(
                 index_elements=["idempotency_key"],
-                set_={name: getattr(statement.excluded, name) for name in _MUTABLE_FIELDS},
+                set_={
+                    name: getattr(postgres_statement.excluded, name)
+                    for name in _MUTABLE_FIELDS
+                },
             )
         )
     elif dialect == "sqlite":
-        statement = sqlite_insert(CommercialSignalRecord).values(**values)
+        sqlite_statement = sqlite_insert(CommercialSignalRecord).values(**values)
         session.execute(
-            statement.on_conflict_do_update(
+            sqlite_statement.on_conflict_do_update(
                 index_elements=["idempotency_key"],
-                set_={name: getattr(statement.excluded, name) for name in _MUTABLE_FIELDS},
+                set_={
+                    name: getattr(sqlite_statement.excluded, name)
+                    for name in _MUTABLE_FIELDS
+                },
             )
         )
     else:
