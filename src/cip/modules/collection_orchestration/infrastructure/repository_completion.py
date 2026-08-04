@@ -64,6 +64,26 @@ def complete_job(
     return written
 
 
+def cancel_claimed_job(
+    session: Session,
+    claimed: ClaimedJob,
+    *,
+    now: datetime,
+    reason: str,
+) -> None:
+    current = require_aware_utc(now, field_name="now")
+    record = owned_running_job(session, claimed=claimed, now=current)
+    normalized_reason = reason.strip()
+    if not normalized_reason or len(normalized_reason) > 100:
+        raise ValueError("cancellation reason must be non-empty and at most 100 characters")
+    record.status = JobStatus.CANCELLED.value
+    record.finished_at = current
+    record.lease_owner = None
+    record.lease_expires_at = None
+    record.error_code = normalized_reason
+    record.error_message = "collection cancelled before adapter execution"
+
+
 def advance_checkpoint(
     session: Session,
     *,
