@@ -23,6 +23,7 @@ class Settings(BaseSettings):
         min_length=1,
     )
     source_registry_path: Path = Path("policies/sources.example.yml")
+    identity_source_registry_path: Path = Path("policies/identity_sources.yml")
     greenhouse_board_registry_path: Path = Path("policies/greenhouse_boards.yml")
     lever_site_registry_path: Path = Path("policies/lever_sites.yml")
     smartrecruiters_company_registry_path: Path = Path(
