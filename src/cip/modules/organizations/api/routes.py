@@ -9,9 +9,9 @@ from sqlalchemy.orm import Session
 from cip.modules.organizations.api.schemas import (
     IdentityResponse,
     MergeCandidatePageResponse,
+    MergeCandidateResponse,
     MergeCandidateReviewRequest,
     MergeCandidateReviewResponse,
-    MergeCandidateResponse,
 )
 from cip.modules.organizations.domain.identity import MatchState
 from cip.modules.organizations.infrastructure.identity_persistence import (
