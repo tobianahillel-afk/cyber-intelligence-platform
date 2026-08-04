@@ -148,6 +148,8 @@ def evaluate_siem_soc_buying_intent(
         confidence=confidence,
         last_evidence_at=latest_evidence_at,
         data_quality=data_quality,
+        created_at=evaluated_at,
+        updated_at=evaluated_at,
     )
     return OpportunityEvaluation(hypothesis=hypothesis, opportunity=opportunity)
 
