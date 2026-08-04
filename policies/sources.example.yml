@@ -89,6 +89,51 @@ sources:
       Full notice documents are not stored. Results are re-filtered locally before
       an evidence-backed commercial signal can be created.
 
+  - id: boamp
+    name: BOAMP Explore API
+    base_url: https://boamp-datadila.opendatasoft.com/api/explore/v2.1/catalog/datasets/boamp/records
+    status: enabled
+    source_type: api
+    owner: Direction de l'information légale et administrative
+    terms_url: https://www.data.gouv.fr/dataservices/api-bulletin-officiel-des-annonces-des-marches-publics-boamp
+    licence: Licence Ouverte 2.0
+    allowed_data_categories:
+      - public_tender
+      - organization_metadata
+    prohibited_data_categories:
+      - credential
+      - victim_file
+      - private_communication
+      - private_personal_data
+      - restricted_content
+    rate_limit_per_minute: 4
+    retention_days: 730
+    attribution_required: true
+    raw_content_storage: false
+    human_review_required: false
+    authorization:
+      status: approved
+      document_reference: boamp-open-api-lo2-2026-08-04
+      reviewed_at: 2026-08-04T10:25:00Z
+      expires_at: null
+      approved_hosts:
+        - boamp-datadila.opendatasoft.com
+      approved_path_prefixes:
+        - /api/explore/v2.1/catalog/datasets/boamp/records
+      approved_purposes:
+        - procurement-intelligence
+      automated_collection_allowed: true
+      raw_storage_allowed: false
+    economics:
+      commercial_value: high
+      monthly_cost: 0
+      implementation_cost: medium
+      maintenance_cost: medium
+      expected_stability: high
+    notes: >-
+      Uses the official DILA Explore API with a dated bounded window and selected
+      public metadata. Full notice documents and embedded contact blocks are not stored.
+
   - id: search-manual-review
     name: Search-engine analyst review
     base_url: https://www.google.com

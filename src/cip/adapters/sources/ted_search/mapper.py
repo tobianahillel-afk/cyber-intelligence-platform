@@ -5,6 +5,7 @@ from datetime import UTC, datetime
 from hashlib import sha256
 from uuid import NAMESPACE_URL, UUID, uuid5
 
+from cip.adapters.sources.procurement_signals import matched_procurement_terms
 from cip.adapters.sources.ted_search.schemas import TedNotice
 from cip.modules.collection_orchestration.application.ports import CommercialProjection
 from cip.modules.evidence.domain.entities import Evidence
@@ -17,19 +18,6 @@ from cip.shared.kernel.time import require_aware_utc
 ADAPTER_ID = "ted-search-api"
 ADAPTER_VERSION = "1.0.0"
 SOURCE_ID = "ted-search"
-SIGNAL_TERMS = (
-    "siem",
-    "soc",
-    "security operations center",
-    "cybersecurity",
-    "cyber security",
-    "cybersécurité",
-    "cybersecurite",
-    "managed detection and response",
-    "mdr",
-    "xdr",
-    "security monitoring",
-)
 COUNTRY_CODES = {
     "AUT": "AT",
     "BEL": "BE",
@@ -73,19 +61,13 @@ def map_ted_notice(
 ) -> tuple[RawObservation, CommercialProjection] | None:
     collected = require_aware_utc(collected_at, field_name="collected_at")
     title = notice.title()
-    matched_terms = _matched_terms(title)
+    matched_terms = matched_procurement_terms(title)
     if not matched_terms:
         return None
     buyer = notice.buyer()
     country = COUNTRY_CODES.get(notice.country() or "")
     notice_url = f"https://ted.europa.eu/en/notice/{notice.publication_number}/html"
-    payload = notice.model_dump(mode="json", by_alias=True)
-    payload_bytes = json.dumps(
-        payload,
-        sort_keys=True,
-        separators=(",", ":"),
-    ).encode()
-    payload_hash = sha256(payload_bytes).hexdigest()
+    payload_hash = _payload_hash(notice)
     published_at = _aware(notice.publication_timestamp())
     deadline = _aware(notice.deadline_timestamp())
     usable_deadline = deadline if deadline is not None and deadline > collected else None
@@ -149,9 +131,10 @@ def map_ted_notice(
     return observation, CommercialProjection(organization, evidence, signal)
 
 
-def _matched_terms(title: str) -> tuple[str, ...]:
-    normalized = title.casefold()
-    return tuple(term for term in SIGNAL_TERMS if term in normalized)
+def _payload_hash(notice: TedNotice) -> str:
+    payload = notice.model_dump(mode="json", by_alias=True)
+    encoded = json.dumps(payload, sort_keys=True, separators=(",", ":")).encode()
+    return sha256(encoded).hexdigest()
 
 
 def _summary(title: str, buyer: str, deadline: datetime | None) -> str:

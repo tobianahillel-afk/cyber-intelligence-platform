@@ -12,7 +12,7 @@ The product is designed to answer:
 
 ## Current implementation status
 
-The repository contains an executable foundation, a durable collection pipeline, real official-source adapters, and the first live opportunity workflow:
+The repository contains an executable foundation, a durable collection pipeline, three official-source adapters, and a live opportunity workflow:
 
 - FastAPI application factory, source-governance endpoints, and opportunity list/detail/action APIs;
 - framework-independent domain modules for organizations, evidence, cyber events, raw observations, opportunity scoring, retention, suppression, source accounts, product metrics, collection orchestration, and analyst-reviewed opportunities;
@@ -23,8 +23,12 @@ The repository contains an executable foundation, a durable collection pipeline,
 - executable retention rules;
 - machine-readable source and collection-schedule registries;
 - an official CISA KEV feed adapter with conditional HTTP requests, size/type checks, strict schemas, checkpoints, provenance, and network-free tests;
-- an official anonymous TED Search API adapter for active European SIEM/SOC procurement notices, with selected-field retrieval, local defensive filtering, deterministic buyer/evidence/signal mapping, checkpoints, and direct Opportunity Inbox projection;
-- durable collection jobs with deterministic idempotency keys, leases, retries, bounded exponential backoff, circuit breakers, dead letters, and recovery after interruption;
+- an official anonymous TED Search API adapter for active European SIEM/SOC procurement notices;
+- an official BOAMP/DILA Explore API adapter for recent French public-procurement notices, with a dated paginated window, checkpointing, and explicit handling of notices, rectifications, cancellations, results, and expired deadlines;
+- selected-field collection only: full procurement documents and embedded contact blocks are not stored;
+- local defensive filtering before a remote result can become a commercial signal;
+- deterministic buyer, evidence, observation, signal, hypothesis, and opportunity identifiers;
+- durable collection jobs with leases, retries, bounded exponential backoff, circuit breakers, dead letters, and recovery after interruption;
 - atomic observation/checkpoint/job completion and observation deduplication;
 - transactional commercial projection: a collection job cannot be marked successful if organization, evidence, signal, or opportunity persistence fails;
 - source freshness, queue lag, error, dead-letter, and volume metrics;
@@ -34,20 +38,22 @@ The repository contains an executable foundation, a durable collection pipeline,
 - explainable score components for tender intent, hiring, corroboration, freshness, confidence, and single-source uncertainty;
 - analyst qualification, rejection, snooze, enrichment request, reopen, score-component override, and immutable review history;
 - a Next.js Opportunity Inbox and detail workspace backed by FastAPI and PostgreSQL, with no demonstration fixtures;
-- loading, empty, stale-context, backend-unavailable, and not-found UI states;
+- loading, empty, backend-unavailable, and not-found UI states;
+- automated architecture tests that reject Python application files above 400 lines and duplicate function or class definitions in a scope;
+- a previously monolithic 532-line collection repository split into queue, completion, failure, circuit, and shared-invariant modules behind a stable facade;
 - pinned direct dependencies, dependency audits, Ruff, Mypy, migration validation, frontend build validation, and 90% branch-aware coverage gates;
 - Dependabot, CODEOWNERS, contribution rules, a PR template, and manually runnable CodeQL.
 
 Not yet implemented:
 
-- BOAMP, DECP, careers/ATS, or other production commercial-signal adapters beyond TED;
+- DECP, careers/ATS, or other production commercial-signal adapters beyond TED and BOAMP;
 - Chromium/browser workers and download quarantine runtime;
 - named professional-contact enrichment and organization-chart workflows;
 - OpenSearch, Redis, object storage, CRM integration, or autonomous outreach;
 - active LinkedIn collection;
 - any executable BrixHub integration.
 
-The live opportunity pipeline can now receive real TED public-tender signals. It does not claim that BOAMP, DECP, job boards, LinkedIn, or other future sources are already connected.
+The live Opportunity Inbox can now receive real TED and BOAMP public-tender signals. It does not claim that DECP, job boards, LinkedIn, Chromium sources, or other future sources are already connected.
 
 Redis is not required for the current durable queue: PostgreSQL owns scheduling, locking, leases, checkpoints, and recovery. Redis should be introduced only when measured throughput or coordination requirements justify it.
 
@@ -120,7 +126,7 @@ npm run typecheck
 npm run build
 ```
 
-The TED commercial-adapter phase was independently validated with 275 passing tests and 94.42% combined line-and-branch coverage. Mypy strict passed on 101 source files, the PostgreSQL upgrade/downgrade/upgrade cycle passed, the TED orchestration adapter reached 100% coverage, and the Next.js audit, typecheck, and production build passed.
+The BOAMP and structure-guardrail phase was independently validated with 302 passing tests and 94.51% combined line-and-branch coverage. Mypy strict passed on 113 source files, the PostgreSQL upgrade/downgrade/upgrade cycle passed, the BOAMP orchestration adapter reached 100% coverage, the architecture test suite passed, and the Next.js audit, typecheck, and production build passed.
 
 ## Architecture
 
@@ -145,6 +151,7 @@ policies/
   product_metrics.yml          quality and commercial-value targets
 
 tests/
+  architecture/                file-size and duplicate-definition gates
   unit/                        domain, adapter, governance, persistence, and recovery tests
   integration/                 persisted source-to-opportunity workflows
 ```
@@ -164,7 +171,9 @@ source registry synchronization
 -> freshness and queue metrics
 ```
 
-A replayed schedule slot cannot create a duplicate job. A replayed observation cannot create a duplicate raw record. If execution stops before the completion transaction commits, the previous checkpoint remains authoritative. A worker whose lease expired cannot commit a late result. A TED job is not successful unless its buyer organization, evidence, commercial signal, and resulting opportunity are also persisted.
+A replayed schedule slot cannot create a duplicate job. A replayed observation cannot create a duplicate raw record. If execution stops before the completion transaction commits, the previous checkpoint remains authoritative. A worker whose lease expired cannot commit a late result. A TED or BOAMP job is not successful unless its associated projections are persisted in the same transaction.
+
+BOAMP uses a dated, paginated window. If the number of records exceeds the configured safe pagination budget, the job fails visibly and its checkpoint does not advance; partial success is never presented as complete collection.
 
 ## Opportunity lifecycle
 
@@ -197,7 +206,7 @@ official API
 -> manual import
 ```
 
-The current executable adapters use the official CISA KEV JSON feed and the official TED Search API. Chromium is intentionally deferred until API and static-HTTP acquisition, normalization, provenance, and value metrics are stable.
+The current executable adapters use the official CISA KEV JSON feed, the official TED Search API, and the official BOAMP/DILA Explore API. Chromium remains deferred until structured API and static-HTTP collection, provenance, normalization, and value metrics are stable.
 
 CAPTCHA, bot challenges, MFA, changed terms, or account-security prompts must produce a safe pause and human task. They are not automatically bypassed. Temporary-account rotation, copied cookies, CAPTCHA-solving services, and access-control circumvention are out of scope.
 
@@ -229,18 +238,20 @@ L7 commercial opportunity
 L8 UI and search read models
 ```
 
-The CISA adapter currently implements L0 through L1. The TED adapter implements L0 through L5 and feeds the live SIEM/SOC workflow, which implements L5 through L8. Future sources cannot bypass source governance, evidence provenance, deterministic identifiers, or entity-resolution controls.
+The CISA adapter currently implements L0 through L1. TED and BOAMP implement L0 through L5 and feed the live SIEM/SOC workflow, which implements L5 through L8. Future sources cannot bypass source governance, evidence provenance, deterministic identifiers, or entity-resolution controls.
 
 ## Code and test standards
 
 - functions target at most 40 logical lines;
-- handwritten source files target at most 300 lines;
+- handwritten source files target at most 300 lines and are rejected above 400 lines;
 - React components target at most 200 lines;
+- duplicate function or class definitions in a module or class scope are rejected by AST-based tests;
 - API routes contain transport concerns only;
-- source adapters never resolve organizations or calculate opportunities;
+- source adapters do not calculate opportunity scores;
 - scores are calculated by the domain and include a reproducible hash;
 - timestamps must be timezone-aware;
 - every adapter requires policy-denial, schema, mapping, checkpoint, HTTP classification, and failure tests;
+- test suites are separated into architecture, unit, integration, and end-to-end concerns;
 - backend line and branch coverage must remain at least 90%;
 - critical policy and scoring modules target 95%.
 

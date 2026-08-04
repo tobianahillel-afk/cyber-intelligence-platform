@@ -11,6 +11,7 @@ from time import sleep
 from sqlalchemy.orm import Session, sessionmaker
 
 from cip.modules.collection_orchestration.application.adapters import CisaKevAdapter
+from cip.modules.collection_orchestration.application.boamp_adapter import BoampAdapter
 from cip.modules.collection_orchestration.application.ports import CollectionAdapter
 from cip.modules.collection_orchestration.application.scheduler import schedule_due_jobs
 from cip.modules.collection_orchestration.application.ted_adapter import TedSearchAdapter
@@ -82,6 +83,9 @@ def _build_adapters(
     ted_entry = entries_by_id.get(TedSearchAdapter.source_id)
     if ted_entry is not None:
         _register(adapters, TedSearchAdapter(ted_entry, timeout_seconds=timeout_seconds))
+    boamp_entry = entries_by_id.get(BoampAdapter.source_id)
+    if boamp_entry is not None:
+        _register(adapters, BoampAdapter(boamp_entry, timeout_seconds=timeout_seconds))
     return adapters
 
 

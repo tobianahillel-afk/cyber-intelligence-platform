@@ -65,16 +65,21 @@ def test_runtime_syncs_sources_and_schedules_idempotently(tmp_path: Path) -> Non
     get_metadata().create_all(create_database_engine(settings.database_url))
 
     runtime = build_collection_runtime(settings)
-    assert run_scheduler_once(runtime, now=NOW) == 2
+    assert run_scheduler_once(runtime, now=NOW) == 3
     assert run_scheduler_once(runtime, now=NOW) == 0
 
     with session_scope(runtime.factory) as session:
-        cisa = session.get(SourceRecord, "cisa-kev")
-        ted = session.get(SourceRecord, "ted-search")
+        sources = {
+            source_id: session.get(SourceRecord, source_id)
+            for source_id in ("boamp", "cisa-kev", "ted-search")
+        }
         jobs = tuple(session.scalars(select(CollectionJobRecord)))
-    assert cisa is not None and cisa.automated_collection_allowed is True
-    assert ted is not None and ted.automated_collection_allowed is True
+    assert all(
+        source is not None and source.automated_collection_allowed is True
+        for source in sources.values()
+    )
     assert {(job.source_id, job.adapter_id) for job in jobs} == {
+        ("boamp", "boamp-explore-api"),
         ("cisa-kev", "cisa-kev-feed"),
         ("ted-search", "ted-search-api"),
     }

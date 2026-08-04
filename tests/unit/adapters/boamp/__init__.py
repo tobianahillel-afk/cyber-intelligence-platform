@@ -1,0 +1,1 @@
+"""BOAMP adapter unit tests."""
