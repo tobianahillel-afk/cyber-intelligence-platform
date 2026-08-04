@@ -105,17 +105,23 @@ def test_repository_collection_schedule_loads() -> None:
     assert set(schedules_by_identity) == {
         ("boamp", "boamp-explore-api"),
         ("cisa-kev", "cisa-kev-feed"),
+        ("greenhouse-job-board", "greenhouse-job-board-api"),
         ("ted-search", "ted-search-api"),
     }
     cisa = schedules_by_identity[("cisa-kev", "cisa-kev-feed")]
     ted = schedules_by_identity[("ted-search", "ted-search-api")]
     boamp = schedules_by_identity[("boamp", "boamp-explore-api")]
+    greenhouse = schedules_by_identity[
+        ("greenhouse-job-board", "greenhouse-job-board-api")
+    ]
     assert cisa.interval_seconds == 900
     assert cisa.retry_policy.max_attempts == 4
     assert ted.interval_seconds == 1800
     assert ted.retry_policy.base_delay_seconds == 60
     assert boamp.interval_seconds == 1800
     assert boamp.retry_policy.max_delay_seconds == 1800
+    assert greenhouse.interval_seconds == 1800
+    assert greenhouse.retry_policy.circuit_failure_threshold == 3
 
 
 @pytest.mark.parametrize(
