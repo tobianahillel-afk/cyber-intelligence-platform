@@ -6,7 +6,10 @@ from datetime import datetime
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from cip.modules.source_portfolio.application.backfill import pause_pending_backfills
+from cip.modules.source_portfolio.application.backfill import (
+    pause_pending_backfills,
+    resume_paused_backfills,
+)
 from cip.modules.source_portfolio.application.errors import SourcePortfolioStateError
 from cip.modules.source_portfolio.application.health import ensure_health
 from cip.modules.source_portfolio.application.records import (
@@ -192,6 +195,8 @@ def _change_source_status(
     record.updated_at = changed_at
     if target in {CatalogStatus.PAUSED, CatalogStatus.DISABLED}:
         pause_pending_backfills(session, record.source_id, now=changed_at)
+    elif target is CatalogStatus.EXECUTABLE:
+        resume_paused_backfills(session, record.source_id, now=changed_at)
     audit(session, record.source_id, f"source_{target.value}", actor, changed_at)
     session.flush()
     return to_catalog_entry(session, record)
