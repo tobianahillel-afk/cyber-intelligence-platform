@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections.abc import Mapping
 from uuid import UUID
 
 from sqlalchemy import select
@@ -12,7 +13,7 @@ from cip.modules.opportunities.infrastructure.models import CommercialSignalReco
 
 
 def store_commercial_signal(session: Session, signal: CommercialSignal) -> UUID:
-    values = {
+    values: dict[str, object] = {
         "id": signal.id,
         "organization_id": signal.organization_id,
         "evidence_id": signal.evidence_id,
@@ -29,13 +30,17 @@ def store_commercial_signal(session: Session, signal: CommercialSignal) -> UUID:
     }
     dialect = session.get_bind().dialect.name
     if dialect == "postgresql":
-        statement = postgresql_insert(CommercialSignalRecord).values(**values)
-        statement = statement.on_conflict_do_nothing(index_elements=["idempotency_key"])
-        session.execute(statement)
+        postgres_statement = postgresql_insert(CommercialSignalRecord).values(**values)
+        postgres_statement = postgres_statement.on_conflict_do_nothing(
+            index_elements=["idempotency_key"]
+        )
+        session.execute(postgres_statement)
     elif dialect == "sqlite":
-        statement = sqlite_insert(CommercialSignalRecord).values(**values)
-        statement = statement.on_conflict_do_nothing(index_elements=["idempotency_key"])
-        session.execute(statement)
+        sqlite_statement = sqlite_insert(CommercialSignalRecord).values(**values)
+        sqlite_statement = sqlite_statement.on_conflict_do_nothing(
+            index_elements=["idempotency_key"]
+        )
+        session.execute(sqlite_statement)
     else:
         _store_portable(session, values, signal.idempotency_key)
     session.flush()
@@ -51,7 +56,7 @@ def store_commercial_signal(session: Session, signal: CommercialSignal) -> UUID:
 
 def _store_portable(
     session: Session,
-    values: dict[str, object],
+    values: Mapping[str, object],
     idempotency_key: str,
 ) -> None:
     existing = session.scalar(
@@ -60,4 +65,4 @@ def _store_portable(
         )
     )
     if existing is None:
-        session.add(CommercialSignalRecord(**values))
+        session.add(CommercialSignalRecord(**dict(values)))
