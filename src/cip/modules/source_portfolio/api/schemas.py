@@ -64,6 +64,9 @@ class SourceHealthResponse(BaseModel):
 
     freshness_state: str
     schema_state: str
+    volume_state: str
+    field_population_state: str
+    circuit_state: str
     last_attempt_at: datetime | None
     last_success_at: datetime | None
     last_source_record_at: datetime | None
@@ -78,6 +81,9 @@ class SourceHealthResponse(BaseModel):
         return cls(
             freshness_state=value.freshness_state.value,
             schema_state=value.schema_state.value,
+            volume_state=value.volume_state.value,
+            field_population_state=value.field_population_state.value,
+            circuit_state=value.circuit_state,
             last_attempt_at=value.last_attempt_at,
             last_success_at=value.last_success_at,
             last_source_record_at=value.last_source_record_at,
