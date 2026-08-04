@@ -2,9 +2,11 @@
 
 ## Objective
 
-The test suite must prevent regressions in collection, parsing, normalization, entity resolution, scoring, privacy controls, browser behavior, downloads, APIs, and UI workflows.
+The test suite must prevent regressions in collection, parsing, normalization, entity resolution, scoring, privacy controls, browser behavior, downloads, APIs, UI workflows, and commercial intelligence quality.
 
-Coverage is a quality gate, not the only measure of quality.
+Coverage is a quality gate, not the only measure of quality. A source adapter with high code coverage but poor resolution, duplicate handling, correction behavior, or commercial usefulness is not complete.
+
+[`SOURCE_INTEGRATION_TEST_MATRIX.md`](SOURCE_INTEGRATION_TEST_MATRIX.md) is mandatory for roadmap lots 10 through 28. It defines the complete source-to-opportunity release path from catalog governance through measurable client-finding value.
 
 ## Coverage targets
 
@@ -20,10 +22,13 @@ Coverage is a quality gate, not the only measure of quality.
 The following target at least 95% line and branch coverage:
 
 - source governance;
-- authorization and redaction;
+- provider onboarding, authorization, and redaction;
+- source catalog and adapter capability decisions;
+- checkpoint, backfill, and incremental convergence;
 - opportunity scoring;
+- signal fusion and need-hypothesis invalidation;
 - entity-resolution decisions;
-- suppression and deletion propagation;
+- suppression, correction, retraction, and deletion propagation;
 - download quarantine policy;
 - browser-job policy;
 - contract-renewal estimation;
@@ -31,7 +36,7 @@ The following target at least 95% line and branch coverage:
 
 ### Adapter code
 
-Adapters target at least 90% for deterministic parsing, mapping, pagination, checkpoint, and failure classification code.
+Adapters target at least 90% for deterministic parsing, mapping, pagination, checkpoint, backfill, incremental refresh, correction, tombstone, and failure-classification code.
 
 External-library internals, generated schemas, and unavoidable browser-engine behavior are excluded only through documented configuration. Exclusions must not hide business branches.
 
@@ -52,7 +57,9 @@ Examples:
 - challenge-page classification;
 - archive-size validation;
 - contact suppression;
-- state transition.
+- state transition;
+- signal identity;
+- claim correction and hypothesis invalidation.
 
 Unit tests must be fast, deterministic, and network-free.
 
@@ -67,10 +74,12 @@ Targets:
 - URL and domain normalization;
 - entity-match scores;
 - pagination cursors;
+- backfill partitions;
 - archive limits;
 - score bounds;
 - state machines;
-- deduplication keys.
+- deduplication keys;
+- relationship validity intervals.
 
 Example invariants:
 
@@ -78,7 +87,9 @@ Example invariants:
 - normalizing an already normalized domain is idempotent;
 - a suppressed contact never appears in export read models;
 - a retry delay never exceeds the configured maximum;
-- an archive exceeding the uncompressed limit is always rejected.
+- an archive exceeding the uncompressed limit is always rejected;
+- replaying the same source record cannot create another active commercial signal;
+- a retracted claim cannot remain the sole support for an active need hypothesis.
 
 ## 3. Parser fixture tests
 
@@ -94,13 +105,15 @@ Every adapter stores sanitized fixtures representing:
 - provider error encoded as HTTP 200;
 - encoding edge case;
 - unusually large field;
-- removed or tombstoned record.
+- removed or tombstoned record;
+- corrected record;
+- retracted record where the provider supports it.
 
-Fixtures must not contain real secrets, private messages, credentials, or unrestricted personal exports.
+Fixtures must not contain real secrets, private messages, credentials, victim files, or unrestricted personal exports.
 
 ## 4. Golden or snapshot tests
 
-Use for stable parser and mapper outputs where a human-readable expected result is valuable.
+Use for stable parser, mapper, observation, signal, and explanation outputs where a human-readable expected result is valuable.
 
 Golden files must be reviewed like code. Updates require an explanation and should not be accepted automatically because a test failed.
 
@@ -110,17 +123,20 @@ The source SDK runs a common test suite against every adapter.
 
 Required contracts:
 
-- valid manifest;
-- stable source ID;
-- no unauthorized host;
-- no direct domain-table writes;
-- deterministic mapping for the same input;
+- valid source and capability manifests;
+- stable source ID and adapter version;
+- no unauthorized host or path;
+- no direct domain, signal, score, alert, or opportunity table writes;
+- deterministic mapping for the same input and mapper version;
 - idempotent checkpoint handling;
 - bounded retries;
 - redacted logs;
-- correct incremental and backfill capabilities;
+- correct incremental, backfill, lookup, webhook, and priority-refresh declarations;
+- backfill and incremental convergence;
+- correction, tombstone, and retraction behavior;
 - correct failure classification;
-- policy denial before network access.
+- policy denial before network access;
+- authorization expiry disables execution.
 
 ## 6. HTTP transport tests
 
@@ -139,7 +155,8 @@ Use mocked or recorded permitted responses to test:
 - Retry-After;
 - unexpected content type;
 - redirect to an unauthorized host;
-- DNS policy rejection.
+- DNS policy rejection;
+- source schema or ownership change.
 
 No routine CI test depends on a live third-party site.
 
@@ -167,7 +184,7 @@ Simulated pages cover:
 - page crash;
 - browser-process crash.
 
-Expected behavior for CAPTCHA, bot challenges, or account-security prompts is a safe pause and human task, never bypass.
+Expected behavior for CAPTCHA, bot challenges, or account-security prompts is a safe pause and explicit state, never bypass.
 
 ## 8. Browser end-to-end tests
 
@@ -219,6 +236,7 @@ Use safe synthetic fixtures rather than live malware in the standard repository.
 Test:
 
 - dates and original precision;
+- source, publication, event, modification, and retrieval times;
 - timezones;
 - organization suffixes and aliases;
 - IDNA domains;
@@ -229,6 +247,7 @@ Test:
 - monetary ranges;
 - CVE and advisory aliases;
 - technology version expressions;
+- indicator formats;
 - language and transliteration;
 - missing versus empty values.
 
@@ -244,7 +263,7 @@ Measure:
 - missed link rate;
 - analyst-review rate.
 
-Tests must include organizations with similar names, group subsidiaries, renamed companies, shared addresses, shared domains, and conflicting registration identifiers.
+Tests must include organizations with similar names, group subsidiaries, renamed companies, shared addresses, shared domains, CDN and hosting ambiguity, conflicting registration identifiers, victim-brand aliases, product aliases, and provider aliases.
 
 A false merge is treated as more severe than a missed automatic link.
 
@@ -254,17 +273,21 @@ Test each component independently and complete scenarios.
 
 Scenarios:
 
-- confirmed incident plus relevant contact;
+- confirmed incident plus relevant professional role;
 - unconfirmed ransomware claim only;
+- actor claim later denied or retracted;
 - open SIEM tender;
+- contract award and estimated renewal;
 - old technology observation plus recent KEV;
-- estimated contract expiry;
+- exact affected version versus family-only evidence;
 - contradictory evidence;
 - stale data;
-- weak-source penalty;
+- weak-source and copied-upstream penalties;
 - contact suppression;
 - source-policy block;
-- score-version migration.
+- score-version migration;
+- several sources reporting one event;
+- one event supporting several service fits without duplicate opportunity creation.
 
 Every test verifies both numeric output and human-readable explanation.
 
@@ -272,8 +295,9 @@ Every test verifies both numeric output and human-readable explanation.
 
 Test:
 
-- authentication;
-- authorization;
+- anonymous public read access where allowed;
+- protected administrative and mutation operations;
+- authentication and authorization at the deployment boundary;
 - pagination;
 - filters and sorting;
 - idempotency keys;
@@ -283,7 +307,7 @@ Test:
 - rate limits;
 - audit events;
 - OpenAPI compatibility;
-- no raw secret or unrestricted payload exposure.
+- no raw secret or unrestricted provider payload exposure.
 
 ## 14. Persistence integration tests
 
@@ -297,8 +321,11 @@ Test:
 - idempotent consumers;
 - concurrent updates;
 - checkpoint locks;
+- source-record immutability;
 - tombstones;
-- deletion propagation;
+- correction and retraction propagation;
+- deletion and suppression propagation;
+- derived-data invalidation;
 - index rebuild;
 - object quarantine lifecycle.
 
@@ -311,7 +338,8 @@ Every database migration is tested by:
 - verifying constraints and backfill;
 - applying the downgrade when supported;
 - verifying application startup;
-- checking that no protected data becomes exposed.
+- checking that no protected data becomes exposed;
+- verifying that existing analyst decisions survive derived-data schema changes.
 
 ## 16. Frontend component tests
 
@@ -319,14 +347,15 @@ Test:
 
 - loading, empty, partial, stale, error, and success states;
 - score explanations;
-- confidence and claim labels;
+- confidence, claim, confirmation, dispute, and retraction labels;
 - redaction;
 - saved filters;
 - table columns;
 - keyboard navigation;
 - dialogs and confirmation steps;
-- long-running job progress;
-- source-health warnings.
+- long-running backfill and refresh progress;
+- source-health and schema-drift warnings;
+- anonymous read versus protected control-plane states.
 
 ## 17. Frontend end-to-end tests
 
@@ -334,13 +363,15 @@ Critical workflows:
 
 1. Review and qualify an opportunity.
 2. Reject a weak signal and observe score recalculation.
-3. Open an organization and inspect evidence lineage.
+3. Open an organization and inspect evidence lineage and conflicts.
 4. Create and monitor a research job.
-5. Review a manual-action-required browser job.
+5. Review a provider onboarding or manual-action state.
 6. Pause a source and verify UI state.
-7. Suppress a contact and verify removal from export.
+7. Suppress a contact and verify removal from export and engagement views.
 8. Inspect a contract-renewal estimate.
 9. Handle partial source failure without losing existing data.
+10. Compare an actor claim, media report, company statement, and regulator confirmation.
+11. Inspect a stale entity while a bounded refresh is queued.
 
 ## 18. Security tests
 
@@ -357,7 +388,9 @@ Automated checks include:
 - authorization matrix tests;
 - object-storage access tests;
 - browser sandbox configuration tests;
-- malicious-file pipeline tests.
+- malicious-file pipeline tests;
+- anonymous-session minimization;
+- provider scope and authorization-expiry tests.
 
 ## 19. Resilience and chaos tests
 
@@ -373,22 +406,27 @@ Inject failures:
 - parser version changes during backfill;
 - source record changes between pages;
 - clock skew;
-- partial index failure.
+- partial index failure;
+- source authorization expires during a run;
+- a projection fails after source records are committed.
 
-Verify no duplicate opportunities, lost checkpoints, uncontrolled retries, or incorrect success statuses.
+Verify no duplicate opportunities, lost checkpoints, uncontrolled retries, corrupt derived data, or incorrect success statuses.
 
 ## 20. Performance tests
 
 Benchmarks cover:
 
 - records normalized per second;
+- historical backfill throughput;
+- incremental refresh latency;
 - entity-resolution batch time;
-- opportunity recalculation latency;
+- signal and opportunity recalculation latency;
 - list and search query latency;
 - browser-worker concurrency;
 - download and parser resource limits;
 - index rebuild time;
-- large organization timeline rendering.
+- large organization timeline rendering;
+- source portfolio scheduling under quota and cost budgets.
 
 Performance thresholds are stored in versioned configuration and tested in scheduled CI rather than every small commit.
 
@@ -400,12 +438,16 @@ Monitor:
 
 - parsed record count;
 - field population rates;
-- duplicate rate;
+- prohibited-field rejection;
+- duplicate rate by layer;
 - entity-link decisions;
-- number and distribution of signals;
+- false merge and review rates;
+- number and distribution of signals and hypotheses;
 - opportunity score distribution;
+- contradiction, correction, and retraction behavior;
 - contact suppression behavior;
-- freshness calculations.
+- freshness calculations;
+- source incremental value.
 
 Unexpected drift blocks deployment until reviewed.
 
@@ -416,11 +458,29 @@ Automatically enforce:
 - no domain imports of frameworks;
 - no cross-module infrastructure imports;
 - no direct database access from routes;
-- no opportunity imports in source adapters;
+- no opportunity or score imports in source adapters;
+- no direct canonical projection writes from provider transport code;
 - no browser imports outside browser adapters;
 - no files above the hard threshold without exception metadata;
 - no circular package dependencies;
-- frontend feature boundaries.
+- frontend feature boundaries;
+- one authoritative roadmap with continuous, unique lot numbers and status consistency.
+
+## 23. Commercial-value tests
+
+Every source family requires a labelled benchmark that measures:
+
+- resolved-organization rate;
+- duplicate suppression;
+- contradiction and false-urgency rates;
+- signal precision and recall;
+- analyst acceptance, rejection, and snooze rates;
+- unique accepted opportunities beyond the existing source portfolio;
+- analyst time saved;
+- cost per accepted opportunity;
+- conversion or downstream usefulness by source family and signal type.
+
+Source ablation tests compare product output with and without the candidate source. A source that increases record volume without adding reliable, unique commercial value fails the product gate.
 
 ## CI pipeline
 
@@ -428,7 +488,7 @@ Automatically enforce:
 
 1. formatting and linting;
 2. type checking;
-3. architecture tests;
+3. architecture and roadmap tests;
 4. unit and property tests;
 5. parser and adapter contract tests;
 6. API and frontend component tests;
@@ -442,8 +502,10 @@ Automatically enforce:
 Additionally run:
 
 - full integration suite;
+- source-record-to-opportunity end-to-end scenarios;
+- backfill and incremental convergence suites;
 - frontend end-to-end suite;
-- browser end-to-end suite;
+- browser end-to-end suite when applicable;
 - container scan;
 - build reproducibility checks.
 
@@ -453,7 +515,9 @@ Additionally run:
 - performance tests;
 - resilience tests;
 - optional approved provider smoke tests;
+- source schema-drift checks;
 - data-quality regression suite;
+- source portfolio incremental-value benchmarks;
 - dependency updates.
 
 ## Test organization
@@ -480,6 +544,7 @@ tests/
   migrations/
   architecture/
   data_quality/
+  commercial_value/
   performance/
   end_to_end/
 ```
@@ -502,7 +567,8 @@ Use:
 - provider-published examples;
 - sanitized and minimized fixtures;
 - approved sandbox data;
-- generated organizations and contacts.
+- generated organizations and contacts;
+- published anonymized research datasets whose licence permits testing.
 
 Do not commit:
 
@@ -510,5 +576,6 @@ Do not commit:
 - cookies or tokens;
 - private exports;
 - leaked datasets;
+- victim files;
 - unrestricted personal data;
 - malicious binaries.
