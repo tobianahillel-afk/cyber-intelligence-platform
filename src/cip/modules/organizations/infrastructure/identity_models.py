@@ -3,7 +3,17 @@ from __future__ import annotations
 from datetime import date, datetime
 from uuid import UUID
 
-from sqlalchemy import Boolean, Date, DateTime, Float, ForeignKey, JSON, String, Text, UniqueConstraint
+from sqlalchemy import (
+    Boolean,
+    Date,
+    DateTime,
+    Float,
+    ForeignKey,
+    JSON,
+    String,
+    Text,
+    UniqueConstraint,
+)
 from sqlalchemy.orm import Mapped, mapped_column
 
 from cip.shared.persistence.base import Base
@@ -138,9 +148,37 @@ class OrganizationMergeCandidateRecord(Base):
     reasons: Mapped[list[str]] = mapped_column(JSON, default=list)
     state: Mapped[str] = mapped_column(String(32), index=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)
-    reviewed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    reviewed_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True),
+        nullable=True,
+    )
     reviewed_by: Mapped[str | None] = mapped_column(String(200), nullable=True)
     review_note: Mapped[str | None] = mapped_column(Text, nullable=True)
+
+
+class OrganizationIdentityClaimRecord(Base):
+    __tablename__ = "organization_identity_claims"
+    __table_args__ = (
+        UniqueConstraint(
+            "source_id",
+            "source_record_key",
+            name="uq_organization_identity_claim_source_record",
+        ),
+    )
+
+    id: Mapped[UUID] = mapped_column(primary_key=True)
+    identity_id: Mapped[UUID] = mapped_column(
+        ForeignKey("organization_identities.id", ondelete="CASCADE"),
+        index=True,
+    )
+    source_id: Mapped[str] = mapped_column(String(100), index=True)
+    source_record_key: Mapped[str] = mapped_column(String(500))
+    source_url: Mapped[str] = mapped_column(String(2_048))
+    selected_fields: Mapped[dict[str, object]] = mapped_column(JSON)
+    confidence: Mapped[float] = mapped_column(Float)
+    observed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)
+    content_hash_sha256: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    conflict_fields: Mapped[list[str]] = mapped_column(JSON, default=list)
 
 
 class OrganizationIdentityEvidenceRecord(Base):
