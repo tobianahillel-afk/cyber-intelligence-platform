@@ -32,7 +32,10 @@ class GleifClient:
         return f"{self.record_url(lei)}/{relationship}-relationship"
 
     def fetch_record(self, lei: str) -> GleifFetchResult:
-        return self._get_json(self.record_url(lei), allow_not_found=False)
+        result = self._get_json(self.record_url(lei), allow_not_found=False)
+        if result is None:
+            raise GleifSourceResponseError("GLEIF record unexpectedly returned no data")
+        return result
 
     def fetch_relationship(
         self,
