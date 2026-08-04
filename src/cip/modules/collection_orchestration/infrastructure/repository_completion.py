@@ -111,17 +111,17 @@ def insert_observations(
     values = [observation_values(observation) for observation in observations]
     dialect = session.get_bind().dialect.name
     if dialect == "postgresql":
-        statement = postgresql_insert(RawObservationRecord).values(values)
+        postgres_statement = postgresql_insert(RawObservationRecord).values(values)
         result = session.execute(
-            statement.on_conflict_do_nothing(
+            postgres_statement.on_conflict_do_nothing(
                 constraint="uq_raw_observation_deduplication"
             )
         )
         return int(getattr(result, "rowcount", 0) or 0)
     if dialect == "sqlite":
-        statement = sqlite_insert(RawObservationRecord).values(values)
+        sqlite_statement = sqlite_insert(RawObservationRecord).values(values)
         result = session.execute(
-            statement.on_conflict_do_nothing(
+            sqlite_statement.on_conflict_do_nothing(
                 index_elements=["source_id", "source_record_key", "payload_hash_sha256"]
             )
         )
