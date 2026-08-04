@@ -32,6 +32,10 @@ from cip.modules.source_governance.infrastructure.registry import (
 
 NOW = datetime(2026, 8, 4, 16, 0, tzinfo=UTC)
 RETENTION = NOW + timedelta(days=1825)
+APPROVED_RECORDS_URL = (
+    "https://bodacc-datadila.opendatasoft.com/api/explore/v2.1/catalog/"
+    "datasets/annonces-commerciales/records"
+)
 TARGET = OrganizationIdentityTarget(
     id="synthetic-fr",
     organization_id=UUID("86fe6126-5731-5c4d-a206-69a6a736cae5"),
@@ -45,7 +49,7 @@ TARGET = OrganizationIdentityTarget(
 
 
 class StubBodaccClient:
-    records_url = "https://bodacc.example.test/api/records"
+    records_url = APPROVED_RECORDS_URL
 
     def __init__(self, payload: object) -> None:
         self.payload = payload
