@@ -1,5 +1,5 @@
 version: 1
-reviewed_at: 2026-08-03
+reviewed_at: 2026-08-04
 
 sources:
   - id: cisa-kev
@@ -42,6 +42,52 @@ sources:
       implementation_cost: low
       maintenance_cost: low
       expected_stability: high
+
+  - id: ted-search
+    name: TED Search API
+    base_url: https://api.ted.europa.eu/v3/notices/search
+    status: enabled
+    source_type: api
+    owner: Publications Office of the European Union
+    terms_url: https://ted.europa.eu/en/legal-notice
+    licence: European Commission reuse policy
+    allowed_data_categories:
+      - public_tender
+      - organization_metadata
+    prohibited_data_categories:
+      - credential
+      - victim_file
+      - private_communication
+      - private_personal_data
+      - restricted_content
+    rate_limit_per_minute: 2
+    retention_days: 730
+    attribution_required: true
+    raw_content_storage: false
+    human_review_required: false
+    authorization:
+      status: approved
+      document_reference: ted-search-api-public-reuse-2026-08-04
+      reviewed_at: 2026-08-04T09:35:00Z
+      expires_at: null
+      approved_hosts:
+        - api.ted.europa.eu
+      approved_path_prefixes:
+        - /v3/notices/search
+      approved_purposes:
+        - procurement-intelligence
+      automated_collection_allowed: true
+      raw_storage_allowed: false
+    economics:
+      commercial_value: high
+      monthly_cost: 0
+      implementation_cost: medium
+      maintenance_cost: medium
+      expected_stability: high
+    notes: >-
+      Uses the anonymous official Search API with selected metadata fields only.
+      Full notice documents are not stored. Results are re-filtered locally before
+      an evidence-backed commercial signal can be created.
 
   - id: search-manual-review
     name: Search-engine analyst review
