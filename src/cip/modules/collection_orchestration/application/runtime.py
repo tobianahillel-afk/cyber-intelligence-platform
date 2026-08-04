@@ -13,6 +13,7 @@ from sqlalchemy.orm import Session, sessionmaker
 from cip.modules.collection_orchestration.application.adapters import CisaKevAdapter
 from cip.modules.collection_orchestration.application.ports import CollectionAdapter
 from cip.modules.collection_orchestration.application.scheduler import schedule_due_jobs
+from cip.modules.collection_orchestration.application.ted_adapter import TedSearchAdapter
 from cip.modules.collection_orchestration.application.worker import (
     WorkerOutcome,
     WorkerStatus,
@@ -25,7 +26,10 @@ from cip.modules.collection_orchestration.infrastructure.schedule_loader import 
 from cip.modules.data_governance.domain.retention import RetentionPolicy
 from cip.modules.data_governance.infrastructure.retention_loader import load_retention_policy
 from cip.modules.source_governance.infrastructure.persistence import sync_source_registry
-from cip.modules.source_governance.infrastructure.registry import load_source_registry
+from cip.modules.source_governance.infrastructure.registry import (
+    SourceRegistryEntry,
+    load_source_registry,
+)
 from cip.shared.config.settings import Settings
 from cip.shared.kernel.time import utc_now
 from cip.shared.persistence.session import (
@@ -51,15 +55,10 @@ def build_collection_runtime(settings: Settings) -> CollectionRuntime:
     entries = load_source_registry(settings.source_registry_path)
     with session_scope(factory) as session:
         sync_source_registry(session, entries)
-    entries_by_id = {entry.policy.id: entry for entry in entries}
-    adapters: dict[tuple[str, str], CollectionAdapter] = {}
-    cisa_entry = entries_by_id.get(CisaKevAdapter.source_id)
-    if cisa_entry is not None:
-        adapter = CisaKevAdapter(
-            cisa_entry,
-            timeout_seconds=settings.source_http_timeout_seconds,
-        )
-        adapters[(adapter.source_id, adapter.adapter_id)] = adapter
+    adapters = _build_adapters(
+        entries,
+        timeout_seconds=settings.source_http_timeout_seconds,
+    )
     schedules = load_collection_schedules(settings.collection_schedule_path)
     _validate_registered_schedules(schedules, adapters)
     return CollectionRuntime(
@@ -68,6 +67,29 @@ def build_collection_runtime(settings: Settings) -> CollectionRuntime:
         adapters=adapters,
         retention_policy=load_retention_policy(settings.retention_policy_path),
     )
+
+
+def _build_adapters(
+    entries: tuple[SourceRegistryEntry, ...],
+    *,
+    timeout_seconds: float,
+) -> dict[tuple[str, str], CollectionAdapter]:
+    entries_by_id = {entry.policy.id: entry for entry in entries}
+    adapters: dict[tuple[str, str], CollectionAdapter] = {}
+    cisa_entry = entries_by_id.get(CisaKevAdapter.source_id)
+    if cisa_entry is not None:
+        _register(adapters, CisaKevAdapter(cisa_entry, timeout_seconds=timeout_seconds))
+    ted_entry = entries_by_id.get(TedSearchAdapter.source_id)
+    if ted_entry is not None:
+        _register(adapters, TedSearchAdapter(ted_entry, timeout_seconds=timeout_seconds))
+    return adapters
+
+
+def _register(
+    adapters: dict[tuple[str, str], CollectionAdapter],
+    adapter: CollectionAdapter,
+) -> None:
+    adapters[(adapter.source_id, adapter.adapter_id)] = adapter
 
 
 def run_scheduler_once(runtime: CollectionRuntime, *, now: datetime | None = None) -> int:
