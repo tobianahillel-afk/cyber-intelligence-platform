@@ -1,19 +1,36 @@
 # Cyber Intelligence Platform
 
-Cyber Intelligence Platform is a human-operated cyber revenue intelligence workspace. It collects authorized public or licensed evidence, converts it into normalized commercial signals, and helps analysts identify organizations that may need cybersecurity services or products.
+Cyber Intelligence Platform is a standalone, human-operated cyber revenue-intelligence and commercial-operations system. It collects authorized public or licensed evidence, converts it into normalized signals, and lets analysts discover, investigate, qualify, assign, and track organizations that may need cybersecurity services or products.
 
-The platform is deliberately evidence-first: every opportunity must expose its source, timestamps, confidence, freshness, claim type, and review history. It does not autonomously contact prospects, validate credentials, exploit systems, or ingest leaked victim data.
+The platform is not a Salesforce, HubSpot, or external-CRM extension. Its target product owns company records, professional organization maps, business contacts, alert rules, saved searches, opportunities, tasks, notes, assignments, engagement history, and reporting.
 
-## Current validated scope
+The system is evidence-first: every material fact, alert, and opportunity exposes its source, timestamps, confidence, freshness, claim type, conflicts, and review history. It does not autonomously contact prospects, validate credentials, exploit systems, ingest leaked victim data, or retain private-life information.
 
-Version `0.7.0` includes four durable official-source adapters:
+## Current scope
+
+Version `0.8.0` includes six durable official-source adapters:
 
 - **CISA KEV** for known-exploited vulnerability metadata;
 - **TED Search API** for active European cyber procurement notices;
 - **BOAMP/DILA Explore API** for actionable French procurement notices;
-- **Greenhouse Job Board API** for public cyber hiring signals from explicitly configured boards.
+- **Greenhouse Job Board API** for public cyber hiring signals;
+- **Lever Postings API** for public published jobs;
+- **SmartRecruiters Posting API** for public job lists and job details.
 
-The Greenhouse path is GET-only. It stores no candidate, application, resume, email, or raw HTML content. Job descriptions are normalized in memory, relevant terms are extracted, and changed listings update the same deterministic signal and opportunity instead of creating duplicates.
+The three ATS paths are GET-only and run only for explicitly configured boards, sites, or companies. They store no candidate, application, resume, candidate email, screening answer, or raw HTML content. Job descriptions are normalized in memory, relevant terms are extracted, and changed postings update one deterministic signal instead of creating duplicates.
+
+## Product direction
+
+The complete native workspace will consolidate:
+
+- companies, establishments, brands, subsidiaries, groups, domains, assets, and relationships;
+- open tenders, historical awards, contracts, published incumbents, providers, end dates, and estimated renewals;
+- technologies, products, versions, vulnerabilities, advisories, public exposures, and confidence;
+- incidents, claims, confirmations, regulatory events, news, recruitment, and business changes;
+- professional roles, organization charts, buying committees, public or licensed business emails, switchboards, direct business numbers, contact forms, and role mailboxes;
+- alerts, watchlists, saved searches, opportunities, tasks, notes, assignments, engagement history, and dashboards.
+
+Professional contact records require provenance, permitted purpose, freshness, retention, correction, objection, and suppression state. Home addresses, family details, private phones, private emails, credentials, private messages, and leaked personal datasets are excluded.
 
 ## Product flow
 
@@ -21,29 +38,19 @@ The Greenhouse path is GET-only. It stores no candidate, application, resume, em
 approved source registry
   -> policy decision before network
   -> bounded transport and strict provider schema
-  -> immutable raw observation metadata
-  -> normalized organization, evidence, and commercial signal
+  -> immutable observation metadata
+  -> normalized organization, evidence, and signal
   -> versioned need hypothesis and score
-  -> human-operated Opportunity Inbox
+  -> native alert, company workspace, task, and opportunity lifecycle
 ```
-
-The current Inbox combines procurement intent and hiring evidence for SIEM/SOC-related needs. Analyst decisions remain explicit and auditable.
 
 ## Architecture
 
-The backend is a Python 3.12 modular monolith using FastAPI, SQLAlchemy, PostgreSQL, Alembic, Pydantic, and durable scheduler/worker orchestration. The analyst UI is a Next.js application in `apps/web`.
+The backend is a Python 3.12 modular monolith using FastAPI, SQLAlchemy, PostgreSQL, Alembic, Pydantic, and durable scheduler/worker orchestration. The analyst UI is a Next.js application under `apps/web`.
 
-Core boundaries include:
+Provider payloads stay inside adapter packages. Domain modules do not import frameworks or infrastructure implementations. External adapters produce approved observations and projections through application contracts rather than importing canonical persistence implementations.
 
-- source and authorization governance;
-- collection scheduling, leases, checkpoints, retries, circuits, and dead letters;
-- raw observations and evidence provenance;
-- organization and opportunity persistence;
-- versioned scoring and analyst review;
-- retention and suppression;
-- product and source-health metrics.
-
-Provider schemas stay inside adapter packages. Domain modules cannot import frameworks or infrastructure implementations. External connectors cannot import canonical persistence implementations directly.
+The public-job subsystem now uses one canonical provider-independent contract. Greenhouse, Lever, and SmartRecruiters retain their own strict transport schemas but produce the same organization, evidence, observation, signal, checkpoint, and opportunity behavior.
 
 ## Development quality gates
 
@@ -57,36 +64,28 @@ Every pull request must pass on one final SHA:
 6. complete backend line and branch coverage with a 90% minimum;
 7. frontend dependency audit, TypeScript checking, and production build.
 
-Additional executable rules include:
+Executable rules include:
 
 - application Python files: maximum 400 lines;
-- functions/methods: maximum 120 lines;
+- functions and methods: maximum 120 lines;
 - classes: maximum 300 lines;
 - function parameters: maximum 10;
 - control-flow nesting: maximum 6;
-- no duplicate definitions in a module or class;
-- no wildcard imports;
-- one authoritative application/package/API version;
+- no duplicate definitions or wildcard imports;
+- one authoritative package and API version;
 - unit tests cannot open live network connections;
-- UTC-aware persistence is normalized consistently across SQLite and PostgreSQL.
+- UTC-aware persistence is normalized across SQLite and PostgreSQL;
+- roadmap lots must be continuous and status-consistent.
 
 See [`docs/DEVELOPMENT_STANDARDS.md`](docs/DEVELOPMENT_STANDARDS.md) and [`docs/TEST_STRATEGY.md`](docs/TEST_STRATEGY.md).
 
 ## Delivery roadmap
 
-The authoritative roadmap is [`docs/PROJECT_DELIVERY_PLAN.md`](docs/PROJECT_DELIVERY_PLAN.md). It defines lots `00` through `26`, including dependencies, detailed deliverables, test suites, exit gates, and non-goals.
+[`docs/PROJECT_DELIVERY_PLAN.md`](docs/PROJECT_DELIVERY_PLAN.md) defines lots `00` through `26` with dependencies, deliverables, tests, exit gates, and non-goals.
 
-Validated lots:
+Completed foundation through lot 06 includes governance, persistence, durable orchestration, opportunities, TED, BOAMP, Greenhouse, and executable architecture gates. Lot 07 expands the same hiring-signal contract across Lever and SmartRecruiters.
 
-- `00` product, legal, and source governance;
-- `01` modular core, persistence, provenance, and retention;
-- `02` durable scheduler, worker, checkpoints, and recovery;
-- `03` evidence-backed opportunity engine and Inbox;
-- `04` TED procurement;
-- `05` BOAMP procurement and executable architecture gates;
-- `06` Greenhouse public cyber hiring signals.
-
-The next locked lot is `07`: multi-ATS hiring-source expansion through separately reviewed official public APIs.
+The roadmap explicitly treats Cyber Intelligence Platform as the authoritative commercial workspace. Lot 20 implements native alerts, tasks, queues, opportunity stages, assignments, notes, and engagement history rather than synchronizing Salesforce or HubSpot.
 
 ## Local development
 
@@ -140,13 +139,13 @@ npm run typecheck
 npm run build
 ```
 
-The phase-6 pre-closing validation passed **344 backend tests**, **94.62% line/branch coverage**, Mypy strict on **123 source files**, reversible PostgreSQL migrations, dependency audits, architecture gates, TypeScript, and the Next.js production build.
-
 ## Source and data safety
 
-The repository is public. Never commit API keys, session material, real prospect lists, CRM exports, collected personal data, proprietary datasets, or production evidence. Use only synthetic, minimized, provider-published, or explicitly redistributable fixtures.
+Never commit API keys, sessions, prospect lists, collected personal data, proprietary datasets, or production evidence. Tests use synthetic, provider-published, minimized, or redistributable fixtures.
 
-The source registry is authoritative. Quarantined or unapproved sources have no executable collection path. Browser automation remains deferred until structured APIs are insufficient and an isolated browser plus download-quarantine runtime has been validated.
+The source registry is authoritative. Quarantined or unapproved sources have no executable collection path. Browser automation remains deferred until structured APIs are insufficient and an isolated browser plus download-quarantine runtime has passed its own gate.
+
+LinkedIn collection remains disabled unless official API scopes or reviewed written authorization covers the exact method, hosts, paths, fields, and purpose. A warning checkbox is not an authorization mechanism.
 
 ## Project documents
 
