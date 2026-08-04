@@ -35,7 +35,13 @@ class RechercheEntreprisesClient:
     def search_url(self) -> str:
         return self._search_url
 
-    def search(self, query: str, *, page: int = 1, per_page: int = 25) -> RechercheEntreprisesFetchResult:
+    def search(
+        self,
+        query: str,
+        *,
+        page: int = 1,
+        per_page: int = 25,
+    ) -> RechercheEntreprisesFetchResult:
         normalized = query.strip()
         if not normalized:
             raise ValueError("query is required")
