@@ -41,8 +41,8 @@ def persist_identity_projections(
 ) -> tuple[UUID, ...]:
     persisted_at = require_aware_utc(now, field_name="now")
     for projection in projections:
-        if projection.target_organization is not None:
-            _upsert_organization(session, projection.target_organization)
+        for organization in projection.projected_organizations:
+            _upsert_organization(session, organization)
         _upsert_evidence(session, projection.evidence)
         _upsert_identity(session, projection, persisted_at)
     session.flush()
