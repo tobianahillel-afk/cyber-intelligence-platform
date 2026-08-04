@@ -62,11 +62,18 @@ input:disabled {
   list-style: none;
 }
 
-.sidebar span {
+.sidebar span,
+.sidebar a {
   display: block;
   padding: 10px 12px;
   border-radius: 8px;
   color: #aeb8c7;
+  text-decoration: none;
+}
+
+.sidebar a:hover {
+  background: #172235;
+  color: #edf2f7;
 }
 
 .sidebar .nav-active {
