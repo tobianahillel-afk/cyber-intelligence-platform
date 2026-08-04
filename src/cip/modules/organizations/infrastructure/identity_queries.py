@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 from cip.modules.organizations.application.identity_views import (
     AliasView,
     IdentifierView,
+    IdentityClaimView,
     IdentityView,
     MergeCandidatePage,
     MergeCandidateView,
@@ -24,6 +25,7 @@ from cip.modules.organizations.domain.identity import (
 from cip.modules.organizations.infrastructure.identity_models import (
     OrganizationAliasRecord,
     OrganizationIdentifierRecord,
+    OrganizationIdentityClaimRecord,
     OrganizationIdentityEvidenceRecord,
     OrganizationIdentityRecord,
     OrganizationMergeCandidateRecord,
@@ -146,6 +148,17 @@ def _identity_view(session: Session, record: OrganizationIdentityRecord) -> Iden
             OrganizationRelationshipRecord.id,
         )
     ).all()
+    claims = session.scalars(
+        select(OrganizationIdentityClaimRecord)
+        .where(OrganizationIdentityClaimRecord.identity_id == record.id)
+        .order_by(
+            OrganizationIdentityClaimRecord.source_id,
+            OrganizationIdentityClaimRecord.observed_at.desc(),
+        )
+    ).all()
+    conflict_fields = tuple(
+        sorted({field for claim in claims for field in claim.conflict_fields})
+    )
     return IdentityView(
         id=record.id,
         organization_id=record.organization_id,
@@ -187,6 +200,8 @@ def _identity_view(session: Session, record: OrganizationIdentityRecord) -> Iden
         ),
         evidence_ids=tuple(evidence_ids),
         relationships=tuple(_relationship_view(item) for item in relationships),
+        claims=tuple(_claim_view(item) for item in claims),
+        conflict_fields=conflict_fields,
     )
 
 
@@ -227,4 +242,18 @@ def _relationship_view(record: OrganizationRelationshipRecord) -> RelationshipVi
         observed_at=record.observed_at,
         valid_from=record.valid_from,
         valid_until=record.valid_until,
+    )
+
+
+def _claim_view(record: OrganizationIdentityClaimRecord) -> IdentityClaimView:
+    return IdentityClaimView(
+        id=record.id,
+        source_id=record.source_id,
+        source_record_key=record.source_record_key,
+        source_url=record.source_url,
+        selected_fields=dict(record.selected_fields),
+        confidence=record.confidence,
+        observed_at=record.observed_at,
+        content_hash_sha256=record.content_hash_sha256,
+        conflict_fields=tuple(record.conflict_fields),
     )
