@@ -147,6 +147,8 @@ Never commit API keys, sessions, prospect lists, collected personal data, propri
 
 The source registry is authoritative. Quarantined or unapproved sources have no executable collection path. Browser automation remains deferred until structured APIs are insufficient and an isolated browser plus download-quarantine runtime has passed its own gate.
 
+OSINT Framework and other tool catalogs are discovery inputs only. Every imported entry must pass source-owner, terms, licence, privacy, security, provenance, rate, retention, and purpose review before an adapter can execute it.
+
 LinkedIn collection remains disabled unless official API scopes or reviewed written authorization covers the exact method, hosts, paths, fields, and purpose. A warning checkbox is not an authorization mechanism.
 
 ## Project documents
@@ -155,6 +157,7 @@ LinkedIn collection remains disabled unless official API scopes or reviewed writ
 - [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)
 - [`docs/DATA_MODEL.md`](docs/DATA_MODEL.md)
 - [`docs/SOURCE_POLICY.md`](docs/SOURCE_POLICY.md)
+- [`docs/OSINT_COLLECTION_CATALOG.md`](docs/OSINT_COLLECTION_CATALOG.md)
 - [`docs/DEVELOPMENT_STANDARDS.md`](docs/DEVELOPMENT_STANDARDS.md)
 - [`docs/TEST_STRATEGY.md`](docs/TEST_STRATEGY.md)
 - [`docs/PROJECT_DELIVERY_PLAN.md`](docs/PROJECT_DELIVERY_PLAN.md)
