@@ -16,6 +16,7 @@ from cip.modules.collection_orchestration.application.ports import (
 from cip.modules.collection_orchestration.domain.models import JobStatus
 from cip.modules.collection_orchestration.infrastructure.repository import (
     LeaseLostError,
+    cancel_claimed_job,
     claim_next_job,
     complete_job,
     fail_job,
@@ -31,6 +32,7 @@ from cip.modules.organizations.infrastructure.identity_persistence import (
     persist_identity_projections,
 )
 from cip.modules.raw_observations.domain.entities import RawObservation
+from cip.modules.source_portfolio.application.execution import source_execution_allowed
 from cip.modules.source_portfolio.application.service import (
     SourcePortfolioNotFoundError,
     record_collection_failure,
@@ -47,6 +49,7 @@ class WorkerStatus(StrEnum):
     NOT_MODIFIED = "not_modified"
     RETRY_SCHEDULED = "retry_scheduled"
     DEAD_LETTERED = "dead_lettered"
+    CANCELLED = "cancelled"
     LEASE_LOST = "lease_lost"
 
 
@@ -69,6 +72,22 @@ def run_worker_once(
     claim_time = _read_clock(clock)
     with session_scope(factory) as session:
         claimed = claim_next_job(session, worker_id=worker_id, now=claim_time)
+        if claimed is not None and not source_execution_allowed(
+            session,
+            claimed.source_id,
+            now=claim_time,
+        ):
+            cancel_claimed_job(
+                session,
+                claimed,
+                now=claim_time,
+                reason="source_execution_disabled",
+            )
+            return WorkerOutcome(
+                WorkerStatus.CANCELLED,
+                job_id=claimed.id,
+                error_code="source_execution_disabled",
+            )
     if claimed is None:
         return WorkerOutcome(WorkerStatus.IDLE)
 
