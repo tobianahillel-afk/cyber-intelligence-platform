@@ -28,7 +28,8 @@
 .filter-form button,
 .provider-card input,
 .provider-card select,
-.provider-card button {
+.provider-card button,
+.portfolio-card button {
   min-height: 38px;
   padding: 8px 10px;
   border: 1px solid #364154;
@@ -39,20 +40,23 @@
 }
 
 .filter-form button,
-.provider-card button {
+.provider-card button,
+.portfolio-card button {
   cursor: pointer;
   background: #20365f;
   border-color: #3e67ae;
 }
 
-.provider-grid {
+.provider-grid,
+.portfolio-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 16px;
   padding: 18px;
 }
 
-.provider-card {
+.provider-card,
+.portfolio-card {
   display: grid;
   align-content: start;
   gap: 16px;
@@ -62,26 +66,30 @@
   background: #0e151f;
 }
 
-.provider-card-heading {
+.provider-card-heading,
+.portfolio-card-heading {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
   gap: 16px;
 }
 
-.provider-card-heading h3 {
+.provider-card-heading h3,
+.portfolio-card-heading h3 {
   margin: 3px 0 0;
   font-size: 1.08rem;
 }
 
-.provider-source-id {
+.provider-source-id,
+.portfolio-card code {
   margin: 0;
   color: #7f8ca0;
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   font-size: 0.72rem;
 }
 
-.provider-state {
+.provider-state,
+.source-status {
   display: inline-flex;
   align-items: center;
   max-width: 190px;
@@ -92,9 +100,11 @@
   color: #d5ddea;
   font-size: 0.72rem;
   text-align: center;
+  text-transform: capitalize;
 }
 
-.provider-state-connected {
+.provider-state-connected,
+.source-status-executable {
   border-color: #26755a;
   background: #153d32;
   color: #9be3c9;
@@ -109,14 +119,16 @@
 .provider-state-awaiting_user_action,
 .provider-state-awaiting_email_verification,
 .provider-state-awaiting_mfa,
-.provider-state-awaiting_provider_approval {
+.provider-state-awaiting_provider_approval,
+.source-status-paused {
   border-color: #8a642f;
   background: #443117;
   color: #ffd592;
 }
 
 .provider-state-failed,
-.provider-state-blocked {
+.provider-state-blocked,
+.source-status-disabled {
   border-color: #8d3c49;
   background: #461e27;
   color: #ffb2bc;
@@ -124,31 +136,36 @@
 
 .provider-state-revoked,
 .provider-state-not_configured,
-.provider-state-not_required {
+.provider-state-not_required,
+.source-status-candidate {
   color: #bac4d2;
 }
 
-.provider-facts {
+.provider-facts,
+.portfolio-health-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 10px;
   margin: 0;
 }
 
-.provider-facts div {
+.provider-facts div,
+.portfolio-health-grid div {
   padding: 10px;
   border: 1px solid #273140;
   border-radius: 8px;
   background: #121b27;
 }
 
-.provider-facts dt {
+.provider-facts dt,
+.portfolio-health-grid dt {
   color: #7f8ca0;
   font-size: 0.7rem;
   text-transform: uppercase;
 }
 
-.provider-facts dd {
+.provider-facts dd,
+.portfolio-health-grid dd {
   margin: 6px 0 0;
   color: #e2e9f3;
   font-size: 0.82rem;
@@ -250,16 +267,47 @@
   margin-top: 10px;
 }
 
-.provider-action-buttons {
+.provider-action-buttons,
+.portfolio-actions {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
 }
 
-.provider-card .button-danger {
+.provider-card .button-danger,
+.portfolio-card .destructive {
   border-color: #86404c;
   background: #421e27;
   color: #ffbac3;
+}
+
+.portfolio-metadata {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 14px;
+  color: #9ca8b8;
+  font-size: 0.76rem;
+}
+
+.portfolio-capabilities,
+.portfolio-candidate-note {
+  display: grid;
+  gap: 5px;
+  padding: 10px;
+  border: 1px solid #283343;
+  border-radius: 8px;
+  background: #111925;
+  color: #9ca8b8;
+  font-size: 0.76rem;
+}
+
+.portfolio-capabilities strong {
+  color: #dbe6f4;
+}
+
+.portfolio-actions {
+  padding-top: 14px;
+  border-top: 1px solid #273140;
 }
 
 .empty-state {
@@ -276,7 +324,15 @@
 }
 
 @media (max-width: 1320px) {
-  .provider-grid {
+  .provider-grid,
+  .portfolio-grid {
     grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 720px) {
+  .portfolio-health-grid,
+  .provider-facts {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
