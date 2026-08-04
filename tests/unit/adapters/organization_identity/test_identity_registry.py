@@ -96,7 +96,7 @@ def test_target_registry_rejects_invalid_values(tmp_path: Path) -> None:
     invalid = (
         ("organization_id: invalid", "UUID"),
         ("country_code: FRA", "ISO alpha-2"),
-        ("enabled: yes", "enabled must be a boolean"),
+        ('enabled: "yes"', "enabled must be a boolean"),
         ("siren: '732829321'", "checksum"),
     )
     for index, (replacement, message) in enumerate(invalid):
