@@ -1,0 +1,9 @@
+version: 1
+reviewed_at: 2026-08-04
+
+boards:
+  - id: greenhouse
+    board_token: greenhouse
+    canonical_name: Greenhouse Software
+    country_code: null
+    enabled: true
