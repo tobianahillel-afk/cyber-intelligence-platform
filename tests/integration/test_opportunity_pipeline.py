@@ -24,7 +24,6 @@ from cip.modules.opportunities.infrastructure.models import (
     CommercialSignalRecord,
     OpportunityRecord,
     OpportunityReviewRecord,
-    OpportunityScoreComponentRecord,
 )
 from cip.modules.opportunities.infrastructure.queries import (
     get_opportunity_detail,
