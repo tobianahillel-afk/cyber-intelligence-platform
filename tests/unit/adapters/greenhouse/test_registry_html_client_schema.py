@@ -158,9 +158,7 @@ def test_client_rejects_unsafe_responses() -> None:
 
     for response, message in cases:
         with (
-            httpx.Client(
-                transport=httpx.MockTransport(lambda _, item=response: item)
-            ) as http_client,
+            httpx.Client(transport=_transport_returning(response)) as http_client,
             pytest.raises(GreenhouseSourceResponseError, match=message),
         ):
             GreenhouseClient(
@@ -180,6 +178,13 @@ def test_schema_normalizes_nodes_and_requires_aware_timestamp() -> None:
         GreenhouseJob.model_validate(_job(updated_at="2026-08-04T10:00:00"))
     with pytest.raises(ValidationError):
         GreenhouseJob.model_validate(_job(title=" "))
+
+
+def _transport_returning(response: httpx.Response) -> httpx.MockTransport:
+    def handler(_: httpx.Request) -> httpx.Response:
+        return response
+
+    return httpx.MockTransport(handler)
 
 
 def _job(**changes: object) -> dict[str, object]:
