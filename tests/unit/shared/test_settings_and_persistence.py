@@ -49,7 +49,14 @@ def test_database_metadata_contains_foundation_tables() -> None:
         "collection_circuits",
         "collection_dead_letters",
         "collection_jobs",
+        "commercial_signals",
         "evidence",
+        "need_hypotheses",
+        "need_hypothesis_signals",
+        "opportunities",
+        "opportunity_evidence",
+        "opportunity_reviews",
+        "opportunity_score_components",
         "organizations",
         "raw_observations",
         "sources",
@@ -64,6 +71,8 @@ def test_metadata_creates_on_sqlite() -> None:
 
     assert get_metadata().tables["raw_observations"].foreign_keys
     assert get_metadata().tables["collection_jobs"].foreign_keys
+    assert get_metadata().tables["opportunities"].foreign_keys
+    assert get_metadata().tables["commercial_signals"].foreign_keys
 
 
 def test_database_url_is_required() -> None:
