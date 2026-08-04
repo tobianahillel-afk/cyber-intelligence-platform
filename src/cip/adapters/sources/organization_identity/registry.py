@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 from uuid import UUID
@@ -11,6 +12,8 @@ from cip.modules.organizations.domain.identifiers import (
     IdentifierScheme,
     OfficialIdentifier,
 )
+
+_REGISTRY_TIME = datetime(2000, 1, 1, tzinfo=UTC)
 
 
 @dataclass(frozen=True, slots=True)
@@ -56,7 +59,12 @@ class OrganizationIdentityTarget:
             )
             object.__setattr__(self, field_name, identifier.value)
 
-    def known_identifiers(self, *, source_id: str, verified_at):  # type: ignore[no-untyped-def]
+    def known_identifiers(
+        self,
+        *,
+        source_id: str,
+        verified_at: datetime,
+    ) -> tuple[OfficialIdentifier, ...]:
         identifiers: list[OfficialIdentifier] = []
         for value, scheme in (
             (self.siren, IdentifierScheme.SIREN),
@@ -75,11 +83,6 @@ class OrganizationIdentityTarget:
                 )
             )
         return tuple(identifiers)
-
-
-from datetime import UTC, datetime
-
-_REGISTRY_TIME = datetime(2000, 1, 1, tzinfo=UTC)
 
 
 def load_organization_identity_targets(
