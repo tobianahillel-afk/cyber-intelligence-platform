@@ -17,7 +17,11 @@ The platform should answer:
 - Which professional roles and business contact channels are relevant?
 - What should the analyst do next?
 
+The product is not limited to SIEM and SOC. It covers strategy and vCISO, audit, GRC, pentest, red and purple teaming, vulnerability management, SOC and MDR, incident response, cyber resilience, IAM and PAM, cloud security, AppSec and DevSecOps, network security, data protection, supply-chain security, OT security, awareness, product integration and cyber-insurance readiness.
+
 Source breadth is useful only when it improves reliable client discovery. A source that adds records but no unique commercial value should be deprioritized or removed.
+
+See [`docs/CYBER_SERVICE_NEED_TAXONOMY.md`](docs/CYBER_SERVICE_NEED_TAXONOMY.md).
 
 ## Accountless product access
 
@@ -73,7 +77,7 @@ Provider payloads remain inside adapter packages. Adapters never write directly 
 The project catalogs and prioritizes:
 
 - official company registries, procurement, awards, contracts, and renewals;
-- corporate websites, documents, sitemaps, archives, public repositories, and approved search APIs;
+- corporate websites, documents, sitemaps, archives, public repositories, Google dorks and approved search APIs;
 - vulnerability, advisory, KEV, EPSS, and exploitation-state sources;
 - ransomware claims, official incident confirmations, regulator notices, and public disclosures;
 - IOC, phishing, malicious infrastructure, C2, attack telemetry, and threat intelligence;
@@ -81,6 +85,8 @@ The project catalogs and prioritizes:
 - provider, partner, customer, supplier, integrator, MSSP, auditor, insurer, and supply-chain relationships;
 - governed public professional roles, business contacts, forums, and community signals;
 - licensed and conditional providers, including official LinkedIn paths, consented Discord connectors, commercial CTI, and BrixHub after explicit approval.
+
+Google and equivalent search dorks are a governed discovery mechanism. Google queries are generated as analyst links unless an approved official API or written authorization covers automated retrieval. Search-result metadata is not a confirmed fact; the referenced public page or document must be retrieved through an approved path before it supports a signal or opportunity.
 
 The broad catalogs are planning inputs, not automatic permission to crawl:
 
@@ -103,7 +109,7 @@ The canonical data layers are:
 3. collection runs and immutable source records;
 4. evidence, observations, and claims;
 5. resolved entities, events, technologies, providers, roles, and temporal relationships;
-6. commercial signals and need hypotheses;
+6. service-family mappings, commercial signals and need hypotheses;
 7. scores, alerts, opportunities, tasks, and analyst decisions.
 
 See:
@@ -111,6 +117,7 @@ See:
 - [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)
 - [`docs/DATA_MODEL.md`](docs/DATA_MODEL.md)
 - [`docs/COMMERCIAL_INTELLIGENCE_INTEGRATION_ARCHITECTURE.md`](docs/COMMERCIAL_INTELLIGENCE_INTEGRATION_ARCHITECTURE.md)
+- [`docs/CYBER_SERVICE_NEED_TAXONOMY.md`](docs/CYBER_SERVICE_NEED_TAXONOMY.md)
 
 ## Delivery roadmap
 
@@ -121,8 +128,9 @@ Completed and current sequence:
 - lots `00–08`: validated foundations, durable collection, opportunities, procurement, hiring, and organization identity;
 - lot `09`: provider onboarding and secret lifecycle, currently in progress;
 - lot `10`: common source portfolio runtime, backfill, freshness, source health, and machine-readable catalog;
-- lots `11–23`: procurement history, public corporate footprint, vulnerabilities, live incidents, telemetry, exposure, relationships, professional context, conditional sources, and research orchestration;
-- lots `24–27`: signal fusion, calibrated scoring, native commercial operations, and Company 360;
+- lots `11–23`: procurement history, public corporate footprint, governed dorks, vulnerabilities, live incidents, telemetry, exposure, relationships, professional context, conditional sources, and research orchestration;
+- lot `24`: executable service taxonomy, signal fusion and need hypotheses;
+- lots `25–27`: calibrated scoring, native commercial operations, and Company 360;
 - lots `28–32`: data quality, release security, resilience, optional isolated browser runtime, and controlled production pilot.
 
 BrixHub is explicitly assigned to lot `22`. It remains non-executable until its exact access path, allowed fields, provenance, licence, retention, security, and authorization are approved. If approved, its adapter must support a controlled historical import, incremental refresh, corrections, deletion, provenance, and unique-value measurement.
@@ -149,13 +157,15 @@ Every source integration must additionally prove:
 - cross-source deduplication and contradiction handling;
 - correction, retraction, suppression, and deletion propagation;
 - source-to-signal and signal-to-opportunity behavior;
-- measurable incremental commercial value.
+- service-family classification with positive, negative and ambiguous fixtures;
+- measurable incremental commercial value across more than one service family.
 
 See:
 
 - [`docs/TEST_STRATEGY.md`](docs/TEST_STRATEGY.md)
 - [`docs/SOURCE_INTEGRATION_TEST_MATRIX.md`](docs/SOURCE_INTEGRATION_TEST_MATRIX.md)
 - [`docs/DEVELOPMENT_STANDARDS.md`](docs/DEVELOPMENT_STANDARDS.md)
+- [`docs/MULTI_SERVICE_DETECTION_AUDIT.md`](docs/MULTI_SERVICE_DETECTION_AUDIT.md)
 
 Executable rules include:
 
@@ -239,6 +249,7 @@ LinkedIn collection remains disabled unless official API scopes, a licensed prod
 - [`docs/ANONYMOUS_ACCESS_AND_REFRESH_MODEL.md`](docs/ANONYMOUS_ACCESS_AND_REFRESH_MODEL.md)
 - [`docs/DATA_MODEL.md`](docs/DATA_MODEL.md)
 - [`docs/COMMERCIAL_INTELLIGENCE_INTEGRATION_ARCHITECTURE.md`](docs/COMMERCIAL_INTELLIGENCE_INTEGRATION_ARCHITECTURE.md)
+- [`docs/CYBER_SERVICE_NEED_TAXONOMY.md`](docs/CYBER_SERVICE_NEED_TAXONOMY.md)
 - [`docs/SOURCE_POLICY.md`](docs/SOURCE_POLICY.md)
 - [`docs/OSINT_COLLECTION_CATALOG.md`](docs/OSINT_COLLECTION_CATALOG.md)
 - [`docs/LIVE_CYBER_THREAT_SOURCE_CATALOG.md`](docs/LIVE_CYBER_THREAT_SOURCE_CATALOG.md)
@@ -246,4 +257,6 @@ LinkedIn collection remains disabled unless official API scopes, a licensed prod
 - [`docs/TEST_STRATEGY.md`](docs/TEST_STRATEGY.md)
 - [`docs/SOURCE_INTEGRATION_TEST_MATRIX.md`](docs/SOURCE_INTEGRATION_TEST_MATRIX.md)
 - [`docs/PROJECT_DELIVERY_PLAN.md`](docs/PROJECT_DELIVERY_PLAN.md)
+- [`docs/ROADMAP_AND_ARCHITECTURE_AUDIT.md`](docs/ROADMAP_AND_ARCHITECTURE_AUDIT.md)
+- [`docs/MULTI_SERVICE_DETECTION_AUDIT.md`](docs/MULTI_SERVICE_DETECTION_AUDIT.md)
 - [`SECURITY.md`](SECURITY.md)
