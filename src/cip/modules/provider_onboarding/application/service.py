@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Sequence
-from datetime import UTC, datetime
+from datetime import datetime
 from uuid import uuid4
 
 from sqlalchemy import select
@@ -20,6 +20,7 @@ from cip.modules.provider_onboarding.infrastructure.models import (
     ProviderOnboardingAuditRecord,
     ProviderOnboardingRecord,
 )
+from cip.modules.provider_onboarding.infrastructure.persistence_time import normalize_optional_utc
 from cip.modules.source_governance.infrastructure.models import SourceRecord
 from cip.shared.kernel.time import require_aware_utc
 
@@ -311,20 +312,12 @@ def _to_domain(record: ProviderOnboardingRecord) -> ProviderOnboarding:
             for name, value in record.secret_references.items()
         },
         blocked_reason=record.blocked_reason,
-        last_verified_at=_persistence_utc(record.last_verified_at),
-        expires_at=_persistence_utc(record.expires_at),
+        last_verified_at=normalize_optional_utc(record.last_verified_at),
+        expires_at=normalize_optional_utc(record.expires_at),
         last_error_code=record.last_error_code,
         last_error_message=record.last_error_message,
-        updated_at=_persistence_utc(record.updated_at),
+        updated_at=normalize_optional_utc(record.updated_at),
     )
-
-
-def _persistence_utc(value: datetime | None) -> datetime | None:
-    if value is None:
-        return None
-    if value.tzinfo is None or value.utcoffset() is None:
-        return value.replace(tzinfo=UTC)
-    return value.astimezone(UTC)
 
 
 def _transition(
