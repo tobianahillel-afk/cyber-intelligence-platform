@@ -23,6 +23,7 @@ def test_repository_source_registry_loads() -> None:
     entries_by_id = {entry.policy.id: entry for entry in entries}
 
     assert set(entries_by_id) == {
+        "boamp",
         "brixhub",
         "cisa-kev",
         "linkedin-authorized-browser",
@@ -30,11 +31,13 @@ def test_repository_source_registry_loads() -> None:
         "search-manual-review",
         "ted-search",
     }
-    assert entries_by_id["cisa-kev"].policy.status is SourceStatus.ENABLED
-    assert entries_by_id["ted-search"].policy.status is SourceStatus.ENABLED
-    assert entries_by_id["ted-search"].policy.allowed_data_categories == frozenset(
-        {DataCategory.PUBLIC_TENDER, DataCategory.ORGANIZATION_METADATA}
-    )
+    for source_id in ("boamp", "cisa-kev", "ted-search"):
+        assert entries_by_id[source_id].policy.status is SourceStatus.ENABLED
+    for source_id in ("boamp", "ted-search"):
+        assert entries_by_id[source_id].policy.allowed_data_categories == frozenset(
+            {DataCategory.PUBLIC_TENDER, DataCategory.ORGANIZATION_METADATA}
+        )
+    assert entries_by_id["boamp"].policy.licence == "Licence Ouverte 2.0"
     assert entries_by_id["brixhub"].policy.status is SourceStatus.QUARANTINED
     assert entries_by_id["brixhub"].policy.allowed_data_categories == frozenset()
 
