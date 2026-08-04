@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from fastapi.testclient import TestClient
 
+from cip import __version__
 from cip.main import app, create_app
 
 client = TestClient(app)
@@ -61,14 +62,14 @@ def test_health() -> None:
     response = client.get("/health")
 
     assert response.status_code == 200
-    assert response.json() == {"status": "ok", "version": "0.7.0"}
+    assert response.json() == {"status": "ok", "version": __version__}
 
 
 def test_application_factory_builds_independent_app() -> None:
     application = create_app()
 
     assert application is not app
-    assert application.version == "0.7.0"
+    assert application.version == __version__
 
 
 def test_validate_source_policy() -> None:
