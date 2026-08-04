@@ -86,7 +86,12 @@ def test_reference_adapter_and_backfill_resume_lifecycle() -> None:
     health = get_source_health(database, "reference-synthetic")
     assert health.current_backfill_state is BackfillState.RUNNING
 
-    pause_source(database, "reference-synthetic", actor="operator", now=NOW + timedelta(seconds=4))
+    pause_source(
+        database,
+        "reference-synthetic",
+        actor="operator",
+        now=NOW + timedelta(seconds=4),
+    )
     assert get_source_portfolio(database, "reference-synthetic").status is CatalogStatus.PAUSED
     assert (
         claim_backfill_partition(
@@ -98,7 +103,12 @@ def test_reference_adapter_and_backfill_resume_lifecycle() -> None:
         is None
     )
 
-    resume_source(database, "reference-synthetic", actor="operator", now=NOW + timedelta(seconds=6))
+    resume_source(
+        database,
+        "reference-synthetic",
+        actor="operator",
+        now=NOW + timedelta(seconds=6),
+    )
     second = claim_backfill_partition(
         database,
         "reference-synthetic",
@@ -114,9 +124,15 @@ def test_reference_adapter_and_backfill_resume_lifecycle() -> None:
         actor="worker-2",
         now=NOW + timedelta(seconds=8),
     )
-    assert get_source_health(database, "reference-synthetic").current_backfill_state is BackfillState.COMPLETED
+    health = get_source_health(database, "reference-synthetic")
+    assert health.current_backfill_state is BackfillState.COMPLETED
 
-    disable_source(database, "reference-synthetic", actor="operator", now=NOW + timedelta(seconds=9))
+    disable_source(
+        database,
+        "reference-synthetic",
+        actor="operator",
+        now=NOW + timedelta(seconds=9),
+    )
     assert get_source_portfolio(database, "reference-synthetic").status is CatalogStatus.DISABLED
     database.close()
 
