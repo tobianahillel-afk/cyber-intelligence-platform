@@ -1,9 +1,10 @@
 from __future__ import annotations
 
 from datetime import datetime
+from typing import Self
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 from cip.modules.opportunities.application.view_models import (
     OpportunityDetail,
@@ -161,12 +162,28 @@ class ReviewRequest(BaseModel):
     note: str | None = Field(default=None, max_length=4_000)
     snoozed_until: datetime | None = None
 
+    @field_validator("actor")
+    @classmethod
+    def normalize_actor(cls, value: str) -> str:
+        normalized = value.strip()
+        if not normalized:
+            raise ValueError("actor is required")
+        return normalized
+
     @field_validator("snoozed_until")
     @classmethod
     def require_timezone(cls, value: datetime | None) -> datetime | None:
         if value is not None and (value.tzinfo is None or value.utcoffset() is None):
             raise ValueError("snoozed_until must be timezone-aware")
         return value
+
+    @model_validator(mode="after")
+    def validate_action_fields(self) -> Self:
+        if self.action is ReviewAction.REJECT and not (self.note and self.note.strip()):
+            raise ValueError("reject requires a reason")
+        if self.action is ReviewAction.SNOOZE and self.snoozed_until is None:
+            raise ValueError("snooze requires snoozed_until")
+        return self
 
 
 class ReviewResponse(BaseModel):
@@ -178,7 +195,31 @@ class ScoreComponentOverrideRequest(BaseModel):
     actor: str = Field(min_length=1, max_length=200)
     value: float | None = Field(default=None, ge=0.0, le=1.0)
     weight: float | None = Field(default=None, ge=0.0, le=100.0)
-    reason: str | None = Field(default=None, min_length=1, max_length=4_000)
+    reason: str | None = Field(default=None, max_length=4_000)
+
+    @field_validator("actor")
+    @classmethod
+    def normalize_actor(cls, value: str) -> str:
+        normalized = value.strip()
+        if not normalized:
+            raise ValueError("actor is required")
+        return normalized
+
+    @field_validator("reason")
+    @classmethod
+    def normalize_reason(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+        normalized = value.strip()
+        if not normalized:
+            raise ValueError("reason cannot be empty")
+        return normalized
+
+    @model_validator(mode="after")
+    def require_change(self) -> Self:
+        if self.value is None and self.weight is None and self.reason is None:
+            raise ValueError("at least one component field must change")
+        return self
 
 
 class ScoreComponentOverrideResponse(BaseModel):
