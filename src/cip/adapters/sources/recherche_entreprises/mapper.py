@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import date, datetime
 from hashlib import sha256
 from uuid import NAMESPACE_URL, UUID, uuid5
 
@@ -125,8 +125,7 @@ def map_recherche_entreprise(
             merge_candidates=candidates,
         )
     ]
-    establishments = _unique_establishments(result)
-    for establishment in establishments:
+    for establishment in _unique_establishments(result):
         mapped = _map_establishment(
             establishment,
             legal_identity=legal_identity,
@@ -341,7 +340,7 @@ def _relationship(
 def _unique_establishments(
     result: RechercheEntrepriseResult,
 ) -> tuple[RechercheEtablissement, ...]:
-    values = [*(result.matching_etablissements or [])]
+    values = [*result.matching_etablissements]
     if result.siege is not None:
         values.append(result.siege)
     unique: dict[str, RechercheEtablissement] = {}
@@ -350,7 +349,7 @@ def _unique_establishments(
     return tuple(unique.values())
 
 
-def _legal_status(value: str | None, closed_at) -> IdentityStatus:  # type: ignore[no-untyped-def]
+def _legal_status(value: str | None, closed_at: date | None) -> IdentityStatus:
     if closed_at is not None:
         return IdentityStatus.CEASED
     return IdentityStatus.ACTIVE if value == "A" else IdentityStatus.UNKNOWN
@@ -358,7 +357,7 @@ def _legal_status(value: str | None, closed_at) -> IdentityStatus:  # type: igno
 
 def _establishment_status(
     value: str | None,
-    closed_at,  # type: ignore[no-untyped-def]
+    closed_at: date | None,
 ) -> IdentityStatus:
     if closed_at is not None:
         return IdentityStatus.CLOSED
