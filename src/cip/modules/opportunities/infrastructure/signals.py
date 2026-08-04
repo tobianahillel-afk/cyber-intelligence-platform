@@ -50,14 +50,10 @@ def store_commercial_signal(session: Session, signal: CommercialSignal) -> UUID:
     else:
         _store_portable(session, values, signal.idempotency_key)
     session.flush()
-    stored_id = session.scalar(
-        select(CommercialSignalRecord.id).where(
-            CommercialSignalRecord.idempotency_key == signal.idempotency_key
-        )
-    )
-    if stored_id is None:
+    stored = _load_stored_signal(session, signal.idempotency_key)
+    if stored is None:
         raise RuntimeError("commercial signal was not persisted")
-    return stored_id
+    return stored.id
 
 
 def _signal_values(signal: CommercialSignal) -> dict[str, object]:
@@ -93,3 +89,15 @@ def _store_portable(
         return
     for name in _MUTABLE_FIELDS:
         setattr(existing, name, values[name])
+
+
+def _load_stored_signal(
+    session: Session,
+    idempotency_key: str,
+) -> CommercialSignalRecord | None:
+    statement = (
+        select(CommercialSignalRecord)
+        .where(CommercialSignalRecord.idempotency_key == idempotency_key)
+        .execution_options(populate_existing=True)
+    )
+    return session.scalar(statement)
