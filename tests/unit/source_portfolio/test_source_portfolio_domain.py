@@ -6,6 +6,7 @@ import pytest
 
 from cip.modules.source_portfolio.domain.models import (
     AdapterCapabilityManifest,
+    BackfillState,
     CatalogStatus,
     CollectionMode,
     SourceCatalogEntry,
@@ -109,3 +110,9 @@ def test_manifest_validates_limits() -> None:
         authorization_expires_at=datetime(2026, 8, 6, tzinfo=UTC),
     )
     assert entry.authorization_expires_at == datetime(2026, 8, 6, tzinfo=UTC)
+
+
+def test_failed_backfill_is_retryable_not_terminal() -> None:
+    assert BackfillState.FAILED.is_terminal is False
+    assert BackfillState.COMPLETED.is_terminal is True
+    assert BackfillState.CANCELLED.is_terminal is True
