@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from datetime import date
+from collections.abc import Sequence
+from datetime import date, datetime
 from uuid import NAMESPACE_URL, UUID, uuid5
 
 from sqlalchemy import select
@@ -28,6 +29,18 @@ _CONFLICT_FIELDS = (
     "postal_code",
     "city",
 )
+
+
+def persist_identity_claims(
+    session: Session,
+    projections: Sequence[IdentityProjection],
+) -> None:
+    identity_ids: set[UUID] = set()
+    for projection in projections:
+        upsert_identity_claim(session, projection)
+        identity_ids.add(projection.identity.id)
+    session.flush()
+    reconcile_identity_claims(session, identity_ids)
 
 
 def upsert_identity_claim(session: Session, projection: IdentityProjection) -> None:
@@ -123,7 +136,9 @@ def _normalized_claim_value(value: object) -> str:
     return str(value)
 
 
-def _claim_rank(claim: OrganizationIdentityClaimRecord) -> tuple[int, float, object]:
+def _claim_rank(
+    claim: OrganizationIdentityClaimRecord,
+) -> tuple[int, float, datetime]:
     return (
         _SOURCE_PRIORITY.get(claim.source_id, 50),
         claim.confidence,
