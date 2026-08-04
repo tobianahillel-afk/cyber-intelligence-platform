@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Sequence
-from datetime import UTC, datetime
+from datetime import datetime
 from uuid import NAMESPACE_URL, UUID, uuid5
 
 from sqlalchemy import select
@@ -22,6 +22,7 @@ from cip.modules.organizations.infrastructure.identity_models import (
     OrganizationRelationshipRecord,
 )
 from cip.modules.organizations.infrastructure.models import OrganizationRecord
+from cip.modules.organizations.infrastructure.persistence_time import latest_utc
 from cip.shared.kernel.time import require_aware_utc
 
 
@@ -116,7 +117,7 @@ def _upsert_organization(session: Session, organization: Organization) -> None:
     record.legal_name = organization.legal_name or record.legal_name
     record.country_code = organization.country_code or record.country_code
     record.website_url = organization.website_url or record.website_url
-    record.updated_at = _latest_utc(record.updated_at, organization.updated_at)
+    record.updated_at = latest_utc(record.updated_at, organization.updated_at)
     record.registration_ids = list(
         dict.fromkeys([*record.registration_ids, *organization.registration_ids])
     )
@@ -130,16 +131,6 @@ def _pending_organization(
         if isinstance(record, OrganizationRecord) and record.id == organization_id:
             return record
     return None
-
-
-def _latest_utc(first: datetime, second: datetime) -> datetime:
-    return max(_coerce_utc(first), _coerce_utc(second))
-
-
-def _coerce_utc(value: datetime) -> datetime:
-    if value.tzinfo is None or value.utcoffset() is None:
-        return value.replace(tzinfo=UTC)
-    return value.astimezone(UTC)
 
 
 def _upsert_evidence(session: Session, evidence: Evidence) -> None:
