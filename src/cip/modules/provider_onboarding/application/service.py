@@ -10,6 +10,7 @@ from sqlalchemy.orm import Session
 from cip.modules.provider_onboarding.application.secrets import SecretReferenceResolver
 from cip.modules.provider_onboarding.domain.models import (
     AuthMode,
+    HumanAction,
     OnboardingState,
     ProviderOnboarding,
     ProviderProfile,
@@ -91,18 +92,17 @@ def start_provider_onboarding(
 ) -> ProviderOnboarding:
     record = _get_record(session, source_id)
     changed_at = require_aware_utc(now, field_name="now")
-    reviewer = _actor(actor)
     if record.blocked_reason:
         raise ProviderOnboardingBlockedError(record.blocked_reason)
     previous = OnboardingState(record.state)
-    if AuthMode(record.auth_mode) is AuthMode.NONE:
-        target = OnboardingState.CONNECTED
+    target = (
+        OnboardingState.CONNECTED
+        if AuthMode(record.auth_mode) is AuthMode.NONE
+        else OnboardingState.AWAITING_USER_ACTION
+    )
+    if target is OnboardingState.CONNECTED:
         record.last_verified_at = changed_at
-    else:
-        target = OnboardingState.AWAITING_USER_ACTION
-    _set_state(record, target, changed_at)
-    _audit_transition(session, record, "onboarding_started", previous, reviewer, changed_at)
-    session.flush()
+    _transition(session, record, target, "onboarding_started", actor, changed_at, previous)
     return _to_domain(record)
 
 
@@ -118,21 +118,18 @@ def set_human_checkpoint(
     if state not in _HUMAN_CHECKPOINT_STATES:
         raise ValueError("state is not a supported human checkpoint")
     record = _get_record(session, source_id)
-    if record.blocked_reason:
-        raise ProviderOnboardingBlockedError(record.blocked_reason)
+    _ensure_not_blocked(record)
     previous = OnboardingState(record.state)
-    changed_at = require_aware_utc(now, field_name="now")
-    _set_state(record, state, changed_at)
-    _audit_transition(
+    _transition(
         session,
         record,
+        state,
         "human_checkpoint_recorded",
+        actor,
+        require_aware_utc(now, field_name="now"),
         previous,
-        _actor(actor),
-        changed_at,
         details={"note": _bounded_note(note)},
     )
-    session.flush()
     return _to_domain(record)
 
 
@@ -146,27 +143,23 @@ def register_secret_reference(
     now: datetime,
 ) -> ProviderOnboarding:
     record = _get_record(session, source_id)
-    if record.blocked_reason:
-        raise ProviderOnboardingBlockedError(record.blocked_reason)
+    _ensure_not_blocked(record)
     if AuthMode(record.auth_mode) is AuthMode.NONE:
         raise ValueError("provider does not require a secret")
     onboarding = _to_domain(record).with_secret_reference(name, reference)
-    previous = OnboardingState(record.state)
-    changed_at = require_aware_utc(now, field_name="now")
     record.secret_references = {
         key: value.value for key, value in onboarding.secret_references.items()
     }
-    _set_state(record, onboarding.state, changed_at)
-    _audit_transition(
+    _transition(
         session,
         record,
+        onboarding.state,
         "secret_reference_registered",
-        previous,
-        _actor(actor),
-        changed_at,
+        actor,
+        require_aware_utc(now, field_name="now"),
+        OnboardingState(record.state),
         details={"secret_name": name.strip(), "reference": reference.redacted},
     )
-    session.flush()
     return _to_domain(record)
 
 
@@ -179,35 +172,24 @@ def verify_provider_configuration(
     now: datetime,
 ) -> ProviderOnboarding:
     record = _get_record(session, source_id)
-    if record.blocked_reason:
-        raise ProviderOnboardingBlockedError(record.blocked_reason)
+    _ensure_not_blocked(record)
     changed_at = require_aware_utc(now, field_name="now")
-    previous = OnboardingState(record.state)
     onboarding = _to_domain(record)
-    if onboarding.auth_mode is AuthMode.NONE:
-        target = OnboardingState.CONNECTED
-        error_code = None
-        error_message = None
-    elif onboarding.auth_mode is AuthMode.MANUAL:
-        target = OnboardingState.AWAITING_PROVIDER_APPROVAL
-        error_code = "manual_provider_authorization_required"
-        error_message = "Provider authorization and scopes require human review."
-    else:
-        target, error_code, error_message = _verify_references(onboarding, resolver)
-    _set_state(record, target, changed_at)
+    target, error_code, error_message = _verification_result(onboarding, resolver)
+    previous = OnboardingState(record.state)
     record.last_error_code = error_code
     record.last_error_message = error_message
     record.last_verified_at = changed_at if target is OnboardingState.CONNECTED else None
-    _audit_transition(
+    _transition(
         session,
         record,
+        target,
         "configuration_verified",
-        previous,
-        _actor(actor),
+        actor,
         changed_at,
+        previous,
         details={"result": target.value, "error_code": error_code},
     )
-    session.flush()
     return _to_domain(record)
 
 
@@ -219,30 +201,36 @@ def revoke_provider_onboarding(
     now: datetime,
 ) -> ProviderOnboarding:
     record = _get_record(session, source_id)
-    changed_at = require_aware_utc(now, field_name="now")
     previous = OnboardingState(record.state)
     record.secret_references = {}
     record.last_verified_at = None
     record.expires_at = None
     record.last_error_code = None
     record.last_error_message = None
-    _set_state(record, OnboardingState.REVOKED, changed_at)
-    _audit_transition(
+    _transition(
         session,
         record,
+        OnboardingState.REVOKED,
         "provider_revoked",
+        actor,
+        require_aware_utc(now, field_name="now"),
         previous,
-        _actor(actor),
-        changed_at,
     )
-    session.flush()
     return _to_domain(record)
 
 
-def _verify_references(
+def _verification_result(
     onboarding: ProviderOnboarding,
     resolver: SecretReferenceResolver,
 ) -> tuple[OnboardingState, str | None, str | None]:
+    if onboarding.auth_mode is AuthMode.NONE:
+        return OnboardingState.CONNECTED, None, None
+    if onboarding.auth_mode is AuthMode.MANUAL:
+        return (
+            OnboardingState.AWAITING_PROVIDER_APPROVAL,
+            "manual_provider_authorization_required",
+            "Provider authorization and scopes require human review.",
+        )
     if onboarding.missing_secret_names:
         return (
             OnboardingState.FAILED,
@@ -309,13 +297,14 @@ def _refresh_record(
 def _to_domain(record: ProviderOnboardingRecord) -> ProviderOnboarding:
     return ProviderOnboarding(
         source_id=record.source_id,
+        display_name=record.display_name,
         auth_mode=AuthMode(record.auth_mode),
         state=OnboardingState(record.state),
         documentation_url=record.documentation_url,
         signup_url=record.signup_url,
         console_url=record.console_url,
         required_secret_names=tuple(record.required_secret_names),
-        human_actions=tuple(record.human_actions),  # type: ignore[arg-type]
+        human_actions=tuple(HumanAction(value) for value in record.human_actions),
         automatic_onboarding=record.automatic_onboarding,
         secret_references={
             name: SecretReference(value)
@@ -330,42 +319,30 @@ def _to_domain(record: ProviderOnboardingRecord) -> ProviderOnboarding:
     )
 
 
-def _get_record(session: Session, source_id: str) -> ProviderOnboardingRecord:
-    record = session.get(ProviderOnboardingRecord, source_id.strip())
-    if record is None:
-        raise ProviderOnboardingNotFoundError(source_id)
-    return record
-
-
-def _set_state(
-    record: ProviderOnboardingRecord,
-    state: OnboardingState,
-    changed_at: datetime,
-) -> None:
-    record.state = state.value
-    record.updated_at = changed_at
-
-
-def _audit_transition(
+def _transition(
     session: Session,
     record: ProviderOnboardingRecord,
+    target: OnboardingState,
     action: str,
-    previous_state: OnboardingState,
     actor: str,
     occurred_at: datetime,
+    previous: OnboardingState,
     *,
     details: dict[str, object] | None = None,
 ) -> None:
+    record.state = target.value
+    record.updated_at = occurred_at
     _audit(
         session,
         source_id=record.source_id,
         action=action,
-        previous_state=previous_state,
-        new_state=OnboardingState(record.state),
-        actor=actor,
+        previous_state=previous,
+        new_state=target,
+        actor=_actor(actor),
         occurred_at=occurred_at,
         details=details or {},
     )
+    session.flush()
 
 
 def _audit(
@@ -391,6 +368,18 @@ def _audit(
             occurred_at=occurred_at,
         )
     )
+
+
+def _get_record(session: Session, source_id: str) -> ProviderOnboardingRecord:
+    record = session.get(ProviderOnboardingRecord, source_id.strip())
+    if record is None:
+        raise ProviderOnboardingNotFoundError(source_id)
+    return record
+
+
+def _ensure_not_blocked(record: ProviderOnboardingRecord) -> None:
+    if record.blocked_reason:
+        raise ProviderOnboardingBlockedError(record.blocked_reason)
 
 
 def _actor(value: str) -> str:
