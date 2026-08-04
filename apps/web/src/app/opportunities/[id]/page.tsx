@@ -6,6 +6,7 @@ import { EvidenceList } from "@/features/opportunities/evidence-list";
 import { ReviewHistory } from "@/features/opportunities/review-history";
 import { ReviewPanel } from "@/features/opportunities/review-panel";
 import { ScoreComponents } from "@/features/opportunities/score-components";
+import type { OpportunityDetail } from "@/features/opportunities/types";
 
 interface OpportunityDetailPageProps {
   params: Promise<{ id: string }>;
@@ -18,7 +19,7 @@ export default async function OpportunityDetailPage({
 }: OpportunityDetailPageProps) {
   const { id } = await params;
   const notices = await searchParams;
-  let detail;
+  let detail: OpportunityDetail;
   try {
     detail = await loadOpportunityDetail(id);
   } catch (error) {
@@ -75,7 +76,7 @@ export default async function OpportunityDetailPage({
             {detail.rule_id} v{detail.rule_version}
           </span>
         </div>
-        <div className="detail-grid">
+        <dl className="detail-grid">
           <Definition label="Recommended offer" value={opportunity.recommended_offer} />
           <Definition label="Next action" value={opportunity.next_action} />
           <Definition label="Relevant roles" value={opportunity.relevant_roles.join(", ")} />
@@ -84,7 +85,7 @@ export default async function OpportunityDetailPage({
           <Definition label="Expires" value={formatDate(detail.expires_at)} />
           <Definition label="Score version" value={detail.score_version} />
           <Definition label="Configuration" value={detail.config_version} />
-        </div>
+        </dl>
         <p className="hash-line">Calculation hash: {detail.calculation_hash}</p>
       </section>
 
