@@ -104,9 +104,12 @@ def test_repository_collection_schedule_loads() -> None:
 
     assert set(schedules_by_identity) == {
         ("boamp", "boamp-explore-api"),
+        ("bodacc-identity", "bodacc-commercial-announcements"),
         ("cisa-kev", "cisa-kev-feed"),
+        ("gleif", "gleif-lei-api"),
         ("greenhouse-job-board", "greenhouse-job-board-api"),
         ("lever-job-board", "lever-postings-api"),
+        ("recherche-entreprises", "recherche-entreprises-search"),
         ("smartrecruiters-job-board", "smartrecruiters-posting-api"),
         ("ted-search", "ted-search-api"),
     }
@@ -120,6 +123,11 @@ def test_repository_collection_schedule_loads() -> None:
     smart = schedules_by_identity[
         ("smartrecruiters-job-board", "smartrecruiters-posting-api")
     ]
+    identity_schedule_keys = (
+        ("recherche-entreprises", "recherche-entreprises-search"),
+        ("gleif", "gleif-lei-api"),
+        ("bodacc-identity", "bodacc-commercial-announcements"),
+    )
     assert cisa.interval_seconds == 900
     assert cisa.retry_policy.max_attempts == 4
     assert ted.interval_seconds == 1800
@@ -132,6 +140,7 @@ def test_repository_collection_schedule_loads() -> None:
     assert lever.lease_seconds == 120
     assert smart.interval_seconds == 1800
     assert smart.lease_seconds == 180
+    assert all(not schedules_by_identity[key].enabled for key in identity_schedule_keys)
 
 
 @pytest.mark.parametrize(
