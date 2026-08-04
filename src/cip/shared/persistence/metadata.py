@@ -10,6 +10,15 @@ from cip.modules.collection_orchestration.infrastructure.models import (
 )
 from cip.modules.data_governance.infrastructure.models import SuppressionRecord
 from cip.modules.evidence.infrastructure.models import EvidenceRecord
+from cip.modules.opportunities.infrastructure.models import (
+    CommercialSignalRecord,
+    NeedHypothesisRecord,
+    NeedHypothesisSignalRecord,
+    OpportunityEvidenceRecord,
+    OpportunityRecord,
+    OpportunityReviewRecord,
+    OpportunityScoreComponentRecord,
+)
 from cip.modules.organizations.infrastructure.models import OrganizationRecord
 from cip.modules.raw_observations.infrastructure.models import RawObservationRecord
 from cip.modules.source_governance.infrastructure.models import SourceRecord
@@ -20,7 +29,14 @@ _IMPORTED_MODELS = (
     CollectionCircuitRecord,
     CollectionDeadLetterRecord,
     CollectionJobRecord,
+    CommercialSignalRecord,
     EvidenceRecord,
+    NeedHypothesisRecord,
+    NeedHypothesisSignalRecord,
+    OpportunityEvidenceRecord,
+    OpportunityRecord,
+    OpportunityReviewRecord,
+    OpportunityScoreComponentRecord,
     OrganizationRecord,
     RawObservationRecord,
     SourceRecord,

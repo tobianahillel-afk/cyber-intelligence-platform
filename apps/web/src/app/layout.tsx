@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 import { AppShell } from "@/shared/components/app-shell";
 
 import "./globals.css";
+import "../features/opportunities/opportunities.css";
 
 export const metadata: Metadata = {
   title: "Cyber Intelligence Platform",

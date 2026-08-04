@@ -1,3 +1,4 @@
+import Link from "next/link";
 import type { ReactNode } from "react";
 
 const navigation = [
@@ -26,9 +27,13 @@ export function AppShell({ children }: AppShellProps) {
           <ul>
             {navigation.map((item) => (
               <li key={item}>
-                <span className={item === "Opportunities" ? "nav-active" : undefined}>
-                  {item}
-                </span>
+                {item === "Opportunities" ? (
+                  <Link className="nav-active" href="/">
+                    {item}
+                  </Link>
+                ) : (
+                  <span aria-disabled="true">{item}</span>
+                )}
               </li>
             ))}
           </ul>
@@ -45,8 +50,8 @@ export function AppShell({ children }: AppShellProps) {
             />
           </label>
           <div className="topbar-status" aria-label="Application status">
-            <span>Sources: foundation mode</span>
-            <span>Jobs: 0</span>
+            <span>Opportunity data: live backend</span>
+            <span>Outreach: human-controlled</span>
           </div>
         </header>
         <main>{children}</main>
