@@ -4,9 +4,11 @@ from dataclasses import dataclass
 from datetime import datetime
 from uuid import UUID
 
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from cip.modules.collection_orchestration.domain.models import CollectionJob, SourceSchedule
+from cip.modules.collection_orchestration.infrastructure.models import CollectionJobRecord
 from cip.modules.collection_orchestration.infrastructure.repository import enqueue_job
 from cip.modules.source_governance.infrastructure.models import SourceRecord
 from cip.modules.source_portfolio.application.errors import SourcePortfolioStateError
@@ -51,13 +53,25 @@ def request_priority_refresh(
     slot = current.replace(second=0, microsecond=0)
     job = CollectionJob.from_schedule(schedule, scheduled_for=slot)
     created = enqueue_job(session, job)
+    job_id = job.id if created else _existing_job_id(session, job.idempotency_key)
     audit(
         session,
         entry.source_id,
         "priority_refresh_requested",
         actor,
         current,
-        details={"job_id": str(job.id), "created": created},
+        details={"job_id": str(job_id), "created": created},
     )
     session.flush()
-    return PriorityRefreshResult(job_id=job.id, created=created)
+    return PriorityRefreshResult(job_id=job_id, created=created)
+
+
+def _existing_job_id(session: Session, idempotency_key: str) -> UUID:
+    job_id = session.scalar(
+        select(CollectionJobRecord.id).where(
+            CollectionJobRecord.idempotency_key == idempotency_key
+        )
+    )
+    if job_id is None:
+        raise RuntimeError("priority refresh idempotency conflict without an existing job")
+    return job_id
