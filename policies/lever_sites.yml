@@ -1,0 +1,8 @@
+version: 1
+
+sites:
+  - id: lever-inc
+    site_token: lever
+    canonical_name: Lever, Inc.
+    country_code: US
+    enabled: true
