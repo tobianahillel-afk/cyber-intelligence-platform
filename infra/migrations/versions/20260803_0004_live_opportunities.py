@@ -49,7 +49,11 @@ def _create_signals() -> None:
             "idempotency_key", name="uq_commercial_signals_idempotency_key"
         ),
     )
-    op.create_index("ix_commercial_signals_organization_id", "commercial_signals", ["organization_id"])
+    op.create_index(
+        "ix_commercial_signals_organization_id",
+        "commercial_signals",
+        ["organization_id"],
+    )
     op.create_index("ix_commercial_signals_evidence_id", "commercial_signals", ["evidence_id"])
     op.create_index("ix_commercial_signals_signal_type", "commercial_signals", ["signal_type"])
     op.create_index("ix_commercial_signals_collected_at", "commercial_signals", ["collected_at"])
@@ -216,7 +220,11 @@ def _create_reviews() -> None:
         sa.ForeignKeyConstraint(["opportunity_id"], ["opportunities.id"]),
         sa.PrimaryKeyConstraint("id"),
     )
-    op.create_index("ix_opportunity_reviews_opportunity_id", "opportunity_reviews", ["opportunity_id"])
+    op.create_index(
+        "ix_opportunity_reviews_opportunity_id",
+        "opportunity_reviews",
+        ["opportunity_id"],
+    )
     op.create_index("ix_opportunity_reviews_action", "opportunity_reviews", ["action"])
     op.create_index("ix_opportunity_reviews_actor", "opportunity_reviews", ["actor"])
     op.create_index("ix_opportunity_reviews_occurred_at", "opportunity_reviews", ["occurred_at"])
