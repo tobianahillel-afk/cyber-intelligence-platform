@@ -134,7 +134,7 @@ def _non_negative_number(
     value: dict[object, object], key: str, *, default: float
 ) -> float:
     item = value.get(key, default)
-    if not isinstance(item, (int, float)) or isinstance(item, bool) or item < 0:
+    if not isinstance(item, int | float) or isinstance(item, bool) or item < 0:
         raise ValueError(f"{key} must be a non-negative number")
     return float(item)
 
@@ -145,7 +145,7 @@ def _optional_non_negative_number(
     item = value.get(key)
     if item is None:
         return None
-    if not isinstance(item, (int, float)) or isinstance(item, bool) or item < 0:
+    if not isinstance(item, int | float) or isinstance(item, bool) or item < 0:
         raise ValueError(f"{key} must be null or a non-negative number")
     return float(item)
 
