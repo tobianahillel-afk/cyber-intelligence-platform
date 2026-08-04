@@ -124,6 +124,37 @@ LinkedIn may be used only through official API scopes actually granted, a licens
 
 A normal user account, browser cookie, extension, proxy pool, CAPTCHA bypass, or ordinary browser automation is not an approved collection method. Profiles, posts, connections, groups, search results, and messages must not be scraped without express authorization covering the exact hosts, paths, fields, purpose, rate, storage, and retention.
 
+## Managed provider onboarding
+
+The product should remove ordinary-user secret handling whenever a provider offers an official or explicitly authorized machine-provisioning route. The target experience is that the user enables a source and the platform provisions, stores, verifies, rotates, and revokes the credential without displaying the raw secret.
+
+Automatic account or credential provisioning is allowed only when all of the following are true:
+
+- the provider permits the exact registration or provisioning method;
+- the account represents the real deploying organization and documented business purpose;
+- the identity uses a durable organization-controlled service mailbox or alias;
+- any password is unique, randomly generated, and written directly to the approved secret backend;
+- any API key, token, client secret, or technical credential is issued through an official API, delegated authorization flow, service-account interface, documented key-management endpoint, or explicitly authorized browser workflow;
+- scopes are minimized and provider quotas, trials, account limits, and commercial restrictions are respected;
+- every external action and state transition is auditable, idempotent, revocable, and covered by an authorization decision.
+
+Unattended email verification may use an approved mailbox connector only for the active onboarding transaction. It must restrict processing by recipient, expected provider sender, time window, message type, and verification-link host. It may retain only minimal verification metadata and must not inspect unrelated mail.
+
+Email verification must not be used to bypass MFA, identity proof, payment, contractual acceptance, provider approval, or another human-presence requirement.
+
+The following remain prohibited:
+
+- temporary or disposable mailboxes;
+- fake identities, deceptive personas, or impersonation;
+- automated account multiplication to evade quotas, trials, bans, or rate limits;
+- automatic acceptance of contractual terms without an approved machine contract flow;
+- CAPTCHA solving or anti-bot evasion;
+- MFA, passkey, hardware-token, biometric, KYC, or identity-verification bypass;
+- scraping a provider console to recover credentials when no authorized automation path exists;
+- storing or exposing raw credentials in Git, application databases, logs, API responses, frontend state, analytics, or audit events.
+
+When a required step cannot be completed through an approved machine workflow, provider onboarding must create a precise human checkpoint, wait, and resume automatically afterward. The complete operational requirements are defined in [`runbooks/PROVIDER_ONBOARDING.md`](runbooks/PROVIDER_ONBOARDING.md).
+
 ## Mandatory registry fields
 
 Each source configuration must include:
