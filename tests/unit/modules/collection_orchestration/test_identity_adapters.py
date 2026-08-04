@@ -7,15 +7,19 @@ from uuid import UUID
 
 import pytest
 
-from cip.adapters.sources.organization_identity.registry import OrganizationIdentityTarget
+from cip.adapters.sources.organization_identity.registry import (
+    OrganizationIdentityTarget,
+)
 from cip.modules.collection_orchestration.application.bodacc_identity_adapter import (
-    BodaccIdentityAdapter,
     _checkpoint_from_payload as bodacc_checkpoint,
 )
+from cip.modules.collection_orchestration.application.bodacc_identity_adapter import (
+    BodaccIdentityAdapter,
+)
 from cip.modules.collection_orchestration.application.gleif_adapter import (
-    GleifAdapter,
     _checkpoint_from_payload as gleif_checkpoint,
 )
+from cip.modules.collection_orchestration.application.gleif_adapter import GleifAdapter
 from cip.modules.collection_orchestration.application.identity_adapters import (
     register_identity_adapters,
 )
@@ -24,8 +28,10 @@ from cip.modules.collection_orchestration.application.ports import (
     CollectionAdapter,
 )
 from cip.modules.collection_orchestration.application.recherche_entreprises_adapter import (
-    RechercheEntreprisesAdapter,
     _checkpoint_from_payload as recherche_checkpoint,
+)
+from cip.modules.collection_orchestration.application.recherche_entreprises_adapter import (
+    RechercheEntreprisesAdapter,
 )
 from cip.modules.source_governance.infrastructure.registry import (
     SourceRegistryEntry,
@@ -199,8 +205,9 @@ def test_adapter_constructors_validate_source_timeout_and_targets(
     entry = _entries()[source_id]
     target = _target()
 
+    incompatible_source = "gleif" if source_id != "gleif" else "bodacc-identity"
     with pytest.raises(ValueError, match="source policy"):
-        adapter_type(_entries()["gleif" if source_id != "gleif" else "bodacc-identity"], (target,))
+        adapter_type(_entries()[incompatible_source], (target,))
     with pytest.raises(ValueError, match="timeout_seconds"):
         adapter_type(entry, (target,), timeout_seconds=0)
 
