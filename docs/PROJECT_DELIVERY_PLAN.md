@@ -36,7 +36,7 @@ A lot is complete only when one final commit passes every applicable backend, fr
 | 04 | TED European procurement signals | `IMPLEMENTED_VALIDATED` |
 | 05 | BOAMP French procurement and executable architecture gates | `IMPLEMENTED_VALIDATED` |
 | 06 | Greenhouse public cyber hiring signals | `IMPLEMENTED_VALIDATED` |
-| 07 | Lever and SmartRecruiters multi-ATS expansion | `IN_PROGRESS` |
+| 07 | Lever and SmartRecruiters multi-ATS expansion | `IMPLEMENTED_VALIDATED` |
 | 08 | French and European organization identity foundation | `PLANNED_LOCKED` |
 | 09 | Procurement history, providers, and contract timing | `PLANNED_LOCKED` |
 | 10 | Vulnerability intelligence enrichment | `PLANNED_LOCKED` |
@@ -171,7 +171,7 @@ A lot is complete only when one final commit passes every applicable backend, fr
 
 ## Lot 07 — Lever and SmartRecruiters multi-ATS expansion
 
-**Status:** `IN_PROGRESS`
+**Status:** `IMPLEMENTED_VALIDATED`
 
 **Objective:** Add two official public ATS providers behind one canonical public-job contract.
 
