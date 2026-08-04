@@ -22,6 +22,7 @@ from cip.modules.opportunities.infrastructure.models import (
 from cip.modules.organizations.infrastructure.identity_models import (
     OrganizationAliasRecord,
     OrganizationIdentifierRecord,
+    OrganizationIdentityClaimRecord,
     OrganizationIdentityEvidenceRecord,
     OrganizationIdentityRecord,
     OrganizationMergeCandidateRecord,
@@ -47,6 +48,7 @@ _IMPORTED_MODELS = (
     OpportunityScoreComponentRecord,
     OrganizationAliasRecord,
     OrganizationIdentifierRecord,
+    OrganizationIdentityClaimRecord,
     OrganizationIdentityEvidenceRecord,
     OrganizationIdentityRecord,
     OrganizationMergeCandidateRecord,
