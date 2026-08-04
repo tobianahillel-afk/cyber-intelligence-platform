@@ -4,17 +4,20 @@ import re
 from pathlib import Path
 
 PLAN_PATH = Path("docs/PROJECT_DELIVERY_PLAN.md")
-EXPECTED_LOTS = tuple(range(27))
-REQUIRED_LABELS = (
+EXPECTED_LOTS = tuple(range(33))
+COMPLETED_REQUIRED_LABELS = (
     "**Status:**",
-    "**Objective:**",
+    "**Outcome:**",
+)
+PLANNED_REQUIRED_LABELS = (
+    "**Status:**",
+    "**Primary business outcome:**",
     "**Dependencies:**",
     "**Deliverables:**",
-    "**Tests:**",
+    "**Required tests:**",
     "**Exit gate:**",
-    "**Non-goals:**",
 )
-LOT_HEADING = re.compile(r"^## Lot (\d{2}) — .+$", re.MULTILINE)
+LOT_HEADING = re.compile(r"^(?:##|###) Lot (\d{2}) — .+$", re.MULTILINE)
 DETAIL_STATUS = re.compile(r"\*\*Status:\*\* `([A-Z_]+)`")
 TABLE_ROW = re.compile(r"^\| (\d{2}) \| .+ \| `([A-Z_]+)` \|$", re.MULTILINE)
 
@@ -24,7 +27,13 @@ def test_plan_contains_every_lot_without_gaps() -> None:
 
     assert tuple(sections) == EXPECTED_LOTS
     for number, section in sections.items():
-        missing = [label for label in REQUIRED_LABELS if label not in section]
+        status = _status(number, section)
+        required = (
+            COMPLETED_REQUIRED_LABELS
+            if status == "IMPLEMENTED_VALIDATED"
+            else PLANNED_REQUIRED_LABELS
+        )
+        missing = [label for label in required if label not in section]
         assert missing == [], f"Lot {number:02d} is missing: {missing}"
 
 
