@@ -31,6 +31,9 @@ from cip.modules.collection_orchestration.application.identity_adapters import (
 )
 from cip.modules.collection_orchestration.application.lever_adapter import LeverAdapter
 from cip.modules.collection_orchestration.application.ports import CollectionAdapter
+from cip.modules.collection_orchestration.application.reference_adapter import (
+    ReferencePortfolioAdapter,
+)
 from cip.modules.collection_orchestration.application.scheduler import schedule_due_jobs
 from cip.modules.collection_orchestration.application.smartrecruiters_adapter import (
     SmartRecruitersAdapter,
@@ -52,6 +55,9 @@ from cip.modules.source_governance.infrastructure.registry import SourceRegistry
 from cip.modules.source_governance.infrastructure.registry_bundle import (
     load_source_registry_bundle,
 )
+from cip.modules.source_portfolio.application.service import sync_source_portfolio
+from cip.modules.source_portfolio.domain.models import SourceCatalogEntry
+from cip.modules.source_portfolio.infrastructure.registry import load_source_portfolio
 from cip.shared.config.settings import Settings
 from cip.shared.kernel.time import utc_now
 from cip.shared.persistence.session import (
@@ -69,6 +75,7 @@ class CollectionRuntime:
     schedules: tuple[SourceSchedule, ...]
     adapters: dict[tuple[str, str], CollectionAdapter]
     retention_policy: RetentionPolicy
+    portfolio: tuple[SourceCatalogEntry, ...]
 
 
 def build_collection_runtime(settings: Settings) -> CollectionRuntime:
@@ -78,6 +85,7 @@ def build_collection_runtime(settings: Settings) -> CollectionRuntime:
         settings.source_registry_path,
         settings.identity_source_registry_path,
     )
+    portfolio = load_source_portfolio(settings.source_portfolio_path)
     greenhouse_boards = load_greenhouse_boards(settings.greenhouse_board_registry_path)
     lever_sites = load_lever_sites(settings.lever_site_registry_path)
     smartrecruiters_companies = load_smartrecruiters_companies(
@@ -88,6 +96,7 @@ def build_collection_runtime(settings: Settings) -> CollectionRuntime:
     )
     with session_scope(factory) as session:
         sync_source_registry(session, entries)
+        sync_source_portfolio(session, portfolio, now=utc_now())
     adapters = _build_adapters(
         entries,
         greenhouse_boards,
@@ -96,6 +105,7 @@ def build_collection_runtime(settings: Settings) -> CollectionRuntime:
         identity_targets,
         timeout_seconds=settings.source_http_timeout_seconds,
     )
+    _validate_portfolio_adapters(portfolio, adapters)
     schedules = load_collection_schedules(settings.collection_schedule_path)
     _validate_registered_schedules(schedules, adapters)
     return CollectionRuntime(
@@ -103,6 +113,7 @@ def build_collection_runtime(settings: Settings) -> CollectionRuntime:
         schedules=schedules,
         adapters=adapters,
         retention_policy=load_retention_policy(settings.retention_policy_path),
+        portfolio=portfolio,
     )
 
 
@@ -117,6 +128,7 @@ def _build_adapters(
 ) -> dict[tuple[str, str], CollectionAdapter]:
     entries_by_id = {entry.policy.id: entry for entry in entries}
     adapters: dict[tuple[str, str], CollectionAdapter] = {}
+    _register(adapters, ReferencePortfolioAdapter())
     cisa_entry = entries_by_id.get(CisaKevAdapter.source_id)
     if cisa_entry is not None:
         _register(adapters, CisaKevAdapter(cisa_entry, timeout_seconds=timeout_seconds))
@@ -232,6 +244,24 @@ def _validate_registered_schedules(
     ]
     if missing:
         raise ValueError(f"enabled schedules have no registered adapter: {', '.join(missing)}")
+
+
+def _validate_portfolio_adapters(
+    portfolio: tuple[SourceCatalogEntry, ...],
+    adapters: dict[tuple[str, str], CollectionAdapter],
+) -> None:
+    missing = [
+        f"{entry.source_id}/{entry.adapter.adapter_id}"
+        for entry in portfolio
+        if entry.executable
+        and entry.adapter is not None
+        and (entry.source_id, entry.adapter.adapter_id) not in adapters
+    ]
+    if missing:
+        raise ValueError(
+            "executable source portfolio entries have no registered adapter: "
+            + ", ".join(missing)
+        )
 
 
 def _log_worker_outcome(outcome: WorkerOutcome) -> None:
