@@ -231,7 +231,7 @@ def _posting(**changes: object) -> dict[str, object]:
             "team": "Security Engineering",
             "department": "Security",
         },
-        "createdAt": 1_775_290_400_000,
+        "createdAt": 1_785_837_600_000,
         "descriptionPlain": "Security operations and detection engineering.",
         "additionalPlain": "Operate Microsoft Sentinel.",
         "hostedUrl": "https://jobs.lever.co/example/job-123",
