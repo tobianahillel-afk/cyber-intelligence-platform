@@ -96,9 +96,7 @@ class CommercialSignal:
 
     @property
     def idempotency_key(self) -> str:
-        material = (
-            f"{self.organization_id}\0{self.evidence_id}\0{self.signal_type.value}"
-        )
+        material = f"{self.organization_id}\0{self.evidence_id}\0{self.signal_type.value}"
         return sha256(material.encode("utf-8")).hexdigest()
 
     @property
@@ -225,6 +223,8 @@ class Opportunity:
                 snoozed_until=None,
             )
         if action is ReviewAction.SNOOZE:
+            if snoozed_until is None:
+                raise ValueError("snooze requires snoozed_until")
             until = require_aware_utc(snoozed_until, field_name="snoozed_until")
             if until <= reviewed_at:
                 raise ValueError("snoozed_until must be later than now")
