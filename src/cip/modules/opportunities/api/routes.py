@@ -14,15 +14,16 @@ from cip.modules.opportunities.api.schemas import (
     ScoreComponentOverrideRequest,
     ScoreComponentOverrideResponse,
 )
-from cip.modules.opportunities.domain.entities import (
-    OpportunityFamily,
-    OpportunityState,
-)
-from cip.modules.opportunities.infrastructure.repository import (
+from cip.modules.opportunities.domain.entities import OpportunityFamily, OpportunityState
+from cip.modules.opportunities.infrastructure.errors import (
     OpportunityNotFoundError,
     ScoreComponentNotFoundError,
+)
+from cip.modules.opportunities.infrastructure.queries import (
     get_opportunity_detail,
     list_opportunities,
+)
+from cip.modules.opportunities.infrastructure.reviews import (
     override_score_component,
     review_opportunity,
 )
