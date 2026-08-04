@@ -53,6 +53,7 @@ def _settings(tmp_path: Path, *, schedule_path: Path | None = None) -> Settings:
         _env_file=None,
         database_url=f"sqlite+pysqlite:///{tmp_path / 'runtime.db'}",
         source_registry_path=Path("policies/sources.example.yml"),
+        greenhouse_board_registry_path=Path("policies/greenhouse_boards.yml"),
         retention_policy_path=Path("policies/retention.yml"),
         collection_schedule_path=schedule_path or Path("policies/collection_schedules.yml"),
         scheduler_poll_seconds=0.01,
@@ -65,13 +66,19 @@ def test_runtime_syncs_sources_and_schedules_idempotently(tmp_path: Path) -> Non
     get_metadata().create_all(create_database_engine(settings.database_url))
 
     runtime = build_collection_runtime(settings)
-    assert run_scheduler_once(runtime, now=NOW) == 3
+    assert run_scheduler_once(runtime, now=NOW) == 4
     assert run_scheduler_once(runtime, now=NOW) == 0
 
+    expected_sources = (
+        "boamp",
+        "cisa-kev",
+        "greenhouse-job-board",
+        "ted-search",
+    )
     with session_scope(runtime.factory) as session:
         sources = {
             source_id: session.get(SourceRecord, source_id)
-            for source_id in ("boamp", "cisa-kev", "ted-search")
+            for source_id in expected_sources
         }
         jobs = tuple(session.scalars(select(CollectionJobRecord)))
     assert all(
@@ -81,6 +88,7 @@ def test_runtime_syncs_sources_and_schedules_idempotently(tmp_path: Path) -> Non
     assert {(job.source_id, job.adapter_id) for job in jobs} == {
         ("boamp", "boamp-explore-api"),
         ("cisa-kev", "cisa-kev-feed"),
+        ("greenhouse-job-board", "greenhouse-job-board-api"),
         ("ted-search", "ted-search-api"),
     }
 
