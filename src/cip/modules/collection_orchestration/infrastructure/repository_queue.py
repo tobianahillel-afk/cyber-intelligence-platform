@@ -6,6 +6,7 @@ from sqlalchemy import select
 from sqlalchemy.dialects.postgresql import insert as postgresql_insert
 from sqlalchemy.dialects.sqlite import insert as sqlite_insert
 from sqlalchemy.orm import Session
+from sqlalchemy.sql import Select
 
 from cip.modules.collection_orchestration.application.ports import ClaimedJob
 from cip.modules.collection_orchestration.domain.models import CollectionJob, JobStatus
@@ -45,15 +46,19 @@ def enqueue_job(session: Session, job: CollectionJob) -> bool:
     values = _job_values(job)
     dialect = session.get_bind().dialect.name
     if dialect == "postgresql":
-        statement = postgresql_insert(CollectionJobRecord).values(**values)
+        postgres_statement = postgresql_insert(CollectionJobRecord).values(**values)
         result = session.execute(
-            statement.on_conflict_do_nothing(index_elements=["idempotency_key"])
+            postgres_statement.on_conflict_do_nothing(
+                index_elements=["idempotency_key"]
+            )
         )
         return bool(getattr(result, "rowcount", 0))
     if dialect == "sqlite":
-        statement = sqlite_insert(CollectionJobRecord).values(**values)
+        sqlite_statement = sqlite_insert(CollectionJobRecord).values(**values)
         result = session.execute(
-            statement.on_conflict_do_nothing(index_elements=["idempotency_key"])
+            sqlite_statement.on_conflict_do_nothing(
+                index_elements=["idempotency_key"]
+            )
         )
         return bool(getattr(result, "rowcount", 0))
     return _enqueue_portable(session, job, values)
@@ -97,11 +102,12 @@ def heartbeat_job(
     if lease_seconds < 1:
         raise ValueError("lease_seconds must be positive")
     record = owned_running_job(session, claimed=claimed, now=current)
-    record.lease_expires_at = current + timedelta(seconds=lease_seconds)
-    return record.lease_expires_at
+    lease_expires_at = current + timedelta(seconds=lease_seconds)
+    record.lease_expires_at = lease_expires_at
+    return lease_expires_at
 
 
-def _claim_statement(now: datetime):
+def _claim_statement(now: datetime) -> Select[tuple[CollectionJobRecord]]:
     return (
         select(CollectionJobRecord)
         .where(
@@ -123,11 +129,12 @@ def _claim_record(
     worker_id: str,
     now: datetime,
 ) -> ClaimedJob:
+    lease_expires_at = now + timedelta(seconds=record.lease_seconds)
     record.status = JobStatus.RUNNING.value
     record.attempt += 1
     record.started_at = record.started_at or now
     record.lease_owner = worker_id
-    record.lease_expires_at = now + timedelta(seconds=record.lease_seconds)
+    record.lease_expires_at = lease_expires_at
     record.error_code = None
     record.error_message = None
     checkpoint = session.get(
@@ -140,7 +147,7 @@ def _claim_record(
         adapter_id=record.adapter_id,
         attempt=record.attempt,
         lease_owner=worker_id,
-        lease_expires_at=record.lease_expires_at,
+        lease_expires_at=lease_expires_at,
         max_attempts=record.max_attempts,
         base_delay_seconds=record.base_delay_seconds,
         max_delay_seconds=record.max_delay_seconds,
