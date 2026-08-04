@@ -1,0 +1,15 @@
+version: 1
+
+# Production targets are explicit and version-controlled. The disabled example
+# documents the schema without collecting any real organization by default.
+targets:
+  - id: example-fr-organization
+    organization_id: 86fe6126-5731-5c4d-a206-69a6a736cae5
+    canonical_name: Example France Organization
+    country_code: FR
+    query: Example France Organization
+    postal_code: "75001"
+    siren: null
+    siret: null
+    lei: null
+    enabled: false
