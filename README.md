@@ -172,6 +172,7 @@ LinkedIn collection remains disabled unless official API scopes or reviewed writ
 - [`docs/DATA_MODEL.md`](docs/DATA_MODEL.md)
 - [`docs/SOURCE_POLICY.md`](docs/SOURCE_POLICY.md)
 - [`docs/OSINT_COLLECTION_CATALOG.md`](docs/OSINT_COLLECTION_CATALOG.md)
+- [`docs/LIVE_CYBER_THREAT_SOURCE_CATALOG.md`](docs/LIVE_CYBER_THREAT_SOURCE_CATALOG.md)
 - [`docs/DEVELOPMENT_STANDARDS.md`](docs/DEVELOPMENT_STANDARDS.md)
 - [`docs/TEST_STRATEGY.md`](docs/TEST_STRATEGY.md)
 - [`docs/PROJECT_DELIVERY_PLAN.md`](docs/PROJECT_DELIVERY_PLAN.md)
