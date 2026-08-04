@@ -105,6 +105,8 @@ def upgrade() -> None:
         sa.Column("source_id", sa.String(length=100), nullable=False),
         sa.Column("freshness_state", sa.String(length=50), nullable=False),
         sa.Column("schema_state", sa.String(length=40), nullable=False),
+        sa.Column("volume_state", sa.String(length=40), nullable=False),
+        sa.Column("field_population_state", sa.String(length=40), nullable=False),
         sa.Column("last_attempt_at", sa.DateTime(timezone=True), nullable=True),
         sa.Column("last_success_at", sa.DateTime(timezone=True), nullable=True),
         sa.Column("last_source_record_at", sa.DateTime(timezone=True), nullable=True),
@@ -116,7 +118,13 @@ def upgrade() -> None:
         sa.Column("updated_at", sa.DateTime(timezone=True), nullable=False),
         sa.PrimaryKeyConstraint("source_id"),
     )
-    for column in ("freshness_state", "schema_state", "updated_at"):
+    for column in (
+        "freshness_state",
+        "schema_state",
+        "volume_state",
+        "field_population_state",
+        "updated_at",
+    ):
         op.create_index(f"ix_source_health_{column}", "source_health", [column])
 
     op.create_table(
@@ -142,7 +150,13 @@ def downgrade() -> None:
             f"ix_source_portfolio_audit_{column}", table_name="source_portfolio_audit"
         )
     op.drop_table("source_portfolio_audit")
-    for column in ("updated_at", "schema_state", "freshness_state"):
+    for column in (
+        "updated_at",
+        "field_population_state",
+        "volume_state",
+        "schema_state",
+        "freshness_state",
+    ):
         op.drop_index(f"ix_source_health_{column}", table_name="source_health")
     op.drop_table("source_health")
     op.drop_index("ix_backfill_partition_claim", table_name="backfill_partitions")
