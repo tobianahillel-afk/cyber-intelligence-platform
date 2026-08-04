@@ -157,14 +157,7 @@ def test_client_rejects_unsafe_responses() -> None:
     )
 
     for response, message in cases:
-        with (
-            httpx.Client(transport=_transport_returning(response)) as http_client,
-            pytest.raises(GreenhouseSourceResponseError, match=message),
-        ):
-            GreenhouseClient(
-                http_client,
-                boards_base_url="https://example.test",
-            ).fetch_jobs("board")
+        _assert_unsafe_response(response, message=message)
 
 
 def test_schema_normalizes_nodes_and_requires_aware_timestamp() -> None:
@@ -178,6 +171,18 @@ def test_schema_normalizes_nodes_and_requires_aware_timestamp() -> None:
         GreenhouseJob.model_validate(_job(updated_at="2026-08-04T10:00:00"))
     with pytest.raises(ValidationError):
         GreenhouseJob.model_validate(_job(title=" "))
+
+
+def _assert_unsafe_response(response: httpx.Response, *, message: str) -> None:
+    http_client = httpx.Client(transport=_transport_returning(response))
+    try:
+        with pytest.raises(GreenhouseSourceResponseError, match=message):
+            GreenhouseClient(
+                http_client,
+                boards_base_url="https://example.test",
+            ).fetch_jobs("board")
+    finally:
+        http_client.close()
 
 
 def _transport_returning(response: httpx.Response) -> httpx.MockTransport:
