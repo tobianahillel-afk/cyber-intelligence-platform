@@ -59,7 +59,6 @@ class BackfillState(StrEnum):
         return self in {
             BackfillState.COMPLETED,
             BackfillState.CANCELLED,
-            BackfillState.FAILED,
         }
 
 
