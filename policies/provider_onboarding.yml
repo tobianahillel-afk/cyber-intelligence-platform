@@ -149,7 +149,7 @@ providers:
       - request_provider_access
       - wait_for_provider_approval
     automatic_onboarding: false
-    blocked_reason: Official API application, products, scopes, redirect URIs, and authorization grants must be reviewed before activation.
+    blocked_reason: null
 
   - source_id: linkedin-authorized-browser
     display_name: LinkedIn Authorized Browser Workflow
