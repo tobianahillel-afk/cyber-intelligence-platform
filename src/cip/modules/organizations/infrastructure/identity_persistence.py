@@ -73,7 +73,8 @@ def review_merge_candidate(
     candidate = session.get(OrganizationMergeCandidateRecord, candidate_id)
     if candidate is None:
         raise LookupError("merge candidate not found")
-    if candidate.state not in {MatchState.NEEDS_REVIEW.value, MatchState.AUTO_CONFIRMED.value}:
+    reviewable_states = {MatchState.NEEDS_REVIEW.value, MatchState.AUTO_CONFIRMED.value}
+    if candidate.state not in reviewable_states:
         raise ValueError("merge candidate has already been reviewed")
     identity = session.get(OrganizationIdentityRecord, candidate.identity_id)
     if identity is None:
@@ -181,8 +182,13 @@ def _upsert_identity(
             )
         )
         return
-    if record.organization_id is not None and attached_id not in {None, record.organization_id}:
-        raise IdentityPersistenceConflictError("identity is already attached to another organization")
+    if (
+        record.organization_id is not None
+        and attached_id not in {None, record.organization_id}
+    ):
+        raise IdentityPersistenceConflictError(
+            "identity is already attached to another organization"
+        )
     record.organization_id = attached_id or record.organization_id
     record.official_name = identity.official_name
     record.status = identity.status.value
@@ -215,7 +221,10 @@ def _replace_identifiers(session: Session, projection: IdentityProjection) -> No
         if existing is None:
             session.add(
                 OrganizationIdentifierRecord(
-                    id=uuid5(NAMESPACE_URL, f"organization-identifier:{identifier.exact_key}"),
+                    id=uuid5(
+                        NAMESPACE_URL,
+                        f"organization-identifier:{identifier.exact_key}",
+                    ),
                     identity_id=identity.id,
                     scheme=identifier.scheme.value,
                     value=identifier.value,
@@ -245,7 +254,10 @@ def _upsert_aliases(session: Session, projection: IdentityProjection) -> None:
         if existing is None:
             session.add(
                 OrganizationAliasRecord(
-                    id=uuid5(NAMESPACE_URL, f"organization-alias:{identity.id}:{normalized}"),
+                    id=uuid5(
+                        NAMESPACE_URL,
+                        f"organization-alias:{identity.id}:{normalized}",
+                    ),
                     identity_id=identity.id,
                     value=alias,
                     normalized_value=normalized,
@@ -273,6 +285,7 @@ def _link_evidence(session: Session, projection: IdentityProjection) -> None:
 
 
 def _upsert_candidates(session: Session, projection: IdentityProjection) -> None:
+    reviewable_states = {MatchState.NEEDS_REVIEW.value, MatchState.AUTO_CONFIRMED.value}
     for candidate in projection.merge_candidates:
         record = session.get(OrganizationMergeCandidateRecord, candidate.id)
         if record is None:
@@ -291,7 +304,7 @@ def _upsert_candidates(session: Session, projection: IdentityProjection) -> None
                     review_note=candidate.review_note,
                 )
             )
-        elif record.state in {MatchState.NEEDS_REVIEW.value, MatchState.AUTO_CONFIRMED.value}:
+        elif record.state in reviewable_states:
             record.method = candidate.method.value
             record.score = candidate.score
             record.reasons = list(candidate.reasons)
@@ -305,9 +318,13 @@ def _upsert_candidates(session: Session, projection: IdentityProjection) -> None
 def _upsert_relationships(session: Session, projection: IdentityProjection) -> None:
     for relationship in projection.relationships:
         if session.get(OrganizationIdentityRecord, relationship.subject_identity_id) is None:
-            raise IdentityPersistenceConflictError("relationship subject identity is missing")
+            raise IdentityPersistenceConflictError(
+                "relationship subject identity is missing"
+            )
         if session.get(OrganizationIdentityRecord, relationship.object_identity_id) is None:
-            raise IdentityPersistenceConflictError("relationship object identity is missing")
+            raise IdentityPersistenceConflictError(
+                "relationship object identity is missing"
+            )
         record = session.get(OrganizationRelationshipRecord, relationship.id)
         if record is None:
             session.add(
