@@ -59,6 +59,9 @@ jobs:
       - name: Mypy
         run: mypy
 
+      - name: Architecture and release contracts
+        run: pytest tests/architecture
+
       - name: Validate reversible migrations
         run: |
           alembic upgrade head
