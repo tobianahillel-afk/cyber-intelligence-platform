@@ -182,6 +182,100 @@ sources:
       Application forms, questions, candidates, resumes, emails and POST endpoints
       are excluded.
 
+  - id: lever-job-board
+    name: Lever Postings API
+    base_url: https://api.lever.co/v0/postings
+    status: enabled
+    source_type: api
+    owner: Lever, Inc.
+    terms_url: https://github.com/lever/postings-api
+    licence: Public postings API documentation
+    allowed_data_categories:
+      - public_job_posting
+      - organization_metadata
+    prohibited_data_categories:
+      - professional_contact
+      - credential
+      - victim_file
+      - private_communication
+      - private_personal_data
+      - restricted_content
+    rate_limit_per_minute: 4
+    retention_days: 365
+    attribution_required: true
+    raw_content_storage: false
+    human_review_required: false
+    authorization:
+      status: approved
+      document_reference: lever-public-postings-api-2026-08-04
+      reviewed_at: 2026-08-04T13:25:00Z
+      expires_at: null
+      approved_hosts:
+        - api.lever.co
+      approved_path_prefixes:
+        - /v0/postings/
+      approved_purposes:
+        - commercial-hiring-intelligence
+      automated_collection_allowed: true
+      raw_storage_allowed: false
+    economics:
+      commercial_value: high
+      monthly_cost: 0
+      implementation_cost: medium
+      maintenance_cost: medium
+      expected_stability: high
+    notes: >-
+      Reads only published postings through GET requests from explicitly configured
+      Lever sites. Candidate creation, application forms, resumes and POST endpoints
+      are excluded.
+
+  - id: smartrecruiters-job-board
+    name: SmartRecruiters Posting API
+    base_url: https://api.smartrecruiters.com/v1/companies
+    status: enabled
+    source_type: api
+    owner: SmartRecruiters, Inc.
+    terms_url: https://developers.smartrecruiters.com/docs/posting-api
+    licence: Public Posting API documentation
+    allowed_data_categories:
+      - public_job_posting
+      - organization_metadata
+    prohibited_data_categories:
+      - professional_contact
+      - credential
+      - victim_file
+      - private_communication
+      - private_personal_data
+      - restricted_content
+    rate_limit_per_minute: 2
+    retention_days: 365
+    attribution_required: true
+    raw_content_storage: false
+    human_review_required: false
+    authorization:
+      status: approved
+      document_reference: smartrecruiters-public-posting-api-2026-08-04
+      reviewed_at: 2026-08-04T13:25:00Z
+      expires_at: null
+      approved_hosts:
+        - api.smartrecruiters.com
+      approved_path_prefixes:
+        - /v1/companies/
+      approved_purposes:
+        - commercial-hiring-intelligence
+      automated_collection_allowed: true
+      raw_storage_allowed: false
+    economics:
+      commercial_value: high
+      monthly_cost: 0
+      implementation_cost: medium
+      maintenance_cost: medium
+      expected_stability: medium
+    notes: >-
+      Reads active public postings with bounded list pagination and GET-only detail
+      requests. Candidate applications, screening questions, candidate status and
+      all write endpoints are excluded.
+
   - id: search-manual-review
     name: Search-engine analyst review
     base_url: https://www.google.com
