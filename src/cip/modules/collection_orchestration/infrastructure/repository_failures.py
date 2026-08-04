@@ -85,9 +85,19 @@ def record_failure(
 ) -> JobStatus:
     code = error_code.strip() or "collection_error"
     message = (error_message.strip() or code)[:4_000]
-    circuit = register_circuit_failure(session, record=record, now=now, error_code=code)
+    circuit = register_circuit_failure(
+        session,
+        record=record,
+        now=now,
+        error_code=code,
+    )
     if retryable and record.attempt < record.max_attempts:
-        _schedule_retry(record, circuit_state=circuit.state, reopen_at=circuit.reopen_at, now=now)
+        _schedule_retry(
+            record,
+            circuit_state=circuit.state,
+            reopen_at=circuit.reopen_at,
+            now=now,
+        )
         record.error_code = code
         record.error_message = message
         return JobStatus.RETRY_SCHEDULED
@@ -114,7 +124,9 @@ def dead_letter_job(
         (record.source_id, record.adapter_id),
     )
     existing = session.scalar(
-        select(CollectionDeadLetterRecord.id).where(CollectionDeadLetterRecord.job_id == record.id)
+        select(CollectionDeadLetterRecord.id).where(
+            CollectionDeadLetterRecord.job_id == record.id
+        )
     )
     if existing is None:
         session.add(
