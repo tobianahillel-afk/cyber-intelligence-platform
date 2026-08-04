@@ -6,6 +6,16 @@ The platform is not a Salesforce, HubSpot, or external-CRM extension. Its target
 
 The system is evidence-first: every material fact, alert, and opportunity exposes its source, timestamps, confidence, freshness, claim type, conflicts, and review history. It does not autonomously contact prospects, validate credentials, exploit systems, ingest leaked victim data, or retain private-life information.
 
+## Accountless product access
+
+The ordinary product experience requires no visitor registration, login, password, or email address. A visitor receives only a short-lived anonymous platform session for navigation continuity, rate limiting, abuse prevention, and temporary interface state.
+
+That anonymous session is never reused as an identity on external providers. Collection is performed centrally by approved public feeds, official APIs, open-data sources, licensed providers, and governed platform service identities.
+
+The product is database-first: normal page views read stored and indexed evidence. They do not crawl every source again. Schedulers refresh sources periodically according to freshness, cost, quota, and change frequency. A stale entity may enqueue a bounded priority refresh while the interface continues to show the latest stored evidence with a visible freshness state.
+
+See [`docs/ANONYMOUS_ACCESS_AND_REFRESH_MODEL.md`](docs/ANONYMOUS_ACCESS_AND_REFRESH_MODEL.md).
+
 ## Current scope
 
 Version `0.8.0` includes six durable official-source adapters:
@@ -36,17 +46,20 @@ Professional contact records require provenance, permitted purpose, freshness, r
 
 ```text
 approved source registry
-  -> policy decision before network
+  -> scheduled policy decision before network
   -> bounded transport and strict provider schema
   -> immutable observation metadata
   -> normalized organization, evidence, and signal
+  -> PostgreSQL and search projections
   -> versioned need hypothesis and score
-  -> native alert, company workspace, task, and opportunity lifecycle
+  -> accountless read interface and native opportunity lifecycle
 ```
 
 ## Architecture
 
 The backend is a Python 3.12 modular monolith using FastAPI, SQLAlchemy, PostgreSQL, Alembic, Pydantic, and durable scheduler/worker orchestration. The analyst UI is a Next.js application under `apps/web`.
+
+The architecture separates an accountless public data plane from a deployment-protected administrative control plane. Anonymous visitors can read approved product data and request bounded refreshes, but cannot access provider secrets, mutate source policy, change collection schedules, or perform administrative operations.
 
 Provider payloads stay inside adapter packages. Domain modules do not import frameworks or infrastructure implementations. External adapters produce approved observations and projections through application contracts rather than importing canonical persistence implementations.
 
@@ -155,6 +168,7 @@ LinkedIn collection remains disabled unless official API scopes or reviewed writ
 
 - [`docs/PRODUCT.md`](docs/PRODUCT.md)
 - [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)
+- [`docs/ANONYMOUS_ACCESS_AND_REFRESH_MODEL.md`](docs/ANONYMOUS_ACCESS_AND_REFRESH_MODEL.md)
 - [`docs/DATA_MODEL.md`](docs/DATA_MODEL.md)
 - [`docs/SOURCE_POLICY.md`](docs/SOURCE_POLICY.md)
 - [`docs/OSINT_COLLECTION_CATALOG.md`](docs/OSINT_COLLECTION_CATALOG.md)
