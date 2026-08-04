@@ -3,8 +3,11 @@
 import { revalidatePath } from "next/cache";
 
 import {
+  cancelSourceBackfill,
+  changeSourcePortfolioState,
   recordHumanCheckpoint,
   registerSecretReference,
+  requestSourcePriorityRefresh,
   revokeProvider,
   startProvider,
   verifyProvider,
@@ -17,6 +20,46 @@ const checkpointStates = new Set<ProviderOnboardingState>([
   "awaiting_mfa",
   "awaiting_provider_approval",
 ]);
+
+export async function priorityRefreshSourceAction(
+  sourceId: string,
+  formData: FormData,
+): Promise<void> {
+  await requestSourcePriorityRefresh(sourceId, { actor: actor(formData) });
+  revalidatePath("/sources");
+}
+
+export async function pauseSourceAction(
+  sourceId: string,
+  formData: FormData,
+): Promise<void> {
+  await changeSourcePortfolioState(sourceId, "pause", { actor: actor(formData) });
+  revalidatePath("/sources");
+}
+
+export async function resumeSourceAction(
+  sourceId: string,
+  formData: FormData,
+): Promise<void> {
+  await changeSourcePortfolioState(sourceId, "resume", { actor: actor(formData) });
+  revalidatePath("/sources");
+}
+
+export async function disableSourceAction(
+  sourceId: string,
+  formData: FormData,
+): Promise<void> {
+  await changeSourcePortfolioState(sourceId, "disable", { actor: actor(formData) });
+  revalidatePath("/sources");
+}
+
+export async function cancelSourceBackfillAction(
+  sourceId: string,
+  formData: FormData,
+): Promise<void> {
+  await cancelSourceBackfill(sourceId, { actor: actor(formData) });
+  revalidatePath("/sources");
+}
 
 export async function startProviderAction(
   sourceId: string,
