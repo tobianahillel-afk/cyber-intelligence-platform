@@ -106,16 +106,11 @@ async function requestJson<T>(path: string, init: RequestInit = {}): Promise<T> 
         ...init.headers,
       },
     });
-  } catch (error) {
-    throw new OpportunityApiError("Opportunity API is unavailable", 503, {
-      cause: error,
-    });
+  } catch {
+    throw new OpportunityApiError("Opportunity API is unavailable", 503);
   }
   if (!response.ok) {
-    throw new OpportunityApiError(
-      await responseMessage(response),
-      response.status,
-    );
+    throw new OpportunityApiError(await responseMessage(response), response.status);
   }
   if (response.status === 204) {
     return undefined as T;
