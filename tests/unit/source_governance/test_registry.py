@@ -28,8 +28,13 @@ def test_repository_source_registry_loads() -> None:
         "linkedin-authorized-browser",
         "linkedin-official-api",
         "search-manual-review",
+        "ted-search",
     }
     assert entries_by_id["cisa-kev"].policy.status is SourceStatus.ENABLED
+    assert entries_by_id["ted-search"].policy.status is SourceStatus.ENABLED
+    assert entries_by_id["ted-search"].policy.allowed_data_categories == frozenset(
+        {DataCategory.PUBLIC_TENDER, DataCategory.ORGANIZATION_METADATA}
+    )
     assert entries_by_id["brixhub"].policy.status is SourceStatus.QUARANTINED
     assert entries_by_id["brixhub"].policy.allowed_data_categories == frozenset()
 

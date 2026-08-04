@@ -98,12 +98,20 @@ def test_checkpoint_is_immutable_and_requires_aware_dates() -> None:
 
 def test_repository_collection_schedule_loads() -> None:
     schedules = load_collection_schedules(Path("policies/collection_schedules.yml"))
+    schedules_by_identity = {
+        (schedule.source_id, schedule.adapter_id): schedule for schedule in schedules
+    }
 
-    assert len(schedules) == 1
-    schedule = schedules[0]
-    assert schedule.source_id == "cisa-kev"
-    assert schedule.interval_seconds == 900
-    assert schedule.retry_policy.max_attempts == 4
+    assert set(schedules_by_identity) == {
+        ("cisa-kev", "cisa-kev-feed"),
+        ("ted-search", "ted-search-api"),
+    }
+    cisa = schedules_by_identity[("cisa-kev", "cisa-kev-feed")]
+    ted = schedules_by_identity[("ted-search", "ted-search-api")]
+    assert cisa.interval_seconds == 900
+    assert cisa.retry_policy.max_attempts == 4
+    assert ted.interval_seconds == 1800
+    assert ted.retry_policy.base_delay_seconds == 60
 
 
 @pytest.mark.parametrize(

@@ -6,6 +6,9 @@ from datetime import datetime
 from typing import Protocol
 from uuid import UUID
 
+from cip.modules.evidence.domain.entities import Evidence
+from cip.modules.opportunities.domain.entities import CommercialSignal
+from cip.modules.organizations.domain.entities import Organization
 from cip.modules.raw_observations.domain.entities import RawObservation
 from cip.modules.source_governance.domain.models import DataCategory
 
@@ -18,10 +21,24 @@ class AdapterExecutionError(RuntimeError):
 
 
 @dataclass(frozen=True, slots=True)
+class CommercialProjection:
+    organization: Organization
+    evidence: Evidence
+    signal: CommercialSignal
+
+    def __post_init__(self) -> None:
+        if self.signal.organization_id != self.organization.id:
+            raise ValueError("signal organization must match projected organization")
+        if self.signal.evidence_id != self.evidence.id:
+            raise ValueError("signal evidence must match projected evidence")
+
+
+@dataclass(frozen=True, slots=True)
 class AdapterCollectionBatch:
     observations: tuple[RawObservation, ...]
     checkpoint_payload: Mapping[str, object]
     not_modified: bool
+    commercial_projections: tuple[CommercialProjection, ...] = ()
 
 
 class CollectionAdapter(Protocol):

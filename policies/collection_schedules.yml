@@ -12,3 +12,15 @@ schedules:
       max_delay_seconds: 900
       circuit_failure_threshold: 3
       circuit_reset_seconds: 900
+
+  - source_id: ted-search
+    adapter_id: ted-search-api
+    enabled: true
+    interval_seconds: 1800
+    lease_seconds: 120
+    retry:
+      max_attempts: 4
+      base_delay_seconds: 60
+      max_delay_seconds: 1800
+      circuit_failure_threshold: 3
+      circuit_reset_seconds: 1800

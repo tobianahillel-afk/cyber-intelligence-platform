@@ -21,6 +21,9 @@ from cip.modules.collection_orchestration.infrastructure.repository import (
     fail_job,
 )
 from cip.modules.data_governance.domain.retention import RetentionPolicy
+from cip.modules.opportunities.infrastructure.projections import (
+    persist_commercial_projections,
+)
 from cip.shared.kernel.time import require_aware_utc, utc_now
 from cip.shared.persistence.session import session_scope
 
@@ -99,11 +102,17 @@ def run_worker_once(
 
     try:
         with session_scope(factory) as session:
+            completion_time = _read_clock(clock)
             written = complete_job(
                 session,
                 claimed,
                 batch,
-                now=_read_clock(clock),
+                now=completion_time,
+            )
+            persist_commercial_projections(
+                session,
+                batch.commercial_projections,
+                now=completion_time,
             )
     except LeaseLostError:
         return WorkerOutcome(

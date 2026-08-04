@@ -12,7 +12,7 @@ The product is designed to answer:
 
 ## Current implementation status
 
-The repository contains an executable foundation, a durable collection pipeline, and the first live opportunity workflow:
+The repository contains an executable foundation, a durable collection pipeline, real official-source adapters, and the first live opportunity workflow:
 
 - FastAPI application factory, source-governance endpoints, and opportunity list/detail/action APIs;
 - framework-independent domain modules for organizations, evidence, cyber events, raw observations, opportunity scoring, retention, suppression, source accounts, product metrics, collection orchestration, and analyst-reviewed opportunities;
@@ -23,8 +23,10 @@ The repository contains an executable foundation, a durable collection pipeline,
 - executable retention rules;
 - machine-readable source and collection-schedule registries;
 - an official CISA KEV feed adapter with conditional HTTP requests, size/type checks, strict schemas, checkpoints, provenance, and network-free tests;
+- an official anonymous TED Search API adapter for active European SIEM/SOC procurement notices, with selected-field retrieval, local defensive filtering, deterministic buyer/evidence/signal mapping, checkpoints, and direct Opportunity Inbox projection;
 - durable collection jobs with deterministic idempotency keys, leases, retries, bounded exponential backoff, circuit breakers, dead letters, and recovery after interruption;
 - atomic observation/checkpoint/job completion and observation deduplication;
+- transactional commercial projection: a collection job cannot be marked successful if organization, evidence, signal, or opportunity persistence fails;
 - source freshness, queue lag, error, dead-letter, and volume metrics;
 - separate `cip-scheduler` and `cip-worker` process entry points;
 - normalized commercial signals, need hypotheses, evidence links, and persistent opportunity lifecycle;
@@ -38,14 +40,14 @@ The repository contains an executable foundation, a durable collection pipeline,
 
 Not yet implemented:
 
-- production adapters that produce the MVP tender and job-posting commercial signals, such as BOAMP, TED, or authorized careers/ATS sources;
+- BOAMP, DECP, careers/ATS, or other production commercial-signal adapters beyond TED;
 - Chromium/browser workers and download quarantine runtime;
 - named professional-contact enrichment and organization-chart workflows;
 - OpenSearch, Redis, object storage, CRM integration, or autonomous outreach;
 - active LinkedIn collection;
 - any executable BrixHub integration.
 
-The live opportunity pipeline currently consumes normalized commercial signals. It does not claim that BOAMP, TED, job boards, LinkedIn, or other future sources are already connected.
+The live opportunity pipeline can now receive real TED public-tender signals. It does not claim that BOAMP, DECP, job boards, LinkedIn, or other future sources are already connected.
 
 Redis is not required for the current durable queue: PostgreSQL owns scheduling, locking, leases, checkpoints, and recovery. Redis should be introduced only when measured throughput or coordination requirements justify it.
 
@@ -86,7 +88,7 @@ cip-scheduler
 cip-worker
 ```
 
-The scheduler reads `policies/collection_schedules.yml`, synchronizes the authorized source registry, and creates at most one active job per source/adapter. The worker claims jobs with a bounded lease, performs source access outside the database transaction, and commits observations, checkpoint advancement, and job completion atomically.
+The scheduler reads `policies/collection_schedules.yml`, synchronizes the authorized source registry, and creates at most one active job per source/adapter. The worker claims jobs with a bounded lease, performs source access outside the database transaction, and commits observations, checkpoints, job completion, and commercial projections atomically.
 
 Start the UI separately:
 
@@ -97,7 +99,7 @@ npm install
 npm run dev
 ```
 
-The API is available on `http://127.0.0.1:8000` by default. The Next.js server uses `CIP_API_BASE_URL` to load and update the Opportunity Inbox. With no commercial signals in PostgreSQL, the UI displays an explicit empty state rather than synthetic records.
+The API is available on `http://127.0.0.1:8000` by default. The Next.js server uses `CIP_API_BASE_URL` to load and update the Opportunity Inbox. With no matching commercial signals in PostgreSQL, the UI displays an explicit empty state rather than synthetic records.
 
 ## Validation
 
@@ -118,7 +120,7 @@ npm run typecheck
 npm run build
 ```
 
-The live-opportunity phase was independently validated with 256 passing tests and 94.94% combined line-and-branch coverage. Mypy strict passed on 94 source files, migration `0004` passed the PostgreSQL upgrade/downgrade/upgrade cycle, and the Next.js audit, typecheck, and production build passed.
+The TED commercial-adapter phase was independently validated with 275 passing tests and 94.42% combined line-and-branch coverage. Mypy strict passed on 101 source files, the PostgreSQL upgrade/downgrade/upgrade cycle passed, the TED orchestration adapter reached 100% coverage, and the Next.js audit, typecheck, and production build passed.
 
 ## Architecture
 
@@ -144,7 +146,7 @@ policies/
 
 tests/
   unit/                        domain, adapter, governance, persistence, and recovery tests
-  integration/                 persisted signal-to-opportunity workflows
+  integration/                 persisted source-to-opportunity workflows
 ```
 
 ## Durable collection lifecycle
@@ -157,12 +159,12 @@ source registry synchronization
 -> bounded worker lease
 -> policy-checked source collection
 -> validation and raw-observation mapping
--> atomic observation insert + checkpoint advance + job completion
+-> atomic observation + checkpoint + commercial projection + job completion
 -> retry/circuit breaker/dead letter on failure
 -> freshness and queue metrics
 ```
 
-A replayed schedule slot cannot create a duplicate job. A replayed observation cannot create a duplicate raw record. If execution stops before the completion transaction commits, the previous checkpoint remains authoritative. A worker whose lease expired cannot commit a late result.
+A replayed schedule slot cannot create a duplicate job. A replayed observation cannot create a duplicate raw record. If execution stops before the completion transaction commits, the previous checkpoint remains authoritative. A worker whose lease expired cannot commit a late result. A TED job is not successful unless its buyer organization, evidence, commercial signal, and resulting opportunity are also persisted.
 
 ## Opportunity lifecycle
 
@@ -195,7 +197,7 @@ official API
 -> manual import
 ```
 
-The current executable source adapter uses the official CISA KEV JSON feed. Chromium is intentionally deferred until API and static-HTTP acquisition, normalization, provenance, and value metrics are stable.
+The current executable adapters use the official CISA KEV JSON feed and the official TED Search API. Chromium is intentionally deferred until API and static-HTTP acquisition, normalization, provenance, and value metrics are stable.
 
 CAPTCHA, bot challenges, MFA, changed terms, or account-security prompts must produce a safe pause and human task. They are not automatically bypassed. Temporary-account rotation, copied cookies, CAPTCHA-solving services, and access-control circumvention are out of scope.
 
@@ -227,7 +229,7 @@ L7 commercial opportunity
 L8 UI and search read models
 ```
 
-The CISA adapter currently implements L0 through L1. The live SIEM/SOC workflow implements L5 through L8 for normalized commercial signals. Future tender and job adapters must implement L0 through L5 and cannot bypass source governance, evidence provenance, or entity resolution.
+The CISA adapter currently implements L0 through L1. The TED adapter implements L0 through L5 and feeds the live SIEM/SOC workflow, which implements L5 through L8. Future sources cannot bypass source governance, evidence provenance, deterministic identifiers, or entity-resolution controls.
 
 ## Code and test standards
 
@@ -238,7 +240,7 @@ The CISA adapter currently implements L0 through L1. The live SIEM/SOC workflow 
 - source adapters never resolve organizations or calculate opportunities;
 - scores are calculated by the domain and include a reproducible hash;
 - timestamps must be timezone-aware;
-- every adapter requires policy-denial, schema, mapping, checkpoint, and failure tests;
+- every adapter requires policy-denial, schema, mapping, checkpoint, HTTP classification, and failure tests;
 - backend line and branch coverage must remain at least 90%;
 - critical policy and scoring modules target 95%.
 
