@@ -72,3 +72,41 @@ schedules:
       max_delay_seconds: 1800
       circuit_failure_threshold: 3
       circuit_reset_seconds: 1800
+
+  # Identity adapters are installed but remain disabled until at least one explicit
+  # organization target is enabled in organization_identity_targets.yml.
+  - source_id: recherche-entreprises
+    adapter_id: recherche-entreprises-search
+    enabled: false
+    interval_seconds: 86400
+    lease_seconds: 180
+    retry:
+      max_attempts: 4
+      base_delay_seconds: 120
+      max_delay_seconds: 3600
+      circuit_failure_threshold: 3
+      circuit_reset_seconds: 3600
+
+  - source_id: gleif
+    adapter_id: gleif-lei-api
+    enabled: false
+    interval_seconds: 86400
+    lease_seconds: 180
+    retry:
+      max_attempts: 4
+      base_delay_seconds: 120
+      max_delay_seconds: 3600
+      circuit_failure_threshold: 3
+      circuit_reset_seconds: 3600
+
+  - source_id: bodacc-identity
+    adapter_id: bodacc-commercial-announcements
+    enabled: false
+    interval_seconds: 86400
+    lease_seconds: 180
+    retry:
+      max_attempts: 4
+      base_delay_seconds: 120
+      max_delay_seconds: 3600
+      circuit_failure_threshold: 3
+      circuit_reset_seconds: 3600
