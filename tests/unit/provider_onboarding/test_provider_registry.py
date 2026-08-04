@@ -47,7 +47,7 @@ def test_provider_catalog_rejects_invalid_shapes_and_duplicates(tmp_path: Path) 
 def test_provider_catalog_rejects_invalid_values(tmp_path: Path) -> None:
     invalid_values = (
         ("auth_mode: invalid", "invalid"),
-        ("automatic_onboarding: yes", "boolean"),
+        ('automatic_onboarding: "yes"', "boolean"),
         ("documentation_url: http://provider.example/docs", "HTTPS"),
         ("human_actions: [invalid]", "invalid"),
     )
