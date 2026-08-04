@@ -1,9 +1,9 @@
 from __future__ import annotations
 
+from collections.abc import Mapping
 from dataclasses import dataclass
 from datetime import datetime
 from types import MappingProxyType
-from typing import Mapping
 from uuid import UUID
 
 from pydantic import ValidationError
@@ -165,7 +165,11 @@ def _parse_response(body: bytes) -> GreenhouseJobsResponse:
 
 
 def _validate_job_window(response: GreenhouseJobsResponse, *, max_jobs: int) -> None:
-    total = response.meta.total if response.meta and response.meta.total is not None else len(response.jobs)
+    total = (
+        response.meta.total
+        if response.meta and response.meta.total is not None
+        else len(response.jobs)
+    )
     if total > max_jobs or len(response.jobs) > max_jobs:
         raise GreenhouseSourceWindowError("Greenhouse board exceeds configured job limit")
 
