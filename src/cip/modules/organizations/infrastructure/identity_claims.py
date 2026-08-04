@@ -35,6 +35,8 @@ def persist_identity_claims(
     session: Session,
     projections: Sequence[IdentityProjection],
 ) -> None:
+    if not projections:
+        return
     identity_ids: set[UUID] = set()
     for projection in projections:
         upsert_identity_claim(session, projection)
