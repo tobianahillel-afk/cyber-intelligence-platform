@@ -24,6 +24,9 @@ from cip.modules.data_governance.domain.retention import RetentionPolicy
 from cip.modules.opportunities.infrastructure.projections import (
     persist_commercial_projections,
 )
+from cip.modules.organizations.infrastructure.identity_persistence import (
+    persist_identity_projections,
+)
 from cip.shared.kernel.time import require_aware_utc, utc_now
 from cip.shared.persistence.session import session_scope
 
@@ -107,6 +110,11 @@ def run_worker_once(
                 session,
                 claimed,
                 batch,
+                now=completion_time,
+            )
+            persist_identity_projections(
+                session,
+                batch.identity_projections,
                 now=completion_time,
             )
             persist_commercial_projections(
