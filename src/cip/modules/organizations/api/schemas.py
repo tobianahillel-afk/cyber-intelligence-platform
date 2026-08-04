@@ -9,6 +9,7 @@ from pydantic import BaseModel, Field, field_validator
 from cip.modules.organizations.application.identity_views import (
     AliasView,
     IdentifierView,
+    IdentityClaimView,
     IdentityView,
     MergeCandidatePage,
     MergeCandidateView,
@@ -79,6 +80,32 @@ class RelationshipResponse(BaseModel):
         )
 
 
+class IdentityClaimResponse(BaseModel):
+    id: UUID
+    source_id: str
+    source_record_key: str
+    source_url: str
+    selected_fields: dict[str, object]
+    confidence: float
+    observed_at: datetime
+    content_hash_sha256: str | None
+    conflict_fields: list[str]
+
+    @classmethod
+    def from_domain(cls, item: IdentityClaimView) -> IdentityClaimResponse:
+        return cls(
+            id=item.id,
+            source_id=item.source_id,
+            source_record_key=item.source_record_key,
+            source_url=item.source_url,
+            selected_fields=dict(item.selected_fields),
+            confidence=item.confidence,
+            observed_at=item.observed_at,
+            content_hash_sha256=item.content_hash_sha256,
+            conflict_fields=list(item.conflict_fields),
+        )
+
+
 class IdentityResponse(BaseModel):
     id: UUID
     organization_id: UUID | None
@@ -103,6 +130,8 @@ class IdentityResponse(BaseModel):
     aliases: list[AliasResponse]
     evidence_ids: list[UUID]
     relationships: list[RelationshipResponse]
+    claims: list[IdentityClaimResponse]
+    conflict_fields: list[str]
 
     @classmethod
     def from_domain(cls, item: IdentityView) -> IdentityResponse:
@@ -130,6 +159,8 @@ class IdentityResponse(BaseModel):
             aliases=[AliasResponse.from_domain(value) for value in item.aliases],
             evidence_ids=list(item.evidence_ids),
             relationships=[RelationshipResponse.from_domain(value) for value in item.relationships],
+            claims=[IdentityClaimResponse.from_domain(value) for value in item.claims],
+            conflict_fields=list(item.conflict_fields),
         )
 
 
