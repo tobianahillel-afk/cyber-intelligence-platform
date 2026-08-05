@@ -116,9 +116,11 @@ def test_robots_and_sitemap_redirects_are_not_followed() -> None:
         return httpx.Response(301, headers={"location": "/robots-v2.txt"})
 
     target = _target()
-    with httpx.Client(transport=httpx.MockTransport(robots_redirect)) as raw_client:
-        with pytest.raises(PublicWebResponseError, match="robots.txt redirects"):
-            PublicWebClient(raw_client).fetch_robots(target)
+    with (
+        httpx.Client(transport=httpx.MockTransport(robots_redirect)) as raw_client,
+        pytest.raises(PublicWebResponseError, match="robots.txt redirects"),
+    ):
+        PublicWebClient(raw_client).fetch_robots(target)
 
     def sitemap_redirect(request: httpx.Request) -> httpx.Response:
         if request.url.path == "/robots.txt":
