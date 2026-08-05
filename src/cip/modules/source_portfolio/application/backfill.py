@@ -168,6 +168,7 @@ def fail_backfill_partition(
     error_code: str,
     actor: str,
     now: datetime,
+    retryable: bool = True,
 ) -> None:
     partition = get_partition(session, partition_id)
     if partition.state != BackfillState.RUNNING.value:
@@ -176,6 +177,8 @@ def fail_backfill_partition(
     partition.cursor = dict(cursor)
     partition.state = BackfillState.FAILED.value
     partition.last_error_code = bounded_value(error_code, "error_code", maximum=100)
+    if not retryable:
+        partition.attempts = MAX_BACKFILL_ATTEMPTS
     partition.updated_at = changed_at
     set_backfill_health(session, partition.source_id, BackfillState.FAILED, changed_at)
     audit(
@@ -188,6 +191,7 @@ def fail_backfill_partition(
             "error_code": partition.last_error_code,
             "attempts": partition.attempts,
             "retry_exhausted": partition.attempts >= MAX_BACKFILL_ATTEMPTS,
+            "retryable": retryable,
         },
     )
     session.flush()
