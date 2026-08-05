@@ -31,7 +31,11 @@ from cip.modules.source_portfolio.application.service import (
     sync_source_portfolio,
 )
 from cip.modules.source_portfolio.domain.models import FreshnessState
-from cip.modules.source_portfolio.infrastructure.models import SourcePortfolioRecord
+from cip.modules.source_portfolio.infrastructure.models import (
+    AdapterCapabilityRecord,
+    SourceHealthRecord,
+    SourcePortfolioRecord,
+)
 from cip.modules.source_portfolio.infrastructure.registry import load_source_portfolio
 from cip.shared.persistence.metadata import get_metadata
 from cip.shared.persistence.session import session_scope
@@ -46,11 +50,7 @@ def test_worker_cancels_job_when_source_was_paused_after_queueing() -> None:
         session.add(_source_record())
         entries = load_source_portfolio(Path("policies/source_portfolio.yml"))
         sync_source_portfolio(session, entries, now=NOW)
-        schedule = SourceSchedule(
-            source_id=adapter.source_id,
-            adapter_id=adapter.adapter_id,
-            interval_seconds=300,
-        )
+        schedule = _schedule(adapter)
         assert enqueue_job(session, CollectionJob.from_schedule(schedule, scheduled_for=NOW))
         pause_source(session, adapter.source_id, actor="guard-test", now=NOW)
 
@@ -71,34 +71,104 @@ def test_worker_cancels_job_when_source_was_paused_after_queueing() -> None:
 
 
 def test_scheduler_skips_expired_authorization_and_updates_health() -> None:
-    factory = _factory()
-    entries = load_source_portfolio(Path("policies/source_portfolio.yml"))
+    factory, entries, adapter = _prepared_runtime()
     with session_scope(factory) as session:
-        session.add(_source_record())
-        sync_source_portfolio(session, entries, now=NOW)
-        portfolio = session.get(SourcePortfolioRecord, "reference-synthetic")
+        portfolio = session.get(SourcePortfolioRecord, adapter.source_id)
         assert portfolio is not None
         portfolio.authorization_expires_at = NOW - timedelta(seconds=1)
 
+    assert run_scheduler_once(_runtime(factory, entries, adapter), now=NOW) == 0
+    with factory() as session:
+        assert session.scalar(select(func.count(CollectionJobRecord.id))) == 0
+        health = get_source_health(session, adapter.source_id)
+        assert health.freshness_state is FreshnessState.AUTHORIZATION_EXPIRED
+
+
+def test_scheduler_skips_exhausted_quota_before_adapter_execution() -> None:
+    factory, entries, adapter = _prepared_runtime()
+    with session_scope(factory) as session:
+        health = session.get(SourceHealthRecord, adapter.source_id)
+        assert health is not None
+        health.quota_remaining = 0
+
+    assert run_scheduler_once(_runtime(factory, entries, adapter), now=NOW) == 0
+    with factory() as session:
+        health = get_source_health(session, adapter.source_id)
+        assert health.freshness_state is FreshnessState.QUOTA_EXHAUSTED
+
+
+def test_scheduler_skips_request_that_would_exceed_monthly_budget() -> None:
+    factory, entries, adapter = _prepared_runtime()
+    with session_scope(factory) as session:
+        portfolio = session.get(SourcePortfolioRecord, adapter.source_id)
+        capability = session.get(
+            AdapterCapabilityRecord,
+            (adapter.source_id, adapter.adapter_id),
+        )
+        health = session.get(SourceHealthRecord, adapter.source_id)
+        assert portfolio is not None
+        assert capability is not None
+        assert health is not None
+        portfolio.monthly_cost_limit = 5.0
+        capability.cost_per_request = 2.0
+        health.monthly_cost_used = 4.0
+
+    assert run_scheduler_once(_runtime(factory, entries, adapter), now=NOW) == 0
+    with factory() as session:
+        health = get_source_health(session, adapter.source_id)
+        assert health.freshness_state is FreshnessState.COST_BUDGET_EXHAUSTED
+
+
+def test_new_month_resets_cost_window_and_allows_scheduling() -> None:
+    factory, entries, adapter = _prepared_runtime()
+    with session_scope(factory) as session:
+        portfolio = session.get(SourcePortfolioRecord, adapter.source_id)
+        capability = session.get(
+            AdapterCapabilityRecord,
+            (adapter.source_id, adapter.adapter_id),
+        )
+        health = session.get(SourceHealthRecord, adapter.source_id)
+        assert portfolio is not None
+        assert capability is not None
+        assert health is not None
+        portfolio.monthly_cost_limit = 5.0
+        capability.cost_per_request = 2.0
+        health.monthly_cost_used = 5.0
+        health.cost_window_started_at = datetime(2026, 7, 1, tzinfo=UTC)
+
+    assert run_scheduler_once(_runtime(factory, entries, adapter), now=NOW) == 1
+    with factory() as session:
+        health = get_source_health(session, adapter.source_id)
+        assert health.monthly_cost_used == 0.0
+        assert health.cost_window_started_at == datetime(2026, 8, 1, tzinfo=UTC)
+
+
+def _prepared_runtime():
+    factory = _factory()
+    entries = load_source_portfolio(Path("policies/source_portfolio.yml"))
     adapter = ReferencePortfolioAdapter()
-    schedule = SourceSchedule(
-        source_id=adapter.source_id,
-        adapter_id=adapter.adapter_id,
-        interval_seconds=300,
-    )
-    runtime = CollectionRuntime(
+    with session_scope(factory) as session:
+        session.add(_source_record())
+        sync_source_portfolio(session, entries, now=NOW)
+    return factory, entries, adapter
+
+
+def _runtime(factory, entries, adapter: ReferencePortfolioAdapter) -> CollectionRuntime:
+    return CollectionRuntime(
         factory=factory,
-        schedules=(schedule,),
+        schedules=(_schedule(adapter),),
         adapters={(adapter.source_id, adapter.adapter_id): adapter},
         retention_policy=_retention_policy(),
         portfolio=entries,
     )
 
-    assert run_scheduler_once(runtime, now=NOW) == 0
-    with factory() as session:
-        assert session.scalar(select(func.count(CollectionJobRecord.id))) == 0
-        health = get_source_health(session, "reference-synthetic")
-        assert health.freshness_state is FreshnessState.AUTHORIZATION_EXPIRED
+
+def _schedule(adapter: ReferencePortfolioAdapter) -> SourceSchedule:
+    return SourceSchedule(
+        source_id=adapter.source_id,
+        adapter_id=adapter.adapter_id,
+        interval_seconds=300,
+    )
 
 
 def _factory() -> sessionmaker[Session]:
