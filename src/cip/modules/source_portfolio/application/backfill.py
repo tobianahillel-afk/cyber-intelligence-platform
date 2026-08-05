@@ -255,12 +255,14 @@ def _transition_partitions(
         update(BackfillPartitionRecord)
         .where(
             BackfillPartitionRecord.source_id == source_id,
-            BackfillPartitionRecord.state.in_(state.value for state in from_states),
+            BackfillPartitionRecord.state.in_(
+                tuple(state.value for state in from_states)
+            ),
         )
         .values(state=target.value, updated_at=now)
     )
     set_backfill_health(session, source_id, target, now)
-    return int(result.rowcount or 0)
+    return int(getattr(result, "rowcount", 0) or 0)
 
 
 def _refresh_backfill_health(session: Session, source_id: str, now: datetime) -> None:
