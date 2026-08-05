@@ -2,7 +2,7 @@
 
 ## Status
 
-`IN_PROGRESS`
+`IMPLEMENTED_PENDING_FINAL_CI`
 
 ## Business outcome
 
@@ -17,28 +17,28 @@ Identify explicit cyber demand, published awardees, incumbent-provider evidence,
 
 ## Canonical distinctions
 
-The lot preserves these distinct states:
+The implementation preserves these distinct states:
 
 ```text
 open procurement notice
   != published result or award
   != confirmed contract history
   != published provider relationship
-  != estimated incumbent relationship
+  != resolved canonical provider identity
   != estimated renewal window
 ```
 
 A source publication remains immutable. Procedures and contracts are mutable projections rebuilt from the publication chronology.
 
-## Domain model
+## Delivered architecture
 
 ### Procedure
 
-A procurement procedure groups publications that belong to one buyer process or lot. Its canonical identity must be deterministic and source-backed. It records the buyer, title, current status, first publication, latest publication, and source coverage.
+A procurement procedure groups publications that belong to one buyer process or lot. Its canonical identity is deterministic and source-backed. It records the buyer, title, current status, first publication, latest publication, and source coverage.
 
 ### Publication
 
-A publication is an immutable event with source identity, source record key, content hash, kind, timestamps, URL, buyer, and minimized structured details. Supported kinds are notice, rectification, result, award, amendment, cancellation, and unknown.
+A publication is an immutable event with source identity, source record key, revision hash, kind, timestamps, URL, buyer, and minimized structured details. Supported kinds are notice, rectification, result, award, amendment, cancellation, and unknown.
 
 A changed provider payload creates another publication revision. It never overwrites the historical publication.
 
@@ -49,75 +49,120 @@ A contract is a projection derived from one or more publications. It records:
 - buyer and published supplier parties;
 - award, active, completed, cancelled, or unknown state;
 - published amount and ISO currency when available;
-- award, start, and end dates;
+- award, conclusion, notification, start, end, and renewal dates;
 - whether each date is published, derived, estimated, or unknown;
-- renewal estimate and confidence separately from confirmed dates;
 - service-family classifications with matched terms and confidence;
 - the latest supporting publication and provenance.
 
+Conclusion and notification are separate canonical fields. Neither is silently treated as an execution start date.
+
 ### Parties and identity
 
-A published party name is retained even when no canonical organization can be resolved. Exact official identifiers may confirm a party. Name-only matching remains a candidate and cannot silently create a confirmed provider relationship.
+A published party name is retained even when no canonical organization can be resolved. Exact identifiers are preserved, but a source identifier or name does not silently create a confirmed canonical provider relationship. Name-only parties remain `unresolved` or `candidate` until the organization identity workflow resolves them.
 
 ### Service classification
 
-Procurement descriptions are classified against the complete canonical cyber-service family vocabulary. Multiple compatible families may apply to one contract. Classification does not duplicate the contract or create several copies of the same commercial opportunity.
+Procurement descriptions are classified against the complete canonical cyber-service family vocabulary. Multiple compatible families may apply to one contract. The classifier covers strategy, audit and risk, GRC, pentest, red/purple teaming, vulnerability management, SOC/SIEM/MDR/XDR/SOAR, DFIR, resilience, IAM/PAM/Zero Trust, cloud, AppSec/DevSecOps, network/SASE, data protection, supply chain, OT/ICS/IoT, awareness, managed services, implementation, training and maintenance.
 
-## Source integration
+## Official source integration
 
-### TED
+### TED Search API
 
-The TED adapter must retrieve selected fields for results, awards, amendments, and cancellations in addition to active notices. Pagination and backfill remain bounded. Official identifiers and award fields are mapped when published.
+- selected bounded fields only;
+- anonymous official Search API;
+- active notices create current commercial signals and procedure history;
+- awards/results create contract history without a current commercial signal;
+- procedure and contract identifiers, winner names/identifiers, values, currency, award date, and conclusion date are mapped when published;
+- full notice documents are not mirrored.
 
-### BOAMP
+### BOAMP Explore API
 
-The BOAMP adapter already sees notice state, result markers, and published `titulaire` data. Lot 11 maps these fields into publication and contract projections while continuing to create current commercial signals only for actionable open notices.
+- bounded official DILA Explore API;
+- active notices continue to create actionable current signals;
+- result/award/cancellation markers create chronology and contract projections;
+- published `titulaire` names are retained as unresolved provider parties;
+- embedded contact blocks and full documents are not stored.
 
-### DECP
+### DECP official dataset
 
-A reviewed official French essential-public-procurement-data source is added through the common source portfolio lifecycle. It must expose only approved published fields, bounded pagination, schema validation, checkpoints, and no document mirroring.
+- official `decp-2022-marches-valides` dataset through Explore API v2.1;
+- selected published fields only, maximum 100 records per page;
+- no bulk-export mirroring;
+- buyer SIRET/SIREN, published titular identifiers, amount in EUR, notification date, duration, and modifications are mapped;
+- duration may derive an end date;
+- a renewal date derived from duration is explicitly marked `estimated`;
+- modifications create immutable publication revisions while updating the same contract projection.
+
+DECP is registered through separate machine-readable source policy, source portfolio, and schedule files. Bundle loaders reject duplicate source IDs and duplicate schedules across registries.
+
+## Persistence and migrations
+
+- migration `20260805_0010` creates procedures, publications, contracts, parties, and service classifications;
+- migration `20260805_0011` adds notification date and its proof basis;
+- both migrations are additive and reversible;
+- observations, checkpoints, buyer organizations, publications, contracts, and current opportunity projections share one worker transaction;
+- replaying the same publication revision remains idempotent;
+- an older publication cannot roll back a newer contract projection.
 
 ## Historical safety
 
-Historical backfill writes raw observations and procurement history but creates no current commercial signal. Incremental collection may update chronology and current state. Replaying the same publication revision is idempotent.
+Historical backfill writes raw observations, buyer organizations, procurement publications, and contract projections. It intentionally ignores current commercial and identity projections, including when an adapter mistakenly supplies them.
+
+This permits historical reconstruction without fabricating a current buying opportunity.
+
+## Protected analyst access
+
+The backend exposes read-only endpoints under `/v1/procurement-history`:
+
+- paginated contract list;
+- filters by status, cyber-service family, buyer, and renewal window;
+- contract detail with parties, service classifications, and immutable publication timeline.
+
+The routes use the existing control-plane authentication. No mutation endpoint can edit imported procurement facts.
+
+The frontend adds a protected **Contracts** workspace with:
+
+- status and renewal filters;
+- value, buyer, provider, source, and service-family columns;
+- visible `published`, `derived`, `estimated`, and `unknown` date badges;
+- contract detail and official-source timeline;
+- unresolved-provider identity status and identifiers;
+- direct links to official publications.
+
+The control-plane token remains server-side and is not exposed to the browser.
 
 ## Data quality and corrections
 
 - duplicate publications do not duplicate procedures or contracts;
 - amendments update approved contract fields while retaining publication history;
-- cancellations and retractions update the projected status;
-- conflicting values remain visible with provenance rather than being silently overwritten;
+- cancellations update the projected status when published;
 - estimates are never displayed as confirmed dates;
 - currency is mandatory whenever an amount is present;
-- ambiguous supplier identity remains unresolved or candidate.
+- ambiguous supplier identity remains unresolved or candidate;
+- SQLite and PostgreSQL timestamp differences are normalized to UTC before comparison;
+- publication ordering uses source time, collection time, and revision key deterministically.
 
-## Required tests
+## Vertical proofs
 
-- notice-to-result and notice-to-award linkage;
-- amendment chronology;
-- duplicate publication and replay idempotence;
-- published provider identity and ambiguous name-only identity;
-- amount and currency validation;
-- cancellation and retraction;
-- confirmed versus estimated dates;
-- current opportunity versus historical contract separation;
-- multi-service contract without duplicated opportunity;
-- backfill without false current signals;
-- backfill/incremental convergence;
-- policy before network, schema drift, bounded pagination, retry classification;
-- reversible migration and full repository CI.
+The repository contains end-to-end worker tests for:
+
+1. BOAMP award → raw observation → buyer → publication → contract → unresolved awardee, with zero current signals and opportunities;
+2. TED award → raw observation → buyer → publication → contract → unresolved awardee with official identifier, with zero current signals and opportunities;
+3. DECP award/modification → raw observation → buyer → immutable publication → contract → derived end and estimated renewal timing;
+4. historical backfill that persists procurement history while rejecting deliberately injected current projections;
+5. protected API list/detail with chronology, source coverage, filters, authentication, and invalid-window handling.
 
 ## Exit gate
 
-Analysts can inspect a procedure and understand:
+The lot is complete when the final branch SHA passes:
 
-- what was published;
-- who bought and who was awarded when published;
-- which contract fields are confirmed or estimated;
-- which cyber-service families are supported by the text;
-- the current chronology and correction state;
-- why a renewal window is estimated;
-- which evidence and source revisions support every conclusion.
+- dependency consistency and security audits;
+- Ruff and strict Mypy;
+- architecture and release contracts;
+- reversible migration cycle;
+- complete backend test suite with coverage above the repository threshold;
+- frontend dependency audit, typecheck, and production build;
+- final validation report with the exact SHA, CI run, tests, and coverage.
 
 ## Non-goals
 
