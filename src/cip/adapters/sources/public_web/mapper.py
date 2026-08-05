@@ -75,7 +75,11 @@ def map_public_page(
 ) -> MappedPublicPage:
     content_hash = sha256(result.body).hexdigest()
     quarantined = contains_credential_marker(result.body)
-    unchanged = previous is not None and previous.content_hash_sha256 == content_hash
+    unchanged = bool(
+        previous is not None
+        and previous.content_hash_sha256 == content_hash
+        and previous.canonical_url == result.fetched_url
+    )
     retrieval_state = _retrieval_state(
         quarantined=quarantined,
         unchanged=unchanged,
