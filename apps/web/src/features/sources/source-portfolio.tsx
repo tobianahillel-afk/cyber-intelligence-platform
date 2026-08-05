@@ -1,6 +1,7 @@
 import {
   cancelSourceBackfillAction,
   disableSourceAction,
+  enableSourceAction,
   pauseSourceAction,
   priorityRefreshSourceAction,
   resumeSourceAction,
@@ -46,7 +47,13 @@ export function SourcePortfolio({
             <span>
               Quota: {source.health.quota_remaining === null ? "not reported" : source.health.quota_remaining}
             </span>
-            <span>Monthly cost: {source.health.monthly_cost_used.toFixed(2)}</span>
+            <span>
+              Monthly cost: {source.health.monthly_cost_used.toFixed(2)}
+              {source.monthly_cost_limit === null
+                ? ""
+                : ` / ${source.monthly_cost_limit.toFixed(2)}`}
+            </span>
+            <span>Cost window: {formatDate(source.health.cost_window_started_at)}</span>
           </div>
 
           {source.adapter ? (
@@ -59,6 +66,12 @@ export function SourcePortfolio({
               Candidate only. Review and authorization are required before an adapter can execute.
             </p>
           )}
+
+          {source.status === "paused" && !source.manual_resume_allowed ? (
+            <p className="portfolio-candidate-note">
+              Activation is controlled by runtime target reconciliation.
+            </p>
+          ) : null}
 
           <SourceActions source={source} />
         </article>
@@ -81,7 +94,9 @@ function SourceActions({ source }: { source: SourcePortfolioEntry }) {
     return null;
   }
   const canRefresh =
-    source.status === "executable" && source.adapter?.modes.includes("priority_refresh");
+    source.status === "executable" &&
+    source.category !== "test_reference" &&
+    source.adapter?.modes.includes("priority_refresh");
   const backfillActive =
     source.health.current_backfill_state !== null &&
     !["completed", "cancelled"].includes(source.health.current_backfill_state);
@@ -93,13 +108,13 @@ function SourceActions({ source }: { source: SourcePortfolioEntry }) {
           label="Priority refresh"
         />
       ) : null}
-      {source.status === "executable" ? (
+      {source.status === "executable" && source.manual_resume_allowed ? (
         <OperatorAction
           action={pauseSourceAction.bind(null, source.source_id)}
           label="Pause"
         />
       ) : null}
-      {source.status === "paused" ? (
+      {source.status === "paused" && source.manual_resume_allowed ? (
         <OperatorAction
           action={resumeSourceAction.bind(null, source.source_id)}
           label="Resume"
@@ -111,13 +126,18 @@ function SourceActions({ source }: { source: SourcePortfolioEntry }) {
           label="Cancel backfill"
         />
       ) : null}
-      {source.status !== "disabled" ? (
+      {source.status === "disabled" ? (
+        <OperatorAction
+          action={enableSourceAction.bind(null, source.source_id)}
+          label="Enable"
+        />
+      ) : (
         <OperatorAction
           action={disableSourceAction.bind(null, source.source_id)}
           label="Disable"
           destructive
         />
-      ) : null}
+      )}
     </div>
   );
 }
