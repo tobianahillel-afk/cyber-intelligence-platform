@@ -24,6 +24,8 @@ from cip.modules.source_portfolio.domain.models import (
 from cip.modules.source_portfolio.infrastructure.models import BackfillPartitionRecord
 from cip.shared.kernel.time import require_aware_utc
 
+MAX_BACKFILL_ATTEMPTS = 5
+
 
 def request_backfill(
     session: Session,
@@ -108,6 +110,7 @@ def claim_backfill_partition(
             BackfillPartitionRecord.state.in_(
                 (BackfillState.PENDING.value, BackfillState.FAILED.value)
             ),
+            BackfillPartitionRecord.attempts < MAX_BACKFILL_ATTEMPTS,
         )
         .order_by(BackfillPartitionRecord.created_at)
         .with_for_update(skip_locked=True)
@@ -181,7 +184,11 @@ def fail_backfill_partition(
         "backfill_partition_failed",
         actor,
         changed_at,
-        details={"error_code": partition.last_error_code},
+        details={
+            "error_code": partition.last_error_code,
+            "attempts": partition.attempts,
+            "retry_exhausted": partition.attempts >= MAX_BACKFILL_ATTEMPTS,
+        },
     )
     session.flush()
 
@@ -192,13 +199,15 @@ def pause_pending_backfills(
     *,
     now: datetime,
 ) -> None:
-    _transition_partitions(
+    changed = _transition_partitions(
         session,
         source_id,
         from_states=(BackfillState.PENDING, BackfillState.RUNNING),
         target=BackfillState.PAUSED,
         now=now,
     )
+    if changed:
+        set_backfill_health(session, source_id, BackfillState.PAUSED, now)
 
 
 def resume_paused_backfills(
@@ -214,7 +223,9 @@ def resume_paused_backfills(
         target=BackfillState.PENDING,
         now=now,
     )
-    if changed == 0:
+    if changed:
+        set_backfill_health(session, source_id, BackfillState.PENDING, now)
+    else:
         _refresh_backfill_health(session, source_id, now)
 
 
@@ -226,7 +237,7 @@ def cancel_backfill(
     now: datetime,
 ) -> None:
     changed_at = require_aware_utc(now, field_name="now")
-    _transition_partitions(
+    changed = _transition_partitions(
         session,
         source_id,
         from_states=(
@@ -238,8 +249,18 @@ def cancel_backfill(
         target=BackfillState.CANCELLED,
         now=changed_at,
     )
-    set_backfill_health(session, source_id, BackfillState.CANCELLED, changed_at)
-    audit(session, source_id, "backfill_cancelled", actor, changed_at)
+    if changed:
+        set_backfill_health(session, source_id, BackfillState.CANCELLED, changed_at)
+    else:
+        _refresh_backfill_health(session, source_id, changed_at)
+    audit(
+        session,
+        source_id,
+        "backfill_cancelled",
+        actor,
+        changed_at,
+        details={"partitions_cancelled": changed},
+    )
     session.flush()
 
 
@@ -261,24 +282,29 @@ def _transition_partitions(
         )
         .values(state=target.value, updated_at=now)
     )
-    set_backfill_health(session, source_id, target, now)
     return int(getattr(result, "rowcount", 0) or 0)
 
 
 def _refresh_backfill_health(session: Session, source_id: str, now: datetime) -> None:
-    active = session.scalar(
-        select(BackfillPartitionRecord.state)
-        .where(
-            BackfillPartitionRecord.source_id == source_id,
-            BackfillPartitionRecord.state.in_(
-                (
-                    BackfillState.PENDING.value,
-                    BackfillState.RUNNING.value,
-                    BackfillState.FAILED.value,
-                )
-            ),
-        )
-        .order_by(BackfillPartitionRecord.created_at)
+    states = tuple(
+        session.scalars(
+            select(BackfillPartitionRecord.state).where(
+                BackfillPartitionRecord.source_id == source_id
+            )
+        ).all()
     )
-    state = BackfillState.COMPLETED if active is None else BackfillState(active)
-    set_backfill_health(session, source_id, state, now)
+    for state in (
+        BackfillState.RUNNING,
+        BackfillState.PENDING,
+        BackfillState.FAILED,
+        BackfillState.PAUSED,
+    ):
+        if state.value in states:
+            set_backfill_health(session, source_id, state, now)
+            return
+    if BackfillState.CANCELLED.value in states:
+        set_backfill_health(session, source_id, BackfillState.CANCELLED, now)
+    elif BackfillState.COMPLETED.value in states:
+        set_backfill_health(session, source_id, BackfillState.COMPLETED, now)
+    else:
+        set_backfill_health(session, source_id, None, now)
