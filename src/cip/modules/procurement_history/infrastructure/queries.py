@@ -5,6 +5,7 @@ from uuid import UUID
 
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
+from sqlalchemy.sql.elements import ColumnElement
 
 from cip.modules.organizations.infrastructure.models import OrganizationRecord
 from cip.modules.procurement_history.application.view_models import (
@@ -49,7 +50,7 @@ def list_procurement_contracts(
         limit=limit,
         offset=offset,
     )
-    filters = []
+    filters: list[ColumnElement[bool]] = []
     if statuses:
         filters.append(ProcurementContractRecord.status.in_(status.value for status in statuses))
     if buyer_organization_id is not None:
