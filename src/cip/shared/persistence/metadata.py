@@ -42,6 +42,7 @@ from cip.modules.source_portfolio.infrastructure.models import (
     SourcePortfolioAuditRecord,
     SourcePortfolioRecord,
     SourceQualityBaselineRecord,
+    SourceValueEventRecord,
 )
 from cip.shared.persistence.base import Base
 
@@ -76,6 +77,7 @@ _IMPORTED_MODELS = (
     SourcePortfolioRecord,
     SourceQualityBaselineRecord,
     SourceRecord,
+    SourceValueEventRecord,
     SuppressionRecord,
 )
 
