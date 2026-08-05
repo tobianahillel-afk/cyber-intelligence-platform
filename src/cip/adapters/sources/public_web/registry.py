@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import datetime
+from ipaddress import ip_address
 from pathlib import Path
 from typing import Any
 from uuid import UUID
@@ -11,6 +12,14 @@ import yaml
 from cip.modules.public_footprint.domain.scope import CrawlScope
 from cip.modules.public_footprint.domain.url_identity import CanonicalUrl, same_origin
 from cip.shared.kernel.time import require_aware_utc
+
+_NON_PUBLIC_HOST_SUFFIXES = (
+    ".home",
+    ".internal",
+    ".lan",
+    ".local",
+    ".localhost",
+)
 
 
 @dataclass(frozen=True, slots=True)
@@ -37,6 +46,7 @@ class PublicWebTarget:
         if not identifier or not name:
             raise ValueError("public web target id and canonical_name are required")
         base = CanonicalUrl(self.base_url)
+        _validate_public_hostname(base.host)
         sitemaps = tuple(CanonicalUrl(value).value for value in self.sitemap_urls)
         if not sitemaps:
             raise ValueError("public web target requires at least one sitemap URL")
@@ -176,6 +186,20 @@ def _parse_target(payload: dict[str, Any]) -> PublicWebTarget:
         ),
         max_redirects=_bounded_int(limits, "max_redirects", minimum=0, maximum=10),
     )
+
+
+def _validate_public_hostname(host: str) -> None:
+    normalized = host.rstrip(".").casefold()
+    if normalized == "localhost" or normalized.endswith(_NON_PUBLIC_HOST_SUFFIXES):
+        raise ValueError("public web target host must not be local or internal")
+    try:
+        parsed_address = ip_address(normalized)
+    except ValueError:
+        parsed_address = None
+    if parsed_address is not None:
+        raise ValueError("public web target host must not be an IP literal")
+    if "." not in normalized:
+        raise ValueError("public web target host must be a public DNS name")
 
 
 def _load_yaml_mapping(path: Path) -> dict[str, Any]:
