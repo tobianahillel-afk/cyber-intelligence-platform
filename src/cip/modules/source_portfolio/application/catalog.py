@@ -70,6 +70,9 @@ def reconcile_runtime_adapters(
     for record in records:
         if "activation_requires" not in record.extra_metadata:
             continue
+        if record.status == CatalogStatus.DISABLED.value:
+            reconciled.append(record.source_id)
+            continue
         capability = capability_record(session, record.source_id)
         if capability is None:
             target = CatalogStatus.PAUSED
@@ -114,6 +117,7 @@ def pause_source(
     actor: str,
     now: datetime,
 ) -> SourceCatalogEntry:
+    _ensure_manual_lifecycle_allowed(session, source_id)
     return _change_source_status(session, source_id, CatalogStatus.PAUSED, actor, now)
 
 
@@ -124,13 +128,9 @@ def resume_source(
     actor: str,
     now: datetime,
 ) -> SourceCatalogEntry:
-    record = get_portfolio_record(session, source_id)
+    record = _ensure_manual_lifecycle_allowed(session, source_id)
     if capability_record(session, record.source_id) is None:
         raise SourcePortfolioStateError("catalog candidates cannot be resumed")
-    if "activation_requires" in record.extra_metadata:
-        raise SourcePortfolioStateError(
-            "source activation is controlled by runtime target reconciliation"
-        )
     return _change_source_status(
         session,
         source_id,
@@ -148,6 +148,38 @@ def disable_source(
     now: datetime,
 ) -> SourceCatalogEntry:
     return _change_source_status(session, source_id, CatalogStatus.DISABLED, actor, now)
+
+
+def enable_source(
+    session: Session,
+    source_id: str,
+    *,
+    actor: str,
+    now: datetime,
+) -> SourceCatalogEntry:
+    record = get_portfolio_record(session, source_id)
+    if record.status != CatalogStatus.DISABLED.value:
+        raise SourcePortfolioStateError("only disabled sources can be enabled")
+    if capability_record(session, record.source_id) is None:
+        raise SourcePortfolioStateError("catalog candidates cannot be enabled")
+    target = (
+        CatalogStatus.PAUSED
+        if "activation_requires" in record.extra_metadata
+        else CatalogStatus.EXECUTABLE
+    )
+    return _change_source_status(session, source_id, target, actor, now)
+
+
+def _ensure_manual_lifecycle_allowed(
+    session: Session,
+    source_id: str,
+) -> SourcePortfolioRecord:
+    record = get_portfolio_record(session, source_id)
+    if "activation_requires" in record.extra_metadata:
+        raise SourcePortfolioStateError(
+            "source lifecycle is controlled by runtime target reconciliation"
+        )
+    return record
 
 
 def _new_record(entry: SourceCatalogEntry, now: datetime) -> SourcePortfolioRecord:
@@ -177,7 +209,13 @@ def _refresh_record(
     record.display_name = entry.display_name
     record.canonical_url = entry.canonical_url
     record.category = entry.category
-    if record.status not in {CatalogStatus.PAUSED.value, CatalogStatus.DISABLED.value}:
+    runtime_managed = "activation_requires" in entry.metadata
+    if entry.status is CatalogStatus.DISABLED:
+        record.status = CatalogStatus.DISABLED.value
+    elif not runtime_managed and record.status not in {
+        CatalogStatus.PAUSED.value,
+        CatalogStatus.DISABLED.value,
+    }:
         record.status = entry.status.value
     record.freshness_max_age_seconds = entry.freshness_max_age_seconds
     record.commercial_use_cases = list(entry.commercial_use_cases)
