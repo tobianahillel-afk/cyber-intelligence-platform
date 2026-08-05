@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime
-from uuid import uuid4
+from uuid import UUID, uuid4
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -42,7 +42,7 @@ def get_health_record(session: Session, source_id: str) -> SourceHealthRecord:
     return record
 
 
-def get_partition(session: Session, partition_id: object) -> BackfillPartitionRecord:
+def get_partition(session: Session, partition_id: UUID) -> BackfillPartitionRecord:
     record = session.get(BackfillPartitionRecord, partition_id)
     if record is None:
         raise SourcePortfolioNotFoundError(str(partition_id))
