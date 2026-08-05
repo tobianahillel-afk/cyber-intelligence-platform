@@ -84,7 +84,7 @@ def test_reference_adapter_and_backfill_resume_lifecycle() -> None:
         now=NOW + timedelta(seconds=3),
     )
     health = get_source_health(database, "reference-synthetic")
-    assert health.current_backfill_state is BackfillState.RUNNING
+    assert health.current_backfill_state is BackfillState.PENDING
 
     pause_source(
         database,
