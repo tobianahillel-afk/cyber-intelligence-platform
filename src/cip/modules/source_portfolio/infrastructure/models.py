@@ -8,6 +8,7 @@ from sqlalchemy import (
     Boolean,
     DateTime,
     Float,
+    ForeignKey,
     Index,
     Integer,
     String,
@@ -48,7 +49,10 @@ class AdapterCapabilityRecord(Base):
         UniqueConstraint("source_id", "adapter_id", name="uq_adapter_capability_identity"),
     )
 
-    source_id: Mapped[str] = mapped_column(String(100), primary_key=True)
+    source_id: Mapped[str] = mapped_column(
+        ForeignKey("source_portfolio.source_id", ondelete="CASCADE"),
+        primary_key=True,
+    )
     adapter_id: Mapped[str] = mapped_column(String(100), primary_key=True)
     adapter_version: Mapped[str] = mapped_column(String(50))
     provider_schema_version: Mapped[str] = mapped_column(String(100))
@@ -76,7 +80,10 @@ class BackfillPartitionRecord(Base):
     )
 
     id: Mapped[UUID] = mapped_column(primary_key=True)
-    source_id: Mapped[str] = mapped_column(String(100), index=True)
+    source_id: Mapped[str] = mapped_column(
+        ForeignKey("source_portfolio.source_id", ondelete="CASCADE"),
+        index=True,
+    )
     adapter_id: Mapped[str] = mapped_column(String(100), index=True)
     partition_key: Mapped[str] = mapped_column(String(300))
     lower_bound: Mapped[str] = mapped_column(String(300))
@@ -94,7 +101,10 @@ class BackfillPartitionRecord(Base):
 class SourceHealthRecord(Base):
     __tablename__ = "source_health"
 
-    source_id: Mapped[str] = mapped_column(String(100), primary_key=True)
+    source_id: Mapped[str] = mapped_column(
+        ForeignKey("source_portfolio.source_id", ondelete="CASCADE"),
+        primary_key=True,
+    )
     freshness_state: Mapped[str] = mapped_column(String(50), index=True)
     schema_state: Mapped[str] = mapped_column(String(40), index=True)
     volume_state: Mapped[str] = mapped_column(String(40), index=True)
@@ -116,7 +126,10 @@ class SourceHealthRecord(Base):
 class SourceQualityBaselineRecord(Base):
     __tablename__ = "source_quality_baselines"
 
-    source_id: Mapped[str] = mapped_column(String(100), primary_key=True)
+    source_id: Mapped[str] = mapped_column(
+        ForeignKey("source_portfolio.source_id", ondelete="CASCADE"),
+        primary_key=True,
+    )
     sample_count: Mapped[int] = mapped_column(Integer, default=0)
     expected_records_per_run: Mapped[float | None] = mapped_column(Float, nullable=True)
     last_records_count: Mapped[int | None] = mapped_column(Integer, nullable=True)
@@ -131,7 +144,10 @@ class SourcePortfolioAuditRecord(Base):
     __tablename__ = "source_portfolio_audit"
 
     id: Mapped[UUID] = mapped_column(primary_key=True)
-    source_id: Mapped[str] = mapped_column(String(100), index=True)
+    source_id: Mapped[str] = mapped_column(
+        ForeignKey("source_portfolio.source_id", ondelete="CASCADE"),
+        index=True,
+    )
     action: Mapped[str] = mapped_column(String(100), index=True)
     actor: Mapped[str] = mapped_column(String(200))
     details: Mapped[dict[str, object]] = mapped_column(JSON, default=dict)
