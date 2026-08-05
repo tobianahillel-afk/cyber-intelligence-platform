@@ -81,6 +81,11 @@ def _patch_scope(monkeypatch: pytest.MonkeyPatch) -> None:
         yield object()
 
     monkeypatch.setattr(worker, "session_scope", fake_scope)
+    monkeypatch.setattr(
+        worker,
+        "source_execution_allowed",
+        lambda *args, **kwargs: True,
+    )
 
 
 def _retention_policy():
