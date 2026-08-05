@@ -32,6 +32,7 @@ from cip.modules.organizations.infrastructure.identity_claims import (
 from cip.modules.organizations.infrastructure.identity_persistence import (
     persist_identity_projections,
 )
+from cip.modules.organizations.infrastructure.persistence import upsert_organizations
 from cip.modules.procurement_history.infrastructure.projections import (
     persist_procurement_projections,
 )
@@ -172,6 +173,7 @@ def _complete_success(
         persist_identity_projections(session, batch.identity_projections, now=now)
         persist_identity_claims(session, batch.identity_projections)
         persist_commercial_projections(session, batch.commercial_projections, now=now)
+        upsert_organizations(session, batch.procurement_organizations)
         persist_procurement_projections(session, batch.procurement_projections, now=now)
         _record_success_health(
             session,
