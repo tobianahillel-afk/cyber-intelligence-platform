@@ -12,6 +12,7 @@ from cip.modules.source_portfolio.application.catalog import (
     get_source_portfolio,
     list_source_portfolio,
     pause_source,
+    reconcile_runtime_adapters,
     resume_source,
     sync_source_portfolio,
 )
@@ -43,6 +44,7 @@ __all__ = [
     "get_source_portfolio",
     "list_source_portfolio",
     "pause_source",
+    "reconcile_runtime_adapters",
     "record_collection_failure",
     "record_collection_success",
     "refresh_freshness",
