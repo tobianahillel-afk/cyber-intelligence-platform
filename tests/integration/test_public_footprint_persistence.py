@@ -8,6 +8,7 @@ from sqlalchemy import create_engine, func, select
 from sqlalchemy.orm import Session
 
 from cip.modules.organizations.infrastructure.models import OrganizationRecord
+from cip.modules.organizations.infrastructure.persistence_time import coerce_utc
 from cip.modules.public_footprint.domain import (
     ClaimEvidenceBasis,
     ClaimResolutionStatus,
@@ -93,7 +94,7 @@ def test_new_version_and_claim_state_cannot_be_rolled_back_by_older_projection()
         assert current_version is not None
         assert _count(session, PublicResourceVersionRecord) == 2
         assert resource.retrieval_state == ResourceRetrievalState.CHANGED.value
-        assert resource.last_seen_at == NOW + timedelta(days=2)
+        assert coerce_utc(resource.last_seen_at) == NOW + timedelta(days=2)
         assert claim.resolution_status == ClaimResolutionStatus.CONFIRMED.value
         assert claim.confidence == 0.95
         assert claim.resource_version_id == current_version.id
