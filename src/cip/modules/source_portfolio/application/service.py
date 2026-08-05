@@ -22,6 +22,7 @@ from cip.modules.source_portfolio.application.errors import (
     SourcePortfolioStateError,
 )
 from cip.modules.source_portfolio.application.health import (
+    CollectionHealthUpdate,
     get_source_health,
     record_collection_failure,
     record_collection_success,
@@ -33,6 +34,7 @@ from cip.modules.source_portfolio.application.priority import (
 )
 
 __all__ = [
+    "CollectionHealthUpdate",
     "PriorityRefreshResult",
     "SourcePortfolioNotFoundError",
     "SourcePortfolioStateError",
