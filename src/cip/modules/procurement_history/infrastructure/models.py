@@ -109,6 +109,8 @@ class ProcurementContractRecord(Base):
     award_date: Mapped[date | None] = mapped_column(Date, nullable=True, index=True)
     conclusion_date: Mapped[date | None] = mapped_column(Date, nullable=True, index=True)
     conclusion_date_basis: Mapped[str] = mapped_column(String(40))
+    notification_date: Mapped[date | None] = mapped_column(Date, nullable=True, index=True)
+    notification_date_basis: Mapped[str] = mapped_column(String(40))
     start_date: Mapped[date | None] = mapped_column(Date, nullable=True, index=True)
     start_date_basis: Mapped[str] = mapped_column(String(40))
     end_date: Mapped[date | None] = mapped_column(Date, nullable=True, index=True)
