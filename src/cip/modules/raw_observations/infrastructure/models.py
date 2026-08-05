@@ -28,6 +28,12 @@ class RawObservationRecord(Base):
     collection_job_id: Mapped[UUID] = mapped_column(index=True)
     source_record_key: Mapped[str | None] = mapped_column(String(500), nullable=True)
     source_record_type: Mapped[str] = mapped_column(String(100), index=True)
+    source_record_action: Mapped[str] = mapped_column(
+        String(32), default="upsert", index=True
+    )
+    supersedes_observation_id: Mapped[UUID | None] = mapped_column(
+        nullable=True, index=True
+    )
     source_url: Mapped[str] = mapped_column(String(2_048))
     collected_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)
     observed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
