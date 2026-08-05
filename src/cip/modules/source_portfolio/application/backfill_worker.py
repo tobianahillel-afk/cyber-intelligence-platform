@@ -20,12 +20,15 @@ from cip.modules.raw_observations.domain.entities import RawObservation
 from cip.modules.source_portfolio.application.execution import source_execution_allowed
 from cip.modules.source_portfolio.application.service import (
     CollectionHealthUpdate,
+    SourceExecutionMode,
     SourcePortfolioNotFoundError,
+    SourceValueEvent,
     claim_backfill_partition,
     complete_backfill_partition,
     fail_backfill_partition,
     record_collection_failure,
     record_collection_success,
+    record_source_value_event,
 )
 from cip.modules.source_portfolio.domain.models import SchemaState
 from cip.modules.source_portfolio.infrastructure.models import BackfillPartitionRecord
@@ -122,6 +125,20 @@ def run_backfill_once(
             records_written=written,
             actor=worker_id,
             now=completed_at,
+        )
+        record_source_value_event(
+            session,
+            SourceValueEvent(
+                source_id=partition.source_id,
+                execution_id=partition.id,
+                execution_mode=SourceExecutionMode.HISTORICAL_BACKFILL,
+                observations_written=written,
+                commercial_projections=0,
+                identity_projections=0,
+                request_cost=batch.request_cost,
+                not_modified=batch.not_modified,
+                occurred_at=completed_at,
+            ),
         )
     status = (
         BackfillWorkerStatus.NOT_MODIFIED
