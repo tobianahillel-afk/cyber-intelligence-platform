@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from collections.abc import Sequence
+from collections.abc import Collection, Sequence
 from datetime import datetime
 
 from sqlalchemy import select
@@ -29,6 +29,8 @@ from cip.modules.source_portfolio.infrastructure.models import (
 )
 from cip.shared.kernel.time import require_aware_utc
 
+AdapterIdentity = tuple[str, str]
+
 
 def sync_source_portfolio(
     session: Session,
@@ -51,6 +53,47 @@ def sync_source_portfolio(
         synchronized.append(entry.source_id)
     session.flush()
     return tuple(synchronized)
+
+
+def reconcile_runtime_adapters(
+    session: Session,
+    available_adapters: Collection[AdapterIdentity],
+    *,
+    now: datetime,
+) -> tuple[str, ...]:
+    """Activate target-dependent entries only when their adapter exists at runtime."""
+
+    changed_at = require_aware_utc(now, field_name="now")
+    available = set(available_adapters)
+    records = session.scalars(select(SourcePortfolioRecord)).all()
+    reconciled: list[str] = []
+    for record in records:
+        if "activation_requires" not in record.extra_metadata:
+            continue
+        capability = capability_record(session, record.source_id)
+        if capability is None:
+            target = CatalogStatus.PAUSED
+        else:
+            identity = (record.source_id, capability.adapter_id)
+            target = (
+                CatalogStatus.EXECUTABLE
+                if identity in available
+                else CatalogStatus.PAUSED
+            )
+        if record.status != target.value:
+            record.status = target.value
+            record.updated_at = changed_at
+            audit(
+                session,
+                record.source_id,
+                "runtime_adapter_reconciled",
+                "system",
+                changed_at,
+                details={"status": target.value},
+            )
+        reconciled.append(record.source_id)
+    session.flush()
+    return tuple(reconciled)
 
 
 def list_source_portfolio(session: Session) -> tuple[SourceCatalogEntry, ...]:
@@ -84,6 +127,10 @@ def resume_source(
     record = get_portfolio_record(session, source_id)
     if capability_record(session, record.source_id) is None:
         raise SourcePortfolioStateError("catalog candidates cannot be resumed")
+    if "activation_requires" in record.extra_metadata:
+        raise SourcePortfolioStateError(
+            "source activation is controlled by runtime target reconciliation"
+        )
     return _change_source_status(
         session,
         source_id,
