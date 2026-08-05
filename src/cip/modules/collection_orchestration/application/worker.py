@@ -9,6 +9,7 @@ from uuid import UUID
 from sqlalchemy.orm import Session, sessionmaker
 
 from cip.modules.collection_orchestration.application.ports import (
+    AdapterCollectionBatch,
     AdapterExecutionError,
     ClaimedJob,
     CollectionAdapter,
@@ -137,48 +138,12 @@ def run_worker_once(
         )
 
     try:
-        with session_scope(factory) as session:
-            completion_time = _read_clock(clock)
-            written = complete_job(
-                session,
-                claimed,
-                batch,
-                now=completion_time,
-            )
-            persist_identity_projections(
-                session,
-                batch.identity_projections,
-                now=completion_time,
-            )
-            persist_identity_claims(session, batch.identity_projections)
-            persist_commercial_projections(
-                session,
-                batch.commercial_projections,
-                now=completion_time,
-            )
-            _record_success_health(
-                session,
-                claimed.source_id,
-                batch.observations,
-                not_modified=batch.not_modified,
-                quota_remaining=batch.quota_remaining,
-                request_cost=batch.request_cost,
-                now=completion_time,
-            )
-            record_source_value_event(
-                session,
-                SourceValueEvent(
-                    source_id=claimed.source_id,
-                    execution_id=claimed.id,
-                    execution_mode=SourceExecutionMode.INCREMENTAL,
-                    observations_written=written,
-                    commercial_projections=len(batch.commercial_projections),
-                    identity_projections=len(batch.identity_projections),
-                    request_cost=batch.request_cost,
-                    not_modified=batch.not_modified,
-                    occurred_at=completion_time,
-                ),
-            )
+        written = _complete_success(
+            factory,
+            claimed=claimed,
+            batch=batch,
+            now=_read_clock(clock),
+        )
     except LeaseLostError:
         return WorkerOutcome(
             WorkerStatus.LEASE_LOST,
@@ -190,6 +155,44 @@ def run_worker_once(
         job_id=claimed.id,
         observations_written=written,
     )
+
+
+def _complete_success(
+    factory: sessionmaker[Session],
+    *,
+    claimed: ClaimedJob,
+    batch: AdapterCollectionBatch,
+    now: datetime,
+) -> int:
+    with session_scope(factory) as session:
+        written = complete_job(session, claimed, batch, now=now)
+        persist_identity_projections(session, batch.identity_projections, now=now)
+        persist_identity_claims(session, batch.identity_projections)
+        persist_commercial_projections(session, batch.commercial_projections, now=now)
+        _record_success_health(
+            session,
+            claimed.source_id,
+            batch.observations,
+            not_modified=batch.not_modified,
+            quota_remaining=batch.quota_remaining,
+            request_cost=batch.request_cost,
+            now=now,
+        )
+        record_source_value_event(
+            session,
+            SourceValueEvent(
+                source_id=claimed.source_id,
+                execution_id=claimed.id,
+                execution_mode=SourceExecutionMode.INCREMENTAL,
+                observations_written=written,
+                commercial_projections=len(batch.commercial_projections),
+                identity_projections=len(batch.identity_projections),
+                request_cost=batch.request_cost,
+                not_modified=batch.not_modified,
+                occurred_at=now,
+            ),
+        )
+    return written
 
 
 def _record_failure(
