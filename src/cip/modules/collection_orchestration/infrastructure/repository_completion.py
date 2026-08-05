@@ -178,6 +178,8 @@ def observation_values(observation: RawObservation) -> dict[str, Any]:
         "collection_job_id": observation.collection_job_id,
         "source_record_key": observation.source_record_key,
         "source_record_type": observation.source_record_type,
+        "source_record_action": observation.source_record_action.value,
+        "supersedes_observation_id": observation.supersedes_observation_id,
         "source_url": observation.source_url,
         "collected_at": observation.collected_at,
         "observed_at": observation.observed_at,
