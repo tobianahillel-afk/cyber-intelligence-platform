@@ -10,7 +10,7 @@ import type {
 } from "./types";
 
 const DEFAULT_API_BASE_URL = "http://127.0.0.1:8000";
-const DEFAULT_CONTROL_TOKEN = "development-control-token";
+const DEVELOPMENT_CONTROL_TOKEN = "development-control-token";
 
 export class ProviderOnboardingApiError extends Error {
   constructor(
@@ -55,7 +55,7 @@ export async function requestSourcePriorityRefresh(
 
 export async function changeSourcePortfolioState(
   sourceId: string,
-  action: "pause" | "resume" | "disable",
+  action: "pause" | "resume" | "disable" | "enable",
   payload: ActorPayload,
 ): Promise<SourcePortfolioEntry> {
   return controlRequestJson<SourcePortfolioEntry>(
@@ -132,7 +132,17 @@ function apiBaseUrl(): string {
 }
 
 function controlPlaneToken(): string {
-  return process.env.CIP_CONTROL_PLANE_TOKEN ?? DEFAULT_CONTROL_TOKEN;
+  const token = process.env.CIP_CONTROL_PLANE_TOKEN;
+  if (token) {
+    return token;
+  }
+  if (process.env.NODE_ENV === "production") {
+    throw new ProviderOnboardingApiError(
+      "Production source control requires CIP_CONTROL_PLANE_TOKEN",
+      500,
+    );
+  }
+  return DEVELOPMENT_CONTROL_TOKEN;
 }
 
 async function controlRequestJson<T>(path: string, init: RequestInit = {}): Promise<T> {
