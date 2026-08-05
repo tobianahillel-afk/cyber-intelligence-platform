@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import UTC, date, datetime, timedelta
 from decimal import Decimal
-from uuid import NAMESPACE_URL, UUID, uuid4, uuid5
+from uuid import NAMESPACE_URL, UUID, uuid5
 
 from sqlalchemy import create_engine, func, select
 from sqlalchemy.orm import Session
