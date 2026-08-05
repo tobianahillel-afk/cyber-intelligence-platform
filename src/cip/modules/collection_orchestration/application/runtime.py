@@ -31,6 +31,9 @@ from cip.modules.collection_orchestration.application.identity_adapters import (
 )
 from cip.modules.collection_orchestration.application.lever_adapter import LeverAdapter
 from cip.modules.collection_orchestration.application.ports import CollectionAdapter
+from cip.modules.collection_orchestration.application.reference_adapter import (
+    ReferencePortfolioAdapter,
+)
 from cip.modules.collection_orchestration.application.scheduler import schedule_due_jobs
 from cip.modules.collection_orchestration.application.smartrecruiters_adapter import (
     SmartRecruitersAdapter,
@@ -52,6 +55,21 @@ from cip.modules.source_governance.infrastructure.registry import SourceRegistry
 from cip.modules.source_governance.infrastructure.registry_bundle import (
     load_source_registry_bundle,
 )
+from cip.modules.source_portfolio.application.backfill_worker import (
+    BackfillWorkerOutcome,
+    BackfillWorkerStatus,
+    run_backfill_once,
+)
+from cip.modules.source_portfolio.application.execution import source_execution_allowed
+from cip.modules.source_portfolio.application.service import (
+    reconcile_runtime_adapters,
+    sync_source_portfolio,
+)
+from cip.modules.source_portfolio.domain.models import (
+    CatalogStatus,
+    SourceCatalogEntry,
+)
+from cip.modules.source_portfolio.infrastructure.registry import load_source_portfolio
 from cip.shared.config.settings import Settings
 from cip.shared.kernel.time import utc_now
 from cip.shared.persistence.session import (
@@ -69,6 +87,7 @@ class CollectionRuntime:
     schedules: tuple[SourceSchedule, ...]
     adapters: dict[tuple[str, str], CollectionAdapter]
     retention_policy: RetentionPolicy
+    portfolio: tuple[SourceCatalogEntry, ...]
 
 
 def build_collection_runtime(settings: Settings) -> CollectionRuntime:
@@ -78,6 +97,7 @@ def build_collection_runtime(settings: Settings) -> CollectionRuntime:
         settings.source_registry_path,
         settings.identity_source_registry_path,
     )
+    portfolio = load_source_portfolio(settings.source_portfolio_path)
     greenhouse_boards = load_greenhouse_boards(settings.greenhouse_board_registry_path)
     lever_sites = load_lever_sites(settings.lever_site_registry_path)
     smartrecruiters_companies = load_smartrecruiters_companies(
@@ -88,6 +108,7 @@ def build_collection_runtime(settings: Settings) -> CollectionRuntime:
     )
     with session_scope(factory) as session:
         sync_source_registry(session, entries)
+        sync_source_portfolio(session, portfolio, now=utc_now())
     adapters = _build_adapters(
         entries,
         greenhouse_boards,
@@ -96,13 +117,17 @@ def build_collection_runtime(settings: Settings) -> CollectionRuntime:
         identity_targets,
         timeout_seconds=settings.source_http_timeout_seconds,
     )
+    with session_scope(factory) as session:
+        reconcile_runtime_adapters(session, adapters.keys(), now=utc_now())
+    _validate_portfolio_adapters(portfolio, adapters)
     schedules = load_collection_schedules(settings.collection_schedule_path)
-    _validate_registered_schedules(schedules, adapters)
+    _validate_registered_schedules(schedules, adapters, portfolio)
     return CollectionRuntime(
         factory=factory,
         schedules=schedules,
         adapters=adapters,
         retention_policy=load_retention_policy(settings.retention_policy_path),
+        portfolio=portfolio,
     )
 
 
@@ -117,6 +142,7 @@ def _build_adapters(
 ) -> dict[tuple[str, str], CollectionAdapter]:
     entries_by_id = {entry.policy.id: entry for entry in entries}
     adapters: dict[tuple[str, str], CollectionAdapter] = {}
+    _register(adapters, ReferencePortfolioAdapter())
     cisa_entry = entries_by_id.get(CisaKevAdapter.source_id)
     if cisa_entry is not None:
         _register(adapters, CisaKevAdapter(cisa_entry, timeout_seconds=timeout_seconds))
@@ -177,7 +203,12 @@ def _register(
 def run_scheduler_once(runtime: CollectionRuntime, *, now: datetime | None = None) -> int:
     current = now or utc_now()
     with session_scope(runtime.factory) as session:
-        return schedule_due_jobs(session, runtime.schedules, now=current)
+        eligible = tuple(
+            schedule
+            for schedule in runtime.schedules
+            if source_execution_allowed(session, schedule.source_id, now=current)
+        )
+        return schedule_due_jobs(session, eligible, now=current)
 
 
 def run_scheduler_forever(
@@ -214,9 +245,20 @@ def run_worker_forever(
             retention_policy=runtime.retention_policy,
         )
         _log_worker_outcome(outcome)
+        backfill_outcome = BackfillWorkerOutcome(BackfillWorkerStatus.IDLE)
+        if outcome.status is WorkerStatus.IDLE:
+            backfill_outcome = run_backfill_once(
+                runtime.factory,
+                worker_id=identity,
+                adapters=runtime.adapters,
+                retention_policy=runtime.retention_policy,
+            )
+            _log_backfill_outcome(backfill_outcome)
         iterations += 1
-        if outcome.status is WorkerStatus.IDLE and (
-            max_iterations is None or iterations < max_iterations
+        if (
+            outcome.status is WorkerStatus.IDLE
+            and backfill_outcome.status is BackfillWorkerStatus.IDLE
+            and (max_iterations is None or iterations < max_iterations)
         ):
             sleep_fn(settings.worker_poll_seconds)
 
@@ -224,14 +266,42 @@ def run_worker_forever(
 def _validate_registered_schedules(
     schedules: tuple[SourceSchedule, ...],
     adapters: dict[tuple[str, str], CollectionAdapter],
+    portfolio: tuple[SourceCatalogEntry, ...],
 ) -> None:
-    missing = [
-        f"{schedule.source_id}/{schedule.adapter_id}"
-        for schedule in schedules
-        if schedule.enabled and (schedule.source_id, schedule.adapter_id) not in adapters
-    ]
+    portfolio_by_id = {entry.source_id: entry for entry in portfolio}
+    missing: list[str] = []
+    for schedule in schedules:
+        identity = (schedule.source_id, schedule.adapter_id)
+        if not schedule.enabled or identity in adapters:
+            continue
+        entry = portfolio_by_id.get(schedule.source_id)
+        conditional = (
+            entry is not None
+            and entry.status is CatalogStatus.PAUSED
+            and "activation_requires" in entry.metadata
+        )
+        if not conditional:
+            missing.append(f"{schedule.source_id}/{schedule.adapter_id}")
     if missing:
         raise ValueError(f"enabled schedules have no registered adapter: {', '.join(missing)}")
+
+
+def _validate_portfolio_adapters(
+    portfolio: tuple[SourceCatalogEntry, ...],
+    adapters: dict[tuple[str, str], CollectionAdapter],
+) -> None:
+    missing = [
+        f"{entry.source_id}/{entry.adapter.adapter_id}"
+        for entry in portfolio
+        if entry.executable
+        and entry.adapter is not None
+        and (entry.source_id, entry.adapter.adapter_id) not in adapters
+    ]
+    if missing:
+        raise ValueError(
+            "executable source portfolio entries have no registered adapter: "
+            + ", ".join(missing)
+        )
 
 
 def _log_worker_outcome(outcome: WorkerOutcome) -> None:
@@ -239,6 +309,16 @@ def _log_worker_outcome(outcome: WorkerOutcome) -> None:
         "collection worker status=%s job_id=%s observations=%s error=%s",
         outcome.status.value,
         outcome.job_id,
+        outcome.observations_written,
+        outcome.error_code,
+    )
+
+
+def _log_backfill_outcome(outcome: BackfillWorkerOutcome) -> None:
+    LOGGER.info(
+        "backfill worker status=%s partition_id=%s observations=%s error=%s",
+        outcome.status.value,
+        outcome.partition_id,
         outcome.observations_written,
         outcome.error_code,
     )

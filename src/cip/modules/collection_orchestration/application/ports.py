@@ -41,6 +41,14 @@ class AdapterCollectionBatch:
     not_modified: bool
     commercial_projections: tuple[CommercialProjection, ...] = ()
     identity_projections: tuple[IdentityProjection, ...] = ()
+    quota_remaining: int | None = None
+    request_cost: float = 0.0
+
+    def __post_init__(self) -> None:
+        if self.quota_remaining is not None and self.quota_remaining < 0:
+            raise ValueError("quota_remaining cannot be negative")
+        if self.request_cost < 0:
+            raise ValueError("request_cost cannot be negative")
 
 
 class CollectionAdapter(Protocol):

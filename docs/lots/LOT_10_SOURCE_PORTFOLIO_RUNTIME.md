@@ -2,238 +2,147 @@
 
 ## Status
 
-`PLANNED_LOCKED`
+`IN_PROGRESS`
 
-Implementation starts only after lot 09 is merged and validated on `main`.
+Implementation is complete on the lot branch. Final repository-wide CI validation and merge remain required before this status becomes `IMPLEMENTED_VALIDATED`.
 
 ## Business outcome
 
-Provide one common execution lifecycle for all future public, licensed, live cyber, corporate-web, community, and conditional sources.
+Provide one common, governed execution lifecycle for future public, licensed, live cyber, corporate-web, community, and conditional sources without allowing each adapter to invent its own catalog, backfill, freshness, health, schema, cost, or control-plane model.
 
-The lot prevents each adapter from inventing its own catalog format, backfill logic, checkpoint rules, freshness state, health model, schema-drift behavior, cost controls, and commercial-value metadata.
+## Delivered architecture
 
-## Dependencies
+### Machine-readable portfolio
 
-- lots 00–08 validated;
-- lot 09 provider onboarding merged and validated;
-- revised architecture, data model, roadmap, and test matrix accepted.
+`policies/source_portfolio.yml` is the reviewed source of truth for:
 
-## Deliverables
+- source identity, canonical URL, category and commercial use cases;
+- executable, paused, disabled and candidate states;
+- freshness targets, review and authorization expiry;
+- monthly cost limits and source metadata;
+- adapter identity, version, provider schema and output types;
+- historical, incremental, conditional, lookup, webhook and priority capabilities;
+- correction, tombstone and retraction support;
+- page and date-window limits.
 
-### Machine-readable source catalog
+OSINT Framework and BrixHub are represented only as non-executable candidates. Target-dependent identity sources remain paused until an approved target exists.
 
-Create a versioned catalog format containing:
+### Governed catalog import
 
-- source identity, owner, canonical URL, category, and subcategory;
-- use cases and expected commercial value;
-- collection mode and authorization state;
-- onboarding level and authentication modes;
-- approved hosts and paths;
-- allowed and prohibited fields;
-- quota, concurrency, response size, date window, cost, and retention limits;
-- freshness class and maximum staleness;
-- raw-storage, attribution, and human-review rules;
-- planned adapter and roadmap lot;
-- review and authorization expiry dates;
-- source health and schema status.
+External catalog entries become deterministic, idempotent candidates with `authorization_required=true`. Import never creates an adapter, source policy, authorization or executable status.
 
-Importing OSINT Framework or another catalog creates non-executable candidates only.
+### Common adapter lifecycle
 
-### Adapter capability contract
+The existing durable collection scheduler, worker, checkpoints, leases, circuit breaker and dead-letter flow remain the execution core. Lot 10 adds a capability manifest and validates that every executable portfolio entry maps to a registered runtime adapter.
 
-Add a provider-independent manifest declaring:
+A deterministic no-network reference adapter proves the contract without relying on a third-party service.
 
-- adapter and provider schema versions;
-- canonical output types;
-- `historical_backfill`;
-- `incremental_cursor`;
-- `conditional_refresh`;
-- `webhook`;
-- `entity_lookup`;
-- `priority_refresh`;
-- cursor, checkpoint, correction, tombstone, and retraction semantics;
-- operational and cost limits;
-- commercial use cases enabled.
+### Durable backfill
 
-### Source record and collection run contracts
+Backfill partitions are persisted with stable source, adapter and bound identities. The state machine supports:
 
-Introduce application contracts for:
+```text
+pending -> running -> completed
+                   -> failed -> running
+pending/running -> paused -> pending
+pending/running/paused/failed -> cancelled
+```
 
-- collection request;
-- collection batch;
-- collection run;
-- immutable source record;
-- rejected record and rejection reason;
-- provider schema version;
-- source and retrieval timestamps;
-- content hashes;
-- authorization and policy decision references.
+Cursors, attempts, written-record counts, errors and timestamps survive interruption. Duplicate partition requests return the existing partition rather than creating parallel work.
 
-Provider payloads must remain inside adapters.
+### Freshness and health
 
-### Historical backfill
+The persisted source-health projection exposes:
 
-Implement:
+- `fresh`, `aging`, `stale_refresh_queued`, `source_unavailable`, `authorization_expired` and `historical_only`;
+- schema state and drift;
+- volume and field-population anomaly state;
+- last attempt, success and source-record timestamps;
+- consecutive failures, quota and monthly cost;
+- current backfill state;
+- the existing collection circuit-breaker state.
 
-- bounded date or key partitions;
-- durable partition checkpoints;
-- resumable execution;
-- progress and remaining-work metrics;
-- pause, resume, cancel, and disable;
-- replay without duplicate current signals;
-- backfill-specific rate and cost budgets.
+Worker successes and failures update the projection transactionally. Page views read stored state and never trigger an unbounded crawl.
 
-### Incremental refresh
+### Execution shutdown
 
-Support:
+The scheduler does not create work for paused, disabled or authorization-expired sources. A worker that claims an already queued job rechecks eligibility and cancels it before adapter execution when the source is no longer allowed.
 
-- provider cursors;
-- timestamps and overlap windows;
-- ETag and Last-Modified;
-- content hashes;
-- provider deltas;
-- webhooks where authorized;
-- correction, deletion, tombstone, and retraction propagation.
+### Priority refresh
 
-### Freshness service
+Priority refresh is a bounded, idempotent queue request. Requests in the same source/adapter minute return the existing job identity. The endpoint refuses candidates, paused sources, unsupported adapters, expired authorization and sources whose governance record has not been synchronized.
 
-Implement source and projection states:
+### Protected API and interface
 
-- `fresh`;
-- `aging`;
-- `stale_refresh_queued`;
-- `source_unavailable`;
-- `authorization_expired`;
-- `historical_only`.
+The protected `/v1/source-portfolio` control plane supports:
 
-Normal page views read stored projections. Priority refreshes are bounded queue requests, not synchronous full crawls.
+- portfolio list and detail;
+- adapter capabilities and health;
+- backfill request and cancellation;
+- priority refresh;
+- pause, resume and disable;
+- explicit freshness recalculation.
 
-### Source health and schema drift
+The Next.js Sources page consumes the API server-side using `CIP_CONTROL_PLANE_TOKEN`; the token is never delivered to browser code. The page shows freshness, schema, anomalies, circuit, backfill, quota, cost and permitted operator actions beside provider onboarding.
 
-Track:
+### Persistence and release
 
-- last attempt and success;
-- last source record time;
-- lag and maximum staleness;
-- HTTP and provider failures;
-- quota and cost use;
-- schema version and drift;
-- volume and field-population anomalies;
-- circuit state;
-- authorization expiry;
-- current backfill status.
+- reversible migration `20260805_0008`;
+- application version `0.11.0`;
+- source portfolio and control-plane deployment settings documented in `.env.example`;
+- portfolio models registered in shared metadata;
+- no raw provider secret added to Git, database responses, UI or logs.
 
-### Source-value metadata
+## Implemented tests
 
-Record the planned measurement for:
+The lot includes tests for:
 
-- organization resolution;
-- unique evidence;
-- signal types;
-- expected analyst workflow;
-- duplicate overlap;
-- cost per accepted opportunity;
-- source ablation and incremental value.
+- domain and manifest validation;
+- strict YAML loading and duplicate rejection;
+- candidate import idempotence and non-execution;
+- backfill creation, duplicate delivery, failure, retry, cursor preservation, pause, resume and cancellation;
+- freshness degradation and recovery;
+- schema drift and anomaly projection;
+- priority-refresh idempotence and pause rejection;
+- anonymous control-plane denial;
+- API list, backfill, priority, pause, resume, cancel and disable;
+- scheduler authorization-expiry shutdown;
+- worker cancellation before provider execution;
+- vertical `job -> worker -> raw observation -> checkpoint -> health` execution through the reference adapter;
+- reversible migrations, architecture limits, backend coverage and frontend type/build gates through the repository CI.
 
-Lot 10 provides the measurement hooks. Later source lots provide labelled benchmarks.
+## Remaining validation gate
 
-### API and interface
+Before merge, one final SHA must pass:
 
-Protected control-plane views must show:
-
-- catalog candidates;
-- executable sources;
-- authorization and onboarding state;
-- adapter capabilities;
-- schedules and freshness;
-- backfill progress;
-- source health and schema drift;
-- pause, resume, disable, and revoke actions;
-- redacted secret-reference state only.
-
-Anonymous visitors may see only approved public freshness summaries where product requirements permit it.
-
-## Required tests
-
-### Architecture
-
-- provider transports cannot import canonical persistence implementations;
-- adapters cannot write directly to companies, signals, scores, alerts, or opportunities;
-- catalog candidates cannot execute;
-- one stable source and adapter identity contract.
-
-### Governance and onboarding
-
-- policy denial before network;
-- blocked, quarantined, expired, and unauthorized states;
-- scope mismatch;
-- source ownership or terms change returns to review;
-- secret redaction.
-
-### Backfill
-
-- partition generation;
-- interruption and resume;
-- duplicate partition delivery;
-- cancellation;
-- rate and cost budgets;
-- historical replay does not create duplicate active alerts;
-- checkpoint advances only after transactional success.
-
-### Incremental convergence
-
-- cursor overlap;
-- ETag and Last-Modified;
-- mutable source record;
-- unchanged record;
-- correction;
-- tombstone;
-- retraction;
-- full backfill and incremental sequence converge to the same canonical source-record state.
-
-### Source health
-
-- provider outage;
-- quota exhaustion;
-- authorization expiry;
-- schema drift;
-- volume anomaly;
-- stale and recovered states;
-- circuit opening and closing;
-- no false-success status.
-
-### API and UI
-
-- protected operations;
-- anonymous denial;
-- loading, empty, partial, stale, failure, and success states;
-- progress updates;
-- redaction;
-- audit history;
-- concurrent pause/resume behavior.
-
-### Migration and CI
-
-- reversible migrations;
-- complete backend and frontend gates;
-- coverage thresholds;
-- common adapter contract suite included in CI.
+- dependency consistency and vulnerability audit;
+- Ruff and strict Mypy;
+- architecture, release and roadmap contracts;
+- PostgreSQL `upgrade -> downgrade base -> upgrade`;
+- complete backend tests with the repository coverage threshold;
+- frontend dependency audit, TypeScript and production build.
 
 ## Exit gate
 
-Lot 10 is complete when a synthetic reference adapter and at least one existing official adapter prove the complete lifecycle:
+Lot 10 is complete when the final validated SHA proves:
 
 ```text
-catalog -> onboarding -> backfill -> incremental refresh -> source records -> freshness -> health -> disablement
+catalog
+  -> governed activation
+  -> schedule or priority queue
+  -> durable worker
+  -> source record/checkpoint
+  -> freshness and health
+  -> pause/expiry shutdown
 ```
 
-The final SHA must pass all repository gates and demonstrate that future sources can reuse the lifecycle without adding provider-specific orchestration to the core.
+Future sources must be able to reuse this lifecycle without adding provider-specific orchestration to the core.
 
 ## Non-goals
 
 - implementing every OSINT or live cyber source;
 - enabling BrixHub;
-- introducing unrestricted browser automation;
-- implementing final entity resolution, signal fusion, scoring, or Company 360;
-- treating catalog import as source authorization;
+- unrestricted browser automation;
+- final entity resolution, signal fusion, scoring or Company 360;
+- treating catalog import as authorization;
 - optimizing for record volume without commercial value.

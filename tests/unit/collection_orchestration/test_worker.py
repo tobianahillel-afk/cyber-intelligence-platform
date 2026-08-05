@@ -81,6 +81,26 @@ def _patch_scope(monkeypatch: pytest.MonkeyPatch) -> None:
         yield object()
 
     monkeypatch.setattr(worker, "session_scope", fake_scope)
+    monkeypatch.setattr(
+        worker,
+        "source_execution_allowed",
+        lambda *args, **kwargs: True,
+    )
+    monkeypatch.setattr(
+        worker,
+        "_record_success_health",
+        lambda *args, **kwargs: None,
+    )
+    monkeypatch.setattr(
+        worker,
+        "_record_failure_health",
+        lambda *args, **kwargs: None,
+    )
+    monkeypatch.setattr(
+        worker,
+        "record_source_value_event",
+        lambda *args, **kwargs: False,
+    )
 
 
 def _retention_policy():

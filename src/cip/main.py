@@ -7,6 +7,7 @@ from cip.modules.opportunities.api.routes import router as opportunities_router
 from cip.modules.organizations.api.routes import router as organizations_router
 from cip.modules.provider_onboarding.api.routes import router as provider_onboarding_router
 from cip.modules.source_governance.api.routes import router as source_governance_router
+from cip.modules.source_portfolio.api.routes import router as source_portfolio_router
 
 
 def create_app() -> FastAPI:
@@ -16,12 +17,13 @@ def create_app() -> FastAPI:
         description=(
             "Standalone human-operated cyber revenue intelligence and commercial "
             "operations API with explicit source governance, provenance, official "
-            "organization identity, provider onboarding, and evidence-backed "
-            "opportunity discovery."
+            "organization identity, provider onboarding, source portfolio health, "
+            "and evidence-backed opportunity discovery."
         ),
     )
     application.include_router(source_governance_router)
     application.include_router(provider_onboarding_router)
+    application.include_router(source_portfolio_router)
     application.include_router(organizations_router)
     application.include_router(opportunities_router)
 

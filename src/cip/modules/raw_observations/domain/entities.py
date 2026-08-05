@@ -2,12 +2,20 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from datetime import datetime
+from enum import StrEnum
 from re import fullmatch
 from urllib.parse import urlparse
 from uuid import UUID, uuid4
 
 from cip.modules.source_governance.domain.models import DataCategory
 from cip.shared.kernel.time import require_aware_utc, utc_now
+
+
+class SourceRecordAction(StrEnum):
+    UPSERT = "upsert"
+    CORRECTION = "correction"
+    TOMBSTONE = "tombstone"
+    RETRACTION = "retraction"
 
 
 @dataclass(frozen=True, slots=True)
@@ -22,6 +30,8 @@ class RawObservation:
     data_categories: frozenset[DataCategory]
     id: UUID = field(default_factory=uuid4)
     source_record_key: str | None = None
+    source_record_action: SourceRecordAction = SourceRecordAction.UPSERT
+    supersedes_observation_id: UUID | None = None
     collected_at: datetime = field(default_factory=utc_now)
     observed_at: datetime | None = None
     published_at: datetime | None = None
@@ -43,6 +53,14 @@ class RawObservation:
             raise ValueError("payload_hash_sha256 must be a lowercase SHA-256 digest")
         if not self.data_categories:
             raise ValueError("at least one data category is required")
+        if self.source_record_action is SourceRecordAction.UPSERT:
+            if self.supersedes_observation_id is not None:
+                raise ValueError("upsert observations cannot supersede another observation")
+        else:
+            if not (self.source_record_key or "").strip():
+                raise ValueError("record mutations require source_record_key")
+            if self.supersedes_observation_id is None:
+                raise ValueError("record mutations require supersedes_observation_id")
         object.__setattr__(
             self,
             "collected_at",
@@ -68,3 +86,12 @@ class RawObservation:
     def deduplication_key(self) -> str:
         record_key = self.source_record_key or ""
         return f"{self.source_id}:{record_key}:{self.payload_hash_sha256}"
+
+    @property
+    def effective_at(self) -> datetime:
+        return (
+            self.source_updated_at
+            or self.observed_at
+            or self.published_at
+            or self.collected_at
+        )

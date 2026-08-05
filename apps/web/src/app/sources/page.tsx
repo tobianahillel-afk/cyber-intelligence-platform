@@ -1,5 +1,6 @@
-import { loadProviderCatalog } from "@/features/sources/api";
+import { loadProviderCatalog, loadSourcePortfolio } from "@/features/sources/api";
 import { ProviderCatalog } from "@/features/sources/provider-catalog";
+import { SourcePortfolio } from "@/features/sources/source-portfolio";
 import type { ProviderOnboardingState } from "@/features/sources/types";
 
 const allowedStates = new Set<ProviderOnboardingState>([
@@ -23,7 +24,10 @@ interface SourcesPageProps {
 export default async function SourcesPage({ searchParams }: SourcesPageProps) {
   const parameters = await searchParams;
   const selectedState = parseState(parameters.state);
-  const catalog = await loadProviderCatalog();
+  const [catalog, portfolio] = await Promise.all([
+    loadProviderCatalog(),
+    loadSourcePortfolio(),
+  ]);
   const providers = selectedState
     ? catalog.items.filter((provider) => provider.state === selectedState)
     : catalog.items;
@@ -33,18 +37,20 @@ export default async function SourcesPage({ searchParams }: SourcesPageProps) {
       value: catalog.items.filter((provider) => provider.state === "connected").length,
     },
     {
-      label: "Human action",
-      value: catalog.items.filter((provider) => provider.state.startsWith("awaiting_")).length,
+      label: "Executable sources",
+      value: portfolio.items.filter((source) => source.status === "executable").length,
     },
     {
-      label: "Ready to verify",
-      value: catalog.items.filter((provider) => provider.state === "ready_to_verify").length,
-    },
-    {
-      label: "Blocked or failed",
-      value: catalog.items.filter((provider) =>
-        ["blocked", "failed"].includes(provider.state),
+      label: "Stale or unavailable",
+      value: portfolio.items.filter((source) =>
+        ["stale_refresh_queued", "source_unavailable", "authorization_expired"].includes(
+          source.health.freshness_state,
+        ),
       ).length,
+    },
+    {
+      label: "Candidates",
+      value: portfolio.items.filter((source) => source.status === "candidate").length,
     },
   ] as const;
 
@@ -53,16 +59,16 @@ export default async function SourcesPage({ searchParams }: SourcesPageProps) {
       <div className="page-heading">
         <div>
           <p className="eyebrow">Source operations</p>
-          <h1>Provider Onboarding</h1>
+          <h1>Source Control Plane</h1>
           <p>
-            Connect public sources automatically and coordinate the official human checkpoints
-            required by authenticated providers. Secret values never enter this interface.
+            Coordinate provider onboarding, runtime capability, freshness, backfill and source
+            health without exposing provider secret values to this interface.
           </p>
         </div>
-        <span className="live-label">Governed provider catalog</span>
+        <span className="live-label">Governed source portfolio</span>
       </div>
 
-      <div className="summary-grid" aria-label="Provider onboarding summary">
+      <div className="summary-grid" aria-label="Source portfolio summary">
         {summary.map((item) => (
           <article className="summary-card" key={item.label}>
             <span>{item.label}</span>
@@ -71,10 +77,23 @@ export default async function SourcesPage({ searchParams }: SourcesPageProps) {
         ))}
       </div>
 
+      <section className="panel" aria-labelledby="source-runtime-title">
+        <div className="panel-heading">
+          <div>
+            <h2 id="source-runtime-title">Runtime, freshness and health</h2>
+            <p>
+              {portfolio.total} catalog entries. Candidates cannot execute until a reviewed
+              adapter, source policy and authorization are present.
+            </p>
+          </div>
+        </div>
+        <SourcePortfolio sources={portfolio.items} />
+      </section>
+
       <section className="panel" aria-labelledby="provider-catalog-title">
         <div className="panel-heading">
           <div>
-            <h2 id="provider-catalog-title">Governed sources</h2>
+            <h2 id="provider-catalog-title">Provider onboarding</h2>
             <p>
               {providers.length} of {catalog.total} provider(s) shown. Registration links point
               only to official provider-controlled portals.

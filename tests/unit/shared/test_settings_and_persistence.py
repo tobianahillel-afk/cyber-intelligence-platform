@@ -59,6 +59,8 @@ def test_database_metadata_contains_foundation_tables() -> None:
     metadata = get_metadata()
 
     assert set(metadata.tables) == {
+        "adapter_capabilities",
+        "backfill_partitions",
         "collection_checkpoints",
         "collection_circuits",
         "collection_dead_letters",
@@ -82,6 +84,11 @@ def test_database_metadata_contains_foundation_tables() -> None:
         "provider_onboarding",
         "provider_onboarding_audit",
         "raw_observations",
+        "source_health",
+        "source_portfolio",
+        "source_portfolio_audit",
+        "source_quality_baselines",
+        "source_value_events",
         "sources",
         "suppressions",
     }
@@ -100,6 +107,9 @@ def test_metadata_creates_on_sqlite() -> None:
     assert get_metadata().tables["organization_identity_claims"].foreign_keys
     assert get_metadata().tables["provider_onboarding"].foreign_keys
     assert get_metadata().tables["provider_onboarding_audit"].foreign_keys
+    assert get_metadata().tables["source_health"].foreign_keys
+    assert get_metadata().tables["backfill_partitions"].foreign_keys
+    assert get_metadata().tables["source_value_events"].foreign_keys
 
 
 def test_database_url_is_required() -> None:
