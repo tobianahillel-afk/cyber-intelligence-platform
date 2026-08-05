@@ -140,6 +140,33 @@ class SourceQualityBaselineRecord(Base):
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)
 
 
+class SourceValueEventRecord(Base):
+    __tablename__ = "source_value_events"
+    __table_args__ = (
+        UniqueConstraint(
+            "source_id",
+            "execution_id",
+            "execution_mode",
+            name="uq_source_value_event_execution",
+        ),
+        Index("ix_source_value_events_source_time", "source_id", "occurred_at"),
+    )
+
+    id: Mapped[UUID] = mapped_column(primary_key=True)
+    source_id: Mapped[str] = mapped_column(
+        ForeignKey("source_portfolio.source_id", ondelete="CASCADE"),
+        index=True,
+    )
+    execution_id: Mapped[UUID] = mapped_column(index=True)
+    execution_mode: Mapped[str] = mapped_column(String(40), index=True)
+    observations_written: Mapped[int] = mapped_column(Integer)
+    commercial_projections: Mapped[int] = mapped_column(Integer)
+    identity_projections: Mapped[int] = mapped_column(Integer)
+    request_cost: Mapped[float] = mapped_column(Float)
+    not_modified: Mapped[bool] = mapped_column(Boolean)
+    occurred_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)
+
+
 class SourcePortfolioAuditRecord(Base):
     __tablename__ = "source_portfolio_audit"
 
