@@ -113,6 +113,7 @@ def upgrade() -> None:
         sa.Column("consecutive_failures", sa.Integer(), nullable=False),
         sa.Column("quota_remaining", sa.Integer(), nullable=True),
         sa.Column("monthly_cost_used", sa.Float(), nullable=False),
+        sa.Column("cost_window_started_at", sa.DateTime(timezone=True), nullable=False),
         sa.Column("current_backfill_state", sa.String(length=40), nullable=True),
         sa.Column("last_error_code", sa.String(length=100), nullable=True),
         sa.Column("updated_at", sa.DateTime(timezone=True), nullable=False),
