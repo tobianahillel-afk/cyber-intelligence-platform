@@ -63,15 +63,16 @@ def collect_public_web_target(
         raise PublicWebCollectionDeniedError("target_authorization_inactive")
     _authorize(entry, target.robots_url, now=collected)
     robots = client.fetch_robots(target)
-    usage = CrawlUsage()
+    total_bytes = robots.bytes_fetched
+    if total_bytes > target.max_total_bytes:
+        raise PublicWebCollectionDeniedError("total_byte_budget_exceeded")
     discovered_urls: list[str] = []
     seen_urls: set[str] = set()
-    sitemap_bytes = 0
     for sitemap_url in target.sitemap_urls:
         _authorize(entry, sitemap_url, now=collected)
         sitemap = client.fetch_sitemap(target, sitemap_url, robots)
-        sitemap_bytes += len(sitemap.body)
-        if sitemap_bytes > target.max_total_bytes:
+        total_bytes += len(sitemap.body)
+        if total_bytes > target.max_total_bytes:
             raise PublicWebCollectionDeniedError("total_byte_budget_exceeded")
         remaining = target.max_pages - len(discovered_urls)
         if remaining <= 0:
@@ -85,7 +86,7 @@ def collect_public_web_target(
                 continue
             seen_urls.add(sitemap_entry.url)
             discovered_urls.append(sitemap_entry.url)
-    usage = CrawlUsage(bytes_fetched=sitemap_bytes)
+    usage = CrawlUsage(bytes_fetched=total_bytes)
     previous_pages = checkpoint.pages if checkpoint is not None else {}
     next_pages = dict(previous_pages)
     observations: list[RawObservation] = []
