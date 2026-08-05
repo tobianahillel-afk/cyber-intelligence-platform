@@ -25,9 +25,13 @@ class Settings(BaseSettings):
     source_registry_path: Path = Path("policies/sources.example.yml")
     identity_source_registry_path: Path = Path("policies/identity_sources.yml")
     decp_source_registry_path: Path = Path("policies/sources.decp.yml")
+    public_web_source_registry_path: Path = Path("policies/sources.public_web.yml")
     provider_onboarding_registry_path: Path = Path("policies/provider_onboarding.yml")
     source_portfolio_path: Path = Path("policies/source_portfolio.yml")
     decp_source_portfolio_path: Path = Path("policies/source_portfolio.decp.yml")
+    public_web_source_portfolio_path: Path = Path(
+        "policies/source_portfolio.public_web.yml"
+    )
     greenhouse_board_registry_path: Path = Path("policies/greenhouse_boards.yml")
     lever_site_registry_path: Path = Path("policies/lever_sites.yml")
     smartrecruiters_company_registry_path: Path = Path(
@@ -36,9 +40,13 @@ class Settings(BaseSettings):
     organization_identity_target_registry_path: Path = Path(
         "policies/organization_identity_targets.yml"
     )
+    public_web_target_registry_path: Path = Path("policies/public_web_targets.yml")
     retention_policy_path: Path = Path("policies/retention.yml")
     collection_schedule_path: Path = Path("policies/collection_schedules.yml")
     decp_collection_schedule_path: Path = Path("policies/collection_schedules.decp.yml")
+    public_web_collection_schedule_path: Path = Path(
+        "policies/collection_schedules.public_web.yml"
+    )
     control_plane_token: str = Field(
         default="development-control-token",
         min_length=16,
