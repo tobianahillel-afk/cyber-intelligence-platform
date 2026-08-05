@@ -161,12 +161,11 @@ class ProcurementPublication:
         published = self.published_at
         if published is not None:
             published = require_aware_utc(published, field_name="published_at")
-        details = MappingProxyType(dict(self.details))
         object.__setattr__(self, "title", title)
         object.__setattr__(self, "content_hash_sha256", content_hash)
         object.__setattr__(self, "collected_at", collected)
         object.__setattr__(self, "published_at", published)
-        object.__setattr__(self, "details", details)
+        object.__setattr__(self, "details", MappingProxyType(dict(self.details)))
 
     @property
     def revision_key(self) -> str:
@@ -183,7 +182,6 @@ class ProcurementContractProjection:
     buyer_organization_id: UUID
     title: str
     status: ContractStatus
-    publication: ProcurementPublication
     confidence: float
     parties: tuple[ProcurementParty, ...] = ()
     service_families: tuple[ServiceFamilyMatch, ...] = ()
@@ -202,10 +200,6 @@ class ProcurementContractProjection:
         title = self.title.strip()
         if not contract_key or not procedure_key or not title:
             raise ValueError("contract_key, procedure_key, and title are required")
-        if self.publication.procedure_key != procedure_key:
-            raise ValueError("publication procedure must match contract procedure")
-        if self.publication.buyer_organization_id != self.buyer_organization_id:
-            raise ValueError("publication buyer must match contract buyer")
         if not 0.0 <= self.confidence <= 1.0:
             raise ValueError("contract confidence must be between 0 and 1")
         _validate_date_basis(self.start_date, self.start_date_basis, "start_date")
@@ -215,13 +209,32 @@ class ProcurementContractProjection:
             raise ValueError("end_date cannot precede start_date")
         if self.renewal_date and self.end_date and self.renewal_date < self.end_date:
             raise ValueError("renewal_date cannot precede end_date")
-        parties = _unique_parties(self.parties)
-        families = _unique_families(self.service_families)
         object.__setattr__(self, "contract_key", contract_key)
         object.__setattr__(self, "procedure_key", procedure_key)
         object.__setattr__(self, "title", title)
-        object.__setattr__(self, "parties", parties)
-        object.__setattr__(self, "service_families", families)
+        object.__setattr__(self, "parties", _unique_parties(self.parties))
+        object.__setattr__(self, "service_families", _unique_families(self.service_families))
+
+
+@dataclass(frozen=True, slots=True)
+class ProcurementHistoryProjection:
+    publication: ProcurementPublication
+    contract: ProcurementContractProjection | None = None
+
+    def __post_init__(self) -> None:
+        if self.contract is None:
+            return
+        if self.contract.procedure_key != self.publication.procedure_key:
+            raise ValueError("contract procedure must match publication procedure")
+        if self.contract.buyer_organization_id != self.publication.buyer_organization_id:
+            raise ValueError("contract buyer must match publication buyer")
+        if self.publication.kind not in {
+            ProcurementPublicationKind.RESULT,
+            ProcurementPublicationKind.AWARD,
+            ProcurementPublicationKind.AMENDMENT,
+            ProcurementPublicationKind.CANCELLATION,
+        }:
+            raise ValueError("a contract projection requires a contract lifecycle publication")
 
 
 def _validate_date_basis(value: date | None, basis: DateBasis, field_name: str) -> None:
