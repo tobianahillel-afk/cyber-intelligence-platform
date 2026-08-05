@@ -108,7 +108,10 @@ class PublicResource:
             ResourceRetrievalState.NOT_MODIFIED,
             ResourceRetrievalState.CHANGED,
         }
-        if self.access_state is not ResourceAccessState.PUBLIC and self.retrieval_state in fetched_states:
+        if (
+            self.access_state is not ResourceAccessState.PUBLIC
+            and self.retrieval_state in fetched_states
+        ):
             raise ValueError("non-public resources cannot be marked as fetched")
         title = _optional_text(self.title, max_length=1_000, field_name="title")
         object.__setattr__(self, "source_id", source_id)
