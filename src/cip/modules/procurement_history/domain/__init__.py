@@ -7,10 +7,10 @@ from cip.modules.procurement_history.domain.models import (
     ProcurementContractProjection,
     ProcurementHistoryProjection,
     ProcurementParty,
+    ProcurementPartyRole,
+    ProcurementProcedureStatus,
     ProcurementPublication,
     ProcurementPublicationKind,
-    ProcurementProcedureStatus,
-    ProcurementPartyRole,
 )
 
 __all__ = [
@@ -23,7 +23,7 @@ __all__ = [
     "ProcurementHistoryProjection",
     "ProcurementParty",
     "ProcurementPartyRole",
+    "ProcurementProcedureStatus",
     "ProcurementPublication",
     "ProcurementPublicationKind",
-    "ProcurementProcedureStatus",
 ]
