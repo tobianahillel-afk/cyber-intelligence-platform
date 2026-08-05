@@ -22,6 +22,7 @@ from cip.modules.source_portfolio.application.service import (
     SourcePortfolioStateError,
     cancel_backfill,
     disable_source,
+    enable_source,
     get_source_health,
     get_source_portfolio,
     list_source_portfolio,
@@ -174,6 +175,17 @@ def disable_source_route(
     return _change_status(session, source_id, payload.actor, "disable")
 
 
+@router.post("/sources/{source_id}/enable", response_model=SourcePortfolioResponse)
+def enable_source_route(
+    source_id: str,
+    payload: ActorRequest,
+    session: SessionDependency,
+    settings: SettingsDependency,
+) -> SourcePortfolioResponse:
+    _prepare(session, settings)
+    return _change_status(session, source_id, payload.actor, "enable")
+
+
 @router.post("/sources/{source_id}/refresh-freshness", response_model=SourcePortfolioResponse)
 def refresh_source_freshness(
     source_id: str,
@@ -207,15 +219,17 @@ def _change_status(
     session: Session,
     source_id: str,
     actor: str,
-    action: Literal["pause", "resume", "disable"],
+    action: Literal["pause", "resume", "disable", "enable"],
 ) -> SourcePortfolioResponse:
     try:
         if action == "pause":
             pause_source(session, source_id, actor=actor, now=utc_now())
         elif action == "resume":
             resume_source(session, source_id, actor=actor, now=utc_now())
-        else:
+        elif action == "disable":
             disable_source(session, source_id, actor=actor, now=utc_now())
+        else:
+            enable_source(session, source_id, actor=actor, now=utc_now())
     except SourcePortfolioNotFoundError as exc:
         raise HTTPException(status_code=404, detail="source not found") from exc
     except SourcePortfolioStateError as exc:
