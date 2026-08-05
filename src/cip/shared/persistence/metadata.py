@@ -40,6 +40,11 @@ from cip.modules.provider_onboarding.infrastructure.models import (
     ProviderOnboardingAuditRecord,
     ProviderOnboardingRecord,
 )
+from cip.modules.public_footprint.infrastructure.models import (
+    PublicClaimRecord,
+    PublicResourceRecord,
+    PublicResourceVersionRecord,
+)
 from cip.modules.raw_observations.infrastructure.models import RawObservationRecord
 from cip.modules.source_governance.infrastructure.models import SourceRecord
 from cip.modules.source_portfolio.infrastructure.models import (
@@ -83,6 +88,9 @@ _IMPORTED_MODELS = (
     ProcurementServiceClassificationRecord,
     ProviderOnboardingAuditRecord,
     ProviderOnboardingRecord,
+    PublicClaimRecord,
+    PublicResourceRecord,
+    PublicResourceVersionRecord,
     RawObservationRecord,
     SourceHealthRecord,
     SourcePortfolioAuditRecord,
