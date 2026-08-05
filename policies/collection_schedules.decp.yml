@@ -1,0 +1,14 @@
+version: 1
+
+schedules:
+  - source_id: decp
+    adapter_id: decp-explore-api
+    interval_seconds: 86400
+    lease_seconds: 300
+    enabled: true
+    retry:
+      max_attempts: 4
+      base_delay_seconds: 60
+      max_delay_seconds: 3600
+      circuit_failure_threshold: 3
+      circuit_reset_seconds: 7200
