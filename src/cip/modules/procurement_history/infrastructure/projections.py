@@ -195,6 +195,8 @@ def _contract_values(projection: ProcurementContractProjection) -> dict[str, obj
         "currency": amount.currency if amount else None,
         "amount_type": amount.amount_type.value if amount else None,
         "award_date": projection.award_date,
+        "conclusion_date": projection.conclusion_date,
+        "conclusion_date_basis": projection.conclusion_date_basis.value,
         "start_date": projection.start_date,
         "start_date_basis": projection.start_date_basis.value,
         "end_date": projection.end_date,
