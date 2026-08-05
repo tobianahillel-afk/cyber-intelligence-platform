@@ -6,7 +6,7 @@ _SERVICE_TERMS: dict[CyberServiceFamily, tuple[str, ...]] = {
     CyberServiceFamily.STRATEGY_VCISO: (
         "vciso",
         "virtual ciso",
-        "rssI externalisé",
+        "rssi externalisé",
         "rssi externalise",
         "cyber strategy",
         "stratégie cybersécurité",
@@ -42,7 +42,6 @@ _SERVICE_TERMS: dict[CyberServiceFamily, tuple[str, ...]] = {
         "purple team",
         "adversary emulation",
         "simulation d'attaque",
-        "simulation d’attaque",
     ),
     CyberServiceFamily.VULNERABILITY_ATTACK_SURFACE: (
         "vulnerability management",
@@ -50,7 +49,6 @@ _SERVICE_TERMS: dict[CyberServiceFamily, tuple[str, ...]] = {
         "gestion des vulnerabilites",
         "attack surface",
         "surface d'attaque",
-        "surface d’attaque",
         "asm",
     ),
     CyberServiceFamily.SOC_SIEM_MDR_XDR_SOAR: (
@@ -78,7 +76,6 @@ _SERVICE_TERMS: dict[CyberServiceFamily, tuple[str, ...]] = {
     CyberServiceFamily.RESILIENCE_CRISIS_READINESS: (
         "cyber resilience",
         "cyber résilience",
-        "cyber resilience",
         "crisis management",
         "gestion de crise",
         "business continuity",
@@ -86,7 +83,7 @@ _SERVICE_TERMS: dict[CyberServiceFamily, tuple[str, ...]] = {
         "continuite d'activite",
         "disaster recovery",
         "reprise d'activité",
-        "reprise d’activite",
+        "reprise d'activite",
     ),
     CyberServiceFamily.IAM_IGA_PAM_ZERO_TRUST: (
         "identity and access management",
