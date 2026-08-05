@@ -25,6 +25,7 @@ from cip.adapters.sources.smartrecruiters.registry import (
 )
 from cip.modules.collection_orchestration.application.adapters import CisaKevAdapter
 from cip.modules.collection_orchestration.application.boamp_adapter import BoampAdapter
+from cip.modules.collection_orchestration.application.decp_adapter import DecpAdapter
 from cip.modules.collection_orchestration.application.greenhouse_adapter import GreenhouseAdapter
 from cip.modules.collection_orchestration.application.identity_adapters import (
     register_identity_adapters,
@@ -45,8 +46,8 @@ from cip.modules.collection_orchestration.application.worker import (
     run_worker_once,
 )
 from cip.modules.collection_orchestration.domain.models import SourceSchedule
-from cip.modules.collection_orchestration.infrastructure.schedule_loader import (
-    load_collection_schedules,
+from cip.modules.collection_orchestration.infrastructure.schedule_bundle import (
+    load_collection_schedule_bundle,
 )
 from cip.modules.data_governance.domain.retention import RetentionPolicy
 from cip.modules.data_governance.infrastructure.retention_loader import load_retention_policy
@@ -69,7 +70,9 @@ from cip.modules.source_portfolio.domain.models import (
     CatalogStatus,
     SourceCatalogEntry,
 )
-from cip.modules.source_portfolio.infrastructure.registry import load_source_portfolio
+from cip.modules.source_portfolio.infrastructure.registry_bundle import (
+    load_source_portfolio_bundle,
+)
 from cip.shared.config.settings import Settings
 from cip.shared.kernel.time import utc_now
 from cip.shared.persistence.session import (
@@ -96,8 +99,12 @@ def build_collection_runtime(settings: Settings) -> CollectionRuntime:
     entries = load_source_registry_bundle(
         settings.source_registry_path,
         settings.identity_source_registry_path,
+        settings.decp_source_registry_path,
     )
-    portfolio = load_source_portfolio(settings.source_portfolio_path)
+    portfolio = load_source_portfolio_bundle(
+        settings.source_portfolio_path,
+        settings.decp_source_portfolio_path,
+    )
     greenhouse_boards = load_greenhouse_boards(settings.greenhouse_board_registry_path)
     lever_sites = load_lever_sites(settings.lever_site_registry_path)
     smartrecruiters_companies = load_smartrecruiters_companies(
@@ -120,7 +127,10 @@ def build_collection_runtime(settings: Settings) -> CollectionRuntime:
     with session_scope(factory) as session:
         reconcile_runtime_adapters(session, adapters.keys(), now=utc_now())
     _validate_portfolio_adapters(portfolio, adapters)
-    schedules = load_collection_schedules(settings.collection_schedule_path)
+    schedules = load_collection_schedule_bundle(
+        settings.collection_schedule_path,
+        settings.decp_collection_schedule_path,
+    )
     _validate_registered_schedules(schedules, adapters, portfolio)
     return CollectionRuntime(
         factory=factory,
@@ -152,6 +162,9 @@ def _build_adapters(
     boamp_entry = entries_by_id.get(BoampAdapter.source_id)
     if boamp_entry is not None:
         _register(adapters, BoampAdapter(boamp_entry, timeout_seconds=timeout_seconds))
+    decp_entry = entries_by_id.get(DecpAdapter.source_id)
+    if decp_entry is not None:
+        _register(adapters, DecpAdapter(decp_entry, timeout_seconds=timeout_seconds))
     greenhouse_entry = entries_by_id.get(GreenhouseAdapter.source_id)
     if greenhouse_entry is not None and any(board.enabled for board in greenhouse_boards):
         _register(
