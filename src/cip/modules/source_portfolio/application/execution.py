@@ -4,13 +4,18 @@ from datetime import datetime
 
 from sqlalchemy.orm import Session
 
+from cip.modules.source_portfolio.application.health import refresh_freshness
 from cip.modules.source_portfolio.domain.models import CatalogStatus, FreshnessState
-from cip.modules.source_portfolio.infrastructure.models import (
-    SourceHealthRecord,
-    SourcePortfolioRecord,
-)
-from cip.modules.source_portfolio.infrastructure.persistence_time import persistence_utc
+from cip.modules.source_portfolio.infrastructure.models import SourcePortfolioRecord
 from cip.shared.kernel.time import require_aware_utc
+
+BLOCKING_FRESHNESS_STATES = frozenset(
+    {
+        FreshnessState.AUTHORIZATION_EXPIRED,
+        FreshnessState.QUOTA_EXHAUSTED,
+        FreshnessState.COST_BUDGET_EXHAUSTED,
+    }
+)
 
 
 def source_execution_allowed(
@@ -30,11 +35,5 @@ def source_execution_allowed(
         return True
     if record.status != CatalogStatus.EXECUTABLE.value:
         return False
-    expires_at = persistence_utc(record.authorization_expires_at)
-    if expires_at is None or expires_at > current:
-        return True
-    health = session.get(SourceHealthRecord, source_id)
-    if health is not None:
-        health.freshness_state = FreshnessState.AUTHORIZATION_EXPIRED.value
-        health.updated_at = current
-    return False
+    health = refresh_freshness(session, source_id, now=current)
+    return health.freshness_state not in BLOCKING_FRESHNESS_STATES
