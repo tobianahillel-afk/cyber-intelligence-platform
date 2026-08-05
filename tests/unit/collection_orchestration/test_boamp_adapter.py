@@ -45,6 +45,8 @@ def test_boamp_adapter_maps_checkpoint_and_result(monkeypatch: pytest.MonkeyPatc
         return BoampCollectionBatch(
             observations=(),
             projections=(),
+            buyers=(),
+            procurement=(),
             checkpoint=BoampCheckpoint(
                 latest_idweb="26-new",
                 latest_publication_date="2026-08-04",
@@ -68,6 +70,8 @@ def test_boamp_adapter_maps_checkpoint_and_result(monkeypatch: pytest.MonkeyPatc
     assert checkpoint.latest_idweb == "26-old"
     assert batch.not_modified is True
     assert batch.commercial_projections == ()
+    assert batch.procurement_organizations == ()
+    assert batch.procurement_projections == ()
     assert batch.checkpoint_payload == {
         "latest_idweb": "26-new",
         "latest_publication_date": "2026-08-04",
@@ -80,7 +84,14 @@ def test_boamp_adapter_accepts_missing_checkpoint(monkeypatch: pytest.MonkeyPatc
     def fake_collect(client: object, entry: object, **kwargs: object) -> BoampCollectionBatch:
         del client, entry
         captured.update(kwargs)
-        return BoampCollectionBatch((), (), BoampCheckpoint(), False)
+        return BoampCollectionBatch(
+            observations=(),
+            projections=(),
+            buyers=(),
+            procurement=(),
+            checkpoint=BoampCheckpoint(),
+            not_modified=False,
+        )
 
     monkeypatch.setattr(adapter_module, "collect_boamp_notices", fake_collect)
     BoampAdapter(_entry()).collect(

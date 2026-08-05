@@ -1,0 +1,49 @@
+version: 1
+reviewed_at: 2026-08-05
+
+sources:
+  - id: decp
+    name: Données essentielles de la commande publique — marchés valides
+    base_url: https://data.economie.gouv.fr/api/explore/v2.1/catalog/datasets/decp-2022-marches-valides/records
+    status: enabled
+    source_type: api
+    owner: Direction des affaires juridiques des ministères économiques et financiers
+    terms_url: https://data.economie.gouv.fr/explore/dataset/decp-2022-marches-valides/information/
+    licence: Licence Ouverte 2.0
+    allowed_data_categories:
+      - public_tender
+      - organization_metadata
+    prohibited_data_categories:
+      - credential
+      - victim_file
+      - private_communication
+      - private_personal_data
+      - restricted_content
+    rate_limit_per_minute: 4
+    retention_days: 3650
+    attribution_required: true
+    raw_content_storage: false
+    human_review_required: false
+    authorization:
+      status: approved
+      document_reference: decp-open-data-lo2-2026-08-05
+      reviewed_at: 2026-08-05T14:00:00Z
+      expires_at: null
+      approved_hosts:
+        - data.economie.gouv.fr
+      approved_path_prefixes:
+        - /api/explore/v2.1/catalog/datasets/decp-2022-marches-valides/records
+      approved_purposes:
+        - procurement-intelligence
+      automated_collection_allowed: true
+      raw_storage_allowed: false
+    economics:
+      commercial_value: high
+      monthly_cost: 0
+      implementation_cost: medium
+      maintenance_cost: medium
+      expected_stability: high
+    notes: >-
+      Uses the official Explore API with selected fields, bounded pages and no bulk
+      export mirroring. Published contract history creates no current commercial
+      signal merely because it was collected historically.

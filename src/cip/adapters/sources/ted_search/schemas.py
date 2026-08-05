@@ -26,6 +26,27 @@ class TedNotice(BaseModel):
         alias="classification-cpv",
     )
     notice_type: object | None = Field(default=None, alias="notice-type")
+    procedure_identifier: object | None = Field(
+        default=None,
+        alias="procedure-identifier",
+    )
+    contract_identifier: object | None = Field(
+        default=None,
+        alias="contract-identifier",
+    )
+    contract_conclusion_date: object | None = Field(
+        default=None,
+        alias="contract-conclusion-date",
+    )
+    winner_decision_date: object | None = Field(
+        default=None,
+        alias="winner-decision-date",
+    )
+    winner_name: object | None = Field(default=None, alias="winner-name")
+    winner_identifier: object | None = Field(default=None, alias="winner-identifier")
+    contract_title: object | None = Field(default=None, alias="contract-title")
+    tender_value: object | None = Field(default=None, alias="tender-value")
+    tender_value_currency: object | None = Field(default=None, alias="tender-value-cur")
 
     @field_validator("notice_title", "buyer_name")
     @classmethod
@@ -47,12 +68,41 @@ class TedNotice(BaseModel):
         country = values[0].upper()
         return country if len(country) == 3 else None
 
+    def procedure_id(self) -> str | None:
+        return _optional_first_text(self.procedure_identifier)
+
+    def contract_ids(self) -> tuple[str, ...]:
+        return tuple(dict.fromkeys(_flatten_text(self.contract_identifier)))
+
+    def notice_types(self) -> tuple[str, ...]:
+        return tuple(dict.fromkeys(_flatten_text(self.notice_type)))
+
+    def winner_names(self) -> tuple[str, ...]:
+        return tuple(dict.fromkeys(_flatten_text(self.winner_name)))
+
+    def winner_identifiers(self) -> tuple[str, ...]:
+        return tuple(dict.fromkeys(_flatten_text(self.winner_identifier)))
+
+    def contract_name(self) -> str | None:
+        return _optional_first_text(self.contract_title)
+
+    def tender_values(self) -> tuple[str, ...]:
+        return tuple(_flatten_text(self.tender_value))
+
+    def tender_currencies(self) -> tuple[str, ...]:
+        return tuple(value.upper() for value in _flatten_text(self.tender_value_currency))
+
     def publication_timestamp(self) -> datetime | None:
         return _parse_datetime(self.publication_date)
 
     def deadline_timestamp(self) -> datetime | None:
-        candidates = (_parse_datetime(value) for value in _flatten_text(self.deadline))
-        return next((value for value in candidates if value is not None), None)
+        return _first_datetime(self.deadline)
+
+    def conclusion_timestamp(self) -> datetime | None:
+        return _first_datetime(self.contract_conclusion_date)
+
+    def award_timestamp(self) -> datetime | None:
+        return _first_datetime(self.winner_decision_date)
 
 
 class TedSearchResponse(BaseModel):
@@ -64,10 +114,15 @@ class TedSearchResponse(BaseModel):
 
 
 def _first_text(value: object) -> str:
-    values = _flatten_text(value)
-    if not values:
+    result = _optional_first_text(value)
+    if result is None:
         raise ValueError("localized field contains no text")
-    return values[0]
+    return result
+
+
+def _optional_first_text(value: object) -> str | None:
+    values = _flatten_text(value)
+    return values[0] if values else None
 
 
 def _flatten_text(value: object) -> list[str]:
@@ -76,6 +131,8 @@ def _flatten_text(value: object) -> list[str]:
     if isinstance(value, str):
         stripped = value.strip()
         return [stripped] if stripped else []
+    if isinstance(value, int | float):
+        return [str(value)]
     if isinstance(value, list):
         list_values: list[str] = []
         for item in value:
@@ -92,6 +149,11 @@ def _flatten_text(value: object) -> list[str]:
                 localized_values.extend(_flatten_text(item))
         return localized_values
     return []
+
+
+def _first_datetime(value: object) -> datetime | None:
+    candidates = (_parse_datetime(item) for item in _flatten_text(value))
+    return next((candidate for candidate in candidates if candidate is not None), None)
 
 
 def _parse_datetime(value: Any) -> datetime | None:

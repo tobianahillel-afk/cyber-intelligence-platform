@@ -10,6 +10,7 @@ from cip.modules.evidence.domain.entities import Evidence
 from cip.modules.opportunities.domain.entities import CommercialSignal
 from cip.modules.organizations.application.identity import IdentityProjection
 from cip.modules.organizations.domain.entities import Organization
+from cip.modules.procurement_history.domain.models import ProcurementHistoryProjection
 from cip.modules.raw_observations.domain.entities import RawObservation
 from cip.modules.source_governance.domain.models import DataCategory
 
@@ -41,10 +42,18 @@ class AdapterCollectionBatch:
     not_modified: bool
     commercial_projections: tuple[CommercialProjection, ...] = ()
     identity_projections: tuple[IdentityProjection, ...] = ()
+    procurement_organizations: tuple[Organization, ...] = ()
+    procurement_projections: tuple[ProcurementHistoryProjection, ...] = ()
     quota_remaining: int | None = None
     request_cost: float = 0.0
 
     def __post_init__(self) -> None:
+        organization_ids = {organization.id for organization in self.procurement_organizations}
+        for projection in self.procurement_projections:
+            if projection.publication.buyer_organization_id not in organization_ids:
+                raise ValueError(
+                    "procurement projection requires its buyer organization in the batch"
+                )
         if self.quota_remaining is not None and self.quota_remaining < 0:
             raise ValueError("quota_remaining cannot be negative")
         if self.request_cost < 0:

@@ -29,6 +29,13 @@ from cip.modules.organizations.infrastructure.identity_models import (
     OrganizationRelationshipRecord,
 )
 from cip.modules.organizations.infrastructure.models import OrganizationRecord
+from cip.modules.procurement_history.infrastructure.models import (
+    ProcurementContractPartyRecord,
+    ProcurementContractRecord,
+    ProcurementProcedureRecord,
+    ProcurementPublicationRecord,
+    ProcurementServiceClassificationRecord,
+)
 from cip.modules.provider_onboarding.infrastructure.models import (
     ProviderOnboardingAuditRecord,
     ProviderOnboardingRecord,
@@ -69,6 +76,11 @@ _IMPORTED_MODELS = (
     OrganizationMergeCandidateRecord,
     OrganizationRecord,
     OrganizationRelationshipRecord,
+    ProcurementContractPartyRecord,
+    ProcurementContractRecord,
+    ProcurementProcedureRecord,
+    ProcurementPublicationRecord,
+    ProcurementServiceClassificationRecord,
     ProviderOnboardingAuditRecord,
     ProviderOnboardingRecord,
     RawObservationRecord,

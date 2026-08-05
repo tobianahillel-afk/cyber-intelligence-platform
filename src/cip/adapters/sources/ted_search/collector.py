@@ -13,6 +13,8 @@ from cip.adapters.sources.ted_search.client import (
 from cip.adapters.sources.ted_search.mapper import map_ted_notice
 from cip.adapters.sources.ted_search.schemas import TedSearchResponse
 from cip.modules.collection_orchestration.application.ports import CommercialProjection
+from cip.modules.organizations.domain.entities import Organization
+from cip.modules.procurement_history.domain.models import ProcurementHistoryProjection
 from cip.modules.raw_observations.domain.entities import RawObservation
 from cip.modules.source_governance.domain.models import (
     CollectionRequest,
@@ -35,6 +37,8 @@ class TedSourceSchemaError(RuntimeError):
 class TedCollectionBatch:
     observations: tuple[RawObservation, ...]
     projections: tuple[CommercialProjection, ...]
+    buyers: tuple[Organization, ...]
+    procurement: tuple[ProcurementHistoryProjection, ...]
     checkpoint: TedSearchCheckpoint
     not_modified: bool
 
@@ -72,6 +76,8 @@ def collect_ted_notices(
     latest = response.notices[0].publication_number if response.notices else None
     observations: list[RawObservation] = []
     projections: list[CommercialProjection] = []
+    buyers: dict[UUID, Organization] = {}
+    procurement: list[ProcurementHistoryProjection] = []
     previous = checkpoint.latest_publication_number if checkpoint else None
     for notice in response.notices:
         if previous is not None and notice.publication_number == previous:
@@ -82,10 +88,13 @@ def collect_ted_notices(
             collected_at=collected,
             retention_until=retention_until,
         )
-        if mapped is not None:
-            observation, projection = mapped
-            observations.append(observation)
-            projections.append(projection)
+        if mapped is None:
+            continue
+        observations.append(mapped.observation)
+        buyers[mapped.buyer.id] = mapped.buyer
+        procurement.append(mapped.procurement)
+        if mapped.projection is not None:
+            projections.append(mapped.projection)
     next_checkpoint = TedSearchCheckpoint(
         latest_publication_number=latest or previous,
     )
@@ -93,6 +102,8 @@ def collect_ted_notices(
     return TedCollectionBatch(
         observations=tuple(observations),
         projections=tuple(projections),
+        buyers=tuple(buyers.values()),
+        procurement=tuple(procurement),
         checkpoint=next_checkpoint,
         not_modified=not_modified,
     )

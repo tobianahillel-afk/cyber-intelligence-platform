@@ -35,7 +35,8 @@ def test_ted_projection_is_idempotent_and_visible_in_inbox() -> None:
         retention_until=NOW + timedelta(days=730),
     )
     assert mapped is not None
-    _, projection = mapped
+    assert mapped.projection is not None
+    projection = mapped.projection
 
     with factory() as session:
         first_ids = persist_commercial_projections(session, (projection,), now=NOW)
@@ -69,4 +70,5 @@ def _notice() -> dict[str, object]:
         "deadline-receipt-tender-date-lot": ["2026-08-30T12:00:00Z"],
         "classification-cpv": ["72000000"],
         "notice-type": ["cn-standard"],
+        "procedure-identifier": ["PROC-987654-2026"],
     }

@@ -46,6 +46,8 @@ def test_ted_adapter_maps_checkpoint_and_collection_result(
         return TedCollectionBatch(
             observations=(),
             projections=(),
+            buyers=(),
+            procurement=(),
             checkpoint=TedSearchCheckpoint(latest_publication_number="300-2026"),
             not_modified=True,
         )
@@ -66,6 +68,8 @@ def test_ted_adapter_maps_checkpoint_and_collection_result(
     assert batch.not_modified is True
     assert batch.observations == ()
     assert batch.commercial_projections == ()
+    assert batch.procurement_organizations == ()
+    assert batch.procurement_projections == ()
     assert batch.checkpoint_payload == {"latest_publication_number": "300-2026"}
 
 
@@ -80,6 +84,8 @@ def test_ted_adapter_accepts_missing_checkpoint(
         return TedCollectionBatch(
             observations=(),
             projections=(),
+            buyers=(),
+            procurement=(),
             checkpoint=TedSearchCheckpoint(),
             not_modified=False,
         )

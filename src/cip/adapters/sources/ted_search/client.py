@@ -31,10 +31,23 @@ class TedSearchClient:
         "deadline-receipt-tender-date-lot",
         "classification-cpv",
         "notice-type",
+        "procedure-identifier",
+        "contract-identifier",
+        "contract-conclusion-date",
+        "winner-decision-date",
+        "winner-name",
+        "winner-identifier",
+        "contract-title",
+        "tender-value",
+        "tender-value-cur",
     )
     SEARCH_QUERY = (
         'FT=(siem OR soc OR cybersecurity OR "cyber security" OR cybersecurite '
-        'OR cybersécurité OR xdr OR mdr OR "security operations center")'
+        'OR cybersécurité OR xdr OR mdr OR pentest OR "penetration test" '
+        'OR "test intrusion" OR "incident response" OR dfir OR iam OR pam '
+        'OR "zero trust" OR "cloud security" OR appsec OR devsecops OR grc '
+        'OR "iso 27001" OR "data protection" OR "network security" '
+        'OR "security awareness" OR "industrial security")'
     )
 
     def __init__(self, client: httpx.Client, *, search_url: str) -> None:
@@ -49,7 +62,7 @@ class TedSearchClient:
                 "query": self.SEARCH_QUERY,
                 "fields": list(self.SEARCH_FIELDS),
                 "limit": self.DEFAULT_LIMIT,
-                "scope": "ACTIVE",
+                "scope": "ALL",
                 "checkQuerySyntax": False,
                 "paginationMode": "PAGE_NUMBER",
                 "page": 1,

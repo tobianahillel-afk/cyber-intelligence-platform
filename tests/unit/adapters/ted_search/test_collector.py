@@ -16,6 +16,7 @@ from cip.adapters.sources.ted_search.collector import (
     TedSourceSchemaError,
     collect_ted_notices,
 )
+from cip.modules.procurement_history.domain.models import ProcurementPublicationKind
 from cip.modules.source_governance.infrastructure.registry import (
     SourceRegistryEntry,
     load_source_registry,
@@ -57,7 +58,41 @@ def test_collector_maps_only_new_relevant_notices() -> None:
     assert batch.checkpoint.latest_publication_number == "300-2026"
     assert len(batch.observations) == 1
     assert len(batch.projections) == 1
+    assert len(batch.buyers) == 1
+    assert len(batch.procurement) == 1
     assert batch.projections[0].signal.title == "SIEM managed service"
+    assert batch.procurement[0].publication.kind is ProcurementPublicationKind.NOTICE
+    assert batch.procurement[0].contract is None
+
+
+def test_collector_maps_award_without_current_commercial_projection() -> None:
+    award = _notice("400-2026", "Award ISO 27001 audit and PAM services")
+    award.update(
+        {
+            "notice-type": ["can-standard"],
+            "contract-identifier": ["CON-400"],
+            "winner-name": {"eng": ["Provider SAS"]},
+            "winner-decision-date": ["2026-08-03"],
+            "contract-conclusion-date": ["2026-08-04"],
+            "tender-value": ["100000"],
+            "tender-value-cur": ["EUR"],
+        }
+    )
+
+    batch = collect_ted_notices(
+        StubTedClient({"notices": [award]}),
+        _entry(),
+        collection_job_id=uuid4(),
+        collected_at=NOW,
+        retention_until=NOW + timedelta(days=730),
+    )
+
+    assert len(batch.observations) == 1
+    assert batch.projections == ()
+    assert len(batch.buyers) == 1
+    assert len(batch.procurement) == 1
+    assert batch.procurement[0].publication.kind is ProcurementPublicationKind.AWARD
+    assert batch.procurement[0].contract is not None
 
 
 def test_collector_marks_unchanged_first_page() -> None:
@@ -73,6 +108,8 @@ def test_collector_marks_unchanged_first_page() -> None:
     assert batch.not_modified is True
     assert batch.observations == ()
     assert batch.projections == ()
+    assert batch.buyers == ()
+    assert batch.procurement == ()
 
 
 def test_collector_rejects_schema_drift() -> None:
@@ -104,4 +141,13 @@ def _notice(number: str, title: str) -> dict[str, object]:
         "deadline-receipt-tender-date-lot": ["2026-08-20T12:00:00Z"],
         "classification-cpv": ["72000000"],
         "notice-type": ["cn-standard"],
+        "procedure-identifier": [f"PROC-{number}"],
+        "contract-identifier": None,
+        "contract-conclusion-date": None,
+        "winner-decision-date": None,
+        "winner-name": None,
+        "winner-identifier": None,
+        "contract-title": None,
+        "tender-value": None,
+        "tender-value-cur": None,
     }

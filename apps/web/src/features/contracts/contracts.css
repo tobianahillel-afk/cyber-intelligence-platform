@@ -1,0 +1,325 @@
+.contract-table-wrap {
+  overflow-x: auto;
+}
+
+.contract-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 980px;
+}
+
+.contract-table th,
+.contract-table td {
+  padding: 1rem;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+  vertical-align: top;
+}
+
+.contract-table th {
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.contract-title-link {
+  display: block;
+  color: var(--text-strong);
+  font-weight: 700;
+  text-decoration: none;
+  max-width: 34rem;
+}
+
+.contract-title-link:hover {
+  text-decoration: underline;
+}
+
+.contract-muted {
+  display: block;
+  color: var(--text-muted);
+  font-size: 0.82rem;
+  margin-top: 0.3rem;
+}
+
+.contract-tags,
+.source-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-top: 0.55rem;
+}
+
+.contract-tags span,
+.source-badges span,
+.date-basis,
+.contract-status {
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 0.22rem 0.5rem;
+  font-size: 0.72rem;
+  line-height: 1.2;
+}
+
+.contract-tags span,
+.source-badges span {
+  background: var(--surface-muted);
+  color: var(--text-muted);
+}
+
+.compact-list {
+  margin: 0;
+  padding-left: 1rem;
+}
+
+.compact-list li + li {
+  margin-top: 0.3rem;
+}
+
+.date-basis {
+  display: inline-block;
+  margin-top: 0.45rem;
+  text-transform: capitalize;
+}
+
+.basis-published {
+  border-color: color-mix(in srgb, #2eb67d 55%, var(--border));
+  color: #2eb67d;
+}
+
+.basis-derived {
+  border-color: color-mix(in srgb, #5b8def 55%, var(--border));
+  color: #5b8def;
+}
+
+.basis-estimated {
+  border-color: color-mix(in srgb, #e4a11b 65%, var(--border));
+  color: #c78708;
+}
+
+.basis-unknown {
+  color: var(--text-muted);
+}
+
+.contract-status {
+  display: inline-block;
+  font-weight: 700;
+}
+
+.status-active,
+.status-awarded {
+  border-color: color-mix(in srgb, #2eb67d 55%, var(--border));
+}
+
+.status-cancelled {
+  border-color: color-mix(in srgb, #d9534f 55%, var(--border));
+}
+
+.contract-filters {
+  align-items: end;
+}
+
+.contract-detail-heading {
+  align-items: flex-start;
+}
+
+.detail-breadcrumb a {
+  color: var(--text-muted);
+  text-decoration: none;
+}
+
+.detail-breadcrumb a:hover {
+  color: var(--text-strong);
+}
+
+.contract-detail-value {
+  min-width: 15rem;
+  padding: 1rem 1.25rem;
+  border: 1px solid var(--border);
+  border-radius: 0.9rem;
+  background: var(--surface);
+}
+
+.contract-detail-value span,
+.contract-detail-value small {
+  display: block;
+  color: var(--text-muted);
+}
+
+.contract-detail-value strong {
+  display: block;
+  margin: 0.35rem 0;
+  font-size: 1.55rem;
+}
+
+.contract-date-grid {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.contract-date-grid article {
+  padding: 1rem;
+  border: 1px solid var(--border);
+  border-radius: 0.8rem;
+  background: var(--surface);
+}
+
+.contract-date-grid article > span:first-child {
+  display: block;
+  color: var(--text-muted);
+  font-size: 0.8rem;
+}
+
+.contract-date-grid strong {
+  display: block;
+  margin-top: 0.4rem;
+}
+
+.contract-detail-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.8fr);
+  gap: 1rem;
+}
+
+.compact-heading {
+  margin-bottom: 0.5rem;
+}
+
+.party-list,
+.classification-list {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.party-list article,
+.classification-list article {
+  padding: 0.9rem;
+  border: 1px solid var(--border);
+  border-radius: 0.75rem;
+  background: var(--surface-muted);
+}
+
+.party-list article > div,
+.classification-list article {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.party-list article > div span,
+.classification-list span,
+.classification-list small {
+  color: var(--text-muted);
+}
+
+.party-list dl {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.75rem;
+  margin: 0.85rem 0 0;
+}
+
+.party-list dt {
+  color: var(--text-muted);
+  font-size: 0.72rem;
+  text-transform: uppercase;
+}
+
+.party-list dd {
+  margin: 0.2rem 0 0;
+}
+
+.publication-timeline {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.publication-timeline li {
+  display: grid;
+  grid-template-columns: 1rem minmax(0, 1fr);
+  gap: 0.75rem;
+  position: relative;
+}
+
+.publication-timeline li:not(:last-child)::before {
+  content: "";
+  position: absolute;
+  left: 0.36rem;
+  top: 1.25rem;
+  bottom: -0.25rem;
+  width: 1px;
+  background: var(--border);
+}
+
+.timeline-marker {
+  width: 0.75rem;
+  height: 0.75rem;
+  margin-top: 1.2rem;
+  border-radius: 999px;
+  background: var(--accent);
+}
+
+.publication-timeline article {
+  padding: 1rem 0 1.4rem;
+}
+
+.timeline-heading {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  color: var(--text-muted);
+  font-size: 0.8rem;
+}
+
+.timeline-heading div {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.publication-timeline h3 {
+  margin: 0.5rem 0 0.25rem;
+}
+
+.publication-timeline p {
+  color: var(--text-muted);
+  margin: 0;
+}
+
+.publication-timeline a {
+  display: inline-block;
+  margin-top: 0.55rem;
+}
+
+.contract-technical-note {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 1rem;
+  border: 1px dashed var(--border);
+  border-radius: 0.8rem;
+  color: var(--text-muted);
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 1100px) {
+  .contract-date-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 760px) {
+  .contract-detail-grid,
+  .contract-date-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .party-list dl {
+    grid-template-columns: 1fr;
+  }
+
+  .contract-detail-value {
+    width: 100%;
+  }
+}
