@@ -193,6 +193,8 @@ class ProcurementContractProjection:
     award_date: date | None = None
     conclusion_date: date | None = None
     conclusion_date_basis: DateBasis = DateBasis.UNKNOWN
+    notification_date: date | None = None
+    notification_date_basis: DateBasis = DateBasis.UNKNOWN
     start_date: date | None = None
     start_date_basis: DateBasis = DateBasis.UNKNOWN
     end_date: date | None = None
@@ -212,6 +214,11 @@ class ProcurementContractProjection:
             self.conclusion_date,
             self.conclusion_date_basis,
             "conclusion_date",
+        )
+        _validate_date_basis(
+            self.notification_date,
+            self.notification_date_basis,
+            "notification_date",
         )
         _validate_date_basis(self.start_date, self.start_date_basis, "start_date")
         _validate_date_basis(self.end_date, self.end_date_basis, "end_date")
