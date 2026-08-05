@@ -264,6 +264,13 @@ def test_runtime_loops_are_bounded_and_sleep_only_when_needed(
         "run_worker_once",
         lambda *args, **kwargs: next(outcomes),
     )
+    monkeypatch.setattr(
+        runtime_module,
+        "run_backfill_once",
+        lambda *args, **kwargs: runtime_module.BackfillWorkerOutcome(
+            runtime_module.BackfillWorkerStatus.IDLE
+        ),
+    )
     runtime_module.run_worker_forever(
         settings,
         worker_id="worker",
