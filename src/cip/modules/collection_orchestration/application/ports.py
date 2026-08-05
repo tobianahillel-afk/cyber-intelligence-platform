@@ -10,7 +10,7 @@ from cip.modules.evidence.domain.entities import Evidence
 from cip.modules.opportunities.domain.entities import CommercialSignal
 from cip.modules.organizations.application.identity import IdentityProjection
 from cip.modules.organizations.domain.entities import Organization
-from cip.modules.procurement_history.domain.models import ProcurementContractProjection
+from cip.modules.procurement_history.domain.models import ProcurementHistoryProjection
 from cip.modules.raw_observations.domain.entities import RawObservation
 from cip.modules.source_governance.domain.models import DataCategory
 
@@ -42,7 +42,7 @@ class AdapterCollectionBatch:
     not_modified: bool
     commercial_projections: tuple[CommercialProjection, ...] = ()
     identity_projections: tuple[IdentityProjection, ...] = ()
-    procurement_projections: tuple[ProcurementContractProjection, ...] = ()
+    procurement_projections: tuple[ProcurementHistoryProjection, ...] = ()
     quota_remaining: int | None = None
     request_cost: float = 0.0
 
