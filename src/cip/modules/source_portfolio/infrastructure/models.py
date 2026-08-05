@@ -113,6 +113,20 @@ class SourceHealthRecord(Base):
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)
 
 
+class SourceQualityBaselineRecord(Base):
+    __tablename__ = "source_quality_baselines"
+
+    source_id: Mapped[str] = mapped_column(String(100), primary_key=True)
+    sample_count: Mapped[int] = mapped_column(Integer, default=0)
+    expected_records_per_run: Mapped[float | None] = mapped_column(Float, nullable=True)
+    last_records_count: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    accepted_schema_fingerprints: Mapped[list[str]] = mapped_column(JSON, default=list)
+    last_schema_fingerprints: Mapped[list[str]] = mapped_column(JSON, default=list)
+    field_population_baseline: Mapped[dict[str, float]] = mapped_column(JSON, default=dict)
+    last_field_population: Mapped[dict[str, float]] = mapped_column(JSON, default=dict)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)
+
+
 class SourcePortfolioAuditRecord(Base):
     __tablename__ = "source_portfolio_audit"
 
