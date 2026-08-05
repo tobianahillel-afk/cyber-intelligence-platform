@@ -31,6 +31,8 @@ class FreshnessState(StrEnum):
     STALE_REFRESH_QUEUED = "stale_refresh_queued"
     SOURCE_UNAVAILABLE = "source_unavailable"
     AUTHORIZATION_EXPIRED = "authorization_expired"
+    QUOTA_EXHAUSTED = "quota_exhausted"
+    COST_BUDGET_EXHAUSTED = "cost_budget_exhausted"
     HISTORICAL_ONLY = "historical_only"
 
 
@@ -170,6 +172,7 @@ class SourceHealth:
     consecutive_failures: int = 0
     quota_remaining: int | None = None
     monthly_cost_used: float = 0.0
+    cost_window_started_at: datetime | None = None
     current_backfill_state: BackfillState | None = None
     last_error_code: str | None = None
 
@@ -184,7 +187,12 @@ class SourceHealth:
             raise ValueError("quota_remaining cannot be negative")
         if self.monthly_cost_used < 0:
             raise ValueError("monthly_cost_used cannot be negative")
-        for field_name in ("last_attempt_at", "last_success_at", "last_source_record_at"):
+        for field_name in (
+            "last_attempt_at",
+            "last_success_at",
+            "last_source_record_at",
+            "cost_window_started_at",
+        ):
             value = getattr(self, field_name)
             if value is not None:
                 object.__setattr__(
