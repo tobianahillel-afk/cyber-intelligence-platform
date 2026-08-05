@@ -45,6 +45,9 @@ class BoampNotice(BaseModel):
         ]
         return " ".join(values)
 
+    def awardee_names(self) -> tuple[str, ...]:
+        return tuple(dict.fromkeys(_extract_party_names(self.titulaire)))
+
     def notice_url(self) -> str:
         if self.url_avis and self.url_avis.strip():
             return self.url_avis.strip()
@@ -75,6 +78,40 @@ def _flatten_text(value: object) -> list[str]:
             result.extend(_flatten_text(item))
         return result
     return []
+
+
+def _extract_party_names(value: object) -> list[str]:
+    if value is None:
+        return []
+    if isinstance(value, str):
+        normalized = value.strip()
+        return [normalized] if normalized else []
+    if isinstance(value, list):
+        names: list[str] = []
+        for item in value:
+            names.extend(_extract_party_names(item))
+        return names
+    if not isinstance(value, dict):
+        return []
+    preferred_keys = (
+        "denomination",
+        "denominationSociale",
+        "raison_sociale",
+        "raisonSociale",
+        "nom",
+        "name",
+        "libelle",
+    )
+    names = []
+    for key in preferred_keys:
+        if key in value:
+            names.extend(_extract_party_names(value[key]))
+    if names:
+        return names
+    for key, nested in value.items():
+        if "titulaire" in str(key).casefold() or "attributaire" in str(key).casefold():
+            names.extend(_extract_party_names(nested))
+    return names
 
 
 def _parse_datetime(value: Any) -> datetime | None:
