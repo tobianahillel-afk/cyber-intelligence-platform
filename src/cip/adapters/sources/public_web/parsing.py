@@ -39,7 +39,7 @@ class ExtractedHtml:
 
     @property
     def excerpt(self) -> str | None:
-        if self.noarchive or not self.text:
+        if self.noindex or self.noarchive or not self.text:
             return None
         return self.text[:1_000]
 
