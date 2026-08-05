@@ -44,6 +44,7 @@ class RobotsRules:
     parser: RobotFileParser
     source_url: str
     missing: bool
+    bytes_fetched: int
 
     def allows(self, url: str) -> bool:
         return self.missing or self.parser.can_fetch(_USER_AGENT, url)
@@ -66,10 +67,15 @@ class PublicWebClient:
             parser = RobotFileParser()
             parser.set_url(target.robots_url)
             parser.parse([])
-            return RobotsRules(parser, target.robots_url, missing=True)
-        response.raise_for_status()
+            return RobotsRules(
+                parser,
+                target.robots_url,
+                missing=True,
+                bytes_fetched=0,
+            )
         if response.status_code in _REDIRECT_STATUSES:
             raise PublicWebResponseError("robots.txt redirects are not followed")
+        response.raise_for_status()
         mime_type = _content_type(response)
         if mime_type not in {"text/plain", "application/octet-stream"}:
             raise PublicWebResponseError("robots.txt returned an unexpected content type")
@@ -77,7 +83,12 @@ class PublicWebClient:
         parser = RobotFileParser()
         parser.set_url(target.robots_url)
         parser.parse(body.decode("utf-8", errors="replace").splitlines())
-        return RobotsRules(parser, target.robots_url, missing=False)
+        return RobotsRules(
+            parser,
+            target.robots_url,
+            missing=False,
+            bytes_fetched=len(body),
+        )
 
     def fetch_sitemap(
         self,
@@ -98,9 +109,9 @@ class PublicWebClient:
             },
             follow_redirects=False,
         )
-        response.raise_for_status()
         if response.status_code in _REDIRECT_STATUSES:
             raise PublicWebResponseError("sitemap redirects are not followed")
+        response.raise_for_status()
         mime_type = _content_type(response)
         if mime_type not in {
             "application/xml",
@@ -113,8 +124,8 @@ class PublicWebClient:
             fetched_url=canonical,
             body=_bounded_body(response, max_bytes=self.SITEMAP_MAX_BYTES),
             mime_type=mime_type,
-            etag=response.headers.get("etag"),
-            last_modified=response.headers.get("last-modified"),
+            etag=_header(response, "etag"),
+            last_modified=_header(response, "last-modified"),
             redirects=0,
         )
 
@@ -149,7 +160,7 @@ class PublicWebClient:
                 follow_redirects=False,
             )
             if response.status_code in _REDIRECT_STATUSES:
-                location = response.headers.get("location")
+                location = _header(response, "location")
                 if not location:
                     raise PublicWebResponseError("redirect response omitted Location")
                 redirects += 1
@@ -170,18 +181,24 @@ class PublicWebClient:
                 fetched_url=current,
                 body=body,
                 mime_type=mime_type,
-                etag=response.headers.get("etag"),
-                last_modified=response.headers.get("last-modified"),
+                etag=_header(response, "etag"),
+                last_modified=_header(response, "last-modified"),
                 redirects=redirects,
             )
 
 
+def _header(response: httpx.Response, name: str) -> str | None:
+    value = response.headers.get(name)
+    return str(value) if value is not None else None
+
+
 def _content_type(response: httpx.Response) -> str:
-    return response.headers.get("content-type", "").split(";", 1)[0].strip().casefold()
+    value = _header(response, "content-type") or ""
+    return value.split(";", 1)[0].strip().casefold()
 
 
 def _bounded_body(response: httpx.Response, *, max_bytes: int) -> bytes:
-    declared = response.headers.get("content-length")
+    declared = _header(response, "content-length")
     if declared is not None:
         try:
             declared_size = int(declared)
