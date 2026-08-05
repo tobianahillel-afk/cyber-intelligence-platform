@@ -9,6 +9,7 @@ from cip.modules.source_portfolio.application.backfill import (
 )
 from cip.modules.source_portfolio.application.catalog import (
     disable_source,
+    enable_source,
     get_source_portfolio,
     list_source_portfolio,
     pause_source,
@@ -39,6 +40,7 @@ __all__ = [
     "claim_backfill_partition",
     "complete_backfill_partition",
     "disable_source",
+    "enable_source",
     "fail_backfill_partition",
     "get_source_health",
     "get_source_portfolio",
