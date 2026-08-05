@@ -20,6 +20,7 @@ from cip.modules.raw_observations.domain.entities import RawObservation
 from cip.modules.source_portfolio.application.execution import source_execution_allowed
 from cip.modules.source_portfolio.application.service import (
     CollectionHealthUpdate,
+    SourcePortfolioNotFoundError,
     claim_backfill_partition,
     complete_backfill_partition,
     fail_backfill_partition,
@@ -149,12 +150,15 @@ def _claim_partition(
             seen_sources.add(source_id)
             if not source_execution_allowed(session, source_id, now=now):
                 continue
-            partition = claim_backfill_partition(
-                session,
-                source_id,
-                actor=worker_id,
-                now=now,
-            )
+            try:
+                partition = claim_backfill_partition(
+                    session,
+                    source_id,
+                    actor=worker_id,
+                    now=now,
+                )
+            except SourcePortfolioNotFoundError:
+                continue
             if partition is not None:
                 return partition
     return None
