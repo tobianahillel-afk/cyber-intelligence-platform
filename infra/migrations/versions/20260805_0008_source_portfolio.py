@@ -69,9 +69,10 @@ def upgrade() -> None:
     ):
         op.create_index(f"ix_source_portfolio_{column}", "source_portfolio", [column])
 
+    source_fk = sa.ForeignKey("source_portfolio.source_id", ondelete="CASCADE")
     op.create_table(
         "adapter_capabilities",
-        sa.Column("source_id", sa.String(length=100), nullable=False),
+        sa.Column("source_id", sa.String(length=100), source_fk, nullable=False),
         sa.Column("adapter_id", sa.String(length=100), nullable=False),
         sa.Column("adapter_version", sa.String(length=50), nullable=False),
         sa.Column("provider_schema_version", sa.String(length=100), nullable=False),
@@ -92,8 +93,13 @@ def upgrade() -> None:
 
     op.create_table(
         "backfill_partitions",
+        sa.Column(
+            "source_id",
+            sa.String(length=100),
+            sa.ForeignKey("source_portfolio.source_id", ondelete="CASCADE"),
+            nullable=False,
+        ),
         sa.Column("id", sa.Uuid(), nullable=False),
-        sa.Column("source_id", sa.String(length=100), nullable=False),
         sa.Column("adapter_id", sa.String(length=100), nullable=False),
         sa.Column("partition_key", sa.String(length=300), nullable=False),
         sa.Column("lower_bound", sa.String(length=300), nullable=False),
@@ -126,7 +132,12 @@ def upgrade() -> None:
 
     op.create_table(
         "source_health",
-        sa.Column("source_id", sa.String(length=100), nullable=False),
+        sa.Column(
+            "source_id",
+            sa.String(length=100),
+            sa.ForeignKey("source_portfolio.source_id", ondelete="CASCADE"),
+            nullable=False,
+        ),
         sa.Column("freshness_state", sa.String(length=50), nullable=False),
         sa.Column("schema_state", sa.String(length=40), nullable=False),
         sa.Column("volume_state", sa.String(length=40), nullable=False),
@@ -154,7 +165,12 @@ def upgrade() -> None:
 
     op.create_table(
         "source_quality_baselines",
-        sa.Column("source_id", sa.String(length=100), nullable=False),
+        sa.Column(
+            "source_id",
+            sa.String(length=100),
+            sa.ForeignKey("source_portfolio.source_id", ondelete="CASCADE"),
+            nullable=False,
+        ),
         sa.Column("sample_count", sa.Integer(), nullable=False),
         sa.Column("expected_records_per_run", sa.Float(), nullable=True),
         sa.Column("last_records_count", sa.Integer(), nullable=True),
@@ -174,7 +190,12 @@ def upgrade() -> None:
     op.create_table(
         "source_portfolio_audit",
         sa.Column("id", sa.Uuid(), nullable=False),
-        sa.Column("source_id", sa.String(length=100), nullable=False),
+        sa.Column(
+            "source_id",
+            sa.String(length=100),
+            sa.ForeignKey("source_portfolio.source_id", ondelete="CASCADE"),
+            nullable=False,
+        ),
         sa.Column("action", sa.String(length=100), nullable=False),
         sa.Column("actor", sa.String(length=200), nullable=False),
         sa.Column("details", sa.JSON(), nullable=False),
