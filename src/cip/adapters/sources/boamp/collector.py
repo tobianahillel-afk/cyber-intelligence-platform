@@ -10,6 +10,8 @@ from cip.adapters.sources.boamp.client import BoampCheckpoint, BoampClient
 from cip.adapters.sources.boamp.mapper import map_boamp_notice
 from cip.adapters.sources.boamp.schemas import BoampResponse
 from cip.modules.collection_orchestration.application.ports import CommercialProjection
+from cip.modules.organizations.domain.entities import Organization
+from cip.modules.procurement_history.domain.models import ProcurementHistoryProjection
 from cip.modules.raw_observations.domain.entities import RawObservation
 from cip.modules.source_governance.domain.models import (
     CollectionRequest,
@@ -36,6 +38,8 @@ class BoampSourceWindowError(RuntimeError):
 class BoampCollectionBatch:
     observations: tuple[RawObservation, ...]
     projections: tuple[CommercialProjection, ...]
+    buyers: tuple[Organization, ...]
+    procurement: tuple[ProcurementHistoryProjection, ...]
     checkpoint: BoampCheckpoint
     not_modified: bool
 
@@ -58,6 +62,8 @@ def collect_boamp_notices(
     since_date = _since_date(checkpoint, collected_at=collected)
     observations: list[RawObservation] = []
     projections: list[CommercialProjection] = []
+    buyers: dict[UUID, Organization] = {}
+    procurement: list[ProcurementHistoryProjection] = []
     newest_id: str | None = None
     newest_date: str | None = None
     checkpoint_reached = False
@@ -85,6 +91,8 @@ def collect_boamp_notices(
             if mapped is None:
                 continue
             observations.append(mapped.observation)
+            buyers[mapped.buyer.id] = mapped.buyer
+            procurement.append(mapped.procurement)
             if mapped.projection is not None:
                 projections.append(mapped.projection)
         if checkpoint_reached or len(response.results) < client.PAGE_SIZE:
@@ -104,6 +112,8 @@ def collect_boamp_notices(
     return BoampCollectionBatch(
         observations=tuple(observations),
         projections=tuple(projections),
+        buyers=tuple(buyers.values()),
+        procurement=tuple(procurement),
         checkpoint=next_checkpoint,
         not_modified=bool(previous_id is not None and newest_id == previous_id),
     )
