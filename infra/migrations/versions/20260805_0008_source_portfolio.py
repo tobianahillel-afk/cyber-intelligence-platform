@@ -129,6 +129,25 @@ def upgrade() -> None:
         op.create_index(f"ix_source_health_{column}", "source_health", [column])
 
     op.create_table(
+        "source_quality_baselines",
+        sa.Column("source_id", sa.String(length=100), nullable=False),
+        sa.Column("sample_count", sa.Integer(), nullable=False),
+        sa.Column("expected_records_per_run", sa.Float(), nullable=True),
+        sa.Column("last_records_count", sa.Integer(), nullable=True),
+        sa.Column("accepted_schema_fingerprints", sa.JSON(), nullable=False),
+        sa.Column("last_schema_fingerprints", sa.JSON(), nullable=False),
+        sa.Column("field_population_baseline", sa.JSON(), nullable=False),
+        sa.Column("last_field_population", sa.JSON(), nullable=False),
+        sa.Column("updated_at", sa.DateTime(timezone=True), nullable=False),
+        sa.PrimaryKeyConstraint("source_id"),
+    )
+    op.create_index(
+        "ix_source_quality_baselines_updated_at",
+        "source_quality_baselines",
+        ["updated_at"],
+    )
+
+    op.create_table(
         "source_portfolio_audit",
         sa.Column("id", sa.Uuid(), nullable=False),
         sa.Column("source_id", sa.String(length=100), nullable=False),
@@ -151,6 +170,11 @@ def downgrade() -> None:
             f"ix_source_portfolio_audit_{column}", table_name="source_portfolio_audit"
         )
     op.drop_table("source_portfolio_audit")
+    op.drop_index(
+        "ix_source_quality_baselines_updated_at",
+        table_name="source_quality_baselines",
+    )
+    op.drop_table("source_quality_baselines")
     for column in (
         "updated_at",
         "field_population_state",
