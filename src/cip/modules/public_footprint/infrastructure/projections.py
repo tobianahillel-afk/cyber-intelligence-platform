@@ -195,7 +195,9 @@ def _upsert_claim(
         return
     _validate_claim_identity(record, claim)
     current_version = session.get(PublicResourceVersionRecord, record.resource_version_id)
-    if current_version is None or version.fetched_at >= coerce_utc(current_version.fetched_at):
+    if current_version is None or coerce_utc(version.fetched_at) >= coerce_utc(
+        current_version.fetched_at
+    ):
         record.resource_version_id = version.id
         record.statement = claim.statement
         record.evidence_basis = claim.evidence_basis.value
