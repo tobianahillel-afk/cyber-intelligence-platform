@@ -2,7 +2,12 @@
 
 ## Status
 
-`IMPLEMENTED_PENDING_FINAL_CI`
+`IMPLEMENTED_VALIDATED`
+
+Validated implementation SHA: `df1db1364fec4b7a52f597f658c9958e665acc35`  
+Validation CI: run `#517` (`31025684920`)  
+Release version: `0.12.0`  
+Detailed evidence: `docs/lots/LOT_11_VALIDATION_REPORT.md`
 
 ## Business outcome
 
@@ -152,17 +157,18 @@ The repository contains end-to-end worker tests for:
 4. historical backfill that persists procurement history while rejecting deliberately injected current projections;
 5. protected API list/detail with chronology, source coverage, filters, authentication, and invalid-window handling.
 
-## Exit gate
+## Validation result
 
-The lot is complete when the final branch SHA passes:
+The exit gate passed on the validated implementation SHA:
 
-- dependency consistency and security audits;
-- Ruff and strict Mypy;
-- architecture and release contracts;
-- reversible migration cycle;
-- complete backend test suite with coverage above the repository threshold;
-- frontend dependency audit, typecheck, and production build;
-- final validation report with the exact SHA, CI run, tests, and coverage.
+- dependency consistency and Python security audit: PASS;
+- Ruff: PASS;
+- strict Mypy across 241 source files: PASS;
+- 13 architecture and release tests: PASS;
+- reversible PostgreSQL migration cycle: PASS;
+- 568 backend tests: PASS;
+- branch coverage 91.65% against a 90% requirement: PASS;
+- frontend dependency audit, typecheck, and production build: PASS.
 
 ## Non-goals
 
