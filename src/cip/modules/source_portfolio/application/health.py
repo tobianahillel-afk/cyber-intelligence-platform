@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Sequence
+from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 
 from sqlalchemy.orm import Session
@@ -31,6 +32,24 @@ from cip.modules.source_portfolio.domain.models import (
 from cip.modules.source_portfolio.infrastructure.models import SourceHealthRecord
 from cip.modules.source_portfolio.infrastructure.persistence_time import persistence_utc
 from cip.shared.kernel.time import require_aware_utc
+
+
+@dataclass(frozen=True, slots=True)
+class CollectionHealthUpdate:
+    source_record_at: datetime | None
+    schema_state: SchemaState
+    quota_remaining: int | None
+    cost: float
+    observations: Sequence[RawObservation] | None = None
+    not_modified: bool = False
+    volume_state: AnomalyState = AnomalyState.NORMAL
+    field_population_state: AnomalyState = AnomalyState.NORMAL
+
+    def __post_init__(self) -> None:
+        if self.quota_remaining is not None and self.quota_remaining < 0:
+            raise ValueError("quota_remaining cannot be negative")
+        if self.cost < 0:
+            raise ValueError("cost cannot be negative")
 
 
 def ensure_health(session: Session, entry: SourceCatalogEntry, now: datetime) -> None:
@@ -85,57 +104,48 @@ def set_backfill_health(
 def record_collection_success(
     session: Session,
     source_id: str,
+    update: CollectionHealthUpdate,
     *,
-    source_record_at: datetime | None,
-    schema_state: SchemaState,
-    quota_remaining: int | None,
-    cost: float,
     now: datetime,
-    observations: Sequence[RawObservation] | None = None,
-    not_modified: bool = False,
-    volume_state: AnomalyState = AnomalyState.NORMAL,
-    field_population_state: AnomalyState = AnomalyState.NORMAL,
 ) -> SourceHealth:
     changed_at = require_aware_utc(now, field_name="now")
-    if quota_remaining is not None and quota_remaining < 0:
-        raise ValueError("quota_remaining cannot be negative")
     record = get_health_record(session, source_id)
     _roll_cost_window(record, changed_at)
     record.last_attempt_at = changed_at
     record.last_success_at = changed_at
-    if source_record_at is not None:
+    if update.source_record_at is not None:
         record.last_source_record_at = require_aware_utc(
-            source_record_at,
+            update.source_record_at,
             field_name="source_record_at",
         )
     evaluation = (
         evaluate_quality(
             session,
             source_id,
-            observations,
-            not_modified=not_modified,
+            update.observations,
+            not_modified=update.not_modified,
             now=changed_at,
         )
-        if observations is not None
+        if update.observations is not None
         else None
     )
     if evaluation is not None:
         record.schema_state = (
             SchemaState.DRIFTED.value
-            if schema_state is SchemaState.DRIFTED
+            if update.schema_state is SchemaState.DRIFTED
             or evaluation.schema_state is SchemaState.DRIFTED
             else SchemaState.STABLE.value
         )
         record.volume_state = evaluation.volume_state.value
         record.field_population_state = evaluation.field_population_state.value
-    elif not not_modified:
-        record.schema_state = schema_state.value
-        record.volume_state = volume_state.value
-        record.field_population_state = field_population_state.value
+    elif not update.not_modified:
+        record.schema_state = update.schema_state.value
+        record.volume_state = update.volume_state.value
+        record.field_population_state = update.field_population_state.value
     record.consecutive_failures = 0
-    if quota_remaining is not None:
-        record.quota_remaining = quota_remaining
-    record.monthly_cost_used += non_negative(cost, "cost")
+    if update.quota_remaining is not None:
+        record.quota_remaining = update.quota_remaining
+    record.monthly_cost_used += non_negative(update.cost, "cost")
     record.last_error_code = None
     record.freshness_state = _freshness_state(session, source_id, changed_at).value
     record.updated_at = changed_at
