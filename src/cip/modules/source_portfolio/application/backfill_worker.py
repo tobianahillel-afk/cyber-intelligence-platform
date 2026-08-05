@@ -16,6 +16,10 @@ from cip.modules.collection_orchestration.infrastructure.repository_completion i
     insert_observations,
 )
 from cip.modules.data_governance.domain.retention import RetentionPolicy
+from cip.modules.organizations.infrastructure.persistence import upsert_organizations
+from cip.modules.procurement_history.infrastructure.projections import (
+    persist_procurement_projections,
+)
 from cip.modules.raw_observations.domain.entities import RawObservation
 from cip.modules.source_portfolio.application.execution import source_execution_allowed
 from cip.modules.source_portfolio.application.service import (
@@ -105,6 +109,12 @@ def run_backfill_once(
     completed_at = _read_clock(clock)
     with session_scope(factory) as session:
         written = insert_observations(session, batch.observations)
+        upsert_organizations(session, batch.procurement_organizations)
+        persist_procurement_projections(
+            session,
+            batch.procurement_projections,
+            now=completed_at,
+        )
         record_collection_success(
             session,
             partition.source_id,
