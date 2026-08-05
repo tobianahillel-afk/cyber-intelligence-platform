@@ -14,11 +14,14 @@ from cip.modules.procurement_history.domain.models import (
     ProcurementHistoryProjection,
     ProcurementParty,
     ProcurementPartyRole,
+    ProcurementProcedureStatus,
     ProcurementPublication,
     ProcurementPublicationKind,
-    ProcurementProcedureStatus,
 )
-from cip.modules.service_taxonomy.domain.models import CyberServiceFamily, ServiceFamilyMatch
+from cip.modules.service_taxonomy.domain.models import (
+    CyberServiceFamily,
+    ServiceFamilyMatch,
+)
 
 NOW = datetime(2026, 8, 5, 12, 0, tzinfo=UTC)
 BUYER_ID = UUID("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa")
