@@ -13,6 +13,7 @@ _SERVICE_TERMS: dict[CyberServiceFamily, tuple[str, ...]] = {
         "strategie cybersecurite",
     ),
     CyberServiceFamily.AUDIT_RISK_ASSESSMENT: (
+        "audit",
         "security audit",
         "audit de sécurité",
         "audit de securite",
