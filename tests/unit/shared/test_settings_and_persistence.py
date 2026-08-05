@@ -87,6 +87,7 @@ def test_database_metadata_contains_foundation_tables() -> None:
         "source_health",
         "source_portfolio",
         "source_portfolio_audit",
+        "source_quality_baselines",
         "sources",
         "suppressions",
     }
