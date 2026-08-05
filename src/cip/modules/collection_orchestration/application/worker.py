@@ -34,6 +34,7 @@ from cip.modules.organizations.infrastructure.identity_persistence import (
 from cip.modules.raw_observations.domain.entities import RawObservation
 from cip.modules.source_portfolio.application.execution import source_execution_allowed
 from cip.modules.source_portfolio.application.service import (
+    CollectionHealthUpdate,
     SourcePortfolioNotFoundError,
     record_collection_failure,
     record_collection_success,
@@ -234,12 +235,14 @@ def _record_success_health(
         record_collection_success(
             session,
             source_id,
-            source_record_at=source_record_at,
-            schema_state=SchemaState.STABLE,
-            quota_remaining=quota_remaining,
-            cost=request_cost,
-            observations=observations,
-            not_modified=not_modified,
+            CollectionHealthUpdate(
+                source_record_at=source_record_at,
+                schema_state=SchemaState.STABLE,
+                quota_remaining=quota_remaining,
+                cost=request_cost,
+                observations=observations,
+                not_modified=not_modified,
+            ),
             now=now,
         )
     except SourcePortfolioNotFoundError:
