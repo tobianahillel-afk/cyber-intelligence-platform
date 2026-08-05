@@ -156,6 +156,7 @@ def run_worker_once(
                 session,
                 claimed.source_id,
                 batch.observations,
+                not_modified=batch.not_modified,
                 quota_remaining=batch.quota_remaining,
                 request_cost=batch.request_cost,
                 now=completion_time,
@@ -217,6 +218,7 @@ def _record_success_health(
     source_id: str,
     observations: tuple[RawObservation, ...],
     *,
+    not_modified: bool,
     quota_remaining: int | None,
     request_cost: float,
     now: datetime,
@@ -236,6 +238,8 @@ def _record_success_health(
             schema_state=SchemaState.STABLE,
             quota_remaining=quota_remaining,
             cost=request_cost,
+            observations=observations,
+            not_modified=not_modified,
             now=now,
         )
     except SourcePortfolioNotFoundError:
