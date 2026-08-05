@@ -120,11 +120,13 @@ def collect_public_web_target(
             and previous.content_hash_sha256 == mapped.content_hash_sha256
             and previous.canonical_url == fetched.fetched_url
         )
+        if unchanged and previous is not None:
+            checkpoint_version_id = previous.version_id
+        else:
+            checkpoint_version_id = mapped.projection.version.id
         next_pages[url] = PageCheckpoint(
             content_hash_sha256=mapped.content_hash_sha256,
-            version_id=(
-                previous.version_id if unchanged else mapped.projection.version.id
-            ),
+            version_id=checkpoint_version_id,
             canonical_url=fetched.fetched_url,
         )
         usage = CrawlUsage(
