@@ -10,6 +10,7 @@ from sqlalchemy.orm import Session
 from cip.modules.raw_observations.domain.entities import RawObservation
 from cip.modules.source_governance.domain.models import DataCategory
 from cip.modules.source_portfolio.application.service import (
+    CollectionHealthUpdate,
     get_source_health,
     record_collection_success,
     sync_source_portfolio,
@@ -39,11 +40,13 @@ def test_quality_baseline_detects_schema_volume_and_field_drift() -> None:
             record_collection_success(
                 session,
                 "reference-synthetic",
-                source_record_at=NOW + timedelta(minutes=sample),
-                schema_state=SchemaState.STABLE,
-                quota_remaining=None,
-                cost=0,
-                observations=observations,
+                CollectionHealthUpdate(
+                    source_record_at=NOW + timedelta(minutes=sample),
+                    schema_state=SchemaState.STABLE,
+                    quota_remaining=None,
+                    cost=0,
+                    observations=observations,
+                ),
                 now=NOW + timedelta(minutes=sample),
             )
 
@@ -55,15 +58,17 @@ def test_quality_baseline_detects_schema_volume_and_field_drift() -> None:
         health = record_collection_success(
             session,
             "reference-synthetic",
-            source_record_at=NOW + timedelta(minutes=4),
-            schema_state=SchemaState.STABLE,
-            quota_remaining=None,
-            cost=0,
-            observations=(
-                _observation(
-                    index=999,
-                    fingerprint="schema-v2",
-                    populated=False,
+            CollectionHealthUpdate(
+                source_record_at=NOW + timedelta(minutes=4),
+                schema_state=SchemaState.STABLE,
+                quota_remaining=None,
+                cost=0,
+                observations=(
+                    _observation(
+                        index=999,
+                        fingerprint="schema-v2",
+                        populated=False,
+                    ),
                 ),
             ),
             now=NOW + timedelta(minutes=4),
@@ -88,13 +93,15 @@ def test_not_modified_run_does_not_create_false_quality_alerts() -> None:
             record_collection_success(
                 session,
                 "reference-synthetic",
-                source_record_at=NOW + timedelta(minutes=sample),
-                schema_state=SchemaState.STABLE,
-                quota_remaining=None,
-                cost=0,
-                observations=tuple(
-                    _observation(index=sample * 10 + index, fingerprint="schema-v1")
-                    for index in range(10)
+                CollectionHealthUpdate(
+                    source_record_at=NOW + timedelta(minutes=sample),
+                    schema_state=SchemaState.STABLE,
+                    quota_remaining=None,
+                    cost=0,
+                    observations=tuple(
+                        _observation(index=sample * 10 + index, fingerprint="schema-v1")
+                        for index in range(10)
+                    ),
                 ),
                 now=NOW + timedelta(minutes=sample),
             )
@@ -102,12 +109,14 @@ def test_not_modified_run_does_not_create_false_quality_alerts() -> None:
         record_collection_success(
             session,
             "reference-synthetic",
-            source_record_at=None,
-            schema_state=SchemaState.STABLE,
-            quota_remaining=None,
-            cost=0,
-            observations=(),
-            not_modified=True,
+            CollectionHealthUpdate(
+                source_record_at=None,
+                schema_state=SchemaState.STABLE,
+                quota_remaining=None,
+                cost=0,
+                observations=(),
+                not_modified=True,
+            ),
             now=NOW + timedelta(minutes=4),
         )
         health = get_source_health(session, "reference-synthetic")
