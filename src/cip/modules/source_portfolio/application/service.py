@@ -32,12 +32,22 @@ from cip.modules.source_portfolio.application.priority import (
     PriorityRefreshResult,
     request_priority_refresh,
 )
+from cip.modules.source_portfolio.application.value import (
+    SourceExecutionMode,
+    SourceValueEvent,
+    SourceValueSummary,
+    record_source_value_event,
+    summarize_source_value,
+)
 
 __all__ = [
     "CollectionHealthUpdate",
     "PriorityRefreshResult",
+    "SourceExecutionMode",
     "SourcePortfolioNotFoundError",
     "SourcePortfolioStateError",
+    "SourceValueEvent",
+    "SourceValueSummary",
     "cancel_backfill",
     "claim_backfill_partition",
     "complete_backfill_partition",
@@ -51,9 +61,11 @@ __all__ = [
     "reconcile_runtime_adapters",
     "record_collection_failure",
     "record_collection_success",
+    "record_source_value_event",
     "refresh_freshness",
     "request_backfill",
     "request_priority_refresh",
     "resume_source",
+    "summarize_source_value",
     "sync_source_portfolio",
 ]
