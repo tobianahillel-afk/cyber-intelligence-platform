@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from datetime import UTC, datetime, timedelta
-from uuid import uuid4
+from uuid import UUID, uuid4
 
 from cip.modules.raw_observations.domain.entities import (
     RawObservation,
@@ -68,7 +68,7 @@ def _observation(
     index: int,
     effective_at: datetime,
     action: SourceRecordAction = SourceRecordAction.UPSERT,
-    supersedes=None,
+    supersedes: UUID | None = None,
 ) -> RawObservation:
     return RawObservation(
         source_id="reference-synthetic",
