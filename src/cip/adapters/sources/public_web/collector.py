@@ -31,6 +31,7 @@ class PublicWebCollectionDeniedError(RuntimeError):
 class PageCheckpoint:
     content_hash_sha256: str
     version_id: UUID
+    canonical_url: str
 
 
 @dataclass(frozen=True, slots=True)
@@ -105,6 +106,7 @@ def collect_public_web_target(
                 PreviousPageState(
                     content_hash_sha256=previous.content_hash_sha256,
                     version_id=previous.version_id,
+                    canonical_url=previous.canonical_url,
                 )
                 if previous is not None
                 else None
@@ -113,14 +115,17 @@ def collect_public_web_target(
         if mapped.observation is not None:
             observations.append(mapped.observation)
         projections.append(mapped.projection)
+        unchanged = bool(
+            previous is not None
+            and previous.content_hash_sha256 == mapped.content_hash_sha256
+            and previous.canonical_url == fetched.fetched_url
+        )
         next_pages[url] = PageCheckpoint(
             content_hash_sha256=mapped.content_hash_sha256,
             version_id=(
-                previous.version_id
-                if previous is not None
-                and previous.content_hash_sha256 == mapped.content_hash_sha256
-                else mapped.projection.version.id
+                previous.version_id if unchanged else mapped.projection.version.id
             ),
+            canonical_url=fetched.fetched_url,
         )
         usage = CrawlUsage(
             pages_fetched=usage.pages_fetched + 1,
