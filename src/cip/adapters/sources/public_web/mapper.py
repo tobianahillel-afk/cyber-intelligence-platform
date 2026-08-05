@@ -54,6 +54,7 @@ _SECURITY_OBJECTIVE_TERMS = (
 class PreviousPageState:
     content_hash_sha256: str
     version_id: UUID
+    canonical_url: str
 
 
 @dataclass(frozen=True, slots=True)
@@ -85,6 +86,9 @@ def map_public_page(
         if result.mime_type == "text/html" and not quarantined
         else None
     )
+    indexable_text = (
+        extracted.text if extracted is not None and not extracted.noindex else ""
+    )
     resource = PublicResource(
         organization_id=target.organization_id,
         source_id=target.id,
@@ -115,17 +119,19 @@ def map_public_page(
         title=extracted.title if extracted is not None else None,
         language=extracted.language if extracted is not None else None,
         extracted_text_hash_sha256=(
-            sha256(extracted.text.encode("utf-8")).hexdigest()
-            if extracted is not None and extracted.text
+            sha256(indexable_text.encode("utf-8")).hexdigest()
+            if indexable_text
             else None
         ),
         excerpt=extracted.excerpt if extracted is not None else None,
         source_locator=result.fetched_url,
-        supersedes_version_id=(
-            previous.version_id if previous is not None and not unchanged else None
+        supersedes_version_id=_predecessor_id(
+            previous,
+            result.fetched_url,
+            unchanged=unchanged,
         ),
     )
-    claims = _claims(target, resource, version, extracted.text if extracted else "")
+    claims = _claims(target, resource, version, indexable_text)
     projection = PublicFootprintProjection(
         resource=resource,
         version=version,
@@ -160,6 +166,17 @@ def map_public_page(
         observation=observation,
         content_hash_sha256=content_hash,
     )
+
+
+def _predecessor_id(
+    previous: PreviousPageState | None,
+    canonical_url: str,
+    *,
+    unchanged: bool,
+) -> UUID | None:
+    if previous is None or unchanged or previous.canonical_url != canonical_url:
+        return None
+    return previous.version_id
 
 
 def _retrieval_state(
