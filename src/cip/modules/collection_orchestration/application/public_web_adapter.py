@@ -119,9 +119,10 @@ def _checkpoint_from_payload(
         content_hash = raw_state.get("content_hash_sha256")
         version_id = raw_state.get("version_id")
         canonical_url = raw_state.get("canonical_url")
-        if not all(
-            isinstance(value, str)
-            for value in (content_hash, version_id, canonical_url)
+        if (
+            not isinstance(content_hash, str)
+            or not isinstance(version_id, str)
+            or not isinstance(canonical_url, str)
         ):
             raise AdapterExecutionError(
                 "public web checkpoint page state is invalid",
