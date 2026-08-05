@@ -113,24 +113,25 @@ def test_historical_backfill_persists_contract_but_ignores_current_signal() -> N
             load_source_portfolio(Path("policies/source_portfolio.decp.yml")),
             now=NOW,
         )
-        partition = request_backfill(
+        partition_id = request_backfill(
             session,
             "decp",
-            "decp-explore-api",
-            bounds={"start_date": "2026-01-01", "end_date": "2026-01-31"},
+            (("2026-01-01", "2026-01-31"),),
+            actor="procurement-backfill-test",
             now=NOW,
-        )
+        )[0]
 
     adapter = ProcurementBackfillAdapter()
     outcome = run_backfill_once(
         factory,
+        worker_id="procurement-backfill-test",
         adapters={(adapter.source_id, adapter.adapter_id): adapter},
         retention_policy=load_retention_policy(Path("policies/retention.yml")),
         clock=lambda: NOW + timedelta(seconds=1),
     )
 
     assert outcome.status is BackfillWorkerStatus.SUCCEEDED
-    assert outcome.partition_id == partition.id
+    assert outcome.partition_id == partition_id
     with factory() as session:
         assert _count(session, ProcurementPublicationRecord) == 1
         assert _count(session, ProcurementContractRecord) == 1
