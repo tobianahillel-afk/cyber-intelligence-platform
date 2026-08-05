@@ -35,9 +35,12 @@ from cip.modules.raw_observations.domain.entities import RawObservation
 from cip.modules.source_portfolio.application.execution import source_execution_allowed
 from cip.modules.source_portfolio.application.service import (
     CollectionHealthUpdate,
+    SourceExecutionMode,
     SourcePortfolioNotFoundError,
+    SourceValueEvent,
     record_collection_failure,
     record_collection_success,
+    record_source_value_event,
 )
 from cip.modules.source_portfolio.domain.models import SchemaState
 from cip.shared.kernel.time import require_aware_utc, utc_now
@@ -161,6 +164,20 @@ def run_worker_once(
                 quota_remaining=batch.quota_remaining,
                 request_cost=batch.request_cost,
                 now=completion_time,
+            )
+            record_source_value_event(
+                session,
+                SourceValueEvent(
+                    source_id=claimed.source_id,
+                    execution_id=claimed.id,
+                    execution_mode=SourceExecutionMode.INCREMENTAL,
+                    observations_written=written,
+                    commercial_projections=len(batch.commercial_projections),
+                    identity_projections=len(batch.identity_projections),
+                    request_cost=batch.request_cost,
+                    not_modified=batch.not_modified,
+                    occurred_at=completion_time,
+                ),
             )
     except LeaseLostError:
         return WorkerOutcome(
