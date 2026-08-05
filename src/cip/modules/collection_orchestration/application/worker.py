@@ -156,6 +156,8 @@ def run_worker_once(
                 session,
                 claimed.source_id,
                 batch.observations,
+                quota_remaining=batch.quota_remaining,
+                request_cost=batch.request_cost,
                 now=completion_time,
             )
     except LeaseLostError:
@@ -215,6 +217,8 @@ def _record_success_health(
     source_id: str,
     observations: tuple[RawObservation, ...],
     *,
+    quota_remaining: int | None,
+    request_cost: float,
     now: datetime,
 ) -> None:
     source_record_at = max(
@@ -230,8 +234,8 @@ def _record_success_health(
             source_id,
             source_record_at=source_record_at,
             schema_state=SchemaState.STABLE,
-            quota_remaining=None,
-            cost=0.0,
+            quota_remaining=quota_remaining,
+            cost=request_cost,
             now=now,
         )
     except SourcePortfolioNotFoundError:
