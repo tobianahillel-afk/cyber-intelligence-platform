@@ -205,8 +205,14 @@ def classify_service_families(*texts: str) -> tuple[ServiceFamilyMatch, ...]:
     return tuple(matches)
 
 
-def contains_cyber_relevance(*texts: str) -> bool:
+def matched_cyber_terms(*texts: str) -> tuple[str, ...]:
     normalized = " ".join(texts).casefold()
-    if any(term in normalized for term in _GENERIC_CYBER_TERMS):
-        return True
-    return bool(classify_service_families(normalized))
+    terms: list[str] = []
+    for match in classify_service_families(normalized):
+        terms.extend(match.matched_terms)
+    terms.extend(term for term in _GENERIC_CYBER_TERMS if term in normalized)
+    return tuple(dict.fromkeys(terms))
+
+
+def contains_cyber_relevance(*texts: str) -> bool:
+    return bool(matched_cyber_terms(*texts))
