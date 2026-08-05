@@ -52,7 +52,8 @@ def test_failed_partition_retries_with_cursor_preserved() -> None:
             actor="worker-1",
             now=NOW + timedelta(seconds=2),
         )
-        assert get_source_health(session, "reference-synthetic").current_backfill_state is BackfillState.FAILED
+        failed_health = get_source_health(session, "reference-synthetic")
+        assert failed_health.current_backfill_state is BackfillState.FAILED
 
         retried = claim_backfill_partition(
             session,
