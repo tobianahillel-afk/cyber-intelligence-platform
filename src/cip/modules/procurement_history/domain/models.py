@@ -1,12 +1,12 @@
 from __future__ import annotations
 
+from collections.abc import Mapping
 from dataclasses import dataclass, field
 from datetime import date, datetime
 from decimal import Decimal
 from enum import StrEnum
 from hashlib import sha256
 from types import MappingProxyType
-from typing import Mapping
 from uuid import UUID, uuid4
 
 from cip.modules.service_taxonomy.domain.models import ServiceFamilyMatch
@@ -110,9 +110,11 @@ class ProcurementParty:
             raise ValueError("published party name cannot exceed 500 characters")
         if not 0.0 <= self.confidence <= 1.0:
             raise ValueError("party confidence must be between 0 and 1")
-        if self.resolution_status is PartyResolutionStatus.CONFIRMED:
-            if self.organization_id is None:
-                raise ValueError("confirmed party requires organization_id")
+        if (
+            self.resolution_status is PartyResolutionStatus.CONFIRMED
+            and self.organization_id is None
+        ):
+            raise ValueError("confirmed party requires organization_id")
         object.__setattr__(self, "published_name", name)
         object.__setattr__(self, "official_identifier", identifier)
 
@@ -155,7 +157,9 @@ class ProcurementPublication:
         if len(title) > 4_000:
             raise ValueError("publication title cannot exceed 4000 characters")
         content_hash = self.content_hash_sha256.strip().lower()
-        if len(content_hash) != 64 or any(char not in "0123456789abcdef" for char in content_hash):
+        if len(content_hash) != 64 or any(
+            char not in "0123456789abcdef" for char in content_hash
+        ):
             raise ValueError("content_hash_sha256 must be a lowercase SHA-256 digest")
         collected = require_aware_utc(self.collected_at, field_name="collected_at")
         published = self.published_at
