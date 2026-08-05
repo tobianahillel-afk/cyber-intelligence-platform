@@ -96,6 +96,11 @@ def _patch_scope(monkeypatch: pytest.MonkeyPatch) -> None:
         "_record_failure_health",
         lambda *args, **kwargs: None,
     )
+    monkeypatch.setattr(
+        worker,
+        "record_source_value_event",
+        lambda *args, **kwargs: False,
+    )
 
 
 def _retention_policy():
