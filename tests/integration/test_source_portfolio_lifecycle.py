@@ -11,6 +11,7 @@ from cip.modules.collection_orchestration.application.reference_adapter import (
     ReferencePortfolioAdapter,
 )
 from cip.modules.source_portfolio.application.service import (
+    CollectionHealthUpdate,
     SourcePortfolioStateError,
     claim_backfill_partition,
     complete_backfill_partition,
@@ -168,10 +169,12 @@ def test_candidate_cannot_execute_and_health_recovers() -> None:
     recovered = record_collection_success(
         database,
         "cisa-kev",
-        source_record_at=NOW + timedelta(minutes=1),
-        schema_state=SchemaState.STABLE,
-        quota_remaining=5,
-        cost=0,
+        CollectionHealthUpdate(
+            source_record_at=NOW + timedelta(minutes=1),
+            schema_state=SchemaState.STABLE,
+            quota_remaining=5,
+            cost=0,
+        ),
         now=NOW + timedelta(minutes=1),
     )
     assert recovered.freshness_state is FreshnessState.FRESH
