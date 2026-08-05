@@ -37,6 +37,7 @@ class PublicWebAdapter:
         target: PublicWebTarget,
         *,
         timeout_seconds: float = 30.0,
+        transport: httpx.BaseTransport | None = None,
     ) -> None:
         if entry.policy.id != target.id:
             raise ValueError("public web adapter requires matching source and target ids")
@@ -46,6 +47,7 @@ class PublicWebAdapter:
         self._entry = entry
         self._target = target
         self._timeout_seconds = timeout_seconds
+        self._transport = transport
 
     def collect(
         self,
@@ -60,6 +62,7 @@ class PublicWebAdapter:
             with httpx.Client(
                 timeout=self._timeout_seconds,
                 follow_redirects=False,
+                transport=self._transport,
             ) as http_client:
                 batch = collect_public_web_target(
                     PublicWebClient(http_client),
@@ -115,7 +118,11 @@ def _checkpoint_from_payload(
             )
         content_hash = raw_state.get("content_hash_sha256")
         version_id = raw_state.get("version_id")
-        if not isinstance(content_hash, str) or not isinstance(version_id, str):
+        canonical_url = raw_state.get("canonical_url")
+        if not all(
+            isinstance(value, str)
+            for value in (content_hash, version_id, canonical_url)
+        ):
             raise AdapterExecutionError(
                 "public web checkpoint page state is invalid",
                 error_code="invalid_checkpoint",
@@ -125,6 +132,7 @@ def _checkpoint_from_payload(
             pages[raw_url] = PageCheckpoint(
                 content_hash_sha256=content_hash,
                 version_id=UUID(version_id),
+                canonical_url=canonical_url,
             )
         except ValueError as exc:
             raise AdapterExecutionError(
@@ -141,6 +149,7 @@ def _checkpoint_payload(checkpoint: PublicWebCheckpoint) -> dict[str, object]:
             url: {
                 "content_hash_sha256": state.content_hash_sha256,
                 "version_id": str(state.version_id),
+                "canonical_url": state.canonical_url,
             }
             for url, state in sorted(checkpoint.pages.items())
         }
