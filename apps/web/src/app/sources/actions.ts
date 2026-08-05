@@ -53,6 +53,14 @@ export async function disableSourceAction(
   revalidatePath("/sources");
 }
 
+export async function enableSourceAction(
+  sourceId: string,
+  formData: FormData,
+): Promise<void> {
+  await changeSourcePortfolioState(sourceId, "enable", { actor: actor(formData) });
+  revalidatePath("/sources");
+}
+
 export async function cancelSourceBackfillAction(
   sourceId: string,
   formData: FormData,
