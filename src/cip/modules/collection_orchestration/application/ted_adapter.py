@@ -81,6 +81,8 @@ class TedSearchAdapter:
             },
             not_modified=batch.not_modified,
             commercial_projections=batch.projections,
+            procurement_organizations=batch.buyers,
+            procurement_projections=batch.procurement,
         )
 
 
