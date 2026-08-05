@@ -70,11 +70,11 @@ def get_source_health(session: Session, source_id: str) -> SourceHealth:
 def set_backfill_health(
     session: Session,
     source_id: str,
-    state: BackfillState,
+    state: BackfillState | None,
     now: datetime,
 ) -> None:
     health = get_health_record(session, source_id)
-    health.current_backfill_state = state.value
+    health.current_backfill_state = state.value if state is not None else None
     health.updated_at = now
 
 
@@ -105,7 +105,8 @@ def record_collection_success(
     record.volume_state = volume_state.value
     record.field_population_state = field_population_state.value
     record.consecutive_failures = 0
-    record.quota_remaining = quota_remaining
+    if quota_remaining is not None:
+        record.quota_remaining = quota_remaining
     record.monthly_cost_used += non_negative(cost, "cost")
     record.last_error_code = None
     record.freshness_state = _freshness_for_success(session, source_id, changed_at).value
