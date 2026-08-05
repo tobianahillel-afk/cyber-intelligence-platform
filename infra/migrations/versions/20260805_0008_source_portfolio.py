@@ -18,6 +18,30 @@ depends_on: str | Sequence[str] | None = None
 
 
 def upgrade() -> None:
+    op.add_column(
+        "raw_observations",
+        sa.Column(
+            "source_record_action",
+            sa.String(length=32),
+            nullable=False,
+            server_default="upsert",
+        ),
+    )
+    op.add_column(
+        "raw_observations",
+        sa.Column("supersedes_observation_id", sa.Uuid(), nullable=True),
+    )
+    op.create_index(
+        "ix_raw_observations_source_record_action",
+        "raw_observations",
+        ["source_record_action"],
+    )
+    op.create_index(
+        "ix_raw_observations_supersedes_observation_id",
+        "raw_observations",
+        ["supersedes_observation_id"],
+    )
+
     op.create_table(
         "source_portfolio",
         sa.Column("source_id", sa.String(length=100), nullable=False),
@@ -198,3 +222,14 @@ def downgrade() -> None:
     ):
         op.drop_index(f"ix_source_portfolio_{column}", table_name="source_portfolio")
     op.drop_table("source_portfolio")
+
+    op.drop_index(
+        "ix_raw_observations_supersedes_observation_id",
+        table_name="raw_observations",
+    )
+    op.drop_index(
+        "ix_raw_observations_source_record_action",
+        table_name="raw_observations",
+    )
+    op.drop_column("raw_observations", "supersedes_observation_id")
+    op.drop_column("raw_observations", "source_record_action")
