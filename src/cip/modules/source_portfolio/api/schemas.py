@@ -78,6 +78,7 @@ class SourceHealthResponse(BaseModel):
     consecutive_failures: int
     quota_remaining: int | None
     monthly_cost_used: float
+    cost_window_started_at: datetime | None
     current_backfill_state: str | None
     last_error_code: str | None
 
@@ -95,6 +96,7 @@ class SourceHealthResponse(BaseModel):
             consecutive_failures=value.consecutive_failures,
             quota_remaining=value.quota_remaining,
             monthly_cost_used=value.monthly_cost_used,
+            cost_window_started_at=value.cost_window_started_at,
             current_backfill_state=(
                 value.current_backfill_state.value
                 if value.current_backfill_state is not None
@@ -111,6 +113,7 @@ class SourcePortfolioResponse(BaseModel):
     category: str
     status: str
     executable: bool
+    manual_resume_allowed: bool
     freshness_max_age_seconds: int
     commercial_use_cases: list[str]
     authorization_expires_at: datetime | None
@@ -133,6 +136,7 @@ class SourcePortfolioResponse(BaseModel):
             category=entry.category,
             status=entry.status.value,
             executable=entry.executable,
+            manual_resume_allowed="activation_requires" not in entry.metadata,
             freshness_max_age_seconds=entry.freshness_max_age_seconds,
             commercial_use_cases=list(entry.commercial_use_cases),
             authorization_expires_at=entry.authorization_expires_at,
