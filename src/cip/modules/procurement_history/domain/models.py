@@ -191,6 +191,8 @@ class ProcurementContractProjection:
     service_families: tuple[ServiceFamilyMatch, ...] = ()
     amount: MoneyAmount | None = None
     award_date: date | None = None
+    conclusion_date: date | None = None
+    conclusion_date_basis: DateBasis = DateBasis.UNKNOWN
     start_date: date | None = None
     start_date_basis: DateBasis = DateBasis.UNKNOWN
     end_date: date | None = None
@@ -206,6 +208,11 @@ class ProcurementContractProjection:
             raise ValueError("contract_key, procedure_key, and title are required")
         if not 0.0 <= self.confidence <= 1.0:
             raise ValueError("contract confidence must be between 0 and 1")
+        _validate_date_basis(
+            self.conclusion_date,
+            self.conclusion_date_basis,
+            "conclusion_date",
+        )
         _validate_date_basis(self.start_date, self.start_date_basis, "start_date")
         _validate_date_basis(self.end_date, self.end_date_basis, "end_date")
         _validate_date_basis(self.renewal_date, self.renewal_date_basis, "renewal_date")
