@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections.abc import Sequence
 from datetime import UTC, datetime, timedelta
 
 from sqlalchemy.orm import Session
@@ -7,6 +8,8 @@ from sqlalchemy.orm import Session
 from cip.modules.collection_orchestration.infrastructure.models import (
     CollectionCircuitRecord,
 )
+from cip.modules.raw_observations.domain.entities import RawObservation
+from cip.modules.source_portfolio.application.quality import evaluate_quality
 from cip.modules.source_portfolio.application.records import (
     bounded_value,
     capability_record,
@@ -88,6 +91,8 @@ def record_collection_success(
     quota_remaining: int | None,
     cost: float,
     now: datetime,
+    observations: Sequence[RawObservation] | None = None,
+    not_modified: bool = False,
     volume_state: AnomalyState = AnomalyState.NORMAL,
     field_population_state: AnomalyState = AnomalyState.NORMAL,
 ) -> SourceHealth:
@@ -103,9 +108,30 @@ def record_collection_success(
             source_record_at,
             field_name="source_record_at",
         )
-    record.schema_state = schema_state.value
-    record.volume_state = volume_state.value
-    record.field_population_state = field_population_state.value
+    evaluation = (
+        evaluate_quality(
+            session,
+            source_id,
+            observations,
+            not_modified=not_modified,
+            now=changed_at,
+        )
+        if observations is not None
+        else None
+    )
+    if evaluation is not None:
+        record.schema_state = (
+            SchemaState.DRIFTED.value
+            if schema_state is SchemaState.DRIFTED
+            or evaluation.schema_state is SchemaState.DRIFTED
+            else SchemaState.STABLE.value
+        )
+        record.volume_state = evaluation.volume_state.value
+        record.field_population_state = evaluation.field_population_state.value
+    elif not not_modified:
+        record.schema_state = schema_state.value
+        record.volume_state = volume_state.value
+        record.field_population_state = field_population_state.value
     record.consecutive_failures = 0
     if quota_remaining is not None:
         record.quota_remaining = quota_remaining
