@@ -33,7 +33,11 @@ class ServiceFamilyMatch:
     confidence: float
 
     def __post_init__(self) -> None:
-        terms = tuple(dict.fromkeys(term.strip().casefold() for term in self.matched_terms if term.strip()))
+        terms = tuple(
+            dict.fromkeys(
+                term.strip().casefold() for term in self.matched_terms if term.strip()
+            )
+        )
         if not terms:
             raise ValueError("service family match requires at least one term")
         if not 0.0 <= self.confidence <= 1.0:
