@@ -11,6 +11,7 @@ from cip.modules.procurement_history.domain.models import (
     MoneyAmount,
     PartyResolutionStatus,
     ProcurementContractProjection,
+    ProcurementHistoryProjection,
     ProcurementParty,
     ProcurementPartyRole,
     ProcurementPublication,
@@ -62,6 +63,27 @@ def test_publication_revision_key_changes_only_with_revision_content() -> None:
     assert changed.revision_key != publication.revision_key
 
 
+def test_open_publication_does_not_require_or_create_contract() -> None:
+    publication = _publication(
+        kind=ProcurementPublicationKind.NOTICE,
+        status=ProcurementProcedureStatus.OPEN,
+    )
+
+    history = ProcurementHistoryProjection(publication=publication)
+
+    assert history.contract is None
+
+
+def test_contract_requires_contract_lifecycle_publication() -> None:
+    publication = _publication(
+        kind=ProcurementPublicationKind.NOTICE,
+        status=ProcurementProcedureStatus.OPEN,
+    )
+
+    with pytest.raises(ValueError, match="lifecycle publication"):
+        ProcurementHistoryProjection(publication=publication, contract=_contract())
+
+
 def test_contract_distinguishes_estimated_and_published_dates() -> None:
     contract = _contract(
         end_date=date(2027, 8, 5),
@@ -105,6 +127,8 @@ def _publication(
     *,
     publication_id: UUID | None = None,
     content_hash: str = "a" * 64,
+    kind: ProcurementPublicationKind = ProcurementPublicationKind.AWARD,
+    status: ProcurementProcedureStatus = ProcurementProcedureStatus.AWARDED,
 ) -> ProcurementPublication:
     return ProcurementPublication(
         id=publication_id or uuid4(),
@@ -112,8 +136,8 @@ def _publication(
         source_id="boamp",
         source_record_key="24-100001",
         source_url="https://example.test/24-100001",
-        kind=ProcurementPublicationKind.AWARD,
-        procedure_status=ProcurementProcedureStatus.AWARDED,
+        kind=kind,
+        procedure_status=status,
         buyer_organization_id=BUYER_ID,
         title="Cybersecurity framework agreement",
         content_hash_sha256=content_hash,
@@ -138,7 +162,6 @@ def _contract(
         buyer_organization_id=BUYER_ID,
         title="Cybersecurity framework agreement",
         status=ContractStatus.AWARDED,
-        publication=_publication(),
         confidence=0.92,
         parties=parties,
         service_families=service_families,
