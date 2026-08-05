@@ -6,7 +6,11 @@ from uuid import NAMESPACE_URL, UUID, uuid5
 from sqlalchemy import delete, select
 from sqlalchemy.orm import Session
 
-from cip.modules.procurement_history.domain.models import ProcurementContractProjection
+from cip.modules.procurement_history.domain.models import (
+    ProcurementContractProjection,
+    ProcurementHistoryProjection,
+    ProcurementPublication,
+)
 from cip.modules.procurement_history.infrastructure.models import (
     ProcurementContractPartyRecord,
     ProcurementContractRecord,
@@ -19,68 +23,70 @@ from cip.shared.kernel.time import require_aware_utc
 
 def persist_procurement_projections(
     session: Session,
-    projections: tuple[ProcurementContractProjection, ...],
+    projections: tuple[ProcurementHistoryProjection, ...],
     *,
     now: datetime,
 ) -> None:
     updated_at = require_aware_utc(now, field_name="now")
     for projection in projections:
-        procedure = _upsert_procedure(session, projection, now=updated_at)
-        publication = _insert_publication(session, procedure.id, projection)
+        publication = projection.publication
+        procedure = _upsert_procedure(session, publication, now=updated_at)
+        publication_record = _insert_publication(session, procedure.id, publication)
+        if projection.contract is None:
+            continue
         contract, changed = _upsert_contract(
             session,
             procedure.id,
-            publication,
-            projection,
+            publication_record,
+            projection.contract,
             now=updated_at,
         )
         if changed:
-            _replace_parties(session, contract.id, projection)
-            _replace_service_families(session, contract.id, projection)
+            _replace_parties(session, contract.id, projection.contract)
+            _replace_service_families(session, contract.id, projection.contract)
 
 
 def _upsert_procedure(
     session: Session,
-    projection: ProcurementContractProjection,
+    publication: ProcurementPublication,
     *,
     now: datetime,
 ) -> ProcurementProcedureRecord:
     record = session.scalar(
         select(ProcurementProcedureRecord).where(
-            ProcurementProcedureRecord.canonical_key == projection.procedure_key
+            ProcurementProcedureRecord.canonical_key == publication.procedure_key
         )
     )
-    effective_at = projection.publication.published_at or projection.publication.collected_at
+    effective_at = publication.published_at or publication.collected_at
     if record is None:
         record = ProcurementProcedureRecord(
-            id=uuid5(NAMESPACE_URL, f"procurement:procedure:{projection.procedure_key}"),
-            canonical_key=projection.procedure_key,
-            buyer_organization_id=projection.buyer_organization_id,
-            title=projection.title,
-            status=projection.publication.procedure_status.value,
-            first_published_at=projection.publication.published_at,
-            latest_published_at=projection.publication.published_at,
-            source_ids=[projection.publication.source_id],
+            id=uuid5(NAMESPACE_URL, f"procurement:procedure:{publication.procedure_key}"),
+            canonical_key=publication.procedure_key,
+            buyer_organization_id=publication.buyer_organization_id,
+            title=publication.title,
+            status=publication.procedure_status.value,
+            first_published_at=publication.published_at,
+            latest_published_at=publication.published_at,
+            source_ids=[publication.source_id],
             created_at=now,
             updated_at=now,
         )
         session.add(record)
         session.flush()
         return record
-    if record.buyer_organization_id != projection.buyer_organization_id:
+    if record.buyer_organization_id != publication.buyer_organization_id:
         raise ValueError("procedure buyer identity cannot change")
-    sources = sorted(set(record.source_ids) | {projection.publication.source_id})
-    record.source_ids = sources
+    record.source_ids = sorted(set(record.source_ids) | {publication.source_id})
     if record.first_published_at is None or (
-        projection.publication.published_at is not None
-        and projection.publication.published_at < record.first_published_at
+        publication.published_at is not None
+        and publication.published_at < record.first_published_at
     ):
-        record.first_published_at = projection.publication.published_at
+        record.first_published_at = publication.published_at
     latest = record.latest_published_at
     if latest is None or effective_at >= latest:
-        record.title = projection.title
-        record.status = projection.publication.procedure_status.value
-        record.latest_published_at = projection.publication.published_at or effective_at
+        record.title = publication.title
+        record.status = publication.procedure_status.value
+        record.latest_published_at = publication.published_at or effective_at
     record.updated_at = now
     session.flush()
     return record
@@ -89,9 +95,8 @@ def _upsert_procedure(
 def _insert_publication(
     session: Session,
     procedure_id: UUID,
-    projection: ProcurementContractProjection,
+    publication: ProcurementPublication,
 ) -> ProcurementPublicationRecord:
-    publication = projection.publication
     existing = session.scalar(
         select(ProcurementPublicationRecord).where(
             ProcurementPublicationRecord.revision_key == publication.revision_key
