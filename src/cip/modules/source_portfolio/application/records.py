@@ -112,6 +112,7 @@ def to_health(
         consecutive_failures=record.consecutive_failures,
         quota_remaining=record.quota_remaining,
         monthly_cost_used=record.monthly_cost_used,
+        cost_window_started_at=persistence_utc(record.cost_window_started_at),
         current_backfill_state=(
             BackfillState(record.current_backfill_state)
             if record.current_backfill_state is not None
