@@ -81,6 +81,11 @@ def test_database_metadata_contains_foundation_tables() -> None:
         "organization_merge_candidates",
         "organization_relationships",
         "organizations",
+        "procurement_contract_parties",
+        "procurement_contracts",
+        "procurement_procedures",
+        "procurement_publications",
+        "procurement_service_classifications",
         "provider_onboarding",
         "provider_onboarding_audit",
         "raw_observations",
@@ -110,6 +115,9 @@ def test_metadata_creates_on_sqlite() -> None:
     assert get_metadata().tables["source_health"].foreign_keys
     assert get_metadata().tables["backfill_partitions"].foreign_keys
     assert get_metadata().tables["source_value_events"].foreign_keys
+    assert get_metadata().tables["procurement_publications"].foreign_keys
+    assert get_metadata().tables["procurement_contracts"].foreign_keys
+    assert get_metadata().tables["procurement_contract_parties"].foreign_keys
 
 
 def test_database_url_is_required() -> None:
