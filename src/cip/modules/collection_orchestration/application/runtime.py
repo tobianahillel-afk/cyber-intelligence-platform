@@ -19,6 +19,10 @@ from cip.adapters.sources.organization_identity.registry import (
     OrganizationIdentityTarget,
     load_organization_identity_targets,
 )
+from cip.adapters.sources.public_web.registry import (
+    PublicWebTarget,
+    load_public_web_targets,
+)
 from cip.adapters.sources.smartrecruiters.registry import (
     SmartRecruitersCompany,
     load_smartrecruiters_companies,
@@ -32,6 +36,7 @@ from cip.modules.collection_orchestration.application.identity_adapters import (
 )
 from cip.modules.collection_orchestration.application.lever_adapter import LeverAdapter
 from cip.modules.collection_orchestration.application.ports import CollectionAdapter
+from cip.modules.collection_orchestration.application.public_web_adapter import PublicWebAdapter
 from cip.modules.collection_orchestration.application.reference_adapter import (
     ReferencePortfolioAdapter,
 )
@@ -100,10 +105,12 @@ def build_collection_runtime(settings: Settings) -> CollectionRuntime:
         settings.source_registry_path,
         settings.identity_source_registry_path,
         settings.decp_source_registry_path,
+        settings.public_web_source_registry_path,
     )
     portfolio = load_source_portfolio_bundle(
         settings.source_portfolio_path,
         settings.decp_source_portfolio_path,
+        settings.public_web_source_portfolio_path,
     )
     greenhouse_boards = load_greenhouse_boards(settings.greenhouse_board_registry_path)
     lever_sites = load_lever_sites(settings.lever_site_registry_path)
@@ -113,6 +120,7 @@ def build_collection_runtime(settings: Settings) -> CollectionRuntime:
     identity_targets = load_organization_identity_targets(
         settings.organization_identity_target_registry_path
     )
+    public_web_targets = load_public_web_targets(settings.public_web_target_registry_path)
     with session_scope(factory) as session:
         sync_source_registry(session, entries)
         sync_source_portfolio(session, portfolio, now=utc_now())
@@ -122,6 +130,7 @@ def build_collection_runtime(settings: Settings) -> CollectionRuntime:
         lever_sites,
         smartrecruiters_companies,
         identity_targets,
+        public_web_targets,
         timeout_seconds=settings.source_http_timeout_seconds,
     )
     with session_scope(factory) as session:
@@ -130,6 +139,7 @@ def build_collection_runtime(settings: Settings) -> CollectionRuntime:
     schedules = load_collection_schedule_bundle(
         settings.collection_schedule_path,
         settings.decp_collection_schedule_path,
+        settings.public_web_collection_schedule_path,
     )
     _validate_registered_schedules(schedules, adapters, portfolio)
     return CollectionRuntime(
@@ -147,6 +157,7 @@ def _build_adapters(
     lever_sites: tuple[LeverSite, ...],
     smartrecruiters_companies: tuple[SmartRecruitersCompany, ...],
     identity_targets: tuple[OrganizationIdentityTarget, ...],
+    public_web_targets: tuple[PublicWebTarget, ...],
     *,
     timeout_seconds: float,
 ) -> dict[tuple[str, str], CollectionAdapter]:
@@ -203,7 +214,38 @@ def _build_adapters(
         identity_targets,
         timeout_seconds=timeout_seconds,
     )
+    _register_public_web_adapters(
+        adapters,
+        entries_by_id,
+        public_web_targets,
+        timeout_seconds=timeout_seconds,
+    )
     return adapters
+
+
+def _register_public_web_adapters(
+    adapters: dict[tuple[str, str], CollectionAdapter],
+    entries_by_id: dict[str, SourceRegistryEntry],
+    targets: tuple[PublicWebTarget, ...],
+    *,
+    timeout_seconds: float,
+) -> None:
+    for target in targets:
+        if not target.enabled:
+            continue
+        entry = entries_by_id.get(target.id)
+        if entry is None:
+            raise ValueError(
+                f"enabled public web target has no source policy: {target.id}"
+            )
+        _register(
+            adapters,
+            PublicWebAdapter(
+                entry,
+                target,
+                timeout_seconds=timeout_seconds,
+            ),
+        )
 
 
 def _register(
