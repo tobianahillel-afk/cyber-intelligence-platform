@@ -89,6 +89,7 @@ export interface SourcePortfolioHealth {
   consecutive_failures: number;
   quota_remaining: number | null;
   monthly_cost_used: number;
+  cost_window_started_at: string | null;
   current_backfill_state: string | null;
   last_error_code: string | null;
 }
@@ -100,6 +101,7 @@ export interface SourcePortfolioEntry {
   category: string;
   status: SourcePortfolioStatus;
   executable: boolean;
+  manual_resume_allowed: boolean;
   freshness_max_age_seconds: number;
   commercial_use_cases: readonly string[];
   authorization_expires_at: string | null;
