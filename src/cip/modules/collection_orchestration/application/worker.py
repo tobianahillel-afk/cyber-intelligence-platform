@@ -36,6 +36,9 @@ from cip.modules.organizations.infrastructure.persistence import upsert_organiza
 from cip.modules.procurement_history.infrastructure.projections import (
     persist_procurement_projections,
 )
+from cip.modules.public_footprint.infrastructure.projections import (
+    persist_public_footprint_projections,
+)
 from cip.modules.raw_observations.domain.entities import RawObservation
 from cip.modules.source_portfolio.application.execution import source_execution_allowed
 from cip.modules.source_portfolio.application.service import (
@@ -175,6 +178,11 @@ def _complete_success(
         persist_commercial_projections(session, batch.commercial_projections, now=now)
         upsert_organizations(session, batch.procurement_organizations)
         persist_procurement_projections(session, batch.procurement_projections, now=now)
+        persist_public_footprint_projections(
+            session,
+            batch.public_footprint_projections,
+            now=now,
+        )
         _record_success_health(
             session,
             claimed.source_id,
