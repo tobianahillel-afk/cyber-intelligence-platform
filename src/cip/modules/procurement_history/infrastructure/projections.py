@@ -6,6 +6,7 @@ from uuid import NAMESPACE_URL, UUID, uuid5
 from sqlalchemy import delete, select
 from sqlalchemy.orm import Session
 
+from cip.modules.organizations.infrastructure.persistence_time import coerce_utc
 from cip.modules.procurement_history.domain.models import (
     ProcurementContractProjection,
     ProcurementHistoryProjection,
@@ -57,7 +58,7 @@ def _upsert_procedure(
             ProcurementProcedureRecord.canonical_key == publication.procedure_key
         )
     )
-    effective_at = publication.published_at or publication.collected_at
+    effective_at = coerce_utc(publication.published_at or publication.collected_at)
     if record is None:
         record = ProcurementProcedureRecord(
             id=uuid5(NAMESPACE_URL, f"procurement:procedure:{publication.procedure_key}"),
@@ -77,13 +78,15 @@ def _upsert_procedure(
     if record.buyer_organization_id != publication.buyer_organization_id:
         raise ValueError("procedure buyer identity cannot change")
     record.source_ids = sorted(set(record.source_ids) | {publication.source_id})
-    if record.first_published_at is None or (
-        publication.published_at is not None
-        and publication.published_at < record.first_published_at
+    published_at = publication.published_at
+    first_published_at = record.first_published_at
+    if published_at is not None and (
+        first_published_at is None
+        or coerce_utc(published_at) < coerce_utc(first_published_at)
     ):
-        record.first_published_at = publication.published_at
+        record.first_published_at = published_at
     latest = record.latest_published_at
-    if latest is None or effective_at >= latest:
+    if latest is None or effective_at >= coerce_utc(latest):
         record.title = publication.title
         record.status = publication.procedure_status.value
         record.latest_published_at = publication.published_at or effective_at
@@ -180,8 +183,8 @@ def _publication_is_newer(
     current = session.get(ProcurementPublicationRecord, current_publication_id)
     if current is None:
         return True
-    current_time = current.published_at or current.collected_at
-    candidate_time = candidate.published_at or candidate.collected_at
+    current_time = coerce_utc(current.published_at or current.collected_at)
+    candidate_time = coerce_utc(candidate.published_at or candidate.collected_at)
     if candidate_time != current_time:
         return candidate_time > current_time
     return candidate.revision_key >= current.revision_key
