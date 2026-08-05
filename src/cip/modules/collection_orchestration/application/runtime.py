@@ -55,9 +55,20 @@ from cip.modules.source_governance.infrastructure.registry import SourceRegistry
 from cip.modules.source_governance.infrastructure.registry_bundle import (
     load_source_registry_bundle,
 )
+from cip.modules.source_portfolio.application.backfill_worker import (
+    BackfillWorkerOutcome,
+    BackfillWorkerStatus,
+    run_backfill_once,
+)
 from cip.modules.source_portfolio.application.execution import source_execution_allowed
-from cip.modules.source_portfolio.application.service import sync_source_portfolio
-from cip.modules.source_portfolio.domain.models import SourceCatalogEntry
+from cip.modules.source_portfolio.application.service import (
+    reconcile_runtime_adapters,
+    sync_source_portfolio,
+)
+from cip.modules.source_portfolio.domain.models import (
+    CatalogStatus,
+    SourceCatalogEntry,
+)
 from cip.modules.source_portfolio.infrastructure.registry import load_source_portfolio
 from cip.shared.config.settings import Settings
 from cip.shared.kernel.time import utc_now
@@ -106,9 +117,11 @@ def build_collection_runtime(settings: Settings) -> CollectionRuntime:
         identity_targets,
         timeout_seconds=settings.source_http_timeout_seconds,
     )
+    with session_scope(factory) as session:
+        reconcile_runtime_adapters(session, adapters.keys(), now=utc_now())
     _validate_portfolio_adapters(portfolio, adapters)
     schedules = load_collection_schedules(settings.collection_schedule_path)
-    _validate_registered_schedules(schedules, adapters)
+    _validate_registered_schedules(schedules, adapters, portfolio)
     return CollectionRuntime(
         factory=factory,
         schedules=schedules,
@@ -232,9 +245,20 @@ def run_worker_forever(
             retention_policy=runtime.retention_policy,
         )
         _log_worker_outcome(outcome)
+        backfill_outcome = BackfillWorkerOutcome(BackfillWorkerStatus.IDLE)
+        if outcome.status is WorkerStatus.IDLE:
+            backfill_outcome = run_backfill_once(
+                runtime.factory,
+                worker_id=identity,
+                adapters=runtime.adapters,
+                retention_policy=runtime.retention_policy,
+            )
+            _log_backfill_outcome(backfill_outcome)
         iterations += 1
-        if outcome.status is WorkerStatus.IDLE and (
-            max_iterations is None or iterations < max_iterations
+        if (
+            outcome.status is WorkerStatus.IDLE
+            and backfill_outcome.status is BackfillWorkerStatus.IDLE
+            and (max_iterations is None or iterations < max_iterations)
         ):
             sleep_fn(settings.worker_poll_seconds)
 
@@ -242,12 +266,22 @@ def run_worker_forever(
 def _validate_registered_schedules(
     schedules: tuple[SourceSchedule, ...],
     adapters: dict[tuple[str, str], CollectionAdapter],
+    portfolio: tuple[SourceCatalogEntry, ...],
 ) -> None:
-    missing = [
-        f"{schedule.source_id}/{schedule.adapter_id}"
-        for schedule in schedules
-        if schedule.enabled and (schedule.source_id, schedule.adapter_id) not in adapters
-    ]
+    portfolio_by_id = {entry.source_id: entry for entry in portfolio}
+    missing: list[str] = []
+    for schedule in schedules:
+        identity = (schedule.source_id, schedule.adapter_id)
+        if not schedule.enabled or identity in adapters:
+            continue
+        entry = portfolio_by_id.get(schedule.source_id)
+        conditional = (
+            entry is not None
+            and entry.status is CatalogStatus.PAUSED
+            and "activation_requires" in entry.metadata
+        )
+        if not conditional:
+            missing.append(f"{schedule.source_id}/{schedule.adapter_id}")
     if missing:
         raise ValueError(f"enabled schedules have no registered adapter: {', '.join(missing)}")
 
@@ -275,6 +309,16 @@ def _log_worker_outcome(outcome: WorkerOutcome) -> None:
         "collection worker status=%s job_id=%s observations=%s error=%s",
         outcome.status.value,
         outcome.job_id,
+        outcome.observations_written,
+        outcome.error_code,
+    )
+
+
+def _log_backfill_outcome(outcome: BackfillWorkerOutcome) -> None:
+    LOGGER.info(
+        "backfill worker status=%s partition_id=%s observations=%s error=%s",
+        outcome.status.value,
+        outcome.partition_id,
         outcome.observations_written,
         outcome.error_code,
     )
