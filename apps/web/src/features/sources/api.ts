@@ -136,26 +136,24 @@ function controlPlaneToken(): string {
 }
 
 async function controlRequestJson<T>(path: string, init: RequestInit = {}): Promise<T> {
-  return requestJson<T>(path, {
-    ...init,
-    headers: {
-      "X-CIP-Control-Token": controlPlaneToken(),
-      ...init.headers,
-    },
-  });
+  const headers = new Headers(init.headers);
+  headers.set("X-CIP-Control-Token", controlPlaneToken());
+  return requestJson<T>(path, { ...init, headers });
 }
 
 async function requestJson<T>(path: string, init: RequestInit = {}): Promise<T> {
+  const headers = new Headers(init.headers);
+  headers.set("accept", "application/json");
+  if (init.body) {
+    headers.set("content-type", "application/json");
+  }
+
   let response: Response;
   try {
     response = await fetch(`${apiBaseUrl()}${path}`, {
       ...init,
       cache: "no-store",
-      headers: {
-        accept: "application/json",
-        ...(init.body ? { "content-type": "application/json" } : {}),
-        ...init.headers,
-      },
+      headers,
     });
   } catch {
     throw new ProviderOnboardingApiError("Source control API is unavailable", 503);
