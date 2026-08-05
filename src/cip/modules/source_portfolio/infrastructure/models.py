@@ -107,6 +107,7 @@ class SourceHealthRecord(Base):
     consecutive_failures: Mapped[int] = mapped_column(Integer, default=0)
     quota_remaining: Mapped[int | None] = mapped_column(Integer, nullable=True)
     monthly_cost_used: Mapped[float] = mapped_column(Float, default=0.0)
+    cost_window_started_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
     current_backfill_state: Mapped[str | None] = mapped_column(String(40), nullable=True)
     last_error_code: Mapped[str | None] = mapped_column(String(100), nullable=True)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)
