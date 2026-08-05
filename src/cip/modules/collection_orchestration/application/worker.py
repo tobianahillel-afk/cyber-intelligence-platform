@@ -32,6 +32,9 @@ from cip.modules.organizations.infrastructure.identity_claims import (
 from cip.modules.organizations.infrastructure.identity_persistence import (
     persist_identity_projections,
 )
+from cip.modules.procurement_history.infrastructure.projections import (
+    persist_procurement_projections,
+)
 from cip.modules.raw_observations.domain.entities import RawObservation
 from cip.modules.source_portfolio.application.execution import source_execution_allowed
 from cip.modules.source_portfolio.application.service import (
@@ -169,6 +172,7 @@ def _complete_success(
         persist_identity_projections(session, batch.identity_projections, now=now)
         persist_identity_claims(session, batch.identity_projections)
         persist_commercial_projections(session, batch.commercial_projections, now=now)
+        persist_procurement_projections(session, batch.procurement_projections, now=now)
         _record_success_health(
             session,
             claimed.source_id,
@@ -185,7 +189,9 @@ def _complete_success(
                 execution_id=claimed.id,
                 execution_mode=SourceExecutionMode.INCREMENTAL,
                 observations_written=written,
-                commercial_projections=len(batch.commercial_projections),
+                commercial_projections=(
+                    len(batch.commercial_projections) + len(batch.procurement_projections)
+                ),
                 identity_projections=len(batch.identity_projections),
                 request_cost=batch.request_cost,
                 not_modified=batch.not_modified,
