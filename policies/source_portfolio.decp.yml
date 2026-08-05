@@ -1,0 +1,32 @@
+version: 1
+
+sources:
+  - source_id: decp
+    display_name: DECP Marchés valides
+    canonical_url: https://data.economie.gouv.fr/explore/dataset/decp-2022-marches-valides/
+    category: procurement
+    status: executable
+    freshness_max_age_seconds: 86400
+    commercial_use_cases:
+      - contract_history
+      - incumbent_discovery
+      - renewal_timing
+    monthly_cost_limit: 0
+    adapter:
+      adapter_id: decp-explore-api
+      adapter_version: "1"
+      provider_schema_version: decp-2022-selected-fields-v1
+      modes:
+        - historical_backfill
+        - incremental_cursor
+        - priority_refresh
+      canonical_output_types:
+        - raw_observation
+        - procurement_publication
+        - procurement_contract
+      supports_corrections: true
+      supports_tombstones: false
+      supports_retractions: false
+      max_page_size: 100
+      max_window_days: 31
+      cost_per_request: 0
