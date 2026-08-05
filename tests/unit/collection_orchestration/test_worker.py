@@ -86,6 +86,16 @@ def _patch_scope(monkeypatch: pytest.MonkeyPatch) -> None:
         "source_execution_allowed",
         lambda *args, **kwargs: True,
     )
+    monkeypatch.setattr(
+        worker,
+        "_record_success_health",
+        lambda *args, **kwargs: None,
+    )
+    monkeypatch.setattr(
+        worker,
+        "_record_failure_health",
+        lambda *args, **kwargs: None,
+    )
 
 
 def _retention_policy():
