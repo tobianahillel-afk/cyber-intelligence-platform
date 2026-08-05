@@ -148,6 +148,7 @@ def complete_backfill_partition(
     partition.state = BackfillState.COMPLETED.value
     partition.updated_at = changed_at
     partition.completed_at = changed_at
+    session.flush()
     _refresh_backfill_health(session, partition.source_id, changed_at)
     audit(
         session,
