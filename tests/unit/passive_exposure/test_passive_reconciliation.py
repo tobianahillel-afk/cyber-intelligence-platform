@@ -142,6 +142,7 @@ def test_inactive_retraction_cannot_override_current_attribution() -> None:
                 organization_link=_exact_link(current_organization),
                 observation_kind=PassiveObservationKind.PRODUCT,
                 technology=active_technology,
+                expires_at=NOW + timedelta(days=1),
             ),
             _snapshot(
                 source_id="provider-b",
@@ -153,6 +154,7 @@ def test_inactive_retraction_cannot_override_current_attribution() -> None:
                 organization_link=_exact_link(retracted_organization),
                 observation_kind=PassiveObservationKind.PRODUCT,
                 technology=retracted_technology,
+                expires_at=NOW + timedelta(days=365),
             ),
         ),
         at=NOW,
@@ -163,6 +165,7 @@ def test_inactive_retraction_cannot_override_current_attribution() -> None:
     assert result.organization_link.exact_organization_id == current_organization
     assert result.organization_link.candidate_organization_ids == ()
     assert result.technologies == (active_technology,)
+    assert result.expires_at == NOW + timedelta(days=1)
 
 
 def test_preserves_state_conflict_while_active_observation_remains_current() -> None:
