@@ -19,7 +19,7 @@ from cip.modules.passive_exposure.infrastructure.models import (
     PassiveTechnologyRecord,
 )
 from cip.modules.passive_exposure.infrastructure.projection_hydration import (
-    latest_passive_snapshots,
+    load_passive_snapshot_history,
 )
 from cip.modules.passive_exposure.infrastructure.projection_payloads import (
     encode_text_values,
@@ -251,7 +251,7 @@ def _refresh_asset(session: Session, asset_id: UUID, *, now: datetime) -> None:
     record = session.get(PassiveAssetRecord, asset_id)
     if record is None:
         raise ValueError("passive asset disappeared during reconciliation")
-    snapshots = latest_passive_snapshots(session, asset_id)
+    snapshots = load_passive_snapshot_history(session, asset_id)
     reconciled = reconcile_passive_snapshots(snapshots, at=now)[0]
     link = reconciled.organization_link
     record.asset_kind = reconciled.asset.kind.value
