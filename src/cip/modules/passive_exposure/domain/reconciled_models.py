@@ -4,12 +4,14 @@ from dataclasses import dataclass
 from datetime import datetime
 from uuid import UUID
 
-from cip.modules.passive_exposure.domain.models import (
+from cip.modules.passive_exposure.domain.asset_models import (
+    PassiveAsset,
+    TechnologyObservation,
+)
+from cip.modules.passive_exposure.domain.enums import (
     AttributionRisk,
     OrganizationLinkStatus,
-    PassiveAsset,
     PassiveObservationState,
-    TechnologyObservation,
 )
 
 
