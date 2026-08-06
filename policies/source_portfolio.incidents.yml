@@ -1,0 +1,131 @@
+version: 1
+
+sources:
+  - source_id: sec-cyber-disclosures
+    display_name: SEC Cybersecurity Disclosures
+    canonical_url: https://data.sec.gov/submissions/
+    category: live_incidents
+    status: candidate
+    freshness_max_age_seconds: 3600
+    commercial_use_cases: &incident_use_cases
+      - incident_response_context
+      - cyber_resilience_context
+      - regulatory_notification_context
+    candidate_origin: lot-14
+    monthly_cost_limit: 0
+    metadata: &disabled_metadata
+      executable: false
+      authorization_status: missing
+      victim_content_collection: forbidden
+      threat_actor_interaction: forbidden
+      autonomous_outreach: forbidden
+    adapter:
+      adapter_id: sec-cyber-disclosures
+      adapter_version: "1"
+      provider_schema_version: public-filing-metadata-v1
+      modes: &modes
+        - historical_backfill
+        - incremental_cursor
+      canonical_output_types: &outputs
+        - incident
+        - incident_claim_snapshot
+      supports_corrections: true
+      supports_tombstones: false
+      supports_retractions: true
+      max_page_size: 100
+      max_window_days: 30
+      cost_per_request: 0
+
+  - source_id: official-company-incident-disclosures
+    display_name: Public Company Incident Disclosures
+    canonical_url: https://example.invalid/company-incidents/
+    category: live_incidents
+    status: candidate
+    freshness_max_age_seconds: 3600
+    commercial_use_cases: *incident_use_cases
+    candidate_origin: lot-14
+    monthly_cost_limit: 0
+    metadata: *disabled_metadata
+    adapter:
+      adapter_id: official-company-disclosures
+      adapter_version: "1"
+      provider_schema_version: official-incident-disclosure-v1
+      modes: *modes
+      canonical_output_types: *outputs
+      supports_corrections: true
+      supports_tombstones: false
+      supports_retractions: true
+      max_page_size: 100
+      max_window_days: 30
+      cost_per_request: 0
+
+  - source_id: regulator-cert-incident-notices
+    display_name: Regulator and CERT Incident Notices
+    canonical_url: https://example.invalid/regulator-cert-incidents/
+    category: live_incidents
+    status: candidate
+    freshness_max_age_seconds: 3600
+    commercial_use_cases: *incident_use_cases
+    candidate_origin: lot-14
+    monthly_cost_limit: 0
+    metadata: *disabled_metadata
+    adapter:
+      adapter_id: regulator-cert-notices
+      adapter_version: "1"
+      provider_schema_version: official-incident-disclosure-v1
+      modes: *modes
+      canonical_output_types: *outputs
+      supports_corrections: true
+      supports_tombstones: false
+      supports_retractions: true
+      max_page_size: 100
+      max_window_days: 30
+      cost_per_request: 0
+
+  - source_id: licensed-incident-reporting
+    display_name: Licensed Incident Reporting
+    canonical_url: https://example.invalid/licensed-incident-reporting/
+    category: live_incidents
+    status: candidate
+    freshness_max_age_seconds: 3600
+    commercial_use_cases: *incident_use_cases
+    candidate_origin: lot-14
+    monthly_cost_limit: 0
+    metadata: *disabled_metadata
+    adapter:
+      adapter_id: licensed-incident-reporting
+      adapter_version: "1"
+      provider_schema_version: public-incident-report-v1
+      modes: *modes
+      canonical_output_types: *outputs
+      supports_corrections: true
+      supports_tombstones: false
+      supports_retractions: true
+      max_page_size: 100
+      max_window_days: 30
+      cost_per_request: 0
+
+  - source_id: licensed-ransomware-metadata
+    display_name: Licensed Ransomware Claim Metadata
+    canonical_url: https://example.invalid/ransomware-metadata/
+    category: live_incidents
+    status: candidate
+    freshness_max_age_seconds: 1800
+    commercial_use_cases:
+      - incident_response_context
+      - cyber_resilience_context
+    candidate_origin: lot-14
+    monthly_cost_limit: 0
+    metadata: *disabled_metadata
+    adapter:
+      adapter_id: licensed-ransomware-metadata
+      adapter_version: "1"
+      provider_schema_version: ransomware-metadata-v1
+      modes: *modes
+      canonical_output_types: *outputs
+      supports_corrections: true
+      supports_tombstones: false
+      supports_retractions: true
+      max_page_size: 100
+      max_window_days: 30
+      cost_per_request: 0

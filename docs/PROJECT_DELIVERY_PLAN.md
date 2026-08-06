@@ -27,6 +27,7 @@ A lot is complete only when one final commit passes every applicable backend, fr
 - Provider payloads never write directly to company, score, alert, or opportunity tables.
 - Evidence, claims, observations, resolved facts, service mappings, signals, hypotheses, and analyst decisions remain distinct.
 - Global vulnerability knowledge never proves that an organization uses an affected product or is exposed.
+- An attacker allegation, public incident claim, or IOC never independently proves that an organization was compromised.
 - Duplicate reporting increases corroboration; it does not duplicate entities, incidents, signals, alerts, or opportunities.
 - Corrections, retractions, suppression, deletion, and authorization expiry propagate to derived data.
 - Historical backfills must not flood the current analyst Inbox.
@@ -60,7 +61,7 @@ A lot is complete only when one final commit passes every applicable backend, fr
 | 11 | Procurement history, providers, contracts, and renewal timing | `IMPLEMENTED_VALIDATED` |
 | 12 | Corporate public footprint, documents, search, and archives | `IMPLEMENTED_VALIDATED` |
 | 13 | Vulnerability knowledge and exploitation-state reconciliation | `IMPLEMENTED_VALIDATED` |
-| 14 | Live incidents, ransomware claims, and official confirmation | `PLANNED_LOCKED` |
+| 14 | Live incidents, ransomware claims, and official confirmation | `IMPLEMENTED_VALIDATED` |
 | 15 | Malicious infrastructure, phishing, IOC, and attack telemetry | `PLANNED_LOCKED` |
 | 16 | Passive exposure and technographic observations | `PLANNED_LOCKED` |
 | 17 | Vendor advisories, product versions, and applicability | `PLANNED_LOCKED` |
@@ -166,41 +167,9 @@ A lot is complete only when one final commit passes every applicable backend, fr
 
 ## Lot 14 — Live incidents, ransomware claims, and official confirmation
 
-**Status:** `PLANNED_LOCKED`
+**Status:** `IMPLEMENTED_VALIDATED`
 
-**Primary business outcome:** Build a temporal, source-aware incident layer that distinguishes allegation, third-party reporting, official confirmation, regulatory notice, denial, correction, and retraction so analysts can identify credible current incident-response, recovery, resilience, notification, legal, and communication needs without contacting threat actors or handling victim data.
-
-**Dependencies:** Lots 01–03, 08, 10, 12, and 13. Organization identity, immutable evidence, source health, public-footprint chronology, and vulnerability knowledge must already exist.
-
-**Deliverables:**
-
-- canonical incident, incident claim, affected-organization assertion, incident type, discovery date, occurrence window, publication time, confirmation time, status, and confidence;
-- claim types for attacker allegation, independent media report, researcher report, company disclosure, regulator notice, CERT/CSIRT notice, insurer or provider statement, denial, correction, and retraction;
-- strict separation between an allegation and a confirmed incident;
-- source ranking, corroboration groups, contradiction handling, and temporal state transitions;
-- metadata-only ransomware and extortion tracking from lawful public or licensed sources;
-- official confirmation paths from company statements, regulators, CERT/CSIRT notices, and public filings;
-- bounded incident summaries, public URLs, provenance, and retention without victim files, leaked data, credentials, negotiation portals, or private communications;
-- entity-resolution links that can remain candidate/review-required when organization identity is ambiguous;
-- protected incident list/detail API and analyst workspace;
-- governed source policies and portfolio entries with no invented authorization;
-- historical backfill that cannot create a current high-urgency opportunity merely because an old incident was imported.
-
-**Required tests:**
-
-- attacker allegation versus official confirmation;
-- independent corroboration versus syndicated duplicate reporting;
-- denial, correction, and retraction propagation;
-- ambiguous victim-name resolution and false-merge prevention;
-- occurrence, discovery, publication, and confirmation timestamp separation;
-- ransomware metadata without portal access or victim-file retrieval;
-- duplicate incident convergence and split review;
-- source precedence and contradiction handling;
-- historical backfill versus current urgency;
-- privacy, suppression, retention, and provenance;
-- reversible migrations, protected API, frontend build, and complete non-regression suite.
-
-**Exit gate:** An analyst can inspect one incident timeline and understand exactly what is alleged, reported, officially confirmed, denied, corrected, or retracted; which organization link is resolved or review-required; which public evidence supports each state; and why no victim data or threat-actor interaction entered the platform. No incident alone creates an autonomous outreach action.
+**Outcome:** Version `0.15.0` provides canonical incident records, immutable source claim revisions, explicit allegation/report/official-confirmation/denial/correction/retraction states, independent-source and syndication controls, reviewable organization links, separated occurrence/discovery/publication/confirmation times, reversible persistence, protected APIs, and an Incidents workspace. Official, public-reporting, and licensed-ransomware schemas are installed behind non-executable source candidates. No threat-actor interaction, victim content, compromised credential, private communication, autonomous opportunity creation, or outreach path is included.
 
 ## Lot 15 — Malicious infrastructure, phishing, IOC, and attack telemetry
 
@@ -751,3 +720,11 @@ A lot is complete only when one final commit passes every applicable backend, fr
 - security, performance, and full regression gates.
 
 **Exit gate:** Named owners approve a measured pilot result, all mandatory controls are operational, and production can be disabled or rolled back without data-integrity loss.
+
+## Current release boundary
+
+Version `0.15.0` includes lots `00–14`.
+
+Lot 14 installs the canonical incident capability, protected APIs, analyst workspace, immutable claim history, source mappings, and governance contracts. Every newly cataloged incident provider remains a non-executable candidate with missing authorization, no approved hosts or paths, and no collection schedule. The release does not authorize threat-actor interaction, ransomware portal access, victim-content retrieval, credential use, private communications, active scanning, automatic opportunity creation, or outreach.
+
+Lot 15 must start from the merged Lot 14 `main` commit and must preserve the rule that global technical telemetry cannot independently label a named organization compromised or exposed.

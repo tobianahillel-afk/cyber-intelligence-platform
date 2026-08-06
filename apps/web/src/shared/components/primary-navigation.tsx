@@ -10,6 +10,7 @@ const navigation = [
   { label: "Organizations", href: null },
   { label: "Research", href: "/research" },
   { label: "Vulnerabilities", href: "/vulnerabilities" },
+  { label: "Incidents", href: "/incidents" },
   { label: "Alerts", href: null },
   { label: "Contacts", href: null },
   { label: "Offers", href: null },

@@ -3,6 +3,7 @@ from __future__ import annotations
 from fastapi import FastAPI
 
 from cip import __version__
+from cip.modules.incident_intelligence.api.routes import router as incident_router
 from cip.modules.opportunities.api.routes import router as opportunities_router
 from cip.modules.organizations.api.routes import router as organizations_router
 from cip.modules.procurement_history.api.routes import router as procurement_history_router
@@ -22,7 +23,8 @@ def create_app() -> FastAPI:
             "operations API with explicit source governance, provenance, official "
             "organization identity, provider onboarding, source portfolio health, "
             "procurement contract history, public footprint evidence, canonical "
-            "vulnerability knowledge, and evidence-backed opportunity discovery."
+            "vulnerability knowledge, public incident intelligence, and "
+            "evidence-backed opportunity discovery."
         ),
     )
     application.include_router(source_governance_router)
@@ -31,6 +33,7 @@ def create_app() -> FastAPI:
     application.include_router(procurement_history_router)
     application.include_router(public_footprint_router)
     application.include_router(vulnerability_router)
+    application.include_router(incident_router)
     application.include_router(organizations_router)
     application.include_router(opportunities_router)
 
