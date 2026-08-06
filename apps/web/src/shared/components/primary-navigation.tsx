@@ -11,6 +11,7 @@ const navigation = [
   { label: "Research", href: "/research" },
   { label: "Vulnerabilities", href: "/vulnerabilities" },
   { label: "Incidents", href: "/incidents" },
+  { label: "Threat Intel", href: "/threat-intelligence" },
   { label: "Alerts", href: null },
   { label: "Contacts", href: null },
   { label: "Offers", href: null },
