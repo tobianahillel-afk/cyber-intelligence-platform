@@ -75,13 +75,15 @@ def encode_text_values(values: tuple[str, ...]) -> str:
 
 
 def decode_text_values(value: str) -> tuple[str, ...]:
-    loaded = json.loads(value)
-    valid_collection = isinstance(loaded, list) and all(
-        isinstance(item, str) for item in loaded
-    )
-    if not valid_collection:
+    loaded: object = json.loads(value)
+    if not isinstance(loaded, list):
         raise ValueError("persisted text collection is invalid")
-    return tuple(loaded)
+    decoded: list[str] = []
+    for item in loaded:
+        if not isinstance(item, str):
+            raise ValueError("persisted text collection is invalid")
+        decoded.append(item)
+    return tuple(decoded)
 
 
 def encode_uuid_values(values: tuple[UUID, ...]) -> str:
