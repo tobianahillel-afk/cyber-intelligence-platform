@@ -62,7 +62,7 @@ A lot is complete only when one final commit passes every applicable backend, fr
 | 12 | Corporate public footprint, documents, search, and archives | `IMPLEMENTED_VALIDATED` |
 | 13 | Vulnerability knowledge and exploitation-state reconciliation | `IMPLEMENTED_VALIDATED` |
 | 14 | Live incidents, ransomware claims, and official confirmation | `IMPLEMENTED_VALIDATED` |
-| 15 | Malicious infrastructure, phishing, IOC, and attack telemetry | `PLANNED_LOCKED` |
+| 15 | Malicious infrastructure, phishing, IOC, and attack telemetry | `IMPLEMENTED_VALIDATED` |
 | 16 | Passive exposure and technographic observations | `PLANNED_LOCKED` |
 | 17 | Vendor advisories, product versions, and applicability | `PLANNED_LOCKED` |
 | 18 | News, regulatory, corporate-disclosure, and change signals | `PLANNED_LOCKED` |
@@ -173,7 +173,7 @@ A lot is complete only when one final commit passes every applicable backend, fr
 
 ## Lot 15 — Malicious infrastructure, phishing, IOC, and attack telemetry
 
-**Status:** `PLANNED_LOCKED`
+**Status:** `IMPLEMENTED_VALIDATED`
 
 **Primary business outcome:** Normalize lawful public or licensed technical threat telemetry into time-bounded infrastructure and campaign context that supports defensive-service hypotheses without scanning prospects or treating an IOC as proof of compromise.
 
@@ -723,8 +723,8 @@ A lot is complete only when one final commit passes every applicable backend, fr
 
 ## Current release boundary
 
-Version `0.15.0` includes lots `00–14`.
+Version `0.16.0` includes lots `00–15`.
 
-Lot 14 installs the canonical incident capability, protected APIs, analyst workspace, immutable claim history, source mappings, and governance contracts. Every newly cataloged incident provider remains a non-executable candidate with missing authorization, no approved hosts or paths, and no collection schedule. The release does not authorize threat-actor interaction, ransomware portal access, victim-content retrieval, credential use, private communications, active scanning, automatic opportunity creation, or outreach.
+Lot 15 installs canonical threat-indicator knowledge, immutable source snapshots, explicit malicious/suspicious/benign/sinkholed/expired/historical/shared-infrastructure/unknown/retracted states, campaign and malware relations, reversible persistence, protected APIs, and the Threat Intelligence workspace. Selected STIX/TAXII, phishing, passive-DNS, certificate, and malware-metadata schemas are installed behind non-executable source candidates. The release does not authorize active prospect scanning, direct connections to suspicious infrastructure, malware or victim-file downloads, credential use, autonomous opportunity creation, or outreach. Global technical telemetry cannot independently label a named organization compromised or exposed.
 
-Lot 15 must start from the merged Lot 14 `main` commit and must preserve the rule that global technical telemetry cannot independently label a named organization compromised or exposed.
+Lot 16 must start from the merged Lot 15 `main` commit and must preserve the distinction among a technology mention, a passive observation, an observed version, vulnerability applicability, and verified exposure.
