@@ -141,37 +141,17 @@ def _reconcile_asset(
     complete_history = tuple(snapshots)
     if not complete_history:
         raise ValueError("passive reconciliation requires at least one snapshot")
-    latest_revisions = _latest_revisions(complete_history)
-    current = _effective_revisions(latest_revisions)
+    current = _effective_revisions(_latest_revisions(complete_history))
     identity = complete_history[0].asset
     if any(snapshot.asset.key != identity.key for snapshot in complete_history):
         raise ValueError("passive reconciliation cannot mix canonical assets")
-    selected = max(current, key=_revision_order)
-    active = tuple(snapshot for snapshot in current if _is_active(snapshot, at=at))
-    selected_active = max(active, key=_revision_order) if active else None
+    active = _active_snapshots(current, at=at)
+    observed_states = _observed_states(complete_history)
+    risks = _active_risks(active)
     expiry_snapshots = active or current
-    observed_states = tuple(
-        sorted(
-            {snapshot.state for snapshot in complete_history},
-            key=lambda state: state.value,
-        )
-    )
-    state = selected_active.state if selected_active is not None else selected.state
-    if state is PassiveObservationState.CURRENT and not active:
-        state = PassiveObservationState.EXPIRED
-    risks = tuple(
-        sorted(
-            {
-                risk
-                for snapshot in active
-                for risk in snapshot.organization_link.attribution_risks
-            },
-            key=lambda risk: risk.value,
-        )
-    )
     return ReconciledPassiveAsset(
         asset=identity,
-        state=state,
+        state=_reconciled_state(current, active),
         observed_states=observed_states,
         first_seen_at=min(snapshot.observed_at for snapshot in complete_history),
         last_seen_at=max(snapshot.observed_at for snapshot in complete_history),
@@ -191,6 +171,50 @@ def _reconcile_asset(
         technologies=_merge_technologies(active),
         services=_merge_services(active),
     )
+
+
+def _active_snapshots(
+    snapshots: tuple[PassiveObservationSnapshot, ...],
+    *,
+    at: datetime,
+) -> tuple[PassiveObservationSnapshot, ...]:
+    return tuple(snapshot for snapshot in snapshots if _is_active(snapshot, at=at))
+
+
+def _observed_states(
+    snapshots: tuple[PassiveObservationSnapshot, ...],
+) -> tuple[PassiveObservationState, ...]:
+    return tuple(
+        sorted(
+            {snapshot.state for snapshot in snapshots},
+            key=lambda state: state.value,
+        )
+    )
+
+
+def _active_risks(
+    snapshots: tuple[PassiveObservationSnapshot, ...],
+) -> tuple[AttributionRisk, ...]:
+    return tuple(
+        sorted(
+            {
+                risk
+                for snapshot in snapshots
+                for risk in snapshot.organization_link.attribution_risks
+            },
+            key=lambda risk: risk.value,
+        )
+    )
+
+
+def _reconciled_state(
+    current: tuple[PassiveObservationSnapshot, ...],
+    active: tuple[PassiveObservationSnapshot, ...],
+) -> PassiveObservationState:
+    selected = max(active or current, key=_revision_order)
+    if selected.state is PassiveObservationState.CURRENT and not active:
+        return PassiveObservationState.EXPIRED
+    return selected.state
 
 
 def _reconcile_organization_link(
