@@ -64,7 +64,7 @@ A lot is complete only when one final commit passes every applicable backend, fr
 | 13 | Vulnerability knowledge and exploitation-state reconciliation | `IMPLEMENTED_VALIDATED` |
 | 14 | Live incidents, ransomware claims, and official confirmation | `IMPLEMENTED_VALIDATED` |
 | 15 | Malicious infrastructure, phishing, IOC, and attack telemetry | `IMPLEMENTED_VALIDATED` |
-| 16 | Passive exposure and technographic observations | `IN_PROGRESS` |
+| 16 | Passive exposure and technographic observations | `IMPLEMENTED_VALIDATED` |
 | 17 | Vendor advisories, product versions, and applicability | `PLANNED_LOCKED` |
 | 18 | News, regulatory, corporate-disclosure, and change signals | `PLANNED_LOCKED` |
 | 19 | Providers, customers, partners, and supply-chain relationships | `PLANNED_LOCKED` |
@@ -206,9 +206,9 @@ A lot is complete only when one final commit passes every applicable backend, fr
 
 ## Lot 16 — Passive exposure and technographic observations
 
-**Status:** `IN_PROGRESS`
+**Status:** `IMPLEMENTED_VALIDATED`
 
-**Primary business outcome:** Prepare release candidate `0.17.0` with canonical passive assets, immutable provider observations, explicit chronology and expiration, source-aware organization attribution with reviewable risks, separated technology evidence levels, reversible persistence, protected APIs, and the Passive Exposure workspace without active validation or exposure claims.
+**Primary business outcome:** Release `0.17.0` with canonical passive assets, immutable provider observations, explicit chronology and expiration, source-aware organization attribution with reviewable risks, separated technology evidence levels, reversible persistence, protected APIs, and the Passive Exposure workspace without active validation or exposure claims.
 
 **Dependencies:** Lots 08, 10, 13, 15, and organization identity contracts.
 
@@ -729,8 +729,8 @@ A lot is complete only when one final commit passes every applicable backend, fr
 
 ## Current release boundary
 
-Version `0.17.0` is the Lot 16 release candidate. Lots `00–15` remain implemented and validated; Lot `16` remains `IN_PROGRESS` until one exact final commit passes every required backend, frontend, architecture, migration, security, documentation, and rollback gate.
+Version `0.17.0` implements and validates lots `00–16`. Lot 16 installs canonical passive assets, immutable provider observation snapshots, explicit current/historical/expired/corrected/retracted/deleted states, organization-link confidence and attribution risks, technology evidence levels, reversible persistence, protected APIs, and the Passive Exposure workspace.
 
-The Lot 16 candidate installs canonical passive assets, immutable provider observation snapshots, explicit current/historical/expired/corrected/retracted/deleted states, organization-link confidence and attribution risks, technology evidence levels, reversible persistence, protected APIs, and the Passive Exposure workspace. Its provider schemas are installed behind unauthorized, unscheduled, non-executable candidates without registered adapters. The candidate does not authorize active probes, authentication, service connection, exploitation, credential use, applicability assessment, exposure verification, autonomous opportunity creation, or outreach. Passive metadata cannot independently label a named organization vulnerable, exposed, or compromised.
+Its provider schemas remain behind unauthorized, unscheduled, non-executable candidates without registered adapters. The release does not authorize active probes, authentication, service connection, exploitation, credential use, applicability assessment, exposure verification, autonomous opportunity creation, or outreach. Passive metadata cannot independently label a named organization vulnerable, exposed, or compromised.
 
-Lot 17 must start from the merged Lot 16 `main` commit and must preserve the distinction between observed technology evidence, vendor version ranges, applicability, and verified exposure.
+Lot 17 is the next locked implementation lot. It must start from the merged Lot 16 `main` commit and preserve the distinction between observed technology evidence, vendor version ranges, applicability, and verified exposure.
