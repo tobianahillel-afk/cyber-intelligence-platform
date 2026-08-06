@@ -61,6 +61,15 @@ _TERMINAL_STATES = {
     ProviderObservationState.RETRACTED,
     ProviderObservationState.DELETED,
 }
+_TECHNOLOGY_KINDS = {
+    ProviderObservationKind.PRODUCT,
+    ProviderObservationKind.VERSION,
+    ProviderObservationKind.TECHNOLOGY_MENTION,
+}
+_SERVICE_KINDS = {
+    ProviderObservationKind.SERVICE,
+    ProviderObservationKind.PORT,
+}
 
 
 class ProviderTechnologyMetadata(BaseModel):
@@ -119,73 +128,13 @@ class PassiveAssetMetadataRecord(BaseModel):
 
     @model_validator(mode="after")
     def validate_passive_metadata_only(self) -> PassiveAssetMetadataRecord:
-        self.observed_at = require_aware_utc(
-            self.observed_at,
-            field_name="observed_at",
-        )
-        self.published_at = require_aware_utc(
-            self.published_at,
-            field_name="published_at",
-        )
-        self.modified_at = require_aware_utc(
-            self.modified_at,
-            field_name="modified_at",
-        )
-        if self.expires_at is not None:
-            self.expires_at = require_aware_utc(
-                self.expires_at,
-                field_name="expires_at",
-            )
+        _normalize_timestamps(self)
         _validate_source_url(self.source_url)
-        if self.published_at < self.observed_at:
-            raise ValueError("published_at cannot precede observed_at")
-        if self.modified_at < self.published_at:
-            raise ValueError("modified_at cannot precede published_at")
-        if self.expires_at is not None and self.expires_at < self.observed_at:
-            raise ValueError("expires_at cannot precede observed_at")
-        if self.state in _TERMINAL_STATES and self.active:
-            raise ValueError("expired, retracted, or deleted records cannot be active")
-        if self.state is ProviderObservationState.HISTORICAL:
-            if self.active:
-                raise ValueError("historical records cannot be active")
-            if not self.historical_only:
-                raise ValueError("historical records must be historical-only")
-        if self.historical_only and self.state is ProviderObservationState.CURRENT:
-            raise ValueError("historical-only records cannot be current")
-        if self.binary_payload is not None or self.credential is not None:
-            raise ValueError("binary payloads and credentials are forbidden")
-        if any(
-            (
-                self.active_probe,
-                self.direct_connection,
-                self.authenticated_enumeration,
-                self.access_control_bypass,
-                self.exploit_attempt,
-            )
-        ):
-            raise ValueError("active or authenticated validation is forbidden")
-        if self.applicability_assessed or self.exposure_verified:
-            raise ValueError("applicability and exposure are not assessed in Lot 16")
-        if (self.port is None) != (self.protocol is None):
-            raise ValueError("port and protocol must be provided together")
-        if self.observation_kind in {
-            ProviderObservationKind.SERVICE,
-            ProviderObservationKind.PORT,
-        } and self.port is None:
-            raise ValueError("service observations require port and protocol")
-        if self.observation_kind in {
-            ProviderObservationKind.PRODUCT,
-            ProviderObservationKind.VERSION,
-            ProviderObservationKind.TECHNOLOGY_MENTION,
-        } and self.technology is None:
-            raise ValueError("technology observations require technology metadata")
-        if self.observation_kind is ProviderObservationKind.VERSION:
-            if (
-                self.technology is None
-                or self.technology.evidence_level
-                is not ProviderTechnologyLevel.OBSERVED_VERSION
-            ):
-                raise ValueError("version observations require observed-version metadata")
+        _validate_timestamp_order(self)
+        _validate_record_state(self)
+        _validate_passive_safety(self)
+        _validate_service_metadata(self)
+        _validate_technology_metadata(self)
         return self
 
 
@@ -219,6 +168,83 @@ class CloudAssetMetadataRecord(PassiveAssetMetadataRecord):
                 "shared cloud tenancy requires shared-hosting attribution risk"
             )
         return self
+
+
+def _normalize_timestamps(record: PassiveAssetMetadataRecord) -> None:
+    record.observed_at = require_aware_utc(
+        record.observed_at,
+        field_name="observed_at",
+    )
+    record.published_at = require_aware_utc(
+        record.published_at,
+        field_name="published_at",
+    )
+    record.modified_at = require_aware_utc(
+        record.modified_at,
+        field_name="modified_at",
+    )
+    if record.expires_at is not None:
+        record.expires_at = require_aware_utc(
+            record.expires_at,
+            field_name="expires_at",
+        )
+
+
+def _validate_timestamp_order(record: PassiveAssetMetadataRecord) -> None:
+    if record.published_at < record.observed_at:
+        raise ValueError("published_at cannot precede observed_at")
+    if record.modified_at < record.published_at:
+        raise ValueError("modified_at cannot precede published_at")
+    if record.expires_at is not None and record.expires_at < record.observed_at:
+        raise ValueError("expires_at cannot precede observed_at")
+
+
+def _validate_record_state(record: PassiveAssetMetadataRecord) -> None:
+    if record.state in _TERMINAL_STATES and record.active:
+        raise ValueError("expired, retracted, or deleted records cannot be active")
+    if record.state is ProviderObservationState.HISTORICAL:
+        if record.active:
+            raise ValueError("historical records cannot be active")
+        if not record.historical_only:
+            raise ValueError("historical records must be historical-only")
+    if record.historical_only and record.state is ProviderObservationState.CURRENT:
+        raise ValueError("historical-only records cannot be current")
+
+
+def _validate_passive_safety(record: PassiveAssetMetadataRecord) -> None:
+    if record.binary_payload is not None or record.credential is not None:
+        raise ValueError("binary payloads and credentials are forbidden")
+    if any(
+        (
+            record.active_probe,
+            record.direct_connection,
+            record.authenticated_enumeration,
+            record.access_control_bypass,
+            record.exploit_attempt,
+        )
+    ):
+        raise ValueError("active or authenticated validation is forbidden")
+    if record.applicability_assessed or record.exposure_verified:
+        raise ValueError("applicability and exposure are not assessed in Lot 16")
+
+
+def _validate_service_metadata(record: PassiveAssetMetadataRecord) -> None:
+    if (record.port is None) != (record.protocol is None):
+        raise ValueError("port and protocol must be provided together")
+    if record.observation_kind in _SERVICE_KINDS and record.port is None:
+        raise ValueError("service observations require port and protocol")
+
+
+def _validate_technology_metadata(record: PassiveAssetMetadataRecord) -> None:
+    if record.observation_kind in _TECHNOLOGY_KINDS and record.technology is None:
+        raise ValueError("technology observations require technology metadata")
+    if record.observation_kind is ProviderObservationKind.VERSION:
+        if (
+            record.technology is None
+            or record.technology.evidence_level
+            is not ProviderTechnologyLevel.OBSERVED_VERSION
+        ):
+            raise ValueError("version observations require observed-version metadata")
 
 
 def _validate_source_url(value: str) -> None:
