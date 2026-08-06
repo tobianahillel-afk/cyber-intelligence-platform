@@ -2,7 +2,7 @@
 
 ## Status
 
-Implementation complete pending final CI validation and release merge.
+`IMPLEMENTED_VALIDATED` for release `0.17.0`, subject to the final pull-request head passing every repository gate before merge.
 
 ## Objective
 
@@ -217,8 +217,10 @@ The Lot 16 suite covers:
 - frontend type checking and production build;
 - full repository non-regression and aggregate coverage gate.
 
+The successful release-candidate evidence is recorded in `LOT_16_VALIDATION_REPORT.md`. Final merge authorization remains tied to a complete CI run on the exact final documentation head.
+
 ## Release boundary
 
-The target release is `0.17.0`.
+The release is `0.17.0`.
 
 Merging this software does not authorize any provider. Provider activation requires a separate review of the exact legal basis, licence, contract, fields, hosts, paths, credentials, quotas, retention, cost, security controls and collection schedule.
