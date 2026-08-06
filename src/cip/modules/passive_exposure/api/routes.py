@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from dataclasses import dataclass
 from typing import Annotated
 from uuid import UUID
 
@@ -35,29 +36,79 @@ router = APIRouter(
 SessionDependency = Annotated[Session, Depends(get_database_session)]
 
 
-def _passive_asset_filters(
+@dataclass(frozen=True, slots=True)
+class _PassiveIdentityFilters:
+    asset_kind: str | None
+    organization_link_status: str | None
+    attribution_risk: str | None
+    organization_id: UUID | None
+    query: str | None
+
+
+@dataclass(frozen=True, slots=True)
+class _PassiveStateFilters:
+    state: str | None
+    active: bool | None
+    historical_only: bool | None
+    has_conflict: bool | None
+
+
+def _passive_identity_filters(
     asset_kind: PassiveAssetKind | None = None,
-    state: PassiveObservationState | None = None,
     organization_link_status: OrganizationLinkStatus | None = None,
     attribution_risk: AttributionRisk | None = None,
     organization_id: UUID | None = None,
-    active: bool | None = None,
-    historical_only: bool | None = None,
-    has_conflict: bool | None = None,
     query: Annotated[str | None, Query(alias="q", max_length=500)] = None,
-) -> PassiveAssetFilters:
-    return PassiveAssetFilters(
+) -> _PassiveIdentityFilters:
+    return _PassiveIdentityFilters(
         asset_kind=asset_kind.value if asset_kind else None,
-        state=state.value if state else None,
         organization_link_status=(
             organization_link_status.value if organization_link_status else None
         ),
         attribution_risk=attribution_risk.value if attribution_risk else None,
         organization_id=organization_id,
+        query=query,
+    )
+
+
+def _passive_state_filters(
+    state: PassiveObservationState | None = None,
+    active: bool | None = None,
+    historical_only: bool | None = None,
+    has_conflict: bool | None = None,
+) -> _PassiveStateFilters:
+    return _PassiveStateFilters(
+        state=state.value if state else None,
         active=active,
         historical_only=historical_only,
         has_conflict=has_conflict,
-        query=query,
+    )
+
+
+IdentityFilterDependency = Annotated[
+    _PassiveIdentityFilters,
+    Depends(_passive_identity_filters),
+]
+StateFilterDependency = Annotated[
+    _PassiveStateFilters,
+    Depends(_passive_state_filters),
+]
+
+
+def _passive_asset_filters(
+    identity: IdentityFilterDependency,
+    state: StateFilterDependency,
+) -> PassiveAssetFilters:
+    return PassiveAssetFilters(
+        asset_kind=identity.asset_kind,
+        state=state.state,
+        organization_link_status=identity.organization_link_status,
+        attribution_risk=identity.attribution_risk,
+        organization_id=identity.organization_id,
+        active=state.active,
+        historical_only=state.historical_only,
+        has_conflict=state.has_conflict,
+        query=identity.query,
     )
 
 
