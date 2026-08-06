@@ -22,6 +22,10 @@ from cip.modules.threat_telemetry.infrastructure.models import (
     ThreatIndicatorRelationRecord,
     ThreatIndicatorSnapshotRecord,
 )
+from cip.modules.threat_telemetry.infrastructure.persistence_time import (
+    normalize_optional_utc,
+    normalize_utc,
+)
 
 
 def list_threat_indicators(
@@ -170,10 +174,10 @@ def _summary(record: ThreatIndicatorRecord) -> IndicatorSummary:
         observed_states=tuple(
             value for value in record.observed_states.split(",") if value
         ),
-        first_seen_at=record.first_seen_at,
-        last_seen_at=record.last_seen_at,
-        expires_at=record.expires_at,
-        last_updated_at=record.last_updated_at,
+        first_seen_at=normalize_optional_utc(record.first_seen_at),
+        last_seen_at=normalize_optional_utc(record.last_seen_at),
+        expires_at=normalize_optional_utc(record.expires_at),
+        last_updated_at=normalize_utc(record.last_updated_at),
         source_count=record.source_count,
         independent_source_count=record.independent_source_count,
         active=record.active,
@@ -194,11 +198,11 @@ def _snapshot_view(
         source_record_key=record.source_record_key,
         source_url=record.source_url,
         state=record.state,
-        published_at=record.published_at,
-        modified_at=record.modified_at,
-        first_seen_at=record.first_seen_at,
-        last_seen_at=record.last_seen_at,
-        expires_at=record.expires_at,
+        published_at=normalize_utc(record.published_at),
+        modified_at=normalize_utc(record.modified_at),
+        first_seen_at=normalize_optional_utc(record.first_seen_at),
+        last_seen_at=normalize_optional_utc(record.last_seen_at),
+        expires_at=normalize_optional_utc(record.expires_at),
         independence_key=record.independence_key,
         sensor_scope=record.sensor_scope,
         confidence=record.confidence,
