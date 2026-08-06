@@ -147,6 +147,35 @@ def test_rejects_active_or_sensitive_provider_payloads(field: str, value: object
         PassiveExposureMetadataRecord(**payload)
 
 
+@pytest.mark.parametrize(
+    "overrides",
+    [
+        {"state": ProviderObservationState.HISTORICAL},
+        {"state": ProviderObservationState.HISTORICAL, "active": False},
+        {"state": ProviderObservationState.CURRENT, "historical_only": True},
+        {"state": ProviderObservationState.RETRACTED},
+    ],
+)
+def test_rejects_inconsistent_provider_temporal_states(
+    overrides: dict[str, object],
+) -> None:
+    with pytest.raises(ValidationError):
+        PassiveExposureMetadataRecord(**_base_payload(**overrides))
+
+
+def test_accepts_explicit_inactive_historical_provider_record() -> None:
+    record = PassiveExposureMetadataRecord(
+        **_base_payload(
+            state=ProviderObservationState.HISTORICAL,
+            active=False,
+            historical_only=True,
+        )
+    )
+
+    assert record.active is False
+    assert record.historical_only is True
+
+
 def test_shared_cloud_tenancy_requires_explicit_attribution_risk() -> None:
     with pytest.raises(ValidationError, match="shared cloud tenancy"):
         CloudAssetMetadataRecord(
