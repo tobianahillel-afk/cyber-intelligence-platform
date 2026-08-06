@@ -18,6 +18,7 @@ _REDIRECT_STATUSES = {
     httpx.codes.TEMPORARY_REDIRECT,
     httpx.codes.PERMANENT_REDIRECT,
 }
+_TOMBSTONE_STATUSES = {httpx.codes.NOT_FOUND, httpx.codes.GONE}
 
 
 class PublicWebResponseError(RuntimeError):
@@ -37,6 +38,7 @@ class PublicWebFetchResult:
     etag: str | None
     last_modified: str | None
     redirects: int
+    status_code: int = 200
 
 
 @dataclass(frozen=True, slots=True)
@@ -127,6 +129,7 @@ class PublicWebClient:
             etag=_header(response, "etag"),
             last_modified=_header(response, "last-modified"),
             redirects=0,
+            status_code=response.status_code,
         )
 
     def fetch_page(
@@ -166,6 +169,17 @@ class PublicWebClient:
                 redirects += 1
                 current = CanonicalUrl(urljoin(current, location)).value
                 continue
+            if response.status_code in _TOMBSTONE_STATUSES:
+                return PublicWebFetchResult(
+                    requested_url=requested,
+                    fetched_url=current,
+                    body=b"",
+                    mime_type="application/x-public-resource-tombstone",
+                    etag=_header(response, "etag"),
+                    last_modified=_header(response, "last-modified"),
+                    redirects=redirects,
+                    status_code=response.status_code,
+                )
             response.raise_for_status()
             mime_type = _content_type(response)
             body = _bounded_body(response, max_bytes=target.max_resource_bytes)
@@ -184,6 +198,7 @@ class PublicWebClient:
                 etag=_header(response, "etag"),
                 last_modified=_header(response, "last-modified"),
                 redirects=redirects,
+                status_code=response.status_code,
             )
 
 
