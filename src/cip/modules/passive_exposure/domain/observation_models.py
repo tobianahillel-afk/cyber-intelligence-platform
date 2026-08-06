@@ -90,13 +90,15 @@ class PassiveObservationSnapshot:
             PassiveObservationKind.TECHNOLOGY_MENTION,
         } and self.technology is None:
             raise ValueError("technology observations require technology metadata")
-        if self.observation_kind is PassiveObservationKind.VERSION:
-            if (
+        if (
+            self.observation_kind is PassiveObservationKind.VERSION
+            and (
                 self.technology is None
                 or self.technology.evidence_level
                 is not TechnologyEvidenceLevel.OBSERVED_VERSION
-            ):
-                raise ValueError("version observations require observed-version evidence")
+            )
+        ):
+            raise ValueError("version observations require observed-version evidence")
         if self.independence_key is None:
             object.__setattr__(self, "independence_key", source_id)
         else:
