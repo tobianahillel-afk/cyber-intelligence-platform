@@ -10,6 +10,7 @@ from cip.adapters.sources.passive_exposure_catalogs.schemas import (
 from cip.modules.passive_exposure.domain.models import (
     AttributionRisk,
     OrganizationLink,
+    OrganizationLinkMethod,
     OrganizationLinkStatus,
     PassiveAsset,
     PassiveAssetKind,
@@ -119,11 +120,8 @@ def _merge_attribution_risks(
     link: OrganizationLink,
     provider_risks: tuple[ProviderAttributionRisk, ...],
 ) -> OrganizationLink:
-    risks = tuple(
-        dict.fromkeys(
-            (*link.attribution_risks, *(AttributionRisk(risk) for risk in provider_risks))
-        )
-    )
+    mapped_risks = tuple(AttributionRisk(risk.value) for risk in provider_risks)
+    risks = tuple(dict.fromkeys((*link.attribution_risks, *mapped_risks)))
     status = link.status
     if status is OrganizationLinkStatus.EXACT and risks:
         status = OrganizationLinkStatus.REVIEW_REQUIRED
@@ -140,6 +138,6 @@ def _merge_attribution_risks(
 def _unresolved_link() -> OrganizationLink:
     return OrganizationLink(
         status=OrganizationLinkStatus.UNRESOLVED,
-        method="none",
+        method=OrganizationLinkMethod.NONE,
         confidence=0.0,
     )
