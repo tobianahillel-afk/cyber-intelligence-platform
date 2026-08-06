@@ -61,6 +61,25 @@ def test_rejects_invalid_cloud_resource_namespaces(value: str) -> None:
         normalize_cloud_resource(value)
 
 
+def test_normalizes_provider_record_identifiers() -> None:
+    snapshot = _snapshot(
+        source_id="  licensed-passive-provider  ",
+        source_record_key="  record-1  ",
+        source_url="  https://provider.example/records/1  ",
+        independence_key="  upstream-group  ",
+        supersedes_record_key="  previous-record  ",
+    )
+
+    assert snapshot.source_id == "licensed-passive-provider"
+    assert snapshot.source_record_key == "record-1"
+    assert snapshot.source_url == "https://provider.example/records/1"
+    assert snapshot.independence_key == "upstream-group"
+    assert snapshot.supersedes_record_key == "previous-record"
+
+    with pytest.raises(ValueError, match="source_id"):
+        _snapshot(source_id="   ")
+
+
 def test_exact_organization_link_requires_exact_evidence_without_risk() -> None:
     link = OrganizationLink(
         status=OrganizationLinkStatus.EXACT,
