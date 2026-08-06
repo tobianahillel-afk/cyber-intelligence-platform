@@ -1,0 +1,20 @@
+version: 1
+
+templates:
+  - id: organization-security-footprint
+    version: 1
+    enabled: false
+    purpose: corporate-public-footprint
+    query_pattern: '"{organization}" cybersecurity architecture'
+
+  - id: organization-technology-footprint
+    version: 1
+    enabled: false
+    purpose: corporate-public-footprint
+    query_pattern: '"{organization}" technology platform cloud'
+
+  - id: organization-public-change
+    version: 1
+    enabled: false
+    purpose: corporate-public-footprint
+    query_pattern: '"{organization}" transformation acquisition partnership'
