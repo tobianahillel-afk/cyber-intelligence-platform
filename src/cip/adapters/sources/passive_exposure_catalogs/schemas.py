@@ -62,7 +62,7 @@ _TERMINAL_STATES = {
 
 
 class ProviderTechnologyMetadata(BaseModel):
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
 
     evidence_level: ProviderTechnologyLevel
     product_name: str = Field(min_length=1, max_length=300)
@@ -80,7 +80,7 @@ class ProviderTechnologyMetadata(BaseModel):
 
 
 class PassiveAssetMetadataRecord(BaseModel):
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
 
     record_id: str = Field(min_length=1, max_length=500)
     source_url: str = Field(pattern=r"^https://", max_length=2_048)
@@ -183,9 +183,7 @@ class CloudAssetMetadataRecord(PassiveAssetMetadataRecord):
     def validate_cloud_identity_and_tenancy(self) -> CloudAssetMetadataRecord:
         if self.asset_kind is not ProviderAssetKind.CLOUD_RESOURCE:
             raise ValueError("cloud metadata requires a cloud-resource asset")
-        provider = self.cloud_provider.strip().casefold()
-        if not provider:
-            raise ValueError("cloud_provider cannot be blank")
+        provider = self.cloud_provider.casefold()
         namespace = self.asset_value.partition(":")[0].casefold()
         if namespace != provider:
             raise ValueError("cloud resource namespace must match cloud_provider")
