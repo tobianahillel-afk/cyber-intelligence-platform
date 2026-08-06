@@ -239,11 +239,11 @@ def _merge_technologies(
 def _merge_services(
     snapshots: tuple[PassiveObservationSnapshot, ...],
 ) -> tuple[ObservedService, ...]:
-    services = {
-        (snapshot.port, snapshot.protocol)
-        for snapshot in snapshots
-        if snapshot.port is not None and snapshot.protocol is not None
-    }
+    services: set[tuple[int, str]] = set()
+    for snapshot in snapshots:
+        if snapshot.port is None or snapshot.protocol is None:
+            continue
+        services.add((snapshot.port, snapshot.protocol))
     return tuple(
         ObservedService(port=port, protocol=protocol)
         for port, protocol in sorted(services)
