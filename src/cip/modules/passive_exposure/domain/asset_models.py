@@ -102,15 +102,21 @@ class TechnologyObservation:
         object.__setattr__(self, "product_name", product_name)
         object.__setattr__(self, "product_version", product_version)
         object.__setattr__(self, "component_name", component_name)
-        if self.evidence_level is TechnologyEvidenceLevel.TECHNOLOGY_MENTION:
-            if product_name is None:
-                raise ValueError("technology mentions require a product name")
-        if self.evidence_level is TechnologyEvidenceLevel.PASSIVE_OBSERVATION:
-            if product_name is None:
-                raise ValueError("passive technology observations require a product name")
-        if self.evidence_level is TechnologyEvidenceLevel.OBSERVED_VERSION:
-            if product_name is None or product_version is None:
-                raise ValueError("observed versions require product and version")
+        if (
+            self.evidence_level is TechnologyEvidenceLevel.TECHNOLOGY_MENTION
+            and product_name is None
+        ):
+            raise ValueError("technology mentions require a product name")
+        if (
+            self.evidence_level is TechnologyEvidenceLevel.PASSIVE_OBSERVATION
+            and product_name is None
+        ):
+            raise ValueError("passive technology observations require a product name")
+        if (
+            self.evidence_level is TechnologyEvidenceLevel.OBSERVED_VERSION
+            and (product_name is None or product_version is None)
+        ):
+            raise ValueError("observed versions require product and version")
 
 
 def normalize_asset(kind: PassiveAssetKind, value: str) -> str:
