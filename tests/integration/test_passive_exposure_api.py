@@ -208,7 +208,14 @@ def test_replay_is_idempotent_and_correction_preserves_history(
     assert "corrected" in {
         observation["state"] for observation in detail["observations"]
     }
-    assert detail["asset"]["exposure_assessment"] == "not_assessed"
+    projected = detail["asset"]
+    assert projected["state"] == "current"
+    assert projected["organization_link_status"] == "exact"
+    assert projected["exact_organization_id"] == str(organization_ids[1])
+    assert projected["candidate_organization_ids"] == []
+    assert projected["independent_source_count"] == 1
+    assert projected["has_conflict"] is True
+    assert projected["exposure_assessment"] == "not_assessed"
 
 
 def test_missing_passive_asset_returns_not_found(
