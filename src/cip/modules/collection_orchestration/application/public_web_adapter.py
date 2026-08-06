@@ -23,6 +23,7 @@ from cip.modules.collection_orchestration.application.ports import (
     AdapterCollectionBatch,
     AdapterExecutionError,
 )
+from cip.modules.public_footprint.domain import PublicResourceKind
 from cip.modules.source_governance.domain.models import DataCategory
 from cip.modules.source_governance.infrastructure.registry import SourceRegistryEntry
 
@@ -119,10 +120,12 @@ def _checkpoint_from_payload(
         content_hash = raw_state.get("content_hash_sha256")
         version_id = raw_state.get("version_id")
         canonical_url = raw_state.get("canonical_url")
+        resource_kind = raw_state.get("resource_kind", PublicResourceKind.WEB_PAGE.value)
         if (
             not isinstance(content_hash, str)
             or not isinstance(version_id, str)
             or not isinstance(canonical_url, str)
+            or not isinstance(resource_kind, str)
         ):
             raise AdapterExecutionError(
                 "public web checkpoint page state is invalid",
@@ -134,6 +137,7 @@ def _checkpoint_from_payload(
                 content_hash_sha256=content_hash,
                 version_id=UUID(version_id),
                 canonical_url=canonical_url,
+                resource_kind=PublicResourceKind(resource_kind),
             )
         except ValueError as exc:
             raise AdapterExecutionError(
@@ -151,6 +155,7 @@ def _checkpoint_payload(checkpoint: PublicWebCheckpoint) -> dict[str, object]:
                 "content_hash_sha256": state.content_hash_sha256,
                 "version_id": str(state.version_id),
                 "canonical_url": state.canonical_url,
+                "resource_kind": state.resource_kind.value,
             }
             for url, state in sorted(checkpoint.pages.items())
         }
