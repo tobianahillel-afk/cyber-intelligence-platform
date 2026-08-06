@@ -7,6 +7,7 @@ from uuid import UUID
 
 from cip.adapters.sources.public_web.client import PublicWebFetchResult
 from cip.adapters.sources.public_web.parsing import (
+    ExtractedHtml,
     contains_credential_marker,
     extract_html,
 )
@@ -27,6 +28,7 @@ from cip.modules.public_footprint.domain import (
 from cip.modules.raw_observations.domain.entities import RawObservation
 from cip.modules.source_governance.domain.models import DataCategory
 
+_TOMBSTONE_MIME_TYPE = "application/x-public-resource-tombstone"
 _TECHNOLOGY_TERMS = (
     "amazon web services",
     "aws",
@@ -55,6 +57,7 @@ class PreviousPageState:
     content_hash_sha256: str
     version_id: UUID
     canonical_url: str
+    resource_kind: PublicResourceKind
 
 
 @dataclass(frozen=True, slots=True)
@@ -73,47 +76,106 @@ def map_public_page(
     retention_until: datetime,
     previous: PreviousPageState | None,
 ) -> MappedPublicPage:
-    content_hash = sha256(result.body).hexdigest()
-    quarantined = contains_credential_marker(result.body)
-    unchanged = bool(
-        previous is not None
-        and previous.content_hash_sha256 == content_hash
-        and previous.canonical_url == result.fetched_url
-    )
-    retrieval_state = _retrieval_state(
-        quarantined=quarantined,
-        unchanged=unchanged,
+    tombstoned = _is_tombstone(result)
+    content_hash = _content_hash(result)
+    quarantined = not tombstoned and contains_credential_marker(result.body)
+    unchanged = _is_unchanged(previous, result, content_hash)
+    extracted = _extracted_html(result, quarantined=quarantined, tombstoned=tombstoned)
+    indexable_text = _indexable_text(extracted)
+    resource = _resource(
+        target,
+        result,
+        collected_at=collected_at,
         previous=previous,
+        quarantined=quarantined,
+        tombstoned=tombstoned,
+        unchanged=unchanged,
+        extracted=extracted,
     )
-    extracted = (
-        extract_html(result.body)
-        if result.mime_type == "text/html" and not quarantined
-        else None
+    version = _version(
+        resource,
+        result,
+        collected_at=collected_at,
+        previous=previous,
+        unchanged=unchanged,
+        content_hash=content_hash,
+        indexable_text=indexable_text,
+        extracted=extracted,
+        tombstoned=tombstoned,
     )
-    indexable_text = (
-        extracted.text if extracted is not None and not extracted.noindex else ""
+    claims = () if tombstoned else _claims(target, resource, version, indexable_text)
+    projection = PublicFootprintProjection(resource=resource, version=version, claims=claims)
+    observation = (
+        None
+        if unchanged
+        else _observation(
+            target,
+            result,
+            collection_job_id=collection_job_id,
+            collected_at=collected_at,
+            retention_until=retention_until,
+            content_hash=content_hash,
+            extracted=extracted,
+            tombstoned=tombstoned,
+        )
     )
-    resource = PublicResource(
+    return MappedPublicPage(
+        projection=projection,
+        observation=observation,
+        content_hash_sha256=content_hash,
+    )
+
+
+def _resource(
+    target: PublicWebTarget,
+    result: PublicWebFetchResult,
+    *,
+    collected_at: datetime,
+    previous: PreviousPageState | None,
+    quarantined: bool,
+    tombstoned: bool,
+    unchanged: bool,
+    extracted: ExtractedHtml | None,
+) -> PublicResource:
+    kind = _resource_kind(result, previous)
+    return PublicResource(
         organization_id=target.organization_id,
         source_id=target.id,
         source_record_key=result.requested_url,
         canonical_url=result.fetched_url,
         source_url=result.requested_url,
-        kind=(
-            PublicResourceKind.DOCUMENT
-            if result.mime_type == "application/pdf"
-            else PublicResourceKind.WEB_PAGE
-        ),
+        kind=kind,
         discovery_method=DiscoveryMethod.SITEMAP,
         first_discovered_at=collected_at,
         last_seen_at=collected_at,
         access_state=(
-            ResourceAccessState.UNKNOWN if quarantined else ResourceAccessState.PUBLIC
+            ResourceAccessState.UNKNOWN
+            if quarantined or tombstoned
+            else ResourceAccessState.PUBLIC
         ),
-        retrieval_state=retrieval_state,
+        retrieval_state=_retrieval_state(
+            quarantined=quarantined,
+            tombstoned=tombstoned,
+            unchanged=unchanged,
+            previous=previous,
+        ),
         title=extracted.title if extracted is not None else None,
     )
-    version = PublicResourceVersion(
+
+
+def _version(
+    resource: PublicResource,
+    result: PublicWebFetchResult,
+    *,
+    collected_at: datetime,
+    previous: PreviousPageState | None,
+    unchanged: bool,
+    content_hash: str,
+    indexable_text: str,
+    extracted: ExtractedHtml | None,
+    tombstoned: bool,
+) -> PublicResourceVersion:
+    return PublicResourceVersion(
         resource_key=resource.identity_key,
         source_url=result.fetched_url,
         content_hash_sha256=content_hash,
@@ -127,7 +189,11 @@ def map_public_page(
             if indexable_text
             else None
         ),
-        excerpt=extracted.excerpt if extracted is not None else None,
+        excerpt=(
+            f"HTTP {result.status_code} tombstone"
+            if tombstoned
+            else extracted.excerpt if extracted is not None else None
+        ),
         source_locator=result.fetched_url,
         supersedes_version_id=_predecessor_id(
             previous,
@@ -135,41 +201,93 @@ def map_public_page(
             unchanged=unchanged,
         ),
     )
-    claims = _claims(target, resource, version, indexable_text)
-    projection = PublicFootprintProjection(
-        resource=resource,
-        version=version,
-        claims=claims,
+
+
+def _observation(
+    target: PublicWebTarget,
+    result: PublicWebFetchResult,
+    *,
+    collection_job_id: UUID,
+    collected_at: datetime,
+    retention_until: datetime,
+    content_hash: str,
+    extracted: ExtractedHtml | None,
+    tombstoned: bool,
+) -> RawObservation:
+    categories = {DataCategory.OFFICIAL_DOCUMENT_DISCOVERY}
+    if not tombstoned:
+        categories.add(DataCategory.TECHNOLOGY_OBSERVATION)
+    return RawObservation(
+        source_id=target.id,
+        adapter_id="public-web-sitemap",
+        adapter_version="1",
+        collection_job_id=collection_job_id,
+        source_record_type=(
+            "public_web_tombstone" if tombstoned else "public_web_resource"
+        ),
+        source_record_key=result.requested_url,
+        source_url=result.fetched_url,
+        payload_hash_sha256=content_hash,
+        data_categories=frozenset(categories),
+        collected_at=collected_at,
+        observed_at=collected_at,
+        source_updated_at=collected_at,
+        schema_fingerprint=(
+            "public-web-tombstone-v1" if tombstoned else "public-web-page-v1"
+        ),
+        content_language=extracted.language if extracted is not None else None,
+        retention_until=retention_until,
     )
-    observation = None
-    if not unchanged:
-        observation = RawObservation(
-            source_id=target.id,
-            adapter_id="public-web-sitemap",
-            adapter_version="1",
-            collection_job_id=collection_job_id,
-            source_record_type="public_web_resource",
-            source_record_key=result.requested_url,
-            source_url=result.fetched_url,
-            payload_hash_sha256=content_hash,
-            data_categories=frozenset(
-                {
-                    DataCategory.OFFICIAL_DOCUMENT_DISCOVERY,
-                    DataCategory.TECHNOLOGY_OBSERVATION,
-                }
-            ),
-            collected_at=collected_at,
-            observed_at=collected_at,
-            source_updated_at=collected_at,
-            schema_fingerprint="public-web-page-v1",
-            content_language=extracted.language if extracted is not None else None,
-            retention_until=retention_until,
-        )
-    return MappedPublicPage(
-        projection=projection,
-        observation=observation,
-        content_hash_sha256=content_hash,
+
+
+def _content_hash(result: PublicWebFetchResult) -> str:
+    if _is_tombstone(result):
+        return sha256(f"http-status:{result.status_code}".encode()).hexdigest()
+    return sha256(result.body).hexdigest()
+
+
+def _is_tombstone(result: PublicWebFetchResult) -> bool:
+    return result.status_code in {404, 410} and result.mime_type == _TOMBSTONE_MIME_TYPE
+
+
+def _is_unchanged(
+    previous: PreviousPageState | None,
+    result: PublicWebFetchResult,
+    content_hash: str,
+) -> bool:
+    return bool(
+        previous is not None
+        and previous.content_hash_sha256 == content_hash
+        and previous.canonical_url == result.fetched_url
     )
+
+
+def _extracted_html(
+    result: PublicWebFetchResult,
+    *,
+    quarantined: bool,
+    tombstoned: bool,
+) -> ExtractedHtml | None:
+    if result.mime_type != "text/html" or quarantined or tombstoned:
+        return None
+    return extract_html(result.body)
+
+
+def _indexable_text(extracted: ExtractedHtml | None) -> str:
+    if extracted is None or extracted.noindex:
+        return ""
+    return extracted.text
+
+
+def _resource_kind(
+    result: PublicWebFetchResult,
+    previous: PreviousPageState | None,
+) -> PublicResourceKind:
+    if _is_tombstone(result) and previous is not None:
+        return previous.resource_kind
+    if result.mime_type == "application/pdf":
+        return PublicResourceKind.DOCUMENT
+    return PublicResourceKind.WEB_PAGE
 
 
 def _predecessor_id(
@@ -186,11 +304,14 @@ def _predecessor_id(
 def _retrieval_state(
     *,
     quarantined: bool,
+    tombstoned: bool,
     unchanged: bool,
     previous: PreviousPageState | None,
 ) -> ResourceRetrievalState:
     if quarantined:
         return ResourceRetrievalState.QUARANTINED
+    if tombstoned:
+        return ResourceRetrievalState.TOMBSTONED
     if unchanged:
         return ResourceRetrievalState.NOT_MODIFIED
     if previous is not None:
