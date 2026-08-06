@@ -51,6 +51,9 @@ from cip.modules.source_portfolio.application.service import (
     record_source_value_event,
 )
 from cip.modules.source_portfolio.domain.models import SchemaState
+from cip.modules.vulnerability_knowledge.infrastructure.projections import (
+    persist_vulnerability_snapshots,
+)
 from cip.shared.kernel.time import require_aware_utc, utc_now
 from cip.shared.persistence.session import session_scope
 
@@ -181,6 +184,11 @@ def _complete_success(
         persist_public_footprint_projections(
             session,
             batch.public_footprint_projections,
+            now=now,
+        )
+        persist_vulnerability_snapshots(
+            session,
+            batch.vulnerability_snapshots,
             now=now,
         )
         _record_success_health(

@@ -12,6 +12,9 @@ from cip.adapters.sources.cisa_kev.client import (
 )
 from cip.adapters.sources.cisa_kev.mapper import map_vulnerability
 from cip.adapters.sources.cisa_kev.schemas import CisaKevCatalog
+from cip.adapters.sources.cisa_kev.vulnerability_projection import (
+    map_cisa_kev_vulnerability,
+)
 from cip.modules.raw_observations.domain.entities import RawObservation
 from cip.modules.source_governance.domain.models import (
     CollectionRequest,
@@ -19,6 +22,7 @@ from cip.modules.source_governance.domain.models import (
     SourceRuntimeState,
 )
 from cip.modules.source_governance.infrastructure.registry import SourceRegistryEntry
+from cip.modules.vulnerability_knowledge.domain.models import VulnerabilitySnapshot
 from cip.shared.kernel.time import require_aware_utc
 
 
@@ -35,6 +39,7 @@ class CisaKevCollectionBatch:
     observations: tuple[RawObservation, ...]
     checkpoint: CisaKevCheckpoint
     not_modified: bool
+    vulnerability_snapshots: tuple[VulnerabilitySnapshot, ...] = ()
 
 
 def collect_cisa_kev(
@@ -91,6 +96,14 @@ def collect_cisa_kev(
         )
         for vulnerability in catalog.vulnerabilities
     )
+    snapshots = tuple(
+        map_cisa_kev_vulnerability(
+            vulnerability,
+            catalog,
+            source_url=entry.policy.base_url,
+        )
+        for vulnerability in catalog.vulnerabilities
+    )
     return CisaKevCollectionBatch(
         observations=observations,
         checkpoint=CisaKevCheckpoint(
@@ -99,4 +112,5 @@ def collect_cisa_kev(
             catalog_version=catalog.catalog_version,
         ),
         not_modified=False,
+        vulnerability_snapshots=snapshots,
     )

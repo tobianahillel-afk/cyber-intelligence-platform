@@ -4,7 +4,7 @@ Cyber Intelligence Platform is a standalone cyber revenue-intelligence and comme
 
 The product is not a Salesforce, HubSpot, or external-CRM extension. It owns company intelligence, evidence, alerts, saved searches, professional organization maps, contacts, opportunities, tasks, notes, assignments, engagement history, and reporting.
 
-The product is evidence-first. A material statement must expose its source, observed time, event time, confidence, freshness, claim type, contradictions, and review history. An attacker claim is not an official confirmation. A technology mention is not proof of deployment or vulnerability. Search-result metadata is a discovery lead, not an independently corroborated fact.
+The product is evidence-first. A material statement must expose its source, observed time, event time, confidence, freshness, claim type, contradictions, and review history. An attacker claim is not an official confirmation. A technology mention is not proof of deployment or vulnerability. A vulnerability record is not proof that an organization uses an affected product or is exposed. Search-result metadata is a discovery lead, not an independently corroborated fact.
 
 ## Product objective
 
@@ -23,7 +23,7 @@ Source breadth is useful only when it improves reliable client discovery. Source
 
 ## Current validated baseline
 
-The current release is version `0.13.0`, covering lots `00` through `12`.
+The current release is version `0.14.0`, covering lots `00` through `13`.
 
 Implemented capabilities include:
 
@@ -37,17 +37,20 @@ Implemented capabilities include:
 - official provider onboarding and secret-reference lifecycle;
 - common source-portfolio runtime, backfill, freshness, health, cost, and controls;
 - DECP/TED/BOAMP contract history, providers, and renewal timing;
-- governed corporate public-footprint resources, immutable versions, tombstones, quarantined search leads, protected APIs, and the Research workspace.
+- governed corporate public-footprint resources, immutable versions, tombstones, quarantined search leads, protected APIs, and the Research workspace;
+- canonical vulnerability knowledge with exact aliases, immutable source history, CVSS and EPSS scores, CWE, affected product ranges, exploitation dimensions, protected APIs, and the Vulnerabilities workspace.
 
-Lot `12` is implemented and mergeable under an explicit governance boundary: **merging the software does not authorize collection against a real organization**. The checked-in public-web example is disabled, has no approved authorization, has no enabled schedule, and cannot execute. Search and archive providers also remain disconnected until separately reviewed and approved.
+Lot `12` remains governed under an explicit activation boundary: merging the software does not authorize collection against a real organization. The checked-in public-web example is disabled, unauthorized, unscheduled, and non-executable. Search and archive providers remain disconnected until separately reviewed and approved.
 
-The next planned implementation lot is `13`, vulnerability knowledge and exploitation-state reconciliation.
+Lot `13` adds global vulnerability knowledge without linking it to organizational exposure. CISA KEV uses the existing governed runtime path. CVE.org, NVD, EPSS, OSV, GitHub Global Security Advisories, and CIRCL Vulnerability-Lookup are modeled and cataloged as non-executable candidates until their exact access, pagination, quota, authorization, retention, and scheduling contracts are approved.
+
+The next planned implementation lot is `14`, live incidents, ransomware claims, and official confirmation.
 
 ## Implemented source portfolio
 
 Executable or installed adapters currently include:
 
-- **CISA KEV** for known-exploited vulnerability metadata;
+- **CISA KEV** for known-exploited vulnerability metadata and canonical KEV history;
 - **TED Search API** for European procurement notices;
 - **BOAMP/DILA Explore API** for French procurement notices;
 - **DECP** for published French contract history;
@@ -60,7 +63,9 @@ Executable or installed adapters currently include:
 - **public-web-sitemap** as a governed but non-activated corporate public-footprint adapter;
 - a synthetic reference adapter for runtime contract testing.
 
-OSINT Framework entries remain non-executable catalog candidates. LinkedIn, Discord, BrixHub, browser automation, premium providers, search APIs, and archive providers remain disabled unless their exact access path, fields, purpose, authorization, retention, and security controls are approved.
+Selected vulnerability-provider schemas and mappings are implemented for CVE.org/CVE v5, NVD API 2.0, FIRST EPSS, OSV, GitHub Global Security Advisories, and CIRCL CVE v5-compatible records. These entries remain non-executable candidates; modeling a provider does not grant permission to collect it.
+
+OSINT Framework entries remain non-executable catalog candidates. LinkedIn, Discord, BrixHub, browser automation, premium providers, search APIs, archive providers, and unapproved vulnerability providers remain disabled unless their exact access path, fields, purpose, authorization, retention, and security controls are approved.
 
 ## Source-to-opportunity flow
 
@@ -79,6 +84,22 @@ source candidate
   -> analyst decision and outcome feedback
 ```
 
+Global vulnerability knowledge is a separate canonical layer:
+
+```text
+provider vulnerability record
+  -> immutable source snapshot
+  -> exact identifier and alias reconciliation
+  -> source-specific CVSS / EPSS / affected-range / exploitation facts
+  -> canonical vulnerability read model
+
+canonical vulnerability
+  != organization technology evidence
+  != affected installation
+  != exposure
+  != current opportunity
+```
+
 Provider payloads remain inside adapter packages. Adapters never write directly to company, score, alert, or opportunity projections.
 
 ## Product access model
@@ -88,6 +109,8 @@ The ordinary read experience requires no visitor registration, password, or emai
 Collection is centralized and uses approved public feeds, official APIs, open-data sources, licensed providers, and governed platform identities. Anonymous visitor sessions are never reused as identities on external services.
 
 The product is database-first. Normal page views read stored and indexed evidence; they do not crawl sources on demand. Schedulers refresh sources according to freshness, value, cost, quota, and change frequency. Stale data remains visible with an explicit freshness state while a bounded refresh may be queued.
+
+The `/vulnerabilities` workspace and vulnerability APIs search persisted data only. They never launch provider collection from an analyst page view.
 
 ## Architecture
 
@@ -103,8 +126,8 @@ Canonical layers are:
 1. source catalog and authorization;
 2. provider onboarding and adapter capabilities;
 3. collection runs and immutable source records;
-4. evidence, observations, and claims;
-5. resolved entities, events, technologies, providers, roles, and temporal relationships;
+4. evidence, observations, claims, and vulnerability source snapshots;
+5. resolved entities, events, vulnerabilities, technologies, providers, roles, and temporal relationships;
 6. service mappings, commercial signals, and need hypotheses;
 7. scores, alerts, opportunities, tasks, and analyst decisions.
 
@@ -124,8 +147,8 @@ Domain modules cannot depend on FastAPI, SQLAlchemy models, adapters, API packag
 
 [`docs/PROJECT_DELIVERY_PLAN.md`](docs/PROJECT_DELIVERY_PLAN.md) is authoritative.
 
-- lots `00–12`: implemented and validated foundations, procurement, hiring, identity, onboarding, source runtime, contracts, and public footprint;
-- lots `13–19`: vulnerability knowledge, incidents, telemetry, exposure, advisories, regulatory and corporate changes, and provider relationships;
+- lots `00–13`: implemented and validated foundations, procurement, hiring, identity, onboarding, source runtime, contracts, public footprint, and vulnerability knowledge;
+- lots `14–19`: incidents, telemetry, exposure, advisories, regulatory and corporate changes, and provider relationships;
 - lots `20–23`: entity resolution, professional context, conditional sources, and governed research orchestration;
 - lots `24–27`: signal fusion, need hypotheses, calibrated scoring, native commercial operations, and Company 360;
 - lots `28–32`: data quality, release security, resilience, optional isolated browser runtime, and controlled production pilot.
@@ -139,7 +162,7 @@ Every pull request must pass on one final SHA:
 3. Mypy strict;
 4. architecture, complexity, dependency, release, and roadmap contracts;
 5. reversible PostgreSQL migrations;
-6. backend branch coverage at or above the configured threshold;
+6. backend coverage instrumentation including branches, with the configured aggregate threshold at or above 90%;
 7. frontend dependency audit, TypeScript checking, and production build.
 
 Executable rules include:
@@ -169,7 +192,8 @@ The platform does not:
 - bypass authentication, paywalls, CAPTCHA, MFA, invitations, or access controls;
 - perform active scanning or exploitation of prospects;
 - create fake accounts or rotate accounts after a ban;
-- perform autonomous outreach.
+- perform autonomous outreach;
+- infer organizational exposure from a global CVE, CVSS, EPSS, PoC, or KEV record alone.
 
 LinkedIn collection remains disabled unless official API scopes, a licensed product, or reviewed written authorization covers the exact method and purpose. Discord collection requires an administrator-installed connector, authorized export, or equivalent consented integration. BrixHub remains quarantined.
 
@@ -244,4 +268,6 @@ npm run build
 - [`docs/MULTI_SERVICE_DETECTION_AUDIT.md`](docs/MULTI_SERVICE_DETECTION_AUDIT.md)
 - [`docs/lots/LOT_12_CORPORATE_PUBLIC_FOOTPRINT.md`](docs/lots/LOT_12_CORPORATE_PUBLIC_FOOTPRINT.md)
 - [`docs/lots/LOT_12_VALIDATION_REPORT.md`](docs/lots/LOT_12_VALIDATION_REPORT.md)
+- [`docs/lots/LOT_13_VULNERABILITY_KNOWLEDGE.md`](docs/lots/LOT_13_VULNERABILITY_KNOWLEDGE.md)
+- [`docs/lots/LOT_13_VALIDATION_REPORT.md`](docs/lots/LOT_13_VALIDATION_REPORT.md)
 - [`SECURITY.md`](SECURITY.md)

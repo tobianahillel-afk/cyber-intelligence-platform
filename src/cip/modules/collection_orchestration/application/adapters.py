@@ -99,6 +99,7 @@ class CisaKevAdapter:
                 "catalog_version": batch.checkpoint.catalog_version,
             },
             not_modified=batch.not_modified,
+            vulnerability_snapshots=batch.vulnerability_snapshots,
         )
 
 

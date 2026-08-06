@@ -106,11 +106,13 @@ def build_collection_runtime(settings: Settings) -> CollectionRuntime:
         settings.identity_source_registry_path,
         settings.decp_source_registry_path,
         settings.public_web_source_registry_path,
+        settings.vulnerability_source_registry_path,
     )
     portfolio = load_source_portfolio_bundle(
         settings.source_portfolio_path,
         settings.decp_source_portfolio_path,
         settings.public_web_source_portfolio_path,
+        settings.vulnerability_source_portfolio_path,
     )
     greenhouse_boards = load_greenhouse_boards(settings.greenhouse_board_registry_path)
     lever_sites = load_lever_sites(settings.lever_site_registry_path)
@@ -338,7 +340,9 @@ def _validate_registered_schedules(
         if not conditional:
             missing.append(f"{schedule.source_id}/{schedule.adapter_id}")
     if missing:
-        raise ValueError(f"enabled schedules have no registered adapter: {', '.join(missing)}")
+        raise ValueError(
+            f"enabled schedules have no registered adapter: {', '.join(missing)}"
+        )
 
 
 def _validate_portfolio_adapters(
