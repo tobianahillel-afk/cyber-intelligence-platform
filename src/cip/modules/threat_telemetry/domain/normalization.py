@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from ipaddress import ip_address
+from ipaddress import IPv4Address, IPv6Address, ip_address
 from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
 _HASH_LENGTHS = {
@@ -9,13 +9,11 @@ _HASH_LENGTHS = {
     64: "sha256",
 }
 _DEFAULT_PORTS = {"http": 80, "https": 443}
+_INTERNAL_SUFFIXES = (".internal", ".local", ".localhost")
 
 
 def normalize_ip(value: str, *, version: int) -> str:
-    try:
-        address = ip_address(value.strip())
-    except ValueError as exc:
-        raise ValueError("indicator must be a valid IP address") from exc
+    address = _public_ip(value)
     if address.version != version:
         raise ValueError(f"indicator must be IPv{version}")
     return address.compressed.casefold()
@@ -36,6 +34,10 @@ def normalize_domain(value: str) -> str:
     except UnicodeError as exc:
         raise ValueError("domain indicator is not valid IDNA") from exc
     labels = normalized.split(".")
+    if len(labels) < 2 or normalized in {"localhost", "localhost.localdomain"}:
+        raise ValueError("domain indicator must be a public multi-label name")
+    if normalized.endswith(_INTERNAL_SUFFIXES):
+        raise ValueError("internal domain indicators are outside the global catalog")
     if len(normalized) > 253 or any(
         not label or len(label) > 63 or label.startswith("-") or label.endswith("-")
         for label in labels
@@ -91,6 +93,16 @@ def normalize_email(value: str) -> str:
 
 def _normalize_url_host(value: str) -> str:
     try:
-        return ip_address(value).compressed.casefold()
+        return _public_ip(value).compressed.casefold()
     except ValueError:
         return normalize_domain(value)
+
+
+def _public_ip(value: str) -> IPv4Address | IPv6Address:
+    try:
+        address = ip_address(value.strip())
+    except ValueError as exc:
+        raise ValueError("indicator must be a valid IP address") from exc
+    if not address.is_global:
+        raise ValueError("private or non-global IP indicators are outside the catalog")
+    return address
