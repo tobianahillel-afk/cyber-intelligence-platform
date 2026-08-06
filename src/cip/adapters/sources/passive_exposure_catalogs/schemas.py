@@ -163,6 +163,11 @@ class CloudAssetMetadataRecord(PassiveAssetMetadataRecord):
 
     @model_validator(mode="after")
     def preserve_shared_tenancy_risk(self) -> CloudAssetMetadataRecord:
-        if self.tenant_shared and ProviderAttributionRisk.SHARED_HOSTING not in self.attribution_risks:
-            raise ValueError("shared cloud tenancy requires shared-hosting attribution risk")
+        has_shared_risk = (
+            ProviderAttributionRisk.SHARED_HOSTING in self.attribution_risks
+        )
+        if self.tenant_shared and not has_shared_risk:
+            raise ValueError(
+                "shared cloud tenancy requires shared-hosting attribution risk"
+            )
         return self
