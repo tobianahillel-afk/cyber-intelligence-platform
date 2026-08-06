@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from collections import defaultdict
+from datetime import datetime
 
 from cip.modules.threat_telemetry.domain.models import (
     IndicatorSnapshot,
@@ -78,16 +79,19 @@ def _reconcile_indicator(
         for snapshot in active
         if snapshot.is_positive_detection
     }
-    relations = _merge_relations(current)
     return ReconciledIndicator(
         indicator_key=identity.indicator_key,
         indicator_type=identity.indicator_type,
         indicator_value=identity.indicator_value,
         state=selected.state,
         observed_states=observed_states,
-        first_seen_at=_minimum_time(current, "first_seen_at"),
-        last_seen_at=_maximum_time(current, "last_seen_at"),
-        expires_at=_maximum_time(current, "expires_at"),
+        first_seen_at=_minimum_time(
+            tuple(snapshot.first_seen_at for snapshot in current)
+        ),
+        last_seen_at=_maximum_time(
+            tuple(snapshot.last_seen_at for snapshot in current)
+        ),
+        expires_at=_maximum_time(tuple(snapshot.expires_at for snapshot in current)),
         last_updated_at=max(snapshot.modified_at for snapshot in current),
         source_count=len({snapshot.source_id for snapshot in current}),
         independent_source_count=len(positive_groups),
@@ -99,7 +103,7 @@ def _reconcile_indicator(
         ),
         historical_only=all(snapshot.historical_only for snapshot in current),
         has_conflict=len(set(observed_states) & _CONFLICTING_STATES) > 1,
-        relations=relations,
+        relations=_merge_relations(current),
     )
 
 
@@ -116,25 +120,11 @@ def _merge_relations(
     return tuple(relations[key] for key in sorted(relations))
 
 
-def _minimum_time(
-    snapshots: tuple[IndicatorSnapshot, ...],
-    field_name: str,
-):
-    values = [
-        value
-        for snapshot in snapshots
-        if (value := getattr(snapshot, field_name)) is not None
-    ]
-    return min(values) if values else None
+def _minimum_time(values: tuple[datetime | None, ...]) -> datetime | None:
+    present = tuple(value for value in values if value is not None)
+    return min(present) if present else None
 
 
-def _maximum_time(
-    snapshots: tuple[IndicatorSnapshot, ...],
-    field_name: str,
-):
-    values = [
-        value
-        for snapshot in snapshots
-        if (value := getattr(snapshot, field_name)) is not None
-    ]
-    return max(values) if values else None
+def _maximum_time(values: tuple[datetime | None, ...]) -> datetime | None:
+    present = tuple(value for value in values if value is not None)
+    return max(present) if present else None
