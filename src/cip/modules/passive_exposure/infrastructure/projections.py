@@ -38,6 +38,7 @@ def persist_passive_snapshots(
 ) -> tuple[UUID, ...]:
     if not snapshots:
         return ()
+    _validate_batch_source_assets(snapshots)
     persisted_at = require_aware_utc(now, field_name="now")
     touched: set[UUID] = set()
     for snapshot in snapshots:
@@ -54,6 +55,26 @@ def persist_passive_snapshots(
 
 def _passive_asset_id(snapshot: PassiveObservationSnapshot) -> UUID:
     return uuid5(NAMESPACE_URL, f"passive-asset:{snapshot.asset.key}")
+
+
+def _validate_batch_source_assets(
+    snapshots: tuple[PassiveObservationSnapshot, ...],
+) -> None:
+    assignments: dict[tuple[str, str], UUID] = {}
+    for snapshot in snapshots:
+        key = (snapshot.source_id, snapshot.source_record_key)
+        asset_id = _passive_asset_id(snapshot)
+        assigned = assignments.get(key)
+        if assigned is not None and assigned != asset_id:
+            raise ValueError("one source record cannot reference multiple passive assets")
+        assignments[key] = asset_id
+    for snapshot in snapshots:
+        target = snapshot.supersedes_record_key
+        if target is None or target == snapshot.source_record_key:
+            continue
+        target_asset_id = assignments.get((snapshot.source_id, target))
+        if target_asset_id is not None and target_asset_id != _passive_asset_id(snapshot):
+            raise ValueError("a supersession target must reference the same passive asset")
 
 
 def _validate_source_record_asset(
@@ -74,9 +95,7 @@ def _validate_source_record_asset(
         )
     )
     if any(existing_asset_id != asset_id for existing_asset_id in existing_asset_ids):
-        raise ValueError(
-            "source records and supersession targets cannot move between passive assets"
-        )
+        raise ValueError("source record ownership conflicts with the canonical passive asset")
 
 
 def _resolve_asset(
