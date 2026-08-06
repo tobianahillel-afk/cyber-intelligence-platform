@@ -184,6 +184,8 @@ def test_replay_is_idempotent_and_correction_preserves_history(
     persist_passive_snapshots(session, snapshots, now=NOW)
     correction = replace(
         snapshots[0],
+        source_record_key="record-a-correction",
+        source_url="https://passive-provider-a.example/records/record-a-correction",
         state=PassiveObservationState.CORRECTED,
         modified_at=NOW + timedelta(days=1),
         active=False,
