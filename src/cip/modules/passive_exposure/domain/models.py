@@ -220,9 +220,7 @@ class PassiveObservationSnapshot:
     def __post_init__(self) -> None:
         _bounded(self.source_id, "source_id", maximum=200)
         _bounded(self.source_record_key, "source_record_key", maximum=500)
-        parsed = urlsplit(self.source_url)
-        if parsed.scheme != "https" or not parsed.hostname:
-            raise ValueError("source_url must be an absolute HTTPS URL")
+        _validate_source_url(self.source_url)
         if not 0 <= self.confidence <= 1:
             raise ValueError("confidence must be between 0 and 1")
         _validate_safety_flags(self)
@@ -290,6 +288,14 @@ def normalize_asset(kind: PassiveAssetKind, value: str) -> str:
     if kind is PassiveAssetKind.CLOUD_RESOURCE:
         return normalize_cloud_resource(value)
     raise ValueError(f"unsupported passive asset kind: {kind}")
+
+
+def _validate_source_url(value: str) -> None:
+    parsed = urlsplit(value)
+    if parsed.scheme != "https" or not parsed.hostname:
+        raise ValueError("source_url must be an absolute HTTPS URL")
+    if parsed.username is not None or parsed.password is not None:
+        raise ValueError("source_url cannot contain embedded credentials")
 
 
 def _normalize_timestamps(snapshot: PassiveObservationSnapshot) -> None:
