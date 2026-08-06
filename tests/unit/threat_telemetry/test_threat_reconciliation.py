@@ -102,9 +102,17 @@ def test_shared_infrastructure_and_relations_are_preserved() -> None:
     )
 
     indicator = reconcile_indicator_snapshots((first, second))[0]
+    relations = {
+        (
+            relation.relation_type,
+            relation.target_key,
+            relation.confidence,
+        )
+        for relation in indicator.relations
+    }
 
     assert indicator.shared_infrastructure is True
-    assert {(relation.relation_type, relation.target_key, relation.confidence) for relation in indicator.relations} == {
+    assert relations == {
         (TelemetryRelationType.CAMPAIGN, "campaign:example", 0.9),
         (TelemetryRelationType.VULNERABILITY, "CVE-2026-12345", 0.7),
     }
