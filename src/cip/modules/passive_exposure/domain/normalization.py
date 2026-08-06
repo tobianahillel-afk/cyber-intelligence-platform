@@ -14,6 +14,7 @@ _LOCAL_SUFFIXES = (
 _ASN_PATTERN = re.compile(r"^(?:AS)?(?P<number>[0-9]{1,10})$", re.IGNORECASE)
 _PROTOCOL_PATTERN = re.compile(r"^[a-z][a-z0-9+._-]{0,31}$")
 _HEX_PATTERN = re.compile(r"^[0-9a-f]+$")
+_CLOUD_NAMESPACE_PATTERN = re.compile(r"^[a-z][a-z0-9._-]{0,99}$")
 
 
 def normalize_domain(value: str) -> str:
@@ -70,14 +71,22 @@ def normalize_certificate_fingerprint(value: str) -> str:
 
 
 def normalize_cloud_resource(value: str) -> str:
-    normalized = value.strip()
-    if not normalized or len(normalized) > 500:
+    candidate = value.strip()
+    if not candidate or len(candidate) > 500:
         raise ValueError("cloud resource identifier must be bounded")
-    if any(character.isspace() for character in normalized):
+    if any(character.isspace() for character in candidate):
         raise ValueError("cloud resource identifier cannot contain whitespace")
-    if ":" not in normalized:
-        raise ValueError("cloud resource identifier must include its provider namespace")
-    return normalized
+    namespace, separator, resource = candidate.partition(":")
+    normalized_namespace = namespace.casefold()
+    if (
+        not separator
+        or not resource
+        or _CLOUD_NAMESPACE_PATTERN.fullmatch(normalized_namespace) is None
+    ):
+        raise ValueError(
+            "cloud resource identifier must include a valid provider namespace"
+        )
+    return f"{normalized_namespace}:{resource}"
 
 
 def normalize_protocol(value: str) -> str:
