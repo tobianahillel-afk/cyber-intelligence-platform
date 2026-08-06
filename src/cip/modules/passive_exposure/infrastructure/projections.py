@@ -41,6 +41,8 @@ def persist_passive_snapshots(
     persisted_at = require_aware_utc(now, field_name="now")
     touched: set[UUID] = set()
     for snapshot in snapshots:
+        asset_id = _passive_asset_id(snapshot)
+        _validate_source_record_asset(session, asset_id, snapshot)
         asset = _resolve_asset(session, snapshot, now=persisted_at)
         _insert_snapshot(session, asset.id, snapshot, now=persisted_at)
         touched.add(asset.id)
@@ -48,6 +50,33 @@ def persist_passive_snapshots(
         _refresh_asset(session, asset_id, now=persisted_at)
     session.flush()
     return tuple(sorted(touched, key=str))
+
+
+def _passive_asset_id(snapshot: PassiveObservationSnapshot) -> UUID:
+    return uuid5(NAMESPACE_URL, f"passive-asset:{snapshot.asset.key}")
+
+
+def _validate_source_record_asset(
+    session: Session,
+    asset_id: UUID,
+    snapshot: PassiveObservationSnapshot,
+) -> None:
+    record_keys = [snapshot.source_record_key]
+    target = snapshot.supersedes_record_key
+    if target is not None and target != snapshot.source_record_key:
+        record_keys.append(target)
+    existing_asset_ids = set(
+        session.scalars(
+            select(PassiveObservationSnapshotRecord.asset_id).where(
+                PassiveObservationSnapshotRecord.source_id == snapshot.source_id,
+                PassiveObservationSnapshotRecord.source_record_key.in_(record_keys),
+            )
+        )
+    )
+    if any(existing_asset_id != asset_id for existing_asset_id in existing_asset_ids):
+        raise ValueError(
+            "source records and supersession targets cannot move between passive assets"
+        )
 
 
 def _resolve_asset(
@@ -74,7 +103,7 @@ def _resolve_asset(
         else ()
     )
     record = PassiveAssetRecord(
-        id=uuid5(NAMESPACE_URL, f"passive-asset:{snapshot.asset.key}"),
+        id=_passive_asset_id(snapshot),
         asset_key=snapshot.asset.key,
         asset_kind=snapshot.asset.kind.value,
         asset_value=snapshot.asset.value,
