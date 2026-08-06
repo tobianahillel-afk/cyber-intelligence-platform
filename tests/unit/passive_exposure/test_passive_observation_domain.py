@@ -134,6 +134,11 @@ def test_service_observation_requires_bounded_port_and_protocol() -> None:
         _snapshot(observation_kind=PassiveObservationKind.PORT, port=443)
 
 
+def test_rejects_credentials_embedded_in_source_url() -> None:
+    with pytest.raises(ValueError, match="embedded credentials"):
+        _snapshot(source_url="https://user:secret@provider.example/records/1")
+
+
 def test_rejects_active_validation_and_exposure_claims() -> None:
     with pytest.raises(ValueError, match="active validation"):
         _snapshot(active_probe_performed=True)
