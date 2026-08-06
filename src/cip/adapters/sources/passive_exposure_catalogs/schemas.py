@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime
 from enum import StrEnum
+from urllib.parse import urlsplit
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
@@ -105,6 +106,7 @@ class PassiveAssetMetadataRecord(BaseModel):
 
     @model_validator(mode="after")
     def validate_passive_metadata_only(self) -> PassiveAssetMetadataRecord:
+        _validate_source_url(self.source_url)
         if self.published_at < self.observed_at:
             raise ValueError("published_at cannot precede observed_at")
         if self.modified_at < self.published_at:
@@ -180,3 +182,11 @@ class CloudAssetMetadataRecord(PassiveAssetMetadataRecord):
                 "shared cloud tenancy requires shared-hosting attribution risk"
             )
         return self
+
+
+def _validate_source_url(value: str) -> None:
+    parsed = urlsplit(value)
+    if parsed.scheme != "https" or not parsed.hostname:
+        raise ValueError("source_url must be an absolute HTTPS URL")
+    if parsed.username is not None or parsed.password is not None:
+        raise ValueError("source_url cannot contain embedded credentials")
