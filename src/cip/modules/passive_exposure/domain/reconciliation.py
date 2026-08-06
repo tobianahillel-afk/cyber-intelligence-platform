@@ -115,6 +115,7 @@ def _latest_revisions(
 def _effective_revisions(
     history: tuple[PassiveObservationSnapshot, ...],
 ) -> tuple[PassiveObservationSnapshot, ...]:
+    _validate_supersession_graph(history)
     superseded: set[tuple[str, str]] = set()
     for snapshot in history:
         target = snapshot.supersedes_record_key
@@ -128,6 +129,37 @@ def _effective_revisions(
     if history and not effective:
         raise ValueError("passive supersession cycle removes every provider record")
     return effective
+
+
+def _validate_supersession_graph(
+    history: tuple[PassiveObservationSnapshot, ...],
+) -> None:
+    known = {
+        (snapshot.source_id, snapshot.source_record_key)
+        for snapshot in history
+    }
+    edges: dict[tuple[str, str], tuple[str, str]] = {}
+    for snapshot in history:
+        target = snapshot.supersedes_record_key
+        if target is None or target == snapshot.source_record_key:
+            continue
+        destination = (snapshot.source_id, target)
+        if destination in known:
+            edges[(snapshot.source_id, snapshot.source_record_key)] = destination
+    visited: set[tuple[str, str]] = set()
+    for start in edges:
+        if start in visited:
+            continue
+        path: list[tuple[str, str]] = []
+        active: set[tuple[str, str]] = set()
+        node = start
+        while node in edges and node not in visited:
+            if node in active:
+                raise ValueError("passive supersession cycle detected")
+            active.add(node)
+            path.append(node)
+            node = edges[node]
+        visited.update(path)
 
 
 def _revision_order(
