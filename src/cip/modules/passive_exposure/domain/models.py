@@ -2,10 +2,20 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import datetime
-from enum import StrEnum
 from urllib.parse import urlsplit
 from uuid import UUID
 
+from cip.modules.passive_exposure.domain.enums import (
+    EXACT_LINK_METHODS,
+    TERMINAL_STATES,
+    AttributionRisk,
+    OrganizationLinkMethod,
+    OrganizationLinkStatus,
+    PassiveAssetKind,
+    PassiveObservationKind,
+    PassiveObservationState,
+    TechnologyEvidenceLevel,
+)
 from cip.modules.passive_exposure.domain.normalization import (
     normalize_asn,
     normalize_certificate_fingerprint,
@@ -18,81 +28,6 @@ from cip.modules.passive_exposure.domain.normalization import (
     normalize_protocol,
 )
 from cip.shared.kernel.time import require_aware_utc
-
-
-class PassiveAssetKind(StrEnum):
-    DOMAIN = "domain"
-    HOSTNAME = "hostname"
-    IPV4 = "ipv4"
-    IPV6 = "ipv6"
-    CERTIFICATE = "certificate"
-    ASN = "asn"
-    CLOUD_RESOURCE = "cloud_resource"
-
-
-class PassiveObservationKind(StrEnum):
-    PASSIVE_DNS = "passive_dns"
-    CERTIFICATE = "certificate"
-    ASN = "asn"
-    CLOUD = "cloud"
-    SERVICE = "service"
-    PORT = "port"
-    PRODUCT = "product"
-    VERSION = "version"
-    TECHNOLOGY_MENTION = "technology_mention"
-
-
-class PassiveObservationState(StrEnum):
-    CURRENT = "current"
-    HISTORICAL = "historical"
-    EXPIRED = "expired"
-    CORRECTED = "corrected"
-    RETRACTED = "retracted"
-    DELETED = "deleted"
-    UNKNOWN = "unknown"
-
-
-class OrganizationLinkStatus(StrEnum):
-    UNRESOLVED = "unresolved"
-    EXACT = "exact"
-    CANDIDATE = "candidate"
-    REVIEW_REQUIRED = "review_required"
-    REJECTED = "rejected"
-
-
-class OrganizationLinkMethod(StrEnum):
-    EXACT_OFFICIAL_DOMAIN = "exact_official_domain"
-    EXACT_OFFICIAL_IDENTIFIER = "exact_official_identifier"
-    PROVIDER_ASSERTION = "provider_assertion"
-    PASSIVE_CORRELATION = "passive_correlation"
-    NAME_ONLY = "name_only"
-    NONE = "none"
-
-
-class AttributionRisk(StrEnum):
-    SHARED_HOSTING = "shared_hosting"
-    CDN = "cdn"
-    RESELLER = "reseller"
-    SUBSIDIARY = "subsidiary"
-    ABANDONED_DOMAIN = "abandoned_domain"
-    REASSIGNED_ADDRESS = "reassigned_address"
-
-
-class TechnologyEvidenceLevel(StrEnum):
-    TECHNOLOGY_MENTION = "technology_mention"
-    PASSIVE_OBSERVATION = "passive_observation"
-    OBSERVED_VERSION = "observed_version"
-
-
-_EXACT_LINK_METHODS = {
-    OrganizationLinkMethod.EXACT_OFFICIAL_DOMAIN,
-    OrganizationLinkMethod.EXACT_OFFICIAL_IDENTIFIER,
-}
-_TERMINAL_STATES = {
-    PassiveObservationState.EXPIRED,
-    PassiveObservationState.RETRACTED,
-    PassiveObservationState.DELETED,
-}
 
 
 @dataclass(frozen=True, slots=True)
@@ -136,7 +71,7 @@ class OrganizationLink:
         } and self.organization_id is None:
             raise ValueError("resolved or reviewable links require organization_id")
         if self.status is OrganizationLinkStatus.EXACT:
-            if self.method not in _EXACT_LINK_METHODS:
+            if self.method not in EXACT_LINK_METHODS:
                 raise ValueError("exact links require exact official evidence")
             if risks:
                 raise ValueError("attribution risks prevent an exact organization link")
@@ -238,7 +173,7 @@ class PassiveObservationSnapshot:
             raise ValueError("published_at cannot precede observed_at")
         if self.expires_at is not None and self.expires_at < self.observed_at:
             raise ValueError("expires_at cannot precede observed_at")
-        if self.state in _TERMINAL_STATES and self.active:
+        if self.state in TERMINAL_STATES and self.active:
             raise ValueError("expired, retracted, or deleted observations cannot be active")
         if self.state is PassiveObservationState.HISTORICAL:
             if self.active:
