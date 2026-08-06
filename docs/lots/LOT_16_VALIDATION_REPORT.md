@@ -6,7 +6,7 @@ Final release decision: **PENDING FINAL CI**.
 
 Target release: `0.17.0`.
 
-PR #43 is the authoritative Lot 16 pull request. Duplicate validation PR #44 was closed without discarding any implementation commit.
+PR #45 is the authoritative Lot 16 pull request. Superseded PRs #43 and #44 were closed without discarding any implementation commit.
 
 This report records the exact validation boundary for Lot 16. It must be updated with the final pull-request head, GitHub Actions run identifier, test counts, coverage and review state before the pull request can merge.
 
@@ -84,4 +84,4 @@ The checked-in provider entries remain metadata-only candidates with missing aut
 
 ## Merge rule
 
-PR #43 was temporarily marked ready to force GitHub to create a validation run after draft synchronization events stopped producing workflows. Readiness does not authorize merge. The pull request must not merge until this report is updated from a successful GitHub Actions run on the exact final head. Any later commit invalidates earlier evidence and requires the complete validation chain to run again.
+PR #45 is non-draft only because draft synchronization events stopped producing workflows during the active GitHub Actions incident. Readiness does not authorize merge. The pull request must not merge until this report is updated from a successful GitHub Actions run on the exact final head. Any later commit invalidates earlier evidence and requires the complete validation chain to run again.
