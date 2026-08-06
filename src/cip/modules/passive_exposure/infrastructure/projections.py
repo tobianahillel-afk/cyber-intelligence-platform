@@ -173,8 +173,27 @@ def _insert_snapshot(
         if existing.asset_id != asset_id:
             raise ValueError("passive snapshot cannot move between assets")
         return existing
+    record = _new_snapshot_record(
+        asset_id=asset_id,
+        snapshot_key=snapshot_key,
+        snapshot=snapshot,
+        now=now,
+    )
+    session.add(record)
+    session.flush()
+    _insert_technology(session, record.id, snapshot_key, snapshot)
+    return record
+
+
+def _new_snapshot_record(
+    *,
+    asset_id: UUID,
+    snapshot_key: str,
+    snapshot: PassiveObservationSnapshot,
+    now: datetime,
+) -> PassiveObservationSnapshotRecord:
     link = snapshot.organization_link
-    record = PassiveObservationSnapshotRecord(
+    return PassiveObservationSnapshotRecord(
         id=uuid5(NAMESPACE_URL, f"passive-observation:{snapshot_key}"),
         asset_id=asset_id,
         snapshot_key=snapshot_key,
@@ -217,10 +236,6 @@ def _insert_snapshot(
         supersedes_record_key=snapshot.supersedes_record_key,
         created_at=now,
     )
-    session.add(record)
-    session.flush()
-    _insert_technology(session, record.id, snapshot_key, snapshot)
-    return record
 
 
 def _insert_technology(
