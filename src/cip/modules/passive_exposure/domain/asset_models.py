@@ -62,16 +62,16 @@ class OrganizationLink:
             OrganizationLinkStatus.REVIEW_REQUIRED,
         } and self.organization_id is None:
             raise ValueError("resolved or reviewable links require organization_id")
-        if self.status is OrganizationLinkStatus.EXACT:
-            if self.method not in EXACT_LINK_METHODS:
-                raise ValueError("exact links require exact official evidence")
-            if risks:
-                raise ValueError("attribution risks prevent an exact organization link")
         if self.method is OrganizationLinkMethod.NAME_ONLY and self.status not in {
             OrganizationLinkStatus.REVIEW_REQUIRED,
             OrganizationLinkStatus.REJECTED,
         }:
             raise ValueError("name-only links must remain reviewable or rejected")
+        if self.status is OrganizationLinkStatus.EXACT:
+            if self.method not in EXACT_LINK_METHODS:
+                raise ValueError("exact links require exact official evidence")
+            if risks:
+                raise ValueError("attribution risks prevent an exact organization link")
         if self.status is not OrganizationLinkStatus.UNRESOLVED and not reasons:
             raise ValueError("linked records require at least one explicit reason")
         if self.status is OrganizationLinkStatus.UNRESOLVED:
