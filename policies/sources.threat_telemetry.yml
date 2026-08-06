@@ -1,0 +1,135 @@
+version: 1
+reviewed_at: 2026-08-06
+
+sources:
+  - id: licensed-stix-taxii
+    name: Licensed STIX and TAXII threat telemetry
+    base_url: https://example.invalid/stix-taxii/
+    status: draft
+    source_type: api
+    owner: Deployment-specific licensed CTI provider
+    terms_url: https://example.invalid/terms
+    licence: Contract required
+    allowed_data_categories: &allowed [technology_observation]
+    prohibited_data_categories: &prohibited
+      - credential
+      - victim_file
+      - private_communication
+      - private_personal_data
+      - restricted_content
+    rate_limit_per_minute: 10
+    retention_days: 1825
+    attribution_required: true
+    raw_content_storage: false
+    human_review_required: true
+    authorization: &missing_authorization
+      status: missing
+      document_reference: null
+      reviewed_at: null
+      expires_at: null
+      approved_hosts: []
+      approved_path_prefixes: []
+      approved_purposes: []
+      automated_collection_allowed: false
+      raw_storage_allowed: false
+    economics: &licensed_economics
+      commercial_value: medium
+      monthly_cost: 0
+      implementation_cost: medium
+      maintenance_cost: medium
+      expected_stability: medium
+    notes: >-
+      Selected indicator metadata only. TAXII discovery, collections, credentials,
+      licence, tenant scope, markings, pagination, quota, retention, and schedule must
+      be reviewed before any executable adapter exists.
+
+  - id: licensed-phishing-metadata
+    name: Licensed phishing indicator metadata
+    base_url: https://example.invalid/phishing-metadata/
+    status: draft
+    source_type: api
+    owner: Deployment-specific phishing metadata provider
+    terms_url: https://example.invalid/terms
+    licence: Contract required
+    allowed_data_categories: *allowed
+    prohibited_data_categories: *prohibited
+    rate_limit_per_minute: 10
+    retention_days: 730
+    attribution_required: true
+    raw_content_storage: false
+    human_review_required: true
+    authorization: *missing_authorization
+    economics: *licensed_economics
+    notes: >-
+      Domains, URLs, sending infrastructure, timestamps, confidence, kit names, and
+      source provenance only. Email bodies, attachments, credentials, browser visits,
+      and direct indicator validation are prohibited.
+
+  - id: licensed-passive-dns
+    name: Licensed passive DNS metadata
+    base_url: https://example.invalid/passive-dns/
+    status: draft
+    source_type: api
+    owner: Deployment-specific passive DNS provider
+    terms_url: https://example.invalid/terms
+    licence: Contract required
+    allowed_data_categories: *allowed
+    prohibited_data_categories: *prohibited
+    rate_limit_per_minute: 10
+    retention_days: 1095
+    attribution_required: true
+    raw_content_storage: false
+    human_review_required: true
+    authorization: *missing_authorization
+    economics: *licensed_economics
+    notes: >-
+      Passive provider observations only. The platform performs no DNS probing,
+      resolution validation, port scan, service connection, or prospect scan.
+
+  - id: licensed-certificate-telemetry
+    name: Licensed certificate and infrastructure metadata
+    base_url: https://example.invalid/certificate-telemetry/
+    status: draft
+    source_type: api
+    owner: Deployment-specific certificate metadata provider
+    terms_url: https://example.invalid/terms
+    licence: Contract required
+    allowed_data_categories: *allowed
+    prohibited_data_categories: *prohibited
+    rate_limit_per_minute: 10
+    retention_days: 1095
+    attribution_required: true
+    raw_content_storage: false
+    human_review_required: true
+    authorization: *missing_authorization
+    economics: *licensed_economics
+    notes: >-
+      Certificate fingerprints and provider-published metadata only. No TLS
+      connection is opened to an indicator by this source contract.
+
+  - id: licensed-malware-metadata
+    name: Licensed malware family and hash metadata
+    base_url: https://example.invalid/malware-metadata/
+    status: draft
+    source_type: api
+    owner: Deployment-specific malware metadata provider
+    terms_url: https://example.invalid/terms
+    licence: Contract required
+    allowed_data_categories: *allowed
+    prohibited_data_categories: *prohibited
+    rate_limit_per_minute: 10
+    retention_days: 1825
+    attribution_required: true
+    raw_content_storage: false
+    human_review_required: true
+    authorization: *missing_authorization
+    economics:
+      commercial_value: medium
+      monthly_cost: 0
+      implementation_cost: medium
+      maintenance_cost: high
+      expected_stability: medium
+    notes: >-
+      Hashes, family names, campaigns, CVE relations, timestamps, and confidence only.
+      Malware samples, download URLs, sandboxes, detonation results containing binary
+      payloads, and direct infrastructure connections are prohibited.
