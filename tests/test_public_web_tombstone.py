@@ -5,8 +5,15 @@ from uuid import UUID, uuid4
 
 import httpx
 
-from cip.adapters.sources.public_web.client import PublicWebClient
-from cip.adapters.sources.public_web.mapper import PreviousPageState, map_public_page
+from cip.adapters.sources.public_web.client import (
+    PublicWebClient,
+    PublicWebFetchResult,
+)
+from cip.adapters.sources.public_web.mapper import (
+    MappedPublicPage,
+    PreviousPageState,
+    map_public_page,
+)
 from cip.adapters.sources.public_web.registry import PublicWebTarget
 from cip.modules.public_footprint.domain import (
     PublicResourceKind,
@@ -64,13 +71,10 @@ def test_http_gone_becomes_document_tombstone_and_replays_idempotently() -> None
 
 def _map(
     target: PublicWebTarget,
-    result: object,
+    result: PublicWebFetchResult,
     *,
     previous: PreviousPageState,
-):
-    from cip.adapters.sources.public_web.client import PublicWebFetchResult
-
-    assert isinstance(result, PublicWebFetchResult)
+) -> MappedPublicPage:
     return map_public_page(
         target,
         result,
