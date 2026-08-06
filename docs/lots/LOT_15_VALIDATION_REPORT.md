@@ -131,6 +131,10 @@ Before release-documentation commits, PR head `790194ba57a3d00d75c81a708e36d0981
 
 This run proves the functional release candidate but is not final merge authorization because version and documentation commits followed it.
 
+## Lot 16 handoff boundary
+
+Lot 16 is scoped in issue `#42`, but no Lot 16 branch or implementation was created before the Lot 15 merge. Its code must start from the exact Lot 15 squash commit on `main`, preserving the distinction among technology mention, passive observation, observed version, vulnerability applicability, and verified exposure.
+
 ## Final-head rule
 
 The exact final pull-request head must rerun and pass every backend and frontend gate after all version and documentation changes. The final SHA, CI run, test count, coverage, review-thread count, and merge decision are recorded in pull request `#41`.
