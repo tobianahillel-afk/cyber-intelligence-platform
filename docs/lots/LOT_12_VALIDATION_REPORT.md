@@ -4,137 +4,114 @@
 
 - Technical implementation: `PASS`
 - Security and governance controls: `PASS`
-- Production source activation: `BLOCKED_BY_DESIGN`
-- Pull request recommendation: keep `DRAFT` until the project accepts that real-source authorization is a separate governance step, or until at least one real target receives reviewed authorization.
-
-This decision distinguishes software readiness from permission to collect a real organization. The implementation is validated, but the checked-in public-web source remains deliberately non-executable.
-
-## Validated implementation head
-
-- Branch: `agent/corporate-public-footprint`
-- Implementation commit: `6321a038da12638dc37a86a9000433a207250af2`
-- CI run: `#606`
+- Software release status: `IMPLEMENTED_VALIDATED`
+- Production source activation: `SEPARATE_GOVERNANCE_OPERATION`
+- Application version: `0.13.0`
 - Migration head: `20260805_0012`
-- Application version: `0.12.0`
 
-This report is added after the validated implementation commit. Its addition changes documentation only and does not alter runtime behavior.
+The project accepts the Lot 12 boundary: software readiness and permission to collect a real organization are separate decisions. Merging this lot does not authorize or schedule collection against a real target.
 
-## Automated validation evidence
+The checked-in public-web example remains deliberately non-executable. A future activation requires a reviewed organization target, source policy, authorization reference, executable source-portfolio state, and explicit schedule. Search and archive providers require their own approvals.
 
-### Dependencies and security audit
+## Validation rule
 
-- editable project installation: `PASS`
-- dependency consistency with `pip check`: `PASS`
-- Python dependency audit: `PASS`, no known vulnerabilities reported
-- frontend dependency audit: `PASS`
+The authoritative release evidence is the successful GitHub Actions CI run attached to the final pull-request head of PR `#35`.
 
-### Static quality
+A validation result is valid only when that exact final head passes:
 
-- Ruff: `PASS`
-- Mypy strict: `PASS`
-- typed Python files checked: `265`
-- architecture and release contracts: `13 passed`
+- Python dependency consistency and vulnerability audit;
+- Ruff;
+- Mypy strict;
+- architecture, complexity, dependency, release, and roadmap contracts;
+- PostgreSQL migration `upgrade -> downgrade -> upgrade`;
+- complete backend tests with branch coverage at or above `90%`;
+- frontend dependency audit;
+- TypeScript typecheck;
+- Next.js production build.
 
-### Database lifecycle
+Any later commit invalidates the result and requires another complete run.
 
-The complete PostgreSQL migration cycle passed:
+## Prior implementation evidence
 
-1. upgrade from base to `20260805_0012`;
-2. downgrade from `20260805_0012` to base;
-3. upgrade again from base to `20260805_0012`.
+Before final release reconciliation, the implementation passed CI runs `#606` and `#607`.
 
-Result: `PASS`.
+The validated implementation included:
 
-### Backend behavior and coverage
+- `604` passing backend tests;
+- `0` failed backend tests;
+- `91.33%` branch coverage;
+- `13` passing architecture and release contracts;
+- successful PostgreSQL migration reversal;
+- successful frontend audit, typecheck, and production build;
+- no known Python dependency vulnerability reported by the configured audit.
 
-- tests passed: `604`
-- tests failed: `0`
-- warnings: `1`
-- branch coverage: `91.33%`
-- required coverage threshold: `90%`
-- result: `PASS`
-
-The single warning is a Starlette TestClient deprecation warning concerning the future `httpx2` transition. It is not a functional test failure and does not affect the Lot 12 release decision.
-
-### Frontend
-
-- TypeScript typecheck: `PASS`
-- production build: `PASS`
-- Research workspace routes: `PASS`
+These prior runs demonstrate implementation stability. The final release decision still depends on a successful run for the final version and documentation head.
 
 ## Capabilities validated
 
 ### Canonical public evidence
 
 - deterministic canonical URL handling;
-- IDNA and IPv6-safe rendering;
-- rejection of embedded credentials, invalid schemes, local names, internal suffixes and IP-literal targets;
-- stable resource identity, corroboration group and immutable version keys.
+- IDNA-safe rendering;
+- rejection of embedded credentials and invalid schemes;
+- rejection of local names, internal suffixes, and IP-literal targets;
+- stable resource, corroboration-group, and immutable-version identities.
 
-### Bounded public-web collection
+### Governed bounded collection
 
 - explicit organization-bound targets;
 - source-policy and authorization checks before requests;
 - `robots.txt` before sitemap and page requests;
 - explicit host and path scope;
-- bounded pages, total bytes, resource size and redirects;
+- bounded pages, total bytes, resource size, and redirects;
 - redirect scope re-evaluation;
-- bounded HTML, PDF and text handling;
+- bounded HTML, PDF, and text handling;
 - sitemap duplicate filtering and XML DTD/entity rejection;
 - `noindex` and `noarchive` suppression;
 - credential-marker quarantine;
-- no raw-content persistence.
+- no raw-content persistence;
+- runtime-derived collector user-agent version.
 
 ### Persistence and replay
 
 - transactional worker persistence;
-- durable chain from collection job to observation, resource, version, claim and checkpoint;
+- durable chain from collection job to observation, resource, version, claim, and checkpoint;
 - idempotent replay without duplicate observations or versions;
-- compatible loading of pre-resource-kind checkpoints;
+- compatible loading of earlier checkpoint shapes;
 - no current opportunity generated from historical public-footprint evidence alone.
 
-### Change and tombstone history
+### Change history and tombstones
 
 - changed content produces a new immutable version;
 - unchanged content does not duplicate versions;
-- HTTP 404 and 410 produce explicit tombstones;
-- tombstones preserve resource identity, resource kind and last known title;
+- HTTP `404` and `410` produce explicit tombstones;
+- tombstones preserve resource identity, kind, title, and chronology;
 - tombstones contain no response body and create no claim;
-- tombstones supersede the previous version and replay idempotently.
+- tombstones supersede earlier versions and replay idempotently.
 
 ### Search-result quarantine
 
 - versioned query templates are machine-readable;
 - all checked-in templates are disabled by default;
 - no external search provider is connected;
-- search-result metadata remains a quarantined lead;
-- search-derived claims remain `candidate` and are capped at `0.5` confidence;
+- search metadata remains a quarantined lead;
+- search-derived claims remain candidates with confidence capped at `0.5`;
 - search metadata cannot confirm a claim;
-- search lead and target page share a corroboration group without counting as independent evidence.
+- a search lead and its target page cannot count as independent corroboration.
 
-### Protected read access
+### Protected read access and analyst workspace
 
-- authenticated resource list endpoint;
-- authenticated resource detail endpoint;
-- pagination and organization/source/kind/access/retrieval/claim filters;
-- local search over persisted URLs, titles and claims;
-- analyst search does not initiate network collection;
-- complete immutable version chronology and claim provenance.
+- authenticated resource list and detail endpoints;
+- pagination and organization/source/kind/state filters;
+- local search over persisted data only;
+- no analyst-query-triggered network collection;
+- immutable version chronology and claim provenance;
+- `/research` resource list and detail views;
+- states, hashes, predecessor links, evidence basis, resolution status, confidence, and corroboration provenance.
 
-### Analyst workspace
+## Non-executable safeguards
 
-- `/research` navigation entry;
-- resource list and filters;
-- collection, access, quarantine and tombstone states;
-- version and claim counts;
-- immutable version timeline;
-- hashes and predecessor links;
-- evidence basis, resolution status and confidence;
-- canonical source and corroboration provenance.
-
-## Non-executable safeguards validated
-
-The checked-in schema example is blocked independently at multiple levels:
+The example is blocked independently at multiple levels:
 
 - source status: `draft`;
 - authorization status: `missing`;
@@ -147,19 +124,33 @@ The checked-in schema example is blocked independently at multiple levels:
 - collection schedule: absent;
 - search templates enabled: `false`.
 
-A cross-registry test verifies that the source, target and portfolio identifiers remain aligned while the example cannot execute accidentally.
+Cross-registry tests verify that identifiers remain aligned while the example cannot execute accidentally.
 
-## Residual risks and accepted limitations
+## Review findings incorporated during finalization
 
-1. No real organization website has reviewed authorization in the repository.
+- The release version was advanced from `0.12.0` to `0.13.0`.
+- The collector user agent now derives its version from the authoritative runtime package instead of a hard-coded value.
+- The README and authoritative delivery plan were reconciled with the implemented state of lots `09–12`.
+- Lot 12 was marked complete while retaining the production-authorization boundary.
+- The next planned implementation lot is Lot `13`.
+
+## Accepted limitations and residual risks
+
+1. No real organization website is authorized in the repository.
 2. No approved search provider is connected.
 3. No approved archive provider such as CDX is connected.
-4. PDF support currently records bounded document evidence; advanced document text extraction remains source- and format-dependent.
-5. The TestClient deprecation warning should be addressed during a future dependency-maintenance lot.
-6. The pull request contains a large technical foundation and should receive normal human review before merge.
+4. PDF support stores bounded evidence metadata; advanced extraction remains format-dependent.
+5. DNS-resolution pinning remains a future hardening topic; current collection is restricted to explicitly reviewed public DNS targets and bounded static HTTP.
+6. Isolated browser and download-quarantine execution remains deferred.
+7. A dependency-maintenance lot should address the existing Starlette TestClient deprecation warning.
 
 ## Release recommendation
 
-The Lot 12 technical foundation is suitable for merge only if the project treats production source activation as a separate, explicit governance operation. Merging this pull request does not authorize or schedule collection against a real organization.
+Merge using a squash commit only after the exact final PR head completes the full CI workflow successfully and the PR has no unresolved review threads.
 
-If the Lot 12 acceptance criteria require a live authorized production target inside the same pull request, the pull request must remain in draft until that authorization exists. No code change should simulate or invent that approval.
+After merge:
+
+- close Lot 12 issue `#34` as completed;
+- retain issues `#3`, `#5`, and `#6` because they represent deferred or future work rather than unfinished Lot 12 tasks;
+- begin Lot 13 only from the merged `main` commit;
+- do not activate any public-web, search, or archive source without a separate governance review.
