@@ -10,6 +10,7 @@ from cip.modules.public_footprint.api.schemas import (
     PublicResourceDetailResponse,
     PublicResourcePageResponse,
 )
+from cip.modules.public_footprint.application.view_models import PublicResourceFilters
 from cip.modules.public_footprint.domain.models import (
     PublicClaimType,
     PublicResourceKind,
@@ -48,17 +49,20 @@ def read_public_resources(
     limit: Annotated[int, Query(ge=1, le=200)] = 50,
     offset: Annotated[int, Query(ge=0)] = 0,
 ) -> PublicResourcePageResponse:
+    filters = PublicResourceFilters(
+        organization_id=organization_id,
+        source_id=source_id,
+        kind=kind,
+        access_state=access_state,
+        retrieval_state=retrieval_state,
+        claim_type=claim_type,
+        query=query,
+    )
     try:
         page = list_public_resources(
             session,
             now=utc_now(),
-            organization_id=organization_id,
-            source_id=source_id,
-            kind=kind,
-            access_state=access_state,
-            retrieval_state=retrieval_state,
-            claim_type=claim_type,
-            query=query,
+            filters=filters,
             limit=limit,
             offset=offset,
         )
