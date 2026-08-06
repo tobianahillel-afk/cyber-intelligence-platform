@@ -162,7 +162,16 @@ class CloudAssetMetadataRecord(PassiveAssetMetadataRecord):
     tenant_shared: bool = False
 
     @model_validator(mode="after")
-    def preserve_shared_tenancy_risk(self) -> CloudAssetMetadataRecord:
+    def validate_cloud_identity_and_tenancy(self) -> CloudAssetMetadataRecord:
+        if self.asset_kind is not ProviderAssetKind.CLOUD_RESOURCE:
+            raise ValueError("cloud metadata requires a cloud-resource asset")
+        provider = self.cloud_provider.strip().casefold()
+        if not provider:
+            raise ValueError("cloud_provider cannot be blank")
+        namespace = self.asset_value.partition(":")[0].casefold()
+        if namespace != provider:
+            raise ValueError("cloud resource namespace must match cloud_provider")
+        self.cloud_provider = provider
         has_shared_risk = (
             ProviderAttributionRisk.SHARED_HOSTING in self.attribution_risks
         )
