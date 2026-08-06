@@ -208,7 +208,7 @@ A lot is complete only when one final commit passes every applicable backend, fr
 
 **Status:** `IMPLEMENTED_VALIDATED`
 
-**Primary business outcome:** Release `0.17.0` with canonical passive assets, immutable provider observations, explicit chronology and expiration, source-aware organization attribution with reviewable risks, separated technology evidence levels, reversible persistence, protected APIs, and the Passive Exposure workspace without active validation or exposure claims.
+**Outcome:** Release `0.17.0` with canonical passive assets, immutable provider observations, explicit chronology and expiration, source-aware organization attribution with reviewable risks, separated technology evidence levels, reversible persistence, protected APIs, and the Passive Exposure workspace without active validation or exposure claims.
 
 **Dependencies:** Lots 08, 10, 13, 15, and organization identity contracts.
 
