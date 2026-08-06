@@ -41,7 +41,7 @@ _STATE_PRIORITY = {
 }
 
 
-def latest_passive_snapshots(
+def load_passive_snapshot_history(
     session: Session,
     asset_id: UUID,
 ) -> tuple[PassiveObservationSnapshot, ...]:
@@ -65,16 +65,13 @@ def latest_passive_snapshots(
             )
         )
     )
-    latest: dict[tuple[str, str], PassiveObservationSnapshotRecord] = {}
-    for record in records:
-        latest.setdefault((record.source_id, record.source_record_key), record)
     technologies = _technologies_by_snapshot(
         session,
-        tuple(record.id for record in latest.values()),
+        tuple(record.id for record in records),
     )
     return tuple(
-        _to_domain(latest[key], technologies.get(latest[key].id))
-        for key in sorted(latest)
+        _to_domain(record, technologies.get(record.id))
+        for record in records
     )
 
 
