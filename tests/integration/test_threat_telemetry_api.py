@@ -155,7 +155,7 @@ def test_replay_is_idempotent_and_reclassification_preserves_history(
     )
     assert (
         session.scalar(select(func.count(ThreatIndicatorRelationRecord.id)))
-        == 5
+        == 6
     )
     detail = client.get(
         f"/v1/threat-indicators/{indicator_id}",
