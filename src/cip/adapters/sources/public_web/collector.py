@@ -11,7 +11,10 @@ from cip.adapters.sources.public_web.mapper import (
 )
 from cip.adapters.sources.public_web.parsing import parse_sitemap
 from cip.adapters.sources.public_web.registry import PublicWebTarget
-from cip.modules.public_footprint.domain import PublicFootprintProjection
+from cip.modules.public_footprint.domain import (
+    PublicFootprintProjection,
+    PublicResourceKind,
+)
 from cip.modules.public_footprint.domain.scope import CrawlUsage
 from cip.modules.raw_observations.domain.entities import RawObservation
 from cip.modules.source_governance.domain.models import (
@@ -32,6 +35,7 @@ class PageCheckpoint:
     content_hash_sha256: str
     version_id: UUID
     canonical_url: str
+    resource_kind: PublicResourceKind
 
 
 @dataclass(frozen=True, slots=True)
@@ -107,6 +111,7 @@ def collect_public_web_target(
                     content_hash_sha256=previous.content_hash_sha256,
                     version_id=previous.version_id,
                     canonical_url=previous.canonical_url,
+                    resource_kind=previous.resource_kind,
                 )
                 if previous is not None
                 else None
@@ -128,6 +133,7 @@ def collect_public_web_target(
             content_hash_sha256=mapped.content_hash_sha256,
             version_id=checkpoint_version_id,
             canonical_url=fetched.fetched_url,
+            resource_kind=mapped.projection.resource.kind,
         )
         usage = CrawlUsage(
             pages_fetched=usage.pages_fetched + 1,
