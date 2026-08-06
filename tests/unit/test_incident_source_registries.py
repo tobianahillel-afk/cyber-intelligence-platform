@@ -35,7 +35,10 @@ def test_incident_sources_are_governed_but_not_authorized() -> None:
     assert all(entry.policy.status is SourceStatus.DRAFT for entry in entries)
     assert all(not entry.authorization.automated_collection_allowed for entry in entries)
     assert all(not entry.authorization.approved_hosts for entry in entries)
-    assert all(PROHIBITED <= entry.policy.prohibited_data_categories for entry in entries)
+    assert all(
+        entry.policy.prohibited_data_categories >= PROHIBITED
+        for entry in entries
+    )
     assert all(not entry.policy.raw_content_storage for entry in entries)
 
 
