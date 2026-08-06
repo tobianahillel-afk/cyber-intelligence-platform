@@ -30,6 +30,9 @@ class Settings(BaseSettings):
         "policies/sources.vulnerability.yml"
     )
     incident_source_registry_path: Path = Path("policies/sources.incidents.yml")
+    threat_telemetry_source_registry_path: Path = Path(
+        "policies/sources.threat_telemetry.yml"
+    )
     provider_onboarding_registry_path: Path = Path("policies/provider_onboarding.yml")
     source_portfolio_path: Path = Path("policies/source_portfolio.yml")
     decp_source_portfolio_path: Path = Path("policies/source_portfolio.decp.yml")
@@ -41,6 +44,9 @@ class Settings(BaseSettings):
     )
     incident_source_portfolio_path: Path = Path(
         "policies/source_portfolio.incidents.yml"
+    )
+    threat_telemetry_source_portfolio_path: Path = Path(
+        "policies/source_portfolio.threat_telemetry.yml"
     )
     greenhouse_board_registry_path: Path = Path("policies/greenhouse_boards.yml")
     lever_site_registry_path: Path = Path("policies/lever_sites.yml")

@@ -60,6 +60,11 @@ from cip.modules.source_portfolio.infrastructure.models import (
     SourceQualityBaselineRecord,
     SourceValueEventRecord,
 )
+from cip.modules.threat_telemetry.infrastructure.models import (
+    ThreatIndicatorRecord,
+    ThreatIndicatorRelationRecord,
+    ThreatIndicatorSnapshotRecord,
+)
 from cip.modules.vulnerability_knowledge.infrastructure.models import (
     VulnerabilityAffectedRangeRecord,
     VulnerabilityAliasRecord,
@@ -115,6 +120,9 @@ _IMPORTED_MODELS = (
     SourceRecord,
     SourceValueEventRecord,
     SuppressionRecord,
+    ThreatIndicatorRecord,
+    ThreatIndicatorRelationRecord,
+    ThreatIndicatorSnapshotRecord,
     VulnerabilityAffectedRangeRecord,
     VulnerabilityAliasRecord,
     VulnerabilityCweRecord,

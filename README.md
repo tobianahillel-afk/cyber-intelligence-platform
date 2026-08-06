@@ -4,7 +4,7 @@ Cyber Intelligence Platform is a standalone cyber revenue-intelligence and comme
 
 The product is not a Salesforce, HubSpot, or external-CRM extension. It owns company intelligence, evidence, alerts, saved searches, professional organization maps, contacts, opportunities, tasks, notes, assignments, engagement history, and reporting.
 
-The product is evidence-first. A material statement must expose its source, event and observation times, confidence, freshness, claim type, contradictions, and review history. An attacker allegation is not an official confirmation. A technology mention is not proof of deployment. A vulnerability record is not proof of an affected installation. An IOC is not proof that a named organization was compromised. Search-result metadata is a discovery lead, not independent corroboration.
+The product is evidence-first. A material statement must expose its source, event and observation times, confidence, freshness, claim type, contradictions, and review history. An attacker allegation is not an official confirmation. A technology mention is not proof of deployment. A vulnerability record is not proof of an affected installation. A global indicator is not proof that a named organization was compromised or exposed. Search-result metadata is a discovery lead, not independent corroboration.
 
 ## Product objective
 
@@ -23,7 +23,7 @@ Source breadth is useful only when it improves reliable client discovery. Source
 
 ## Current validated baseline
 
-The current release is version `0.15.0`, covering lots `00` through `14`.
+The current release is version `0.16.0`, covering lots `00` through `15`.
 
 Implemented capabilities include:
 
@@ -39,7 +39,8 @@ Implemented capabilities include:
 - DECP, TED, and BOAMP contract history, providers, and renewal timing;
 - governed corporate public-footprint resources, immutable versions, tombstones, quarantined search leads, protected APIs, and the Research workspace;
 - canonical vulnerability knowledge with aliases, immutable source history, CVSS, EPSS, CWE, affected ranges, exploitation dimensions, protected APIs, and the Vulnerabilities workspace;
-- canonical public incident records with immutable claims, explicit allegation/report/confirmation/denial/correction/retraction states, syndication controls, protected APIs, and the Incidents workspace.
+- canonical public incident records with immutable claims, explicit allegation/report/confirmation/denial/correction/retraction states, syndication controls, protected APIs, and the Incidents workspace;
+- canonical defensive threat indicators with deterministic normalization, immutable source history, conflicting classifications, sensor scope, campaign/malware/CVE relations, protected APIs, and the Threat Intel workspace.
 
 Lot `12` remains under an explicit activation boundary: merging the software does not authorize collection against a real organization. The checked-in public-web example is disabled, unauthorized, unscheduled, and non-executable. Search and archive providers remain disconnected until separately approved.
 
@@ -47,7 +48,9 @@ Lot `13` provides global vulnerability knowledge without asserting organization 
 
 Lot `14` provides public incident intelligence without contacting threat actors or handling victim data. An attacker allegation remains an allegation; only an active company confirmation, regulator notice, or CERT notice can provide official confirmation. Incident provider candidates remain non-executable, unauthorized, and unscheduled.
 
-The next planned implementation lot is `15`, malicious infrastructure, phishing, indicators of compromise, and attack telemetry.
+Lot `15` provides a global defensive telemetry layer without organization attribution. It normalizes public-safe indicators, preserves malicious, suspicious, benign, sinkholed, expired, shared-infrastructure, and retracted states, and exposes immutable source history. It performs no active connection, scan, binary download, compromise inference, opportunity creation, or outreach. All newly modeled telemetry providers remain non-executable candidates.
+
+The next planned implementation lot is `16`, passive exposure and technographic observations.
 
 ## Implemented and modeled source portfolio
 
@@ -64,17 +67,19 @@ Executable or installed adapters currently include:
 
 Selected vulnerability schemas and deterministic mappings are implemented for CVE.org/CVE v5, NVD API 2.0, FIRST EPSS, OSV, GitHub Global Security Advisories, and CIRCL-compatible CVE records. These entries remain non-executable candidates.
 
-Selected incident schemas and deterministic mappings are implemented for official company disclosures, regulator and CERT notices, bounded public or licensed incident reporting, and licensed ransomware metadata. The installed source candidates are:
+Selected incident schemas and deterministic mappings are implemented for official company disclosures, regulator and CERT notices, bounded public or licensed incident reporting, and licensed ransomware metadata. These entries remain non-executable candidates.
 
-- SEC cyber disclosures;
-- official company incident disclosures;
-- regulator and CERT incident notices;
-- licensed incident reporting;
-- licensed ransomware metadata.
+Selected defensive telemetry schemas and deterministic mappings are implemented for:
 
-Every incident candidate is `draft`, has missing authorization, has no approved hosts or paths, has no schedule, and is marked `executable: false`. Modeling a provider does not grant permission to collect it.
+- licensed STIX/TAXII indicators;
+- licensed phishing metadata;
+- licensed passive DNS;
+- licensed certificate telemetry;
+- licensed malware family and hash metadata.
 
-OSINT Framework entries remain non-executable catalog candidates. LinkedIn, Discord, BrixHub, browser automation, premium providers, search APIs, archive providers, unapproved vulnerability providers, and unapproved incident providers remain disabled unless their exact method, fields, purpose, authorization, retention, licence, and security controls are approved.
+Every telemetry candidate is `draft`, has missing authorization, has no approved hosts or paths, has no schedule, and is marked `executable: false`. Direct indicator connection, binary collection, organization-compromise inference, and autonomous outreach are explicitly forbidden.
+
+OSINT Framework entries remain non-executable catalog candidates. LinkedIn, Discord, BrixHub, browser automation, premium providers, search APIs, archive providers, and every unapproved vulnerability, incident, or telemetry provider remain disabled unless their exact method, fields, purpose, authorization, retention, licence, and security controls are approved.
 
 ## Evidence flow
 
@@ -127,6 +132,23 @@ attacker allegation
   != authorization to contact
 ```
 
+Defensive threat telemetry remains separate from organization attribution:
+
+```text
+provider indicator metadata
+  -> deterministic indicator normalization
+  -> immutable source snapshot
+  -> source independence, sensor scope, and classification history
+  -> canonical indicator and campaign relations
+
+canonical indicator
+  != direct validation by this platform
+  != organization asset evidence
+  != proof of exposure
+  != proof of compromise
+  != current opportunity
+```
+
 Provider payloads remain inside adapter packages. Adapters never write directly to company, score, alert, or opportunity projections.
 
 ## Product access model
@@ -137,7 +159,7 @@ Collection is centralized and uses approved public feeds, official APIs, open-da
 
 The product is database-first. Normal page views read stored and indexed evidence; they do not crawl sources on demand. Schedulers refresh sources according to freshness, value, cost, quota, authorization, and change frequency. Stale data remains visible with an explicit freshness state.
 
-The `/research`, `/vulnerabilities`, and `/incidents` workspaces and their APIs search persisted data only. They never launch external collection from an analyst page view.
+The `/research`, `/vulnerabilities`, `/incidents`, and `/threat-intelligence` workspaces and their APIs search persisted data only. They never launch external collection from an analyst page view.
 
 ## Architecture
 
@@ -153,8 +175,8 @@ Canonical layers are:
 1. source catalog and authorization;
 2. provider onboarding and adapter capabilities;
 3. collection runs and immutable source records;
-4. evidence, observations, public claims, vulnerability snapshots, and incident claim snapshots;
-5. resolved organizations, incidents, vulnerabilities, technologies, providers, roles, and temporal relationships;
+4. evidence, observations, public claims, vulnerability snapshots, incident claims, and telemetry snapshots;
+5. resolved organizations, incidents, vulnerabilities, indicators, technologies, providers, roles, and temporal relationships;
 6. service mappings, commercial signals, and need hypotheses;
 7. scores, alerts, opportunities, tasks, and analyst decisions.
 
@@ -174,8 +196,8 @@ Domain modules cannot depend on FastAPI, SQLAlchemy models, adapters, API packag
 
 [`docs/PROJECT_DELIVERY_PLAN.md`](docs/PROJECT_DELIVERY_PLAN.md) is authoritative.
 
-- lots `00–14`: implemented and validated foundations, procurement, hiring, identity, onboarding, source runtime, contracts, public footprint, vulnerability knowledge, and public incident intelligence;
-- lots `15–19`: malicious infrastructure and telemetry, passive exposure, advisories and applicability, corporate changes, and provider relationships;
+- lots `00–15`: implemented and validated foundations, procurement, hiring, identity, onboarding, source runtime, contracts, public footprint, vulnerability knowledge, public incident intelligence, and defensive telemetry;
+- lots `16–19`: passive exposure, advisories and applicability, corporate changes, and provider relationships;
 - lots `20–23`: entity resolution, professional context, conditional sources, and governed research orchestration;
 - lots `24–27`: signal fusion, need hypotheses, calibrated scoring, native commercial operations, and Company 360;
 - lots `28–32`: data quality, release security, resilience, optional isolated browser runtime, and controlled production pilot.
@@ -187,7 +209,7 @@ Every pull request must pass on one final SHA:
 1. dependency consistency and security audits;
 2. Ruff;
 3. Mypy strict;
-4. architecture, complexity, dependency, release, and roadmap contracts;
+4. architecture, complexity, dependency, safety, release, and roadmap contracts;
 5. reversible PostgreSQL migrations;
 6. backend coverage instrumentation including branches, with the configured aggregate threshold at or above 90%;
 7. frontend dependency audit, TypeScript checking, and production build.
@@ -203,7 +225,8 @@ Executable rules include:
 - one authoritative package and API version;
 - unit tests cannot open live network connections;
 - UTC-aware persistence;
-- roadmap lots remain continuous and status-consistent.
+- roadmap lots remain continuous and status-consistent;
+- threat telemetry cannot import network clients, organization modules, or opportunity modules.
 
 ## Source and data safety
 
@@ -213,12 +236,12 @@ The platform does not:
 
 - interact with threat actors;
 - enter victim negotiation portals or use `.onion` incident sources;
-- download victim files, stolen datasets, or malware samples;
+- download victim files, stolen datasets, malware samples, or other binary payloads;
 - validate leaked credentials;
 - store private communications or private-life data;
 - bypass authentication, paywalls, CAPTCHA, MFA, invitations, or access controls;
 - actively scan or exploit prospects;
-- directly connect to malicious infrastructure merely to validate an IOC;
+- directly connect to suspicious or malicious infrastructure merely to validate an indicator;
 - create fake accounts or rotate accounts after a ban;
 - perform autonomous outreach;
 - infer organization exposure from a global CVE, CVSS, EPSS, PoC, or KEV record alone;
@@ -301,4 +324,6 @@ npm run build
 - [`docs/lots/LOT_13_VALIDATION_REPORT.md`](docs/lots/LOT_13_VALIDATION_REPORT.md)
 - [`docs/lots/LOT_14_INCIDENT_INTELLIGENCE.md`](docs/lots/LOT_14_INCIDENT_INTELLIGENCE.md)
 - [`docs/lots/LOT_14_VALIDATION_REPORT.md`](docs/lots/LOT_14_VALIDATION_REPORT.md)
+- [`docs/lots/LOT_15_THREAT_TELEMETRY.md`](docs/lots/LOT_15_THREAT_TELEMETRY.md)
+- [`docs/lots/LOT_15_VALIDATION_REPORT.md`](docs/lots/LOT_15_VALIDATION_REPORT.md)
 - [`SECURITY.md`](SECURITY.md)

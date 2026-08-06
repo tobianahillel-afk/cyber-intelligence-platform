@@ -36,6 +36,12 @@ def test_settings_have_safe_local_defaults() -> None:
     assert settings.incident_source_portfolio_path == Path(
         "policies/source_portfolio.incidents.yml"
     )
+    assert settings.threat_telemetry_source_registry_path == Path(
+        "policies/sources.threat_telemetry.yml"
+    )
+    assert settings.threat_telemetry_source_portfolio_path == Path(
+        "policies/source_portfolio.threat_telemetry.yml"
+    )
     assert settings.greenhouse_board_registry_path == Path(
         "policies/greenhouse_boards.yml"
     )
@@ -117,6 +123,9 @@ def test_database_metadata_contains_foundation_tables() -> None:
         "source_value_events",
         "sources",
         "suppressions",
+        "threat_indicator_relations",
+        "threat_indicator_snapshots",
+        "threat_indicators",
         "vulnerabilities",
         "vulnerability_affected_ranges",
         "vulnerability_aliases",
@@ -155,6 +164,8 @@ def test_metadata_creates_on_sqlite() -> None:
     assert get_metadata().tables["vulnerability_scores"].foreign_keys
     assert get_metadata().tables["incidents"].foreign_keys
     assert get_metadata().tables["incident_claim_snapshots"].foreign_keys
+    assert get_metadata().tables["threat_indicator_snapshots"].foreign_keys
+    assert get_metadata().tables["threat_indicator_relations"].foreign_keys
 
 
 def test_database_url_is_required() -> None:
