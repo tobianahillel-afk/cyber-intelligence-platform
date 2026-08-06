@@ -18,6 +18,9 @@ from cip.modules.passive_exposure.domain.models import (
     TechnologyEvidenceLevel,
     TechnologyObservation,
 )
+from cip.modules.passive_exposure.domain.reconciliation import (
+    latest_passive_snapshots as select_latest_passive_snapshots,
+)
 from cip.modules.passive_exposure.infrastructure.models import (
     PassiveObservationSnapshotRecord,
     PassiveTechnologyRecord,
@@ -72,10 +75,11 @@ def latest_passive_snapshots(
         session,
         tuple(record.id for record in latest.values()),
     )
-    return tuple(
+    hydrated = tuple(
         _to_domain(latest[key], technologies.get(latest[key].id))
         for key in sorted(latest)
     )
+    return select_latest_passive_snapshots(hydrated)
 
 
 def _technologies_by_snapshot(
