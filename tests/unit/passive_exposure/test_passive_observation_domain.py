@@ -150,7 +150,24 @@ def test_rejects_active_validation_and_exposure_claims() -> None:
         _snapshot(vulnerability_applicability_assessed=True)
 
 
-def test_terminal_observations_are_inactive_and_historical() -> None:
+def test_historical_observations_are_inactive_and_historical_only() -> None:
+    snapshot = _snapshot(
+        state=PassiveObservationState.HISTORICAL,
+        active=False,
+        historical_only=True,
+    )
+
+    assert snapshot.active is False
+    assert snapshot.historical_only is True
+
+    with pytest.raises(ValueError, match="cannot be active"):
+        _snapshot(state=PassiveObservationState.HISTORICAL)
+
+    with pytest.raises(ValueError, match="must be historical-only"):
+        _snapshot(state=PassiveObservationState.HISTORICAL, active=False)
+
+
+def test_terminal_observations_cannot_be_active() -> None:
     snapshot = _snapshot(
         state=PassiveObservationState.EXPIRED,
         active=False,
