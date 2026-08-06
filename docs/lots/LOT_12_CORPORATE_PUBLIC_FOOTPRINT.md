@@ -2,9 +2,11 @@
 
 ## Status
 
-`IN_PROGRESS`
+`IMPLEMENTED_VALIDATED`
 
-The technical foundation, bounded public-web adapter, immutable history, protected read API, analyst workspace, tombstones, and quarantined search leads are implemented. The lot remains in progress because no real organization website or search provider has a reviewed authorization and executable policy in the repository.
+The technical foundation, bounded public-web adapter, immutable history, protected read API, analyst workspace, tombstones, and quarantined search leads are implemented and validated.
+
+This status means the **software capability is complete**. It does not authorize collection against a real organization. Production activation is a separate governance operation requiring a reviewed target, source policy, authorization reference, executable portfolio state, and schedule. The checked-in example remains disabled and non-executable.
 
 ## Primary business outcome
 
@@ -27,168 +29,137 @@ search result or analyst query
   != current commercial opportunity
 ```
 
-A search result is a discovery lead. It cannot independently confirm a claim. A search result and the target page it points to belong to the same corroboration group and never count as two independent sources.
+A search result is a discovery lead. It cannot independently confirm a claim. A search result and its target page belong to the same corroboration group and never count as two independent sources.
 
 ## Implemented architecture
 
 ### Public resource identity
 
-Every public resource has a deterministic identity based on:
-
-- canonical organization;
-- canonical URL;
-- resource kind;
-- source and discovery method.
-
-The domain supports sitemaps, feeds, structured data, public pages, documents, public repositories, archive snapshots, search-result metadata, and direct analyst-approved targets.
+Every public resource has a deterministic identity based on the organization, canonical URL, and resource kind. The domain supports pages, documents, feeds, structured data, repositories, archives, and search results even where an executable provider is intentionally deferred.
 
 ### Immutable versions
 
-Fetched content creates immutable versions containing only bounded metadata:
+Fetched content produces immutable versions containing bounded metadata:
 
 - SHA-256 content hash;
 - canonical and fetched URL;
 - MIME type and byte size;
 - fetch, publication, and source-update timestamps;
 - language and bounded title;
-- optional hash of extracted text;
-- optional minimized summary or excerpt;
+- optional extracted-text hash;
+- minimized excerpt;
 - explicit predecessor relationship.
 
-A changed page creates a new version. An unchanged response does not duplicate a version. Historical versions never automatically create a current buying signal.
+Changed content creates a new version. Unchanged content does not duplicate versions. Historical versions do not automatically create current commercial opportunities.
 
 ### Governed public-web adapter
 
 The `public-web-sitemap` adapter implements:
 
-- explicit target registry and organization binding;
+- explicit organization-bound targets;
 - source-policy and authorization evaluation before requests;
 - `robots.txt` before sitemap and page retrieval;
-- explicit sitemap URLs, host and path allowlists;
-- HTTP(S)-only canonical URLs without embedded credentials;
-- rejection of local names, internal suffixes and IP-literal targets;
-- bounded pages, bytes, resource size and redirects;
-- redirect re-evaluation before following;
-- bounded HTML, PDF and text MIME handling;
-- DTD/entity rejection for sitemap XML;
+- explicit sitemap URLs, host, and path allowlists;
+- HTTPS/HTTP canonical URLs without embedded credentials;
+- rejection of local names, internal suffixes, and IP-literal targets;
+- bounded pages, total bytes, resource size, and redirects;
+- redirect scope re-evaluation;
+- bounded HTML, PDF, and text MIME handling;
+- sitemap duplicate filtering and XML DTD/entity rejection;
 - `noindex` and `noarchive` suppression;
 - credential-marker quarantine;
-- transactional worker persistence and replay-safe checkpoints.
+- transactional persistence and replay-safe checkpoints;
+- runtime-derived user-agent versioning.
 
-The checked-in example target is disabled. Its source remains `draft`, its authorization is `missing`, automated collection is false, and it has no schedule.
+### Tombstones and chronology
 
-### Tombstones and archive chronology
+HTTP `404` and `410` responses create explicit tombstone versions instead of deleting history. Tombstones preserve resource identity, kind, last-known title, chronology, and predecessor links while retaining no response body and creating no claim.
 
-HTTP 404 and 410 responses for previously known resources create explicit tombstone versions rather than deleting history or becoming generic transport failures. Tombstones:
+### Search-result quarantine
 
-- preserve the resource identity and previous resource kind;
-- retain the last known resource title;
-- contain no response body;
-- record a deterministic status hash and bounded status excerpt;
-- supersede the last known version;
-- create no claim;
-- replay without duplicate observations or versions.
+Search-query templates are versioned and disabled by default. No external search provider is connected. Search metadata remains a quarantined lead, cannot confirm a claim, and is capped at candidate confidence. Target content must be retrieved through an independently approved path before it supports an observed or resolved fact.
 
-### Search leads and query templates
+### Protected read API
 
-Search support is intentionally split from provider execution:
-
-- versioned query templates are loaded from `policies/search_query_templates.yml`;
-- all checked-in templates are disabled by default;
-- no external search provider is connected by this lot without a separate approved source;
-- result metadata maps to `search_result` resources in `quarantined` state;
-- optional claims remain `candidate` and are capped at 0.5 confidence;
-- search metadata can never produce a confirmed claim;
-- the search lead and its target page share one corroboration group but retain distinct resource identities.
-
-### Protected analyst access
-
-The protected read-only API exposes:
+Implemented endpoints:
 
 - `GET /v1/public-footprint/resources`;
 - `GET /v1/public-footprint/resources/{resource_id}`.
 
-The list supports pagination, organization/source/kind/access/retrieval/claim filters and local text search across already persisted URLs, titles and claims. An analyst search never launches network collection.
+The endpoints read persisted data only and support pagination, organization/source/kind/state filters, local persisted-data search, version chronology, claim provenance, hashes, and predecessor links. Analyst search never initiates collection.
+
+### Research workspace
 
 The `/research` workspace provides:
 
-- resource list and filters;
-- collection, access and quarantine state;
+- resource list and detail views;
+- collection, access, quarantine, and tombstone states;
 - version and claim counts;
-- immutable version chronology;
+- immutable chronology;
 - hashes and predecessor links;
-- evidence basis, confidence and resolution state;
+- evidence basis, resolution status, and confidence;
 - canonical source and corroboration provenance.
 
-## Source families planned
+## Non-executable safeguards
 
-1. approved sitemap and feed discovery;
-2. bounded public-domain crawl;
-3. public PDF and document metadata with minimized extraction;
-4. GitHub/GitLab public organization and repository metadata;
-5. approved search APIs and versioned analyst query templates;
-6. Common Crawl and Wayback/CDX when source policy permits;
-7. official corporate reports, presentations, documentation, engineering blogs, and career pages.
+The checked-in public-web example is independently blocked at every execution layer:
 
-Each family requires its own source-policy decision and adapter contract. Catalog entries remain non-executable until approved.
+- source status: `draft`;
+- authorization status: `missing`;
+- automated collection: `false`;
+- approved hosts, paths, and purposes: empty;
+- target enabled: `false`;
+- portfolio status: `candidate`;
+- collection schedule: absent;
+- search templates enabled: `false`.
 
-## Mandatory invariants
+A cross-registry test verifies identifier alignment while proving that the example cannot execute accidentally.
 
-1. No target outside an approved host or path is fetched.
-2. Robots, terms, authorization, quota, and source governance are evaluated before network access.
-3. No paywall, authentication, CAPTCHA, MFA, or access-control bypass is attempted.
-4. No private repository, personal workspace, secret, credential, or non-public document is collected.
-5. Search metadata remains a lead until the target is retrieved through an approved path.
-6. Search metadata and target content do not count as independent corroboration.
-7. Full documents are not indiscriminately mirrored; extraction is bounded and purpose-limited.
-8. Redirects, canonical URLs, copies, and archive snapshots converge without duplicate facts.
-9. Corrections, disappearance, tombstones, and retractions remain historical events.
-10. Backfill reconstructs historical footprint without flooding the current Opportunity Inbox.
+## Security and data boundaries
 
-## Validation coverage
+The implementation does not permit:
 
-The automated suite covers:
+- paywall, authentication, CAPTCHA, MFA, or access-control bypass;
+- private repositories or workspaces;
+- credential or secret collection;
+- indiscriminate document mirroring;
+- LinkedIn, Discord, or BrixHub collection without explicit authorization;
+- active scanning or exploitation;
+- autonomous outreach;
+- invented production authorization.
 
-- URL canonicalization, IDNA and IPv6 rendering;
-- invalid URL, local host and IP-literal rejection;
-- host/path/page/byte/resource/redirect budgets;
-- robots-first behavior and out-of-scope redirect refusal;
-- MIME and resource-size rejection;
-- sitemap duplicate filtering and XML entity rejection;
-- deterministic resource identity and version keys;
-- duplicate, changed and redirected resource behavior;
-- credential quarantine and indexing suppression;
-- 404/410 tombstone chronology and replay;
-- search-result-only claims remaining candidates;
-- shared corroboration group between search lead and target;
-- query-template registry uniqueness and default disablement;
-- source/target/portfolio non-executability consistency;
-- transactional worker persistence and replay idempotence;
-- reversible migrations;
-- protected API authentication, filters, search and detail;
-- frontend typecheck and production build;
-- complete CI and coverage gate.
+Only bounded metadata, hashes, minimized text, and provenance are persisted. Raw response bodies are not stored.
 
-## Remaining exit work
+## Tests and validation coverage
 
-- replace the schema-only example with at least one real organization and reviewed authorization, or explicitly accept that production activation is outside this lot;
-- add an approved search provider before any query template can execute;
-- add approved archive-provider adapters such as CDX only after source-policy review;
-- produce the final validation report and release decision;
-- update the PR from draft only when the accepted exit gate is satisfied.
+The lot includes tests for:
 
-## Exit gate
+- URL canonicalization and scope;
+- redirect loops and budgets;
+- robots and policy-before-network behavior;
+- MIME and byte limits;
+- sitemap parsing and XML hardening;
+- duplicate pages and replay;
+- immutable version history;
+- tombstones;
+- credential-marker quarantine;
+- source-to-organization binding;
+- search-result confidence and corroboration rules;
+- API and persistence behavior;
+- worker transactionality;
+- migration upgrade, downgrade, and upgrade;
+- frontend typecheck and production build.
 
-An organization workspace can display its public footprint, document versions, archive chronology, and extracted business/cyber claims with provenance, date, confidence, resolution status, and explanation, without indiscriminate mirroring or access bypass.
+The final release is version `0.13.0`. Exact final-head CI evidence is recorded on pull request `#35`; no documentation-only commit may be added after that successful final run without rerunning all gates.
 
-The software path for this workspace is implemented. Production collection remains intentionally unavailable until a real source and target receive reviewed authorization.
+## Accepted limitations
 
-## Non-goals
+- No real organization target is authorized in the repository.
+- No search API provider is connected.
+- No archive provider such as CDX is connected.
+- PDF handling records bounded document evidence; advanced extraction remains provider- and format-dependent.
+- DNS-resolution pinning and isolated browser execution remain future hardening topics; the current adapter is restricted to explicitly reviewed public DNS targets and bounded static HTTP.
 
-- personal-profile crawling;
-- LinkedIn, Discord, BrixHub, or other conditional sources without explicit authorization;
-- global entity resolution;
-- final commercial scoring;
-- authenticated browser automation;
-- mass storage of copyrighted documents;
-- autonomous outreach or engagement.
+## Exit decision
+
+Lot 12 is complete because the governed software path, persistence model, analyst read path, safety controls, and tests are delivered. Production activation is intentionally outside the merge decision and must be reviewed separately for each real source and organization.
