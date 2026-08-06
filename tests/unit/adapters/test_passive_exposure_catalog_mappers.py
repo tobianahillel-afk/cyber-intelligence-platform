@@ -124,6 +124,28 @@ def test_maps_shared_cloud_tenancy_as_review_risk() -> None:
     )
 
 
+def test_provider_metadata_is_trimmed_before_mapping() -> None:
+    record = PassiveExposureMetadataRecord(
+        **_base_payload(
+            record_id="  record-1  ",
+            source_url="  https://provider.example/records/1  ",
+            independence_key="  upstream-group  ",
+            supersedes_record_key="  previous-record  ",
+        )
+    )
+
+    snapshot = map_passive_exposure_metadata(
+        record,
+        source_id="  licensed-passive-exposure  ",
+    )
+
+    assert record.record_id == "record-1"
+    assert record.source_url == "https://provider.example/records/1"
+    assert snapshot.source_id == "licensed-passive-exposure"
+    assert snapshot.independence_key == "upstream-group"
+    assert snapshot.supersedes_record_key == "previous-record"
+
+
 @pytest.mark.parametrize(
     ("field", "value"),
     [
