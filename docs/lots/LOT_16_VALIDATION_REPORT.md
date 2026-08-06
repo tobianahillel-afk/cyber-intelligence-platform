@@ -6,7 +6,7 @@ Final release decision: **PENDING FINAL CI**.
 
 Target release: `0.17.0`.
 
-PR #46 is the authoritative Lot 16 pull request. Superseded PRs #43, #44, and #45 were closed without discarding any implementation commit.
+PR #47 is the authoritative Lot 16 pull request. Superseded PRs #43, #44, #45, and #46 were closed without discarding any implementation commit.
 
 This report records the exact validation boundary for Lot 16. It must be updated with the final pull-request head, GitHub Actions run identifier, test counts, coverage and review state before the pull request can merge.
 
@@ -62,7 +62,7 @@ The exact final pull-request head must pass:
 | Gate | Result |
 | --- | --- |
 | Final pull-request head | Pending |
-| GitHub Actions run | Blocked by GitHub Actions incident |
+| GitHub Actions run | Requested; no run indexed yet |
 | Dependency consistency | Pending |
 | Python dependency audit | Pending |
 | Ruff | Pending |
@@ -74,7 +74,7 @@ The exact final pull-request head must pass:
 | Frontend dependency audit | Pending |
 | TypeScript typecheck | Pending |
 | Next.js production build | Pending |
-| Unresolved review threads | Pending |
+| Unresolved review threads | 0 at last inspection |
 
 ## Provider activation decision
 
@@ -82,10 +82,10 @@ Production activation of the Lot 16 provider candidates is **not authorized by t
 
 The checked-in provider entries remain metadata-only candidates with missing authorization, no approved hosts or paths, no registered adapters, no collection schedule and `executable: false`.
 
-## Current external blocker
+## Current validation state
 
-GitHub Status reports a major Actions outage. Webhook triggers are being throttled during recovery, so many pushes and pull-request events are not creating workflow runs; queued jobs may also be delayed or fail. PR #46 was opened after the earlier PRs failed to receive a run, but no validation run has yet been created.
+GitHub Status currently reports Actions and Webhooks operational. PR #47 was opened on the complete implementation history after earlier pull-request events failed to create a run. This report update requests a fresh `synchronize` event on the authoritative branch; the lot remains blocked from merge until a complete run is attached to the resulting exact head.
 
 ## Merge rule
 
-PR #46 must not merge until this report is updated from a successful GitHub Actions run on the exact final head. Any later commit invalidates earlier evidence and requires the complete validation chain to run again.
+PR #47 must not merge until this report is updated from a successful GitHub Actions run on the exact final head. Any later commit invalidates earlier evidence and requires the complete validation chain to run again.
