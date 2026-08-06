@@ -3,12 +3,14 @@ from __future__ import annotations
 from collections import defaultdict
 from datetime import datetime
 
-from cip.modules.passive_exposure.domain.models import (
+from cip.modules.passive_exposure.domain.asset_models import TechnologyObservation
+from cip.modules.passive_exposure.domain.enums import (
     AttributionRisk,
     OrganizationLinkStatus,
-    PassiveObservationSnapshot,
     PassiveObservationState,
-    TechnologyObservation,
+)
+from cip.modules.passive_exposure.domain.observation_models import (
+    PassiveObservationSnapshot,
 )
 from cip.modules.passive_exposure.domain.reconciled_models import (
     ObservedService,
