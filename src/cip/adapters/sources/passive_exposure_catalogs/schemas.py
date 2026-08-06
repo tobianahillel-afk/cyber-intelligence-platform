@@ -238,13 +238,15 @@ def _validate_service_metadata(record: PassiveAssetMetadataRecord) -> None:
 def _validate_technology_metadata(record: PassiveAssetMetadataRecord) -> None:
     if record.observation_kind in _TECHNOLOGY_KINDS and record.technology is None:
         raise ValueError("technology observations require technology metadata")
-    if record.observation_kind is ProviderObservationKind.VERSION:
-        if (
+    if (
+        record.observation_kind is ProviderObservationKind.VERSION
+        and (
             record.technology is None
             or record.technology.evidence_level
             is not ProviderTechnologyLevel.OBSERVED_VERSION
-        ):
-            raise ValueError("version observations require observed-version metadata")
+        )
+    ):
+        raise ValueError("version observations require observed-version metadata")
 
 
 def _validate_source_url(value: str) -> None:
