@@ -10,6 +10,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.pool import StaticPool
 
+from cip import __version__
 from cip.main import create_app
 from cip.modules.evidence.infrastructure.models import EvidenceRecord
 from cip.modules.opportunities.domain.entities import CommercialSignal, SignalType
@@ -49,7 +50,7 @@ def test_health_reports_phase_version(client_and_session: tuple[TestClient, Sess
     response = client.get("/health")
 
     assert response.status_code == 200
-    assert response.json() == {"status": "ok", "version": "0.12.0"}
+    assert response.json() == {"status": "ok", "version": __version__}
 
 
 def test_empty_opportunity_list(client_and_session: tuple[TestClient, Session]) -> None:
