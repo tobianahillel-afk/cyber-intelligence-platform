@@ -4,6 +4,24 @@ from dataclasses import dataclass
 from datetime import datetime
 from uuid import UUID
 
+from cip.modules.public_footprint.domain.models import (
+    PublicClaimType,
+    PublicResourceKind,
+    ResourceAccessState,
+    ResourceRetrievalState,
+)
+
+
+@dataclass(frozen=True, slots=True)
+class PublicResourceFilters:
+    organization_id: UUID | None = None
+    source_id: str | None = None
+    kind: PublicResourceKind | None = None
+    access_state: ResourceAccessState | None = None
+    retrieval_state: ResourceRetrievalState | None = None
+    claim_type: PublicClaimType | None = None
+    query: str | None = None
+
 
 @dataclass(frozen=True, slots=True)
 class PublicClaimItem:
