@@ -3,6 +3,8 @@ from __future__ import annotations
 from datetime import UTC, datetime, timedelta
 from uuid import UUID, uuid4
 
+import pytest
+
 from cip.modules.passive_exposure.domain.models import (
     AttributionRisk,
     OrganizationLink,
@@ -58,6 +60,41 @@ def test_new_provider_record_can_supersede_previous_record_key() -> None:
     )
 
     assert latest_passive_snapshots((original, correction)) == (correction,)
+
+
+def test_superseded_record_remains_in_reconciled_history() -> None:
+    original = _snapshot(observed_at=NOW - timedelta(days=1))
+    correction = _snapshot(
+        source_record_key="record-2",
+        source_url="https://provider-a.example/records/2",
+        state=PassiveObservationState.CORRECTED,
+        modified_at=NOW + timedelta(minutes=3),
+        active=False,
+        historical_only=True,
+        supersedes_record_key="record-1",
+    )
+
+    result = reconcile_passive_snapshots((original, correction), at=NOW)[0]
+
+    assert result.state is PassiveObservationState.CORRECTED
+    assert result.first_seen_at == NOW - timedelta(days=1)
+    assert result.observed_states == (
+        PassiveObservationState.CORRECTED,
+        PassiveObservationState.CURRENT,
+    )
+    assert result.has_conflict is True
+
+
+def test_rejects_supersession_cycles() -> None:
+    first = _snapshot(supersedes_record_key="record-2")
+    second = _snapshot(
+        source_record_key="record-2",
+        source_url="https://provider-a.example/records/2",
+        supersedes_record_key="record-1",
+    )
+
+    with pytest.raises(ValueError, match="supersession cycle"):
+        latest_passive_snapshots((first, second))
 
 
 def test_expires_current_observation_at_read_time() -> None:
