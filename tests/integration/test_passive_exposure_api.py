@@ -231,8 +231,41 @@ def test_source_record_cannot_move_between_assets(
         modified_at=NOW + timedelta(minutes=1),
     )
 
-    with pytest.raises(ValueError, match="cannot move between passive assets"):
+    with pytest.raises(ValueError, match="ownership conflicts"):
         persist_passive_snapshots(session, (moved,), now=NOW + timedelta(minutes=1))
+
+    session.rollback()
+
+
+def test_batch_supersession_target_must_stay_on_same_asset(
+    passive_client: tuple[TestClient, Session, UUID, tuple[UUID, UUID]],
+) -> None:
+    _, session, _, organization_ids = passive_client
+    template = _current_snapshots(organization_ids)[0]
+    original = replace(
+        template,
+        source_id="batch-provider",
+        source_record_key="batch-original",
+        source_url="https://batch-provider.example/records/original",
+    )
+    correction = replace(
+        original,
+        source_record_key="batch-correction",
+        source_url="https://batch-provider.example/records/correction",
+        asset=PassiveAsset(PassiveAssetKind.HOSTNAME, "other.example.com"),
+        state=PassiveObservationState.CORRECTED,
+        modified_at=NOW + timedelta(minutes=1),
+        active=False,
+        historical_only=True,
+        supersedes_record_key="batch-original",
+    )
+
+    with pytest.raises(ValueError, match="supersession target"):
+        persist_passive_snapshots(
+            session,
+            (correction, original),
+            now=NOW + timedelta(minutes=1),
+        )
 
     session.rollback()
 
