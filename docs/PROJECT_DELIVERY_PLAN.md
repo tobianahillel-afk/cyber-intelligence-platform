@@ -26,6 +26,7 @@ A lot is complete only when one final commit passes every applicable backend, fr
 - A source catalog entry is not an executable adapter.
 - Provider payloads never write directly to company, score, alert, or opportunity tables.
 - Evidence, claims, observations, resolved facts, service mappings, signals, hypotheses, and analyst decisions remain distinct.
+- Global vulnerability knowledge never proves that an organization uses an affected product or is exposed.
 - Duplicate reporting increases corroboration; it does not duplicate entities, incidents, signals, alerts, or opportunities.
 - Corrections, retractions, suppression, deletion, and authorization expiry propagate to derived data.
 - Historical backfills must not flood the current analyst Inbox.
@@ -58,7 +59,7 @@ A lot is complete only when one final commit passes every applicable backend, fr
 | 10 | Source portfolio runtime, backfill, freshness, and source health | `IMPLEMENTED_VALIDATED` |
 | 11 | Procurement history, providers, contracts, and renewal timing | `IMPLEMENTED_VALIDATED` |
 | 12 | Corporate public footprint, documents, search, and archives | `IMPLEMENTED_VALIDATED` |
-| 13 | Vulnerability knowledge and exploitation-state reconciliation | `PLANNED_LOCKED` |
+| 13 | Vulnerability knowledge and exploitation-state reconciliation | `IMPLEMENTED_VALIDATED` |
 | 14 | Live incidents, ransomware claims, and official confirmation | `PLANNED_LOCKED` |
 | 15 | Malicious infrastructure, phishing, IOC, and attack telemetry | `PLANNED_LOCKED` |
 | 16 | Passive exposure and technographic observations | `PLANNED_LOCKED` |
@@ -101,344 +102,652 @@ A lot is complete only when one final commit passes every applicable backend, fr
 
 **Status:** `IMPLEMENTED_VALIDATED`
 
-**Outcome:** Normalized evidence can create persistent, explainable, versioned, human-reviewed opportunities with filters, detail views, score components, qualification, rejection, snooze, and analyst overrides.
+**Outcome:** Evidence-backed commercial signals, need hypotheses, explainable scores, analyst reviews, score overrides, API contracts, and an Inbox workspace support human qualification without autonomous outreach.
 
 ## Lot 04 — TED European procurement signals
 
 **Status:** `IMPLEMENTED_VALIDATED`
 
-**Outcome:** Relevant official TED notices create deterministic procurement evidence, commercial signals, and opportunities through a bounded, checkpointed, replay-safe adapter without mirroring full notices.
+**Outcome:** Governed TED Search API collection produces deterministic procurement observations, evidence, service-classified signals, and opportunities with replay-safe checkpoints and provenance.
 
 ## Lot 05 — BOAMP French procurement and executable architecture gates
 
 **Status:** `IMPLEMENTED_VALIDATED`
 
-**Outcome:** Relevant BOAMP notices use the same evidence-to-opportunity path while CI enforces dependency boundaries, module size, complexity, duplicate-definition, migration, and maintainability contracts.
+**Outcome:** BOAMP procurement expands French coverage while executable rules enforce module boundaries, complexity, file sizes, duplicate definitions, release consistency, and deterministic unit tests.
 
 ## Lot 06 — Greenhouse public cyber hiring signals
 
 **Status:** `IMPLEMENTED_VALIDATED`
 
-**Outcome:** Approved Greenhouse boards produce mutable and deterministic public hiring signals without collecting applications, candidates, CVs, private emails, screening answers, or raw HTML.
+**Outcome:** An explicit company-board registry drives bounded Greenhouse collection, canonical job observations, evidence, service-family classification, commercial signals, and opportunities.
 
 ## Lot 07 — Lever and SmartRecruiters multi-ATS expansion
 
 **Status:** `IMPLEMENTED_VALIDATED`
 
-**Outcome:** Greenhouse, Lever, and SmartRecruiters share one canonical public-job contract, update and expire postings idempotently, and keep ambiguous cross-provider matches reviewable.
+**Outcome:** Lever and SmartRecruiters extend the public hiring path with registry-bound targets, strict schemas, deterministic mapping, replay safety, and cross-ATS deduplication contracts.
 
 ## Lot 08 — French and European organization identity foundation
 
 **Status:** `IMPLEMENTED_VALIDATED`
 
-**Outcome:** Recherche d'entreprises, GLEIF, and BODACC resolve legal units, establishments, SIREN, SIRET, LEI, aliases, statuses, headquarters, parent relationships, registry claims, conflicts, and merge candidates; exact identifiers may link automatically while ambiguous cases require review.
+**Outcome:** Recherche d'entreprises, GLEIF, and BODACC support legal units, establishments, groups, exact identifiers, aliases, source claims, conflicts, parent relationships, and review candidates without unsafe fuzzy merges.
 
 ## Lot 09 — Official provider onboarding and secret lifecycle
 
 **Status:** `IMPLEMENTED_VALIDATED`
 
-**Outcome:** Provider onboarding supports public automatic connection, official human checkpoints, references to secrets rather than raw secret values, verification, rotation state, expiry, revocation, audit, protected APIs, and a Sources workspace. CAPTCHA, MFA, KYC, approval, payment, and access controls are never bypassed.
+**Outcome:** Provider onboarding states, reviewed authorization, capability checks, secret references, audit history, revocation, rotation, expiry, and control-plane APIs govern official or licensed integrations.
 
 ## Lot 10 — Source portfolio runtime, backfill, freshness, and source health
 
 **Status:** `IMPLEMENTED_VALIDATED`
 
-**Outcome:** A common machine-readable source portfolio governs adapter capabilities, historical backfill, incremental refresh, conditional requests, priority refresh, immutable source records, transactional checkpoints, corrections, tombstones, retractions, freshness, health, drift, volume, quotas, costs, circuits, authorization expiry, pause, resume, and disablement.
+**Outcome:** A machine-readable source portfolio controls executable capability, historical partitions, incremental collection, freshness, quota, cost, quality, health, ablation value, and runtime reconciliation.
 
 ## Lot 11 — Procurement history, providers, contracts, and renewal timing
 
 **Status:** `IMPLEMENTED_VALIDATED`
 
-**Outcome:** DECP, TED, and BOAMP publications are reconciled into procurement procedures, awards, contracts, provider relationships, amendments, cancellations, amounts, currencies, confirmed dates, and explicitly uncertain renewal estimates across the complete cyber-service taxonomy. Historical backfill does not create false current opportunities.
+**Outcome:** DECP, TED, and BOAMP records produce canonical procedures, publications, contracts, parties, service classifications, chronology, and renewal context without treating historical awards as current buying intent.
 
 ## Lot 12 — Corporate public footprint, documents, search, and archives
 
 **Status:** `IMPLEMENTED_VALIDATED`
 
-**Outcome:** The software foundation for organization-bound public-web evidence is implemented: governed targets, policy-before-network, robots checks, bounded sitemap/page retrieval, immutable resources and versions, hashes, chronology, tombstones, minimized claims, search-result quarantine, protected APIs, and a Research workspace. Production activation remains a separate governance operation: the checked-in example target is disabled and unauthorized, no search or archive provider is connected, and merging the lot authorizes no real-world collection.
+**Outcome:** Governed public-web collection provides immutable resources, versions, tombstones, bounded parsing, exact scope enforcement, quarantined search leads, protected APIs, and a Research workspace while real targets and search/archive providers remain separately authorized.
 
 ## Lot 13 — Vulnerability knowledge and exploitation-state reconciliation
 
-**Status:** `PLANNED_LOCKED`
+**Status:** `IMPLEMENTED_VALIDATED`
 
-**Primary business outcome:** Build a reliable vulnerability layer without equating publication with organizational exposure.
-
-**Dependencies:** Lots 01–03, 10, and 12.
-
-**Deliverables:** CVE.org, NVD, CISA KEV history, EPSS history, OSV, GitHub advisories, CIRCL Vulnerability-Lookup, aliases, CVSS, CWE, products, affected ranges, references, exploitation state, updates, supersession, and retractions.
-
-**Required tests:** Alias reconciliation, conflicting scores, affected ranges, malformed versions, KEV/EPSS history, source precedence, proof-of-concept versus observed exploitation, corrections, and retractions.
-
-**Exit gate:** Vulnerability facts reconcile across sources and cannot independently claim that a prospect is vulnerable.
+**Outcome:** Version `0.14.0` provides canonical vulnerability records, exact aliases, immutable provider snapshots, CVSS and EPSS history, CWE, affected ranges, independent exploitation dimensions, reversible persistence, protected APIs, and a Vulnerabilities workspace. CISA KEV projects transactionally through the existing governed worker; additional provider mappings remain non-executable candidates. Global vulnerability data alone cannot infer organization exposure or create an opportunity.
 
 ## Lot 14 — Live incidents, ransomware claims, and official confirmation
 
 **Status:** `PLANNED_LOCKED`
 
-**Primary business outcome:** Detect organizations with current cyber urgency while separating allegations, secondary reports, confirmations, denials, and corrections.
+**Primary business outcome:** Build a temporal, source-aware incident layer that distinguishes allegation, third-party reporting, official confirmation, regulatory notice, denial, correction, and retraction so analysts can identify credible current incident-response, recovery, resilience, notification, legal, and communication needs without contacting threat actors or handling victim data.
 
-**Dependencies:** Lots 08, 10, 12, and 13.
+**Dependencies:** Lots 01–03, 08, 10, 12, and 13. Organization identity, immutable evidence, source health, public-footprint chronology, and vulnerability knowledge must already exist.
 
-**Deliverables:** Incident claims, actor aliases, victim matching, timelines, duplicate clustering, source ranking, allegation/report/confirmation/regulatory/denial/retraction states, bounded public metadata, historical backfill, and frequent refresh.
+**Deliverables:**
 
-**Required tests:** Duplicate victims, ambiguous organizations, actor claim versus denial, official confirmation, stale claims, correction, retraction, forbidden victim-content rejection, and source ranking.
+- canonical incident, incident claim, affected-organization assertion, incident type, discovery date, occurrence window, publication time, confirmation time, status, and confidence;
+- claim types for attacker allegation, independent media report, researcher report, company disclosure, regulator notice, CERT/CSIRT notice, insurer or provider statement, denial, correction, and retraction;
+- strict separation between an allegation and a confirmed incident;
+- source ranking, corroboration groups, contradiction handling, and temporal state transitions;
+- metadata-only ransomware and extortion tracking from lawful public or licensed sources;
+- official confirmation paths from company statements, regulators, CERT/CSIRT notices, and public filings;
+- bounded incident summaries, public URLs, provenance, and retention without victim files, leaked data, credentials, negotiation portals, or private communications;
+- entity-resolution links that can remain candidate/review-required when organization identity is ambiguous;
+- protected incident list/detail API and analyst workspace;
+- governed source policies and portfolio entries with no invented authorization;
+- historical backfill that cannot create a current high-urgency opportunity merely because an old incident was imported.
 
-**Exit gate:** Every incident exposes claim type, source, confidence, corroboration, chronology, and resolution without storing stolen files or private negotiations.
+**Required tests:**
+
+- attacker allegation versus official confirmation;
+- independent corroboration versus syndicated duplicate reporting;
+- denial, correction, and retraction propagation;
+- ambiguous victim-name resolution and false-merge prevention;
+- occurrence, discovery, publication, and confirmation timestamp separation;
+- ransomware metadata without portal access or victim-file retrieval;
+- duplicate incident convergence and split review;
+- source precedence and contradiction handling;
+- historical backfill versus current urgency;
+- privacy, suppression, retention, and provenance;
+- reversible migrations, protected API, frontend build, and complete non-regression suite.
+
+**Exit gate:** An analyst can inspect one incident timeline and understand exactly what is alleged, reported, officially confirmed, denied, corrected, or retracted; which organization link is resolved or review-required; which public evidence supports each state; and why no victim data or threat-actor interaction entered the platform. No incident alone creates an autonomous outreach action.
 
 ## Lot 15 — Malicious infrastructure, phishing, IOC, and attack telemetry
 
 **Status:** `PLANNED_LOCKED`
 
-**Primary business outcome:** Add campaign and sector context without turning global telemetry into unsupported accusations against named organizations.
+**Primary business outcome:** Normalize lawful public or licensed technical threat telemetry into time-bounded infrastructure and campaign context that supports defensive-service hypotheses without scanning prospects or treating an IOC as proof of compromise.
 
-**Dependencies:** Lots 10 and 13–14.
+**Dependencies:** Lots 01–03, 10, 13, and 14.
 
-**Deliverables:** IOC, malicious URL/domain, C2, phishing, scanning, exploitation, outage, and campaign observations; STIX/TAXII mappings; first/last seen; confidence; sensor scope; expiry; and campaign/CVE relations.
+**Deliverables:**
 
-**Required tests:** Indicator normalization, active/inactive transitions, duplicate feeds, sensor scope, expiration, TAXII replay, oversized feeds, provider outages, false organization linkage, and malicious-binary exclusion.
+- canonical indicators, infrastructure observations, campaigns, malware families, confidence, first/last seen, expiration, and source history;
+- IOC types for domains, IPs, URLs, hashes, certificates, email infrastructure, phishing kits, and C2 metadata;
+- passive/provider telemetry only, with source-specific licences and retention;
+- distinction among malicious, suspicious, historical, sinkholed, shared-hosting, and unknown states;
+- campaign and malware links with explicit provenance;
+- no active connection to malicious infrastructure and no malware download;
+- protected search and timeline views;
+- signal eligibility rules that require organization-specific authorized evidence before any company conclusion.
 
-**Exit gate:** Telemetry enriches threats and incidents but cannot alone assert that a named organization was compromised.
+**Required tests:**
+
+- indicator normalization and collision prevention;
+- shared infrastructure and CDN false-positive handling;
+- first/last seen and expiration;
+- correction, sinkhole, and benign reclassification;
+- duplicate feed convergence;
+- no prospect scanning or direct malicious-host connection;
+- backfill/incremental idempotence;
+- migration, API, UI, and full regression gates.
+
+**Exit gate:** Technical telemetry is searchable, historical, source-aware, and safe, but cannot independently label an organization compromised or exposed.
 
 ## Lot 16 — Passive exposure and technographic observations
 
 **Status:** `PLANNED_LOCKED`
 
-**Primary business outcome:** Identify fresh, passive, evidence-backed asset and technology hypotheses relevant to services and products.
+**Primary business outcome:** Build organization-linked passive exposure and technology observations from approved providers so analysts can identify reviewable product, cloud, certificate, DNS, ASN, and service context without active scanning.
 
-**Dependencies:** Lots 08, 10, and 13.
+**Dependencies:** Lots 08, 10, 13, 15, and organization identity contracts.
 
-**Deliverables:** Governed passive providers, domains, certificates, IPs, ASNs, services, banners, technologies, versions, first/last seen, observation method, provider scope, shared-hosting uncertainty, ownership confidence, and decay.
+**Deliverables:**
 
-**Required tests:** No direct scanning, host and provider policy, stale data, shared infrastructure, certificate/domain linkage, provider conflict, version precision, quotas, and false-link datasets.
+- passive asset, hostname, certificate, DNS, ASN, cloud, service, port, product, and technology observations;
+- exact observation time, provider, confidence, expiry, and historical state;
+- organization-link confidence and review workflow;
+- explicit distinction among technology mention, passive observation, version observation, affected version, and verified exposure;
+- authorized provider adapters and cost/quota controls;
+- suppression and opt-out handling;
+- no active probes, exploitation, credential use, or access-control bypass;
+- asset and technology views with provenance and freshness.
 
-**Exit gate:** Every exposure hypothesis shows who observed what, when, through which passive method, and with what ownership and version confidence.
+**Required tests:**
+
+- shared hosting, CDN, reseller, subsidiary, and abandoned-domain false matches;
+- certificate and DNS chronology;
+- passive observation expiration;
+- technology without version and version without vulnerability applicability;
+- provider correction/deletion;
+- organization-link review;
+- no live-network unit tests or active scans;
+- migration, API, UI, and full regression gates.
+
+**Exit gate:** Passive observations are useful and reviewable while every exposure conclusion remains bounded by evidence, time, identity confidence, and source authorization.
 
 ## Lot 17 — Vendor advisories, product versions, and applicability
 
 **Status:** `PLANNED_LOCKED`
 
-**Primary business outcome:** Convert vulnerability and technology evidence into precise, qualified product-risk hypotheses.
+**Primary business outcome:** Reconcile vendor advisories, product naming, version ranges, support status, fixes, mitigations, and applicability so vulnerability knowledge can be compared with organization-specific technology evidence without unsafe automatic conclusions.
 
 **Dependencies:** Lots 13 and 16.
 
-**Deliverables:** Prioritized PSIRT connectors, advisory-to-CVE mappings, vendor/product/version taxonomy, fixed versions, workarounds, supersession, range evaluation, lifecycle state, and match precision.
+**Deliverables:**
 
-**Required tests:** Affected/unaffected/unknown, version ranges, superseded advisories, malformed versions, family-only downgrade, stale technology, contradiction, applicable KEV, and explanation completeness.
+- vendor, product, edition, component, platform, version, branch, support lifecycle, advisory, fix, and mitigation models;
+- vendor PSIRT and official advisory sources;
+- CPE, package, ecosystem, and vendor alias reconciliation;
+- range-evaluation semantics with unknown and ambiguous states;
+- superseded advisories and corrected ranges;
+- applicability assessments that cite both vulnerability and organization technology evidence;
+- review-required state for weak product/version matches;
+- no active validation against prospect systems.
 
-**Exit gate:** Product-risk results expose match precision and never present family evidence as an exact vulnerable installation.
+**Required tests:**
+
+- product aliases and false product merges;
+- inclusive/exclusive and open-ended version ranges;
+- unknown versions and backported fixes;
+- vendor correction and supersession;
+- operating-system/distribution/package distinctions;
+- evidence expiration and applicability withdrawal;
+- no exposure conclusion without organization evidence;
+- migration, API, UI, and regression gates.
+
+**Exit gate:** Applicability is explainable and reversible, with exact evidence for the vulnerability side and the organization-technology side.
 
 ## Lot 18 — News, regulatory, corporate-disclosure, and change signals
 
 **Status:** `PLANNED_LOCKED`
 
-**Primary business outcome:** Detect events that create urgency, budget, governance, integration, or compliance needs.
+**Primary business outcome:** Detect material public changes that may create cyber needs while distinguishing original disclosures, regulation, reporting, commentary, and speculation.
 
-**Dependencies:** Lots 08, 10, 12, and 14.
+**Dependencies:** Lots 08, 10, 12, 14, and 17.
 
-**Deliverables:** Company pressrooms, RSS, market disclosures, regulators, authorities, licensed news metadata, acquisitions, funding, leadership, restructuring, cloud, data-center, transformation events, clustering, corrections, and event/publication time separation.
+**Deliverables:**
 
-**Required tests:** Primary versus secondary source, duplicate stories, corrections, date distinctions, copyright limits, organization resolution, conflicting reports, and event-to-need classification.
+- canonical change events for acquisitions, leadership, funding, restructuring, geographic expansion, cloud or digital programs, regulatory action, breaches, audits, certifications, and public security commitments;
+- source and article identity, publication/update times, syndication groups, quotes/excerpts within copyright bounds, and provenance;
+- official filing, regulator, company, media, and analyst-source distinctions;
+- contradiction, correction, and retraction processing;
+- organization and event candidate links;
+- service-family mappings kept separate from raw events;
+- protected event search and timelines.
 
-**Exit gate:** Material changes become traceable evidence and commercial signals without full-text news mirroring.
+**Required tests:**
+
+- syndicated duplicate stories;
+- speculation versus official disclosure;
+- correction/retraction propagation;
+- event-date versus publication-date separation;
+- company-name ambiguity;
+- bounded excerpts and retention;
+- historical backfill versus current urgency;
+- migrations, API, UI, and regression gates.
+
+**Exit gate:** Analysts can trace every corporate or regulatory change to original evidence and understand whether it is confirmed, reported, disputed, or stale.
 
 ## Lot 19 — Providers, customers, partners, and supply-chain relationships
 
 **Status:** `PLANNED_LOCKED`
 
-**Primary business outcome:** Reveal incumbent providers, ecosystems, partnerships, dependencies, and relationship changes that shape commercial positioning.
+**Primary business outcome:** Build temporal, evidence-backed business and technology relationships that explain incumbents, dependencies, partners, customers, suppliers, integrators, auditors, insurers, and MSSPs.
 
-**Dependencies:** Lots 08 and 11–18.
+**Dependencies:** Lots 08, 11, 12, 14, 16, and 18.
 
-**Deliverables:** Public case studies, marketplace listings, partner directories, customer stories, procurement-derived links, relationship types, temporal state, confidence, replacement, consolidation, and source-incentive metadata.
+**Deliverables:**
 
-**Required tests:** Alias normalization, current versus historical state, circular citation, duplicate case studies, source incentive penalties, contradictions, subsidiary scope, and replacement chronology.
+- typed organization relationships with direction, role, start/end, confidence, source, and review state;
+- provider/product/customer evidence from contracts, case studies, partner directories, disclosures, certificates, and approved sources;
+- distinction among claimed, observed, contracted, historical, and inferred relationships;
+- duplicate and contradiction handling;
+- incumbent and renewal context for commercial analysis;
+- no scraping of private customer portals or personal networks;
+- relationship graph and chronology APIs/UI.
 
-**Exit gate:** Every relationship exposes why it is believed, its timeframe, and whether it is confirmed, published, probable, contradicted, or historical.
+**Required tests:**
+
+- direction and role correctness;
+- historical versus active relationship;
+- marketing claim versus contract evidence;
+- parent/subsidiary and reseller ambiguity;
+- contradiction and correction;
+- false relationship prevention;
+- migrations, API, UI, and full regression gates.
+
+**Exit gate:** Relationship context is temporal and explainable and never presented as current fact without adequate evidence.
 
 ## Lot 20 — Entity resolution and temporal corporate knowledge graph
 
 **Status:** `PLANNED_LOCKED`
 
-**Primary business outcome:** Link legal entities, brands, groups, domains, assets, providers, contracts, incidents, technologies, and people without unsafe merges.
+**Primary business outcome:** Reconcile organizations, establishments, groups, brands, domains, products, incidents, assets, providers, and relationships into a temporal graph with reversible merge/split decisions.
 
 **Dependencies:** Lots 08 and 11–19.
 
-**Deliverables:** Candidate generation, identifier-first matching, evidence-weighted matching, corporate hierarchy, acquisitions, aliases, temporal relationships, reversible merge/split, conflict queues, source-specific claims, and graph projections.
+**Deliverables:**
 
-**Required tests:** Similar names, subsidiaries, acquisitions, shared infrastructure, exact and fuzzy identifiers, false merges, missed links, merge reversal, temporal validity, and contradiction preservation.
+- graph identifiers, node/edge types, temporal validity, source claims, and lineage;
+- deterministic exact matching followed by explainable probabilistic candidates;
+- analyst merge, reject, split, and override workflows;
+- identity-conflict queues and blast-radius previews;
+- propagation of corrections and suppression;
+- graph read models without making the graph database the system of record by default;
+- performance and consistency contracts.
 
-**Exit gate:** Every accepted node and edge is evidence-backed, temporal, reversible, and reviewable; ambiguous relations remain candidates.
+**Required tests:**
+
+- exact identifiers and alias chains;
+- homonyms, rebrands, mergers, spin-offs, and reused domains;
+- merge/split rollback;
+- temporal edges and historical queries;
+- correction propagation;
+- false-merge benchmark fixtures;
+- migrations, API, UI, and regression gates.
+
+**Exit gate:** Every resolved entity and relationship exposes why it exists, when it was valid, and how to reverse an incorrect decision.
 
 ## Lot 21 — Professional organization maps, contacts, and public community signals
 
 **Status:** `PLANNED_LOCKED`
 
-**Primary business outcome:** Identify the professional buying context and weak public professional signals needed to route opportunities correctly.
+**Primary business outcome:** Identify relevant professional roles, teams, public business contact channels, and consented community context without building private-life profiles or bypassing platform rules.
 
-**Dependencies:** Lots 08, 10, 12, and 20.
+**Dependencies:** Lots 08, 12, 19, and 20 plus privacy controls.
 
-**Deliverables:** Professional identities, roles, departments, seniority, employment dates, buying-committee roles, public/licensed business contacts, provenance, purpose, freshness, retention, correction, objection, suppression, and governed public community signals.
+**Deliverables:**
 
-**Required tests:** Person and employment deduplication, professional/private classification, stale roles, contact suppression, public affiliation evidence, weak-signal penalties, pseudonym non-deanonymization, and export minimization.
+- professional role, team, reporting-line claim, business email pattern, switchboard, contact form, and public professional profile references;
+- relevance to service families and opportunities;
+- source, freshness, confidence, and employment-history transitions;
+- lawful-basis, minimization, suppression, correction, and deletion handling;
+- public community signals only through approved exports, APIs, or administrator-installed integrations;
+- no private messages, friend graphs, personal addresses, or sensitive private-life data;
+- organization map and contact review UI.
 
-**Exit gate:** Every visible contact and role has provenance, permitted purpose, freshness, and suppression state; community data remains weak evidence until corroborated.
+**Required tests:**
+
+- same-name people and job transitions;
+- stale employment and role changes;
+- business versus personal contact separation;
+- suppression and deletion propagation;
+- public/community consent boundaries;
+- no unauthorized LinkedIn or Discord automation;
+- migrations, API, UI, and regression gates.
+
+**Exit gate:** Analysts can find relevant professional context with source and freshness while privacy rights and platform authorization remain enforceable.
 
 ## Lot 22 — Conditional, premium, LinkedIn, Discord, and BrixHub integrations
 
 **Status:** `PLANNED_LOCKED`
 
-**Primary business outcome:** Add high-value sources that require licences, platform authorization, consented installation, or provider review through the same canonical contracts as public sources.
+**Primary business outcome:** Provide a controlled framework for sources whose use depends on licence, account scopes, administrator consent, customer-provided access, or written authorization.
 
-**Dependencies:** Lots 09–10 and 20–21.
+**Dependencies:** Lots 09, 10, 21, privacy controls, and repository hardening.
 
-**Deliverables:** Licensed-provider contracts, cost and quota controls, official LinkedIn scopes or licensed products, consented Discord connectors or exports, commercial CTI, premium B2B data, and a BrixHub assessment and adapter only after explicit approval.
+**Deliverables:**
 
-**Required tests:** Licence expiry, authorization expiry, scope mismatch, tenant isolation, cost budgets, permitted channels and fields, deletion, historical import/resume, incremental convergence, prohibited-field rejection, and unique-value benchmarks.
+- per-provider approval dossier covering method, scopes, fields, purpose, retention, licence, security, revocation, and cost;
+- provider service identities and secret references;
+- official LinkedIn API/licensed paths only;
+- Discord administrator-installed connector, authorized export, or equivalent consented path only;
+- BrixHub exact access-path and field review before any adapter exists;
+- premium CTI and commercial providers through contract-bound capabilities;
+- kill switch, quota, deletion, audit, and unique-value measurement;
+- no fake accounts, copied cookies, CAPTCHA solving, ban evasion, or proxy rotation for bypass.
 
-**Exit gate:** Conditional sources are either approved and governed or remain non-executable with explicit blockers. BrixHub is never activated merely because it appears in the roadmap.
+**Required tests:**
+
+- missing/expired/revoked authorization;
+- scope reduction and secret rotation;
+- account isolation;
+- deletion and correction propagation;
+- quota and cost limits;
+- provider outage and terms-change pause;
+- unique commercial value against existing sources;
+- migrations, API, UI, and regression gates.
+
+**Exit gate:** A conditional source cannot execute until its exact approval dossier is positive, and disabling it immediately stops collection without corrupting existing provenance.
 
 ## Lot 23 — Analyst research and governed OSINT catalog orchestration
 
 **Status:** `PLANNED_LOCKED`
 
-**Primary business outcome:** Make broad public research reproducible, prioritized, and connected to company and opportunity workflows.
+**Primary business outcome:** Turn the broad OSINT catalog into human-operated, policy-aware research plans and evidence capture instead of unrestricted autonomous browsing.
 
-**Dependencies:** Lots 10, 12, and 20–22.
+**Dependencies:** Lots 10, 12–22.
 
-**Deliverables:** Research cases, reusable queries, saved results, OSINT catalog candidates, source classification queues, organization research plans, approved search APIs, bounded document discovery, review tasks, sensitive-result quarantine, catalog health, and source-value comparison.
+**Deliverables:**
 
-**Required tests:** Query templates, candidate deduplication, dead or redirected tools, ownership changes, restricted-result quarantine, no secret download, authorization expiry, research history, and source recommendations based on evidence gaps.
+- research questions, plans, steps, allowed tools, budgets, approvals, results, and analyst decisions;
+- source selection based on value, freshness, cost, quota, authorization, and risk;
+- analyst links for search/dorks when automation is not approved;
+- captured evidence through approved ingestion paths only;
+- no unrestricted agent browsing, authenticated automation, or active probing;
+- reproducible research history and handoff;
+- orchestration UI with explicit manual-action states.
 
-**Exit gate:** Analysts can reproduce why a source or query was used, what it found, what remains uncertain, and how it affected a commercial hypothesis.
+**Required tests:**
+
+- denied tool before execution;
+- budget and domain/path boundaries;
+- analyst-link versus automated-provider distinction;
+- evidence provenance and deduplication;
+- interruption/retry without duplicate actions;
+- no autonomous outreach or unsafe browsing;
+- API, UI, and full regression gates.
+
+**Exit gate:** Analysts can run reproducible governed research while every automated step remains bounded by an executable policy and authorization.
 
 ## Lot 24 — Signal fusion, need hypotheses, and commercial taxonomy
 
 **Status:** `PLANNED_LOCKED`
 
-**Primary business outcome:** Convert the evidence portfolio into non-duplicated, service-specific, explainable cybersecurity needs across the canonical taxonomy.
+**Primary business outcome:** Fuse independent evidence into explicit cybersecurity need hypotheses across the complete service taxonomy without collapsing weak observations into deterministic conclusions.
 
-**Dependencies:** Lots 03 and 11–23.
+**Dependencies:** Lots 11–23 and the canonical service taxonomy.
 
-**Deliverables:** Executable service taxonomy, event clustering, corroboration, contradiction, source independence, active intervals, service/product fit, deterministic signals, need hypotheses, commercial motions, recalculation, and invalidation.
+**Deliverables:**
 
-**Required tests:** Positive, negative, and ambiguous cases for every service family; multilingual aliases; duplicate sources; contradiction; stale decay; retraction; compatible grouping; unrelated needs; cross-service bias; search metadata limits; and explanation completeness.
+- executable service-family mappings and versioned rules;
+- evidence independence and corroboration groups;
+- contradiction, negative evidence, freshness, and expiry;
+- need hypotheses with rationale, confidence, urgency, horizon, and applicable offers;
+- separate raw evidence, signal, hypothesis, and analyst decision states;
+- cross-service coverage beyond SIEM/SOC;
+- explainable source contribution and ablation.
 
-**Exit gate:** Every hypothesis explains why it exists, supporting and contradicting evidence, expiry, service family, and the distinct or grouped commercial motion it enables.
+**Required tests:**
+
+- positive, negative, ambiguous, stale, and contradictory fixtures;
+- duplicate-source independence;
+- multi-service classification;
+- global vulnerability without organization applicability;
+- historical incident without current urgency;
+- rule-version replay and rollback;
+- API, UI, and regression gates.
+
+**Exit gate:** Every need hypothesis explains which independent evidence supports it, which evidence conflicts, and why a service family is or is not applicable.
 
 ## Lot 25 — Advanced scoring, calibration, explainability, and feedback
 
 **Status:** `PLANNED_LOCKED`
 
-**Primary business outcome:** Prioritize commercially useful and defensible opportunities while preserving human control.
+**Primary business outcome:** Rank opportunities using calibrated, explainable, reviewable scores tied to measurable outcomes rather than opaque heuristics.
 
-**Dependencies:** Lot 24.
+**Dependencies:** Lot 24 plus analyst outcomes from Lot 03.
 
-**Deliverables:** Intent, urgency, fit, timing, company fit, product risk, incident confidence, contact availability, evidence quality, source independence, freshness, uncertainty, penalties, calibration datasets, thresholds by service family, source value, outcomes, and rollbackable score versions.
+**Deliverables:**
 
-**Required tests:** Bounds, monotonicity, stale decay, contradiction, source independence, precision/recall, false urgency, source ablation, cross-service bias, calibration, override preservation, and explanation completeness.
+- versioned score components for intent, urgency, fit, confidence, freshness, corroboration, relationship, timing, and cost;
+- calibration datasets and offline evaluation;
+- analyst overrides and reasons;
+- uncertainty and missing-data handling;
+- service-specific and segment-specific calibration;
+- drift, bias, and false-positive monitoring;
+- score replay and comparison between versions.
 
-**Exit gate:** A scoring version improves service-specific and global benchmarks, is explainable and rollbackable, and optimizes accepted opportunity quality rather than ingestion volume.
+**Required tests:**
+
+- monotonic component behavior;
+- contradictory and missing evidence;
+- calibration and ranking fixtures;
+- override audit and rollback;
+- score-version reproducibility;
+- no sensitive protected-class inference;
+- API, UI, and regression gates.
+
+**Exit gate:** A score is reproducible, calibrated against outcomes, decomposable into evidence-backed components, and overrideable by an analyst.
 
 ## Lot 26 — Native commercial operations, alerts, tasks, and engagement
 
 **Status:** `PLANNED_LOCKED`
 
-**Primary business outcome:** Let a team operate the complete commercial workflow inside Cyber Intelligence Platform.
+**Primary business outcome:** Manage the complete opportunity lifecycle inside the platform without requiring an external CRM and without autonomous outreach.
 
-**Dependencies:** Lots 03, 08, 21, and 25.
+**Dependencies:** Lots 21, 24, and 25.
 
-**Deliverables:** Rules, alerts, saved searches, watchlists, opportunity stages, ownership, assignments, tasks, reminders, queues, service levels, notes, research requests, buying committees, engagement history, audit, dashboards, and controlled import/export.
+**Deliverables:**
 
-**Required tests:** Alert deduplication and reopening, stage transitions, task recurrence, assignment, concurrent edits, immutable history, suppression before contact use, distinct service motions, deletion, and dashboard consistency.
+- organizations, contacts, opportunities, stages, owners, teams, tasks, notes, reminders, alerts, assignments, and engagement history;
+- saved searches and subscriptions;
+- analyst-created outreach drafts and approval workflow;
+- communication logging without sending automatically;
+- SLA, snooze, reopen, rejection, duplicate, and closed-loop outcomes;
+- role-based control-plane operations and audit history;
+- reporting read models.
 
-**Exit gate:** A team can discover, qualify, assign, research, track, and close opportunities with complete history and no external CRM dependency.
+**Required tests:**
+
+- state-machine transitions and permissions;
+- duplicate opportunity handling;
+- task/reminder chronology;
+- engagement audit and deletion;
+- no automatic send or contact enrichment bypass;
+- concurrency and rollback;
+- API, UI, and regression gates.
+
+**Exit gate:** Analysts can operate an opportunity end to end with auditable human decisions and no autonomous external communication.
 
 ## Lot 27 — Complete company intelligence and analyst workspace
 
 **Status:** `PLANNED_LOCKED`
 
-**Primary business outcome:** Present one coherent company workspace that connects evidence to action without exposing raw provider data.
+**Primary business outcome:** Deliver Company 360 and analyst workflows that assemble identity, evidence, incidents, vulnerabilities, exposure, relationships, contacts, opportunities, and actions without losing provenance or uncertainty.
 
 **Dependencies:** Lots 20–26.
 
-**Deliverables:** Company 360, public footprint, corporate graph, assets, technologies, providers, vulnerabilities, incidents, contracts, recruitment, events, professional map, contacts, evidence timeline, conflicts, freshness, service coverage, alerts, hypotheses, scores, opportunities, tasks, notes, engagement, and saved layouts.
+**Deliverables:**
 
-**Required tests:** Loading, empty, partial, stale, conflicting, suppressed, unavailable, unauthorized, and success states; graph and timeline navigation; service filters; deep links; accessibility; responsiveness; and end-to-end investigations.
+- Company 360 summary and timelines;
+- identity, group, establishment, domain, asset, product, provider, incident, vulnerability, relationship, role, contact, signal, hypothesis, score, opportunity, task, and engagement sections;
+- freshness, confidence, contradictions, review queues, and source lineage;
+- analyst navigation from summary to exact evidence;
+- bulk triage and saved workspace state;
+- accessibility and responsive design;
+- performance budgets for large companies.
 
-**Exit gate:** Analysts can understand what happened, why it matters commercially, which services fit, who may be relevant, and what action is next without direct database or log access.
+**Required tests:**
+
+- cross-module read consistency;
+- stale and contradictory data presentation;
+- permission and privacy boundaries;
+- source-to-summary navigation;
+- large-record performance;
+- accessibility, typecheck, and production build;
+- complete regression gates.
+
+**Exit gate:** An analyst can understand one company and act on it without hidden provenance, duplicated facts, or unsupported certainty.
 
 ## Lot 28 — Data quality, reconciliation, lineage, and publication gates
 
 **Status:** `PLANNED_LOCKED`
 
-**Primary business outcome:** Stop silent source, parser, entity, signal, and derived-data regressions before they reach users.
+**Primary business outcome:** Prevent low-quality or inconsistent data from silently reaching analyst-facing projections.
 
-**Dependencies:** Lots 10–27.
+**Dependencies:** Lots 20–27.
 
-**Deliverables:** Volume and field baselines, freshness thresholds, duplicate rates, lineage validation, source reconciliation, golden datasets, drift alerts, quarantine, replay, correction propagation, invalidation, source value, service coverage, false-urgency dashboards, and publication gates.
+**Deliverables:**
 
-**Required tests:** Parser regression, volume anomaly, missing fields, stale sources, duplicate entities/signals/opportunities, broken lineage, false merge, replay, correction, deletion, score drift, service coverage, and source ablation.
+- completeness, validity, uniqueness, consistency, timeliness, provenance, and contradiction metrics;
+- source and field-level quality baselines;
+- quarantine and publication gates;
+- reconciliation queues and repair tools;
+- lineage from source record to every derived projection;
+- correction, deletion, suppression, and restore validation;
+- data-contract dashboards and alerts.
 
-**Exit gate:** Silent data or commercial-classification regressions block publication and can be replayed, diagnosed, corrected, and audited.
+**Required tests:**
+
+- schema drift and malformed records;
+- duplicate and conflicting data;
+- quality-threshold publication blocking;
+- correction/deletion lineage;
+- restore and replay consistency;
+- performance and regression gates.
+
+**Exit gate:** Analyst-facing data has explicit quality status and traceable lineage, and failed quality gates cannot masquerade as current facts.
 
 ## Lot 29 — Supply-chain, release provenance, and repository protection
 
 **Status:** `PLANNED_LOCKED`
 
-**Primary business outcome:** Make builds and releases reproducible, verifiable, and protected.
+**Primary business outcome:** Make builds and releases reproducible, reviewable, attestable, and protected against unauthorized repository changes.
 
-**Dependencies:** Lots 00–28.
+**Dependencies:** Stable application and CI contracts from lots 00–28.
 
-**Deliverables:** Python lock, deterministic frontend install, SBOMs, checksums, attestations, pinned actions, CODEOWNERS, strict `main` protection, secret scanning, release and rollback procedures, and artifact retention.
+**Deliverables:**
 
-**Required tests:** Clean rebuild, dependency integrity, SBOM generation, secret fixture detection, protected-branch checks, artifact verification, and rollback rehearsal.
+- verified Python and npm lockfiles;
+- deterministic clean installations;
+- `npm ci` and locked Python installation in CI;
+- Python and npm SBOMs;
+- signed or attested release artifacts;
+- dependency-update policy and lockfile review;
+- protected `main`, required PR and checks, CODEOWNERS, resolved conversations, and force-push prohibition;
+- secret scanning and available repository security controls;
+- release, rollback, and secret-rotation runbooks.
 
-**Exit gate:** A release can be rebuilt from source and cannot bypass mandatory checks.
+**Required tests:**
+
+- two clean builds resolve identical dependencies;
+- lockfile tampering and dependency drift;
+- SBOM generation;
+- pinned GitHub Action SHAs;
+- protected-branch behavior;
+- release rollback rehearsal;
+- full regression gates.
+
+**Exit gate:** Every release has reproducible dependencies, provenance evidence, and repository protections preventing unreviewed changes.
 
 ## Lot 30 — Observability, performance, resilience, and recovery
 
 **Status:** `PLANNED_LOCKED`
 
-**Primary business outcome:** Prove the database-first collection and analyst product remains reliable under source growth and failures.
+**Primary business outcome:** Operate collection, processing, APIs, and analyst workflows reliably under expected load and recover predictably from failure.
 
-**Dependencies:** Lots 02–29.
+**Dependencies:** Lots 02, 10, 27–29.
 
-**Deliverables:** Structured logs, traces, metrics, source freshness/cost/quota/queue/backfill/schema/value dashboards, alerts, backups, restore runbooks, load tests, soak tests, fault injection, degraded modes, capacity thresholds, and recovery objectives.
+**Deliverables:**
 
-**Required tests:** Provider outage, quota exhaustion, worker crash, database crash, duplicate delivery, large backfill, index failure, backup restore, degraded UI, recovery time, and no false-success state.
+- structured logs, metrics, traces, dashboards, alerts, and SLOs;
+- queue depth, lag, source freshness, error budgets, cost, quota, and projection latency;
+- load and capacity baselines;
+- backup, restore, disaster recovery, and suppression reapplication;
+- worker crash, database interruption, provider outage, and partial-dependency recovery;
+- runbooks and incident exercises;
+- data-integrity checks after recovery.
 
-**Exit gate:** Restore succeeds, invariants survive injected failures, and capacity and recovery limits are measured.
+**Required tests:**
+
+- load and sustained scheduler/worker operation;
+- lease expiry and crash recovery;
+- database and provider interruption;
+- backup/restore and suppression replay;
+- alerting and SLO calculation;
+- performance regressions;
+- complete release gates.
+
+**Exit gate:** Operational failure is observable, bounded, recoverable, and documented with measured recovery objectives.
 
 ## Lot 31 — Isolated browser and download-quarantine runtime
 
 **Status:** `DEFERRED`
 
-**Primary business outcome:** Provide a tightly isolated browser path only when approved APIs and bounded static HTTP are insufficient.
+**Primary business outcome:** Provide a browser path only when approved structured APIs and bounded static HTTP cannot satisfy a reviewed source requirement.
 
-**Dependencies:** Lots 09–10, 22–23, and 29–30.
+**Dependencies:** Lots 09, 10, 23, 28–30 plus an approved browser-specific threat model.
 
-**Deliverables:** Ephemeral Playwright workers, host/path allowlists, network interception, page/time/CPU/memory/download budgets, login/MFA/CAPTCHA/challenge detection, manual-action state, MIME verification, hashes, archive limits, parser isolation, kill switch, and cleanup.
+**Deliverables:**
 
-**Required tests:** Local simulated sites, worker isolation, challenge pause, redirect limits, forbidden host access, download quarantine, archive bombs, browser crash, interruption recovery, and process cleanup.
+- isolated Chromium/Playwright workers;
+- ephemeral profile and context per source/account;
+- host/path allowlists and network interception;
+- page, time, CPU, memory, and download budgets;
+- login, MFA, CAPTCHA, anti-bot, and terms-change detection producing `manual_action_required`;
+- quarantined downloads with MIME detection, hashes, size limits, archive controls, isolated parsing, kill switch, and cleanup;
+- no CAPTCHA solving, copied cookies, fake accounts, proxy bypass, or ban evasion.
 
-**Exit gate:** Browser execution cannot bypass access controls, cannot expose downloads directly, and remains optional. No current lot depends on its activation.
+**Required tests:**
+
+- local simulated application E2E;
+- isolation between sources;
+- network allowlist enforcement;
+- challenge pause behavior;
+- download quarantine and parser failure;
+- browser crash and cleanup;
+- complete security and regression gates.
+
+**Exit gate:** The browser runtime remains disabled unless separately approved and cannot escape source, network, account, or download isolation.
 
 ## Lot 32 — Controlled pilot and production gate
 
 **Status:** `PLANNED_LOCKED`
 
-**Primary business outcome:** Validate commercial usefulness, safety, operations, and recovery with a bounded production pilot before broader rollout.
+**Primary business outcome:** Validate the complete platform with a controlled set of authorized sources, organizations, analysts, and measurable commercial outcomes before general production use.
 
-**Dependencies:** Lots 24–30 and any explicitly approved subset of Lot 31.
+**Dependencies:** Lots 00–30 and Lot 31 only if explicitly activated.
 
-**Deliverables:** Approved source and organization cohort, operator roles, runbooks, service-level objectives, truth datasets, source and service benchmarks, false-positive review, privacy and security review, restore exercise, incident exercise, cost review, and GO/CONDITIONAL-GO/NO-GO decision record.
+**Deliverables:**
 
-**Required tests:** End-to-end source-to-opportunity workflows, multi-service detection, false urgency, source ablation, suppression and deletion, authorization expiry, outage, restore, operator error, and audit completeness.
+- pilot scope, users, organizations, sources, jurisdictions, and success metrics;
+- data-protection, security, source-authorization, and operational sign-offs;
+- analyst training and runbooks;
+- precision, recall, false-positive, freshness, source-value, workflow, and commercial-outcome measurement;
+- support, incident, rollback, and kill-switch procedures;
+- final go/no-go review;
+- controlled production configuration with no dormant candidate source activated accidentally.
 
-**Exit gate:** The project records an evidence-based production decision with explicit accepted risks, blockers, ownership, rollback, and follow-up actions.
+**Required tests:**
 
-## Current release boundary
+- end-to-end authorized-source workflows;
+- privacy rights and suppression;
+- source revocation and kill switches;
+- disaster recovery;
+- role and permission tests;
+- pilot metrics and acceptance thresholds;
+- security, performance, and full regression gates.
 
-Version `0.13.0` includes lots `00–12`.
-
-Lot 12's software is complete, but real public-web collection remains disabled until a separately reviewed organization target, source policy, authorization reference, portfolio state, and schedule are all approved. Search providers and archive providers are also separate governance activations. No merge, release, or documentation status may be interpreted as permission to collect an unapproved source.
+**Exit gate:** Named owners approve a measured pilot result, all mandatory controls are operational, and production can be disabled or rolled back without data-integrity loss.
