@@ -11,16 +11,12 @@ from cip.modules.organizations.infrastructure.models import OrganizationRecord
 from cip.modules.public_footprint.application.view_models import (
     PublicClaimItem,
     PublicResourceDetail,
+    PublicResourceFilters,
     PublicResourceListItem,
     PublicResourcePage,
     PublicResourceVersionItem,
 )
-from cip.modules.public_footprint.domain.models import (
-    PublicClaimType,
-    PublicResourceKind,
-    ResourceAccessState,
-    ResourceRetrievalState,
-)
+from cip.modules.public_footprint.domain.models import PublicClaimType
 from cip.modules.public_footprint.infrastructure.errors import (
     PublicResourceNotFoundError,
 )
@@ -36,54 +32,25 @@ def list_public_resources(
     session: Session,
     *,
     now: datetime,
-    organization_id: UUID | None = None,
-    source_id: str | None = None,
-    kind: PublicResourceKind | None = None,
-    access_state: ResourceAccessState | None = None,
-    retrieval_state: ResourceRetrievalState | None = None,
-    claim_type: PublicClaimType | None = None,
-    query: str | None = None,
+    filters: PublicResourceFilters,
     limit: int = 50,
     offset: int = 0,
 ) -> PublicResourcePage:
     generated_at = require_aware_utc(now, field_name="now")
     _validate_list_options(limit=limit, offset=offset)
-    filters: list[ColumnElement[bool]] = []
-    if organization_id is not None:
-        filters.append(PublicResourceRecord.organization_id == organization_id)
-    if source_id is not None:
-        normalized_source = source_id.strip()
-        if not normalized_source:
-            raise ValueError("source_id cannot be blank")
-        filters.append(PublicResourceRecord.source_id == normalized_source)
-    if kind is not None:
-        filters.append(PublicResourceRecord.kind == kind.value)
-    if access_state is not None:
-        filters.append(PublicResourceRecord.access_state == access_state.value)
-    if retrieval_state is not None:
-        filters.append(PublicResourceRecord.retrieval_state == retrieval_state.value)
-    if claim_type is not None:
-        filters.append(_claim_exists(claim_type=claim_type))
-    normalized_query = _optional_query(query)
-    if normalized_query is not None:
-        pattern = f"%{normalized_query}%"
-        filters.append(
-            or_(
-                PublicResourceRecord.canonical_url.ilike(pattern),
-                PublicResourceRecord.source_record_key.ilike(pattern),
-                PublicResourceRecord.title.ilike(pattern),
-                _claim_exists(query_pattern=pattern),
-            )
-        )
-
+    query_filters = _resource_filters(filters)
     total = int(
-        session.scalar(select(func.count()).select_from(PublicResourceRecord).where(*filters))
+        session.scalar(
+            select(func.count())
+            .select_from(PublicResourceRecord)
+            .where(*query_filters)
+        )
         or 0
     )
     records = tuple(
         session.scalars(
             select(PublicResourceRecord)
-            .where(*filters)
+            .where(*query_filters)
             .order_by(
                 PublicResourceRecord.last_seen_at.desc(),
                 PublicResourceRecord.canonical_url.asc(),
@@ -139,6 +106,41 @@ def get_public_resource_detail(
         versions=tuple(_version_item(item) for item in versions),
         claims=tuple(_claim_item(item) for item in claims),
     )
+
+
+def _resource_filters(filters: PublicResourceFilters) -> list[ColumnElement[bool]]:
+    conditions: list[ColumnElement[bool]] = []
+    if filters.organization_id is not None:
+        conditions.append(
+            PublicResourceRecord.organization_id == filters.organization_id
+        )
+    if filters.source_id is not None:
+        normalized_source = filters.source_id.strip()
+        if not normalized_source:
+            raise ValueError("source_id cannot be blank")
+        conditions.append(PublicResourceRecord.source_id == normalized_source)
+    if filters.kind is not None:
+        conditions.append(PublicResourceRecord.kind == filters.kind.value)
+    if filters.access_state is not None:
+        conditions.append(PublicResourceRecord.access_state == filters.access_state.value)
+    if filters.retrieval_state is not None:
+        conditions.append(
+            PublicResourceRecord.retrieval_state == filters.retrieval_state.value
+        )
+    if filters.claim_type is not None:
+        conditions.append(_claim_exists(claim_type=filters.claim_type))
+    normalized_query = _optional_query(filters.query)
+    if normalized_query is not None:
+        pattern = f"%{normalized_query}%"
+        conditions.append(
+            or_(
+                PublicResourceRecord.canonical_url.ilike(pattern),
+                PublicResourceRecord.source_record_key.ilike(pattern),
+                PublicResourceRecord.title.ilike(pattern),
+                _claim_exists(query_pattern=pattern),
+            )
+        )
+    return conditions
 
 
 def _claim_exists(
