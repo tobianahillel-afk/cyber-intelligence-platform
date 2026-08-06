@@ -56,6 +56,16 @@ from cip.modules.source_portfolio.infrastructure.models import (
     SourceQualityBaselineRecord,
     SourceValueEventRecord,
 )
+from cip.modules.vulnerability_knowledge.infrastructure.models import (
+    VulnerabilityAffectedRangeRecord,
+    VulnerabilityAliasRecord,
+    VulnerabilityCweRecord,
+    VulnerabilityExploitationRecord,
+    VulnerabilityRecord,
+    VulnerabilityReferenceRecord,
+    VulnerabilityScoreRecord,
+    VulnerabilitySourceSnapshotRecord,
+)
 from cip.shared.persistence.base import Base
 
 _IMPORTED_MODELS = (
@@ -99,6 +109,14 @@ _IMPORTED_MODELS = (
     SourceRecord,
     SourceValueEventRecord,
     SuppressionRecord,
+    VulnerabilityAffectedRangeRecord,
+    VulnerabilityAliasRecord,
+    VulnerabilityCweRecord,
+    VulnerabilityExploitationRecord,
+    VulnerabilityRecord,
+    VulnerabilityReferenceRecord,
+    VulnerabilityScoreRecord,
+    VulnerabilitySourceSnapshotRecord,
 )
 
 
