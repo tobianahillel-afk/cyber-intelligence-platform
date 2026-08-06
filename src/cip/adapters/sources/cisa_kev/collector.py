@@ -37,9 +37,9 @@ class SourceSchemaError(RuntimeError):
 @dataclass(frozen=True, slots=True)
 class CisaKevCollectionBatch:
     observations: tuple[RawObservation, ...]
-    vulnerability_snapshots: tuple[VulnerabilitySnapshot, ...]
     checkpoint: CisaKevCheckpoint
     not_modified: bool
+    vulnerability_snapshots: tuple[VulnerabilitySnapshot, ...] = ()
 
 
 def collect_cisa_kev(
@@ -72,7 +72,6 @@ def collect_cisa_kev(
     if result.not_modified:
         return CisaKevCollectionBatch(
             observations=(),
-            vulnerability_snapshots=(),
             checkpoint=CisaKevCheckpoint(
                 etag=result.etag,
                 last_modified=result.last_modified,
@@ -107,11 +106,11 @@ def collect_cisa_kev(
     )
     return CisaKevCollectionBatch(
         observations=observations,
-        vulnerability_snapshots=snapshots,
         checkpoint=CisaKevCheckpoint(
             etag=result.etag,
             last_modified=result.last_modified,
             catalog_version=catalog.catalog_version,
         ),
         not_modified=False,
+        vulnerability_snapshots=snapshots,
     )
