@@ -1,0 +1,139 @@
+version: 1
+reviewed_at: 2026-08-06
+
+sources:
+  - id: sec-cyber-disclosures
+    name: SEC public cybersecurity incident disclosures
+    base_url: https://data.sec.gov/submissions/
+    status: draft
+    source_type: api
+    owner: U.S. Securities and Exchange Commission
+    terms_url: https://www.sec.gov/about/privacy-information
+    licence: SEC public data policy
+    allowed_data_categories: &allowed [public_incident_metadata]
+    prohibited_data_categories: &prohibited
+      - credential
+      - victim_file
+      - private_communication
+      - private_personal_data
+      - restricted_content
+    rate_limit_per_minute: 10
+    retention_days: 3650
+    attribution_required: true
+    raw_content_storage: false
+    human_review_required: true
+    authorization: &missing_authorization
+      status: missing
+      document_reference: null
+      reviewed_at: null
+      expires_at: null
+      approved_hosts: []
+      approved_path_prefixes: []
+      approved_purposes: []
+      automated_collection_allowed: false
+      raw_storage_allowed: false
+    economics: &public_economics
+      commercial_value: high
+      monthly_cost: 0
+      implementation_cost: medium
+      maintenance_cost: medium
+      expected_stability: medium
+    notes: >-
+      Public filing mapping is planned, but no issuer scope, accession cursor,
+      user-agent policy, quota, or schedule is authorized by this catalog entry.
+
+  - id: official-company-incident-disclosures
+    name: Authorized public company incident disclosures
+    base_url: https://example.invalid/company-incidents/
+    status: draft
+    source_type: api
+    owner: Deployment-specific approved company disclosure sources
+    terms_url: https://example.invalid/terms
+    licence: Deployment-specific public source terms
+    allowed_data_categories: *allowed
+    prohibited_data_categories: *prohibited
+    rate_limit_per_minute: 10
+    retention_days: 3650
+    attribution_required: true
+    raw_content_storage: false
+    human_review_required: true
+    authorization: *missing_authorization
+    economics: *public_economics
+    notes: >-
+      Schema-only placeholder. A real company or filing source requires an exact
+      reviewed target registry and authorization before an adapter or schedule exists.
+
+  - id: regulator-cert-incident-notices
+    name: Authorized regulator and CERT incident notices
+    base_url: https://example.invalid/regulator-cert-incidents/
+    status: draft
+    source_type: api
+    owner: Deployment-specific regulator or CERT sources
+    terms_url: https://example.invalid/terms
+    licence: Deployment-specific public source terms
+    allowed_data_categories: *allowed
+    prohibited_data_categories: *prohibited
+    rate_limit_per_minute: 10
+    retention_days: 3650
+    attribution_required: true
+    raw_content_storage: false
+    human_review_required: true
+    authorization: *missing_authorization
+    economics: *public_economics
+    notes: >-
+      Only public notices may be considered. Reports submitted privately to a regulator,
+      restricted portals, case files, and personal victim data are excluded.
+
+  - id: licensed-incident-reporting
+    name: Licensed public incident reporting and research
+    base_url: https://example.invalid/licensed-incident-reporting/
+    status: draft
+    source_type: api
+    owner: Deployment-specific licensed reporting provider
+    terms_url: https://example.invalid/terms
+    licence: Contract required
+    allowed_data_categories: *allowed
+    prohibited_data_categories: *prohibited
+    rate_limit_per_minute: 10
+    retention_days: 1825
+    attribution_required: true
+    raw_content_storage: false
+    human_review_required: true
+    authorization: *missing_authorization
+    economics:
+      commercial_value: medium
+      monthly_cost: 0
+      implementation_cost: medium
+      maintenance_cost: medium
+      expected_stability: medium
+    notes: >-
+      Syndicated reports must share one independence key. Full article mirroring,
+      private newsletters, credentials, and personal data are not permitted.
+
+  - id: licensed-ransomware-metadata
+    name: Licensed public ransomware claim metadata
+    base_url: https://example.invalid/ransomware-metadata/
+    status: draft
+    source_type: api
+    owner: Deployment-specific licensed metadata provider
+    terms_url: https://example.invalid/terms
+    licence: Contract required
+    allowed_data_categories: *allowed
+    prohibited_data_categories: *prohibited
+    rate_limit_per_minute: 10
+    retention_days: 1825
+    attribution_required: true
+    raw_content_storage: false
+    human_review_required: true
+    authorization: *missing_authorization
+    economics:
+      commercial_value: medium
+      monthly_cost: 0
+      implementation_cost: high
+      maintenance_cost: high
+      expected_stability: low
+    notes: >-
+      Provider-hosted metadata only. Threat-actor portals, onion URLs, screenshots,
+      victim files, leaked samples, stolen data, negotiation messages, credentials,
+      and direct interaction are prohibited. Every record remains an allegation until
+      independently and officially confirmed.
