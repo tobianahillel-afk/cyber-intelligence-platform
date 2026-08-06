@@ -9,6 +9,7 @@ import "../features/sources/sources.css";
 import "../features/contracts/contracts.css";
 import "../features/public-footprint/public-footprint.css";
 import "../features/vulnerabilities/vulnerabilities.css";
+import "../features/incidents/incidents.css";
 
 export const metadata: Metadata = {
   title: "Cyber Intelligence Platform",
