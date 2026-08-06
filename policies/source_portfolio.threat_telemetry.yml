@@ -1,0 +1,131 @@
+version: 1
+
+sources:
+  - source_id: licensed-stix-taxii
+    display_name: Licensed STIX/TAXII Threat Telemetry
+    canonical_url: https://example.invalid/stix-taxii/
+    category: threat_telemetry
+    status: candidate
+    freshness_max_age_seconds: 1800
+    commercial_use_cases: &use_cases
+      - threat_context
+      - incident_response_context
+      - vulnerability_prioritization_context
+    candidate_origin: lot-15
+    monthly_cost_limit: 0
+    metadata: &disabled_metadata
+      executable: false
+      authorization_status: missing
+      direct_indicator_connection: forbidden
+      binary_collection: forbidden
+      organization_compromise_inference: forbidden
+      autonomous_outreach: forbidden
+    adapter:
+      adapter_id: licensed-stix-taxii
+      adapter_version: "1"
+      provider_schema_version: selected-stix-indicator-v1
+      modes: &modes
+        - historical_backfill
+        - incremental_cursor
+      canonical_output_types: &outputs
+        - threat_indicator
+        - threat_indicator_snapshot
+        - threat_indicator_relation
+      supports_corrections: true
+      supports_tombstones: false
+      supports_retractions: true
+      max_page_size: 100
+      max_window_days: 30
+      cost_per_request: 0
+
+  - source_id: licensed-phishing-metadata
+    display_name: Licensed Phishing Metadata
+    canonical_url: https://example.invalid/phishing-metadata/
+    category: threat_telemetry
+    status: candidate
+    freshness_max_age_seconds: 900
+    commercial_use_cases: *use_cases
+    candidate_origin: lot-15
+    monthly_cost_limit: 0
+    metadata: *disabled_metadata
+    adapter:
+      adapter_id: licensed-phishing-metadata
+      adapter_version: "1"
+      provider_schema_version: phishing-metadata-v1
+      modes: *modes
+      canonical_output_types: *outputs
+      supports_corrections: true
+      supports_tombstones: false
+      supports_retractions: true
+      max_page_size: 100
+      max_window_days: 7
+      cost_per_request: 0
+
+  - source_id: licensed-passive-dns
+    display_name: Licensed Passive DNS Metadata
+    canonical_url: https://example.invalid/passive-dns/
+    category: threat_telemetry
+    status: candidate
+    freshness_max_age_seconds: 3600
+    commercial_use_cases: *use_cases
+    candidate_origin: lot-15
+    monthly_cost_limit: 0
+    metadata: *disabled_metadata
+    adapter:
+      adapter_id: licensed-passive-dns
+      adapter_version: "1"
+      provider_schema_version: passive-dns-metadata-v1
+      modes: *modes
+      canonical_output_types: *outputs
+      supports_corrections: true
+      supports_tombstones: false
+      supports_retractions: true
+      max_page_size: 100
+      max_window_days: 30
+      cost_per_request: 0
+
+  - source_id: licensed-certificate-telemetry
+    display_name: Licensed Certificate Telemetry
+    canonical_url: https://example.invalid/certificate-telemetry/
+    category: threat_telemetry
+    status: candidate
+    freshness_max_age_seconds: 3600
+    commercial_use_cases: *use_cases
+    candidate_origin: lot-15
+    monthly_cost_limit: 0
+    metadata: *disabled_metadata
+    adapter:
+      adapter_id: licensed-certificate-telemetry
+      adapter_version: "1"
+      provider_schema_version: certificate-telemetry-v1
+      modes: *modes
+      canonical_output_types: *outputs
+      supports_corrections: true
+      supports_tombstones: false
+      supports_retractions: true
+      max_page_size: 100
+      max_window_days: 30
+      cost_per_request: 0
+
+  - source_id: licensed-malware-metadata
+    display_name: Licensed Malware Metadata
+    canonical_url: https://example.invalid/malware-metadata/
+    category: threat_telemetry
+    status: candidate
+    freshness_max_age_seconds: 1800
+    commercial_use_cases: *use_cases
+    candidate_origin: lot-15
+    monthly_cost_limit: 0
+    metadata: *disabled_metadata
+    adapter:
+      adapter_id: licensed-malware-metadata
+      adapter_version: "1"
+      provider_schema_version: malware-metadata-v1
+      modes: *modes
+      canonical_output_types: *outputs
+      supports_corrections: true
+      supports_tombstones: false
+      supports_retractions: true
+      max_page_size: 100
+      max_window_days: 30
+      cost_per_request: 0
