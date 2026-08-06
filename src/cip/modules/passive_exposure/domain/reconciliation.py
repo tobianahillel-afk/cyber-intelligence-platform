@@ -100,9 +100,20 @@ def latest_passive_snapshots(
     for snapshot in snapshots:
         key = (snapshot.source_id, snapshot.source_record_key)
         current = latest.get(key)
-        if current is None or snapshot.modified_at > current.modified_at:
+        if current is None or _revision_order(snapshot) > _revision_order(current):
             latest[key] = snapshot
-    return tuple(latest.values())
+    return tuple(latest[key] for key in sorted(latest))
+
+
+def _revision_order(snapshot: PassiveObservationSnapshot) -> tuple[object, ...]:
+    return (
+        snapshot.modified_at,
+        snapshot.published_at,
+        snapshot.observed_at,
+        _STATE_PRIORITY[snapshot.state],
+        snapshot.confidence,
+        snapshot.source_url,
+    )
 
 
 def _reconcile_asset(
@@ -116,26 +127,20 @@ def _reconcile_asset(
     identity = current[0].asset
     if any(snapshot.asset.key != identity.key for snapshot in current):
         raise ValueError("passive reconciliation cannot mix canonical assets")
-    selected = max(
-        current,
-        key=lambda snapshot: (
-            snapshot.modified_at,
-            _STATE_PRIORITY[snapshot.state],
-            snapshot.confidence,
-        ),
-    )
+    selected = max(current, key=_revision_order)
     active = tuple(snapshot for snapshot in current if _is_active(snapshot, at=at))
+    selected_active = max(active, key=_revision_order) if active else None
     observed_states = tuple(
         sorted({snapshot.state for snapshot in current}, key=lambda state: state.value)
     )
-    state = selected.state
+    state = selected_active.state if selected_active is not None else selected.state
     if state is PassiveObservationState.CURRENT and not active:
         state = PassiveObservationState.EXPIRED
     risks = tuple(
         sorted(
             {
                 risk
-                for snapshot in current
+                for snapshot in active
                 for risk in snapshot.organization_link.attribution_risks
             },
             key=lambda risk: risk.value,
@@ -154,12 +159,12 @@ def _reconcile_asset(
             {snapshot.independence_key for snapshot in active}
         ),
         active=bool(active),
-        historical_only=not active or all(snapshot.historical_only for snapshot in current),
+        historical_only=not active or all(snapshot.historical_only for snapshot in active),
         has_conflict=len(set(observed_states) & _CONFLICTING_STATES) > 1,
-        organization_link=_reconcile_organization_link(current, risks=risks),
+        organization_link=_reconcile_organization_link(active, risks=risks),
         attribution_risks=risks,
-        technologies=_merge_technologies(current),
-        services=_merge_services(current),
+        technologies=_merge_technologies(active),
+        services=_merge_services(active),
     )
 
 
