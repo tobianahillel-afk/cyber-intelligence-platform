@@ -57,7 +57,7 @@ class PreviousPageState:
     content_hash_sha256: str
     version_id: UUID
     canonical_url: str
-    resource_kind: PublicResourceKind
+    resource_kind: PublicResourceKind = PublicResourceKind.WEB_PAGE
 
 
 @dataclass(frozen=True, slots=True)
@@ -175,6 +175,11 @@ def _version(
     extracted: ExtractedHtml | None,
     tombstoned: bool,
 ) -> PublicResourceVersion:
+    excerpt = (
+        f"HTTP {result.status_code} tombstone"
+        if tombstoned
+        else extracted.excerpt if extracted is not None else None
+    )
     return PublicResourceVersion(
         resource_key=resource.identity_key,
         source_url=result.fetched_url,
@@ -189,11 +194,7 @@ def _version(
             if indexable_text
             else None
         ),
-        excerpt=(
-            f"HTTP {result.status_code} tombstone"
-            if tombstoned
-            else extracted.excerpt if extracted is not None else None
-        ),
+        excerpt=excerpt,
         source_locator=result.fetched_url,
         supersedes_version_id=_predecessor_id(
             previous,
@@ -242,7 +243,7 @@ def _observation(
 
 def _content_hash(result: PublicWebFetchResult) -> str:
     if _is_tombstone(result):
-        return sha256(f"http-status:{result.status_code}".encode()).hexdigest()
+        return sha256(f"http-status:{result.status_code}".encode("utf-8")).hexdigest()
     return sha256(result.body).hexdigest()
 
 
