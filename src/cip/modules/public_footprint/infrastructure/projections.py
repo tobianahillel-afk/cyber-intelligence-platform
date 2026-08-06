@@ -80,7 +80,8 @@ def _upsert_resource(
         record.discovery_method = resource.discovery_method.value
         record.access_state = resource.access_state.value
         record.retrieval_state = resource.retrieval_state.value
-        record.title = resource.title
+        if resource.title is not None:
+            record.title = resource.title
         record.last_seen_at = resource.last_seen_at
         record.updated_at = now
     session.flush()
