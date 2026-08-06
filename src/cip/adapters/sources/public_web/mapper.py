@@ -190,7 +190,7 @@ def _version(
         title=extracted.title if extracted is not None else None,
         language=extracted.language if extracted is not None else None,
         extracted_text_hash_sha256=(
-            sha256(indexable_text.encode("utf-8")).hexdigest()
+            sha256(indexable_text.encode()).hexdigest()
             if indexable_text
             else None
         ),
@@ -243,7 +243,7 @@ def _observation(
 
 def _content_hash(result: PublicWebFetchResult) -> str:
     if _is_tombstone(result):
-        return sha256(f"http-status:{result.status_code}".encode("utf-8")).hexdigest()
+        return sha256(f"http-status:{result.status_code}".encode()).hexdigest()
     return sha256(result.body).hexdigest()
 
 
