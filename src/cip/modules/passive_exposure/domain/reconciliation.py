@@ -105,7 +105,9 @@ def latest_passive_snapshots(
     return tuple(latest[key] for key in sorted(latest))
 
 
-def _revision_order(snapshot: PassiveObservationSnapshot) -> tuple[object, ...]:
+def _revision_order(
+    snapshot: PassiveObservationSnapshot,
+) -> tuple[datetime, datetime, datetime, int, float, str]:
     return (
         snapshot.modified_at,
         snapshot.published_at,
