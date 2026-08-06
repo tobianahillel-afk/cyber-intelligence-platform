@@ -1,0 +1,24 @@
+version: 1
+
+# This target documents the production schema without authorizing collection.
+# A real organization and approval reference must replace it before enablement.
+targets:
+  - id: public-web-example-fr-organization
+    organization_id: 86fe6126-5731-5c4d-a206-69a6a736cae5
+    canonical_name: Example France Organization
+    base_url: https://example.com
+    sitemap_urls:
+      - https://example.com/sitemap.xml
+    allowed_path_prefixes:
+      - /public
+    enabled: false
+    authorization:
+      document_reference: null
+      reviewed_at: null
+      expires_at: null
+    terms_url: https://example.com/terms
+    limits:
+      max_pages: 25
+      max_total_bytes: 5000000
+      max_resource_bytes: 1000000
+      max_redirects: 2

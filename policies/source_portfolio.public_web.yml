@@ -1,0 +1,37 @@
+version: 1
+
+sources:
+  - source_id: public-web-example-fr-organization
+    display_name: Example public website candidate
+    canonical_url: https://example.com
+    category: corporate_public_footprint
+    status: candidate
+    freshness_max_age_seconds: 604800
+    commercial_use_cases:
+      - public_evidence_map
+      - technology_observation
+      - change_history
+    candidate_origin: lot-12-schema-example
+    monthly_cost_limit: 0
+    metadata:
+      executable: false
+      authorization_status: missing
+      target_enabled: false
+    adapter:
+      adapter_id: public-web-sitemap
+      adapter_version: "1"
+      provider_schema_version: public-web-page-v1
+      modes:
+        - incremental_cursor
+        - priority_refresh
+      canonical_output_types:
+        - raw_observation
+        - public_resource
+        - public_resource_version
+        - public_claim
+      supports_corrections: true
+      supports_tombstones: true
+      supports_retractions: false
+      max_page_size: 25
+      max_window_days: 1
+      cost_per_request: 0

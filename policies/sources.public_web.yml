@@ -1,0 +1,46 @@
+version: 1
+reviewed_at: 2026-08-06
+
+sources:
+  - id: public-web-example-fr-organization
+    name: Example France Organization — public website candidate
+    base_url: https://example.com
+    status: draft
+    source_type: static_http
+    owner: Example France Organization
+    terms_url: https://example.com/terms
+    licence: null
+    allowed_data_categories:
+      - official_document_discovery
+      - technology_observation
+    prohibited_data_categories:
+      - credential
+      - victim_file
+      - private_communication
+      - private_personal_data
+      - restricted_content
+    rate_limit_per_minute: 1
+    retention_days: 365
+    attribution_required: true
+    raw_content_storage: false
+    human_review_required: true
+    authorization:
+      status: missing
+      document_reference: null
+      reviewed_at: null
+      expires_at: null
+      approved_hosts: []
+      approved_path_prefixes: []
+      approved_purposes: []
+      automated_collection_allowed: false
+      raw_storage_allowed: false
+    economics:
+      commercial_value: unknown
+      monthly_cost: 0
+      implementation_cost: medium
+      maintenance_cost: medium
+      expected_stability: unknown
+    notes: >-
+      Schema-only candidate. Collection is impossible until a real organization,
+      reviewed authorization, approved host/path scope and explicit automation
+      permission replace this example configuration.

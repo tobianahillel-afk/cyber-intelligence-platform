@@ -88,6 +88,9 @@ def test_database_metadata_contains_foundation_tables() -> None:
         "procurement_service_classifications",
         "provider_onboarding",
         "provider_onboarding_audit",
+        "public_claims",
+        "public_resource_versions",
+        "public_resources",
         "raw_observations",
         "source_health",
         "source_portfolio",
@@ -118,6 +121,9 @@ def test_metadata_creates_on_sqlite() -> None:
     assert get_metadata().tables["procurement_publications"].foreign_keys
     assert get_metadata().tables["procurement_contracts"].foreign_keys
     assert get_metadata().tables["procurement_contract_parties"].foreign_keys
+    assert get_metadata().tables["public_resources"].foreign_keys
+    assert get_metadata().tables["public_resource_versions"].foreign_keys
+    assert get_metadata().tables["public_claims"].foreign_keys
 
 
 def test_database_url_is_required() -> None:

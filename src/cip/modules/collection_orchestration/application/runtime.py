@@ -19,18 +19,24 @@ from cip.adapters.sources.organization_identity.registry import (
     OrganizationIdentityTarget,
     load_organization_identity_targets,
 )
+from cip.adapters.sources.public_web.registry import (
+    PublicWebTarget,
+    load_public_web_targets,
+)
 from cip.adapters.sources.smartrecruiters.registry import (
     SmartRecruitersCompany,
     load_smartrecruiters_companies,
 )
 from cip.modules.collection_orchestration.application.adapters import CisaKevAdapter
 from cip.modules.collection_orchestration.application.boamp_adapter import BoampAdapter
+from cip.modules.collection_orchestration.application.decp_adapter import DecpAdapter
 from cip.modules.collection_orchestration.application.greenhouse_adapter import GreenhouseAdapter
 from cip.modules.collection_orchestration.application.identity_adapters import (
     register_identity_adapters,
 )
 from cip.modules.collection_orchestration.application.lever_adapter import LeverAdapter
 from cip.modules.collection_orchestration.application.ports import CollectionAdapter
+from cip.modules.collection_orchestration.application.public_web_adapter import PublicWebAdapter
 from cip.modules.collection_orchestration.application.reference_adapter import (
     ReferencePortfolioAdapter,
 )
@@ -45,8 +51,8 @@ from cip.modules.collection_orchestration.application.worker import (
     run_worker_once,
 )
 from cip.modules.collection_orchestration.domain.models import SourceSchedule
-from cip.modules.collection_orchestration.infrastructure.schedule_loader import (
-    load_collection_schedules,
+from cip.modules.collection_orchestration.infrastructure.schedule_bundle import (
+    load_collection_schedule_bundle,
 )
 from cip.modules.data_governance.domain.retention import RetentionPolicy
 from cip.modules.data_governance.infrastructure.retention_loader import load_retention_policy
@@ -69,7 +75,9 @@ from cip.modules.source_portfolio.domain.models import (
     CatalogStatus,
     SourceCatalogEntry,
 )
-from cip.modules.source_portfolio.infrastructure.registry import load_source_portfolio
+from cip.modules.source_portfolio.infrastructure.registry_bundle import (
+    load_source_portfolio_bundle,
+)
 from cip.shared.config.settings import Settings
 from cip.shared.kernel.time import utc_now
 from cip.shared.persistence.session import (
@@ -96,8 +104,14 @@ def build_collection_runtime(settings: Settings) -> CollectionRuntime:
     entries = load_source_registry_bundle(
         settings.source_registry_path,
         settings.identity_source_registry_path,
+        settings.decp_source_registry_path,
+        settings.public_web_source_registry_path,
     )
-    portfolio = load_source_portfolio(settings.source_portfolio_path)
+    portfolio = load_source_portfolio_bundle(
+        settings.source_portfolio_path,
+        settings.decp_source_portfolio_path,
+        settings.public_web_source_portfolio_path,
+    )
     greenhouse_boards = load_greenhouse_boards(settings.greenhouse_board_registry_path)
     lever_sites = load_lever_sites(settings.lever_site_registry_path)
     smartrecruiters_companies = load_smartrecruiters_companies(
@@ -106,6 +120,7 @@ def build_collection_runtime(settings: Settings) -> CollectionRuntime:
     identity_targets = load_organization_identity_targets(
         settings.organization_identity_target_registry_path
     )
+    public_web_targets = load_public_web_targets(settings.public_web_target_registry_path)
     with session_scope(factory) as session:
         sync_source_registry(session, entries)
         sync_source_portfolio(session, portfolio, now=utc_now())
@@ -115,12 +130,17 @@ def build_collection_runtime(settings: Settings) -> CollectionRuntime:
         lever_sites,
         smartrecruiters_companies,
         identity_targets,
+        public_web_targets,
         timeout_seconds=settings.source_http_timeout_seconds,
     )
     with session_scope(factory) as session:
         reconcile_runtime_adapters(session, adapters.keys(), now=utc_now())
     _validate_portfolio_adapters(portfolio, adapters)
-    schedules = load_collection_schedules(settings.collection_schedule_path)
+    schedules = load_collection_schedule_bundle(
+        settings.collection_schedule_path,
+        settings.decp_collection_schedule_path,
+        settings.public_web_collection_schedule_path,
+    )
     _validate_registered_schedules(schedules, adapters, portfolio)
     return CollectionRuntime(
         factory=factory,
@@ -137,6 +157,7 @@ def _build_adapters(
     lever_sites: tuple[LeverSite, ...],
     smartrecruiters_companies: tuple[SmartRecruitersCompany, ...],
     identity_targets: tuple[OrganizationIdentityTarget, ...],
+    public_web_targets: tuple[PublicWebTarget, ...],
     *,
     timeout_seconds: float,
 ) -> dict[tuple[str, str], CollectionAdapter]:
@@ -152,6 +173,9 @@ def _build_adapters(
     boamp_entry = entries_by_id.get(BoampAdapter.source_id)
     if boamp_entry is not None:
         _register(adapters, BoampAdapter(boamp_entry, timeout_seconds=timeout_seconds))
+    decp_entry = entries_by_id.get(DecpAdapter.source_id)
+    if decp_entry is not None:
+        _register(adapters, DecpAdapter(decp_entry, timeout_seconds=timeout_seconds))
     greenhouse_entry = entries_by_id.get(GreenhouseAdapter.source_id)
     if greenhouse_entry is not None and any(board.enabled for board in greenhouse_boards):
         _register(
@@ -190,7 +214,38 @@ def _build_adapters(
         identity_targets,
         timeout_seconds=timeout_seconds,
     )
+    _register_public_web_adapters(
+        adapters,
+        entries_by_id,
+        public_web_targets,
+        timeout_seconds=timeout_seconds,
+    )
     return adapters
+
+
+def _register_public_web_adapters(
+    adapters: dict[tuple[str, str], CollectionAdapter],
+    entries_by_id: dict[str, SourceRegistryEntry],
+    targets: tuple[PublicWebTarget, ...],
+    *,
+    timeout_seconds: float,
+) -> None:
+    for target in targets:
+        if not target.enabled:
+            continue
+        entry = entries_by_id.get(target.id)
+        if entry is None:
+            raise ValueError(
+                f"enabled public web target has no source policy: {target.id}"
+            )
+        _register(
+            adapters,
+            PublicWebAdapter(
+                entry,
+                target,
+                timeout_seconds=timeout_seconds,
+            ),
+        )
 
 
 def _register(

@@ -53,6 +53,10 @@ def _settings(tmp_path: Path, *, schedule_path: Path | None = None) -> Settings:
         _env_file=None,
         database_url=f"sqlite+pysqlite:///{tmp_path / 'runtime.db'}",
         source_registry_path=Path("policies/sources.example.yml"),
+        identity_source_registry_path=Path("policies/identity_sources.yml"),
+        decp_source_registry_path=Path("policies/sources.decp.yml"),
+        source_portfolio_path=Path("policies/source_portfolio.yml"),
+        decp_source_portfolio_path=Path("policies/source_portfolio.decp.yml"),
         greenhouse_board_registry_path=Path("policies/greenhouse_boards.yml"),
         lever_site_registry_path=Path("policies/lever_sites.yml"),
         smartrecruiters_company_registry_path=Path(
@@ -60,6 +64,7 @@ def _settings(tmp_path: Path, *, schedule_path: Path | None = None) -> Settings:
         ),
         retention_policy_path=Path("policies/retention.yml"),
         collection_schedule_path=schedule_path or Path("policies/collection_schedules.yml"),
+        decp_collection_schedule_path=Path("policies/collection_schedules.decp.yml"),
         scheduler_poll_seconds=0.01,
         worker_poll_seconds=0.01,
     )
@@ -70,12 +75,13 @@ def test_runtime_syncs_sources_and_schedules_idempotently(tmp_path: Path) -> Non
     get_metadata().create_all(create_database_engine(settings.database_url))
 
     runtime = build_collection_runtime(settings)
-    assert run_scheduler_once(runtime, now=NOW) == 6
+    assert run_scheduler_once(runtime, now=NOW) == 7
     assert run_scheduler_once(runtime, now=NOW) == 0
 
     expected_sources = (
         "boamp",
         "cisa-kev",
+        "decp",
         "greenhouse-job-board",
         "lever-job-board",
         "smartrecruiters-job-board",
@@ -94,6 +100,7 @@ def test_runtime_syncs_sources_and_schedules_idempotently(tmp_path: Path) -> Non
     assert {(job.source_id, job.adapter_id) for job in jobs} == {
         ("boamp", "boamp-explore-api"),
         ("cisa-kev", "cisa-kev-feed"),
+        ("decp", "decp-explore-api"),
         ("greenhouse-job-board", "greenhouse-job-board-api"),
         ("lever-job-board", "lever-postings-api"),
         ("smartrecruiters-job-board", "smartrecruiters-posting-api"),

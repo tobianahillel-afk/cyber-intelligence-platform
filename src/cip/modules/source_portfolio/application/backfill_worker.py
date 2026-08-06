@@ -20,6 +20,9 @@ from cip.modules.organizations.infrastructure.persistence import upsert_organiza
 from cip.modules.procurement_history.infrastructure.projections import (
     persist_procurement_projections,
 )
+from cip.modules.public_footprint.infrastructure.projections import (
+    persist_public_footprint_projections,
+)
 from cip.modules.raw_observations.domain.entities import RawObservation
 from cip.modules.source_portfolio.application.execution import source_execution_allowed
 from cip.modules.source_portfolio.application.service import (
@@ -113,6 +116,11 @@ def run_backfill_once(
         persist_procurement_projections(
             session,
             batch.procurement_projections,
+            now=completed_at,
+        )
+        persist_public_footprint_projections(
+            session,
+            batch.public_footprint_projections,
             now=completed_at,
         )
         record_collection_success(
