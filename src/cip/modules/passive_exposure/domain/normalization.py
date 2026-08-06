@@ -3,12 +3,16 @@ from __future__ import annotations
 import re
 from ipaddress import IPv4Address, IPv6Address, ip_address
 
-_LOCAL_SUFFIXES = (
+_NON_PUBLIC_SUFFIXES = (
+    ".example",
+    ".home.arpa",
     ".internal",
     ".intranet",
+    ".invalid",
     ".lan",
     ".local",
     ".localhost",
+    ".onion",
     ".test",
 )
 _ASN_PATTERN = re.compile(r"^(?:AS)?(?P<number>[0-9]{1,10})$", re.IGNORECASE)
@@ -25,8 +29,10 @@ def normalize_domain(value: str) -> str:
         normalized = candidate.encode("idna").decode("ascii").casefold()
     except UnicodeError as exc:
         raise ValueError("domain must be valid IDNA") from exc
-    if normalized == "localhost" or normalized.endswith(_LOCAL_SUFFIXES):
-        raise ValueError("local or internal domains are not accepted")
+    if len(normalized) > 253:
+        raise ValueError("IDNA domain cannot exceed 253 characters")
+    if normalized == "localhost" or normalized.endswith(_NON_PUBLIC_SUFFIXES):
+        raise ValueError("local, reserved, or non-public domains are not accepted")
     labels = normalized.split(".")
     if len(labels) < 2:
         raise ValueError("domain must have a registrable suffix")
