@@ -35,9 +35,7 @@ router = APIRouter(
 SessionDependency = Annotated[Session, Depends(get_database_session)]
 
 
-@router.get("", response_model=IncidentPageResponse)
-def read_incidents(
-    session: SessionDependency,
+def _incident_filters(
     status: IncidentStatus | None = None,
     incident_type: IncidentType | None = None,
     claim_type: IncidentClaimType | None = None,
@@ -46,10 +44,8 @@ def read_incidents(
     officially_confirmed: bool | None = None,
     historical_only: bool | None = None,
     query: Annotated[str | None, Query(alias="q", max_length=200)] = None,
-    limit: Annotated[int, Query(ge=1, le=200)] = 50,
-    offset: Annotated[int, Query(ge=0)] = 0,
-) -> IncidentPageResponse:
-    filters = IncidentFilters(
+) -> IncidentFilters:
+    return IncidentFilters(
         status=status.value if status else None,
         incident_type=incident_type.value if incident_type else None,
         claim_type=claim_type.value if claim_type else None,
@@ -63,6 +59,18 @@ def read_incidents(
         historical_only=historical_only,
         query=query,
     )
+
+
+IncidentFilterDependency = Annotated[IncidentFilters, Depends(_incident_filters)]
+
+
+@router.get("", response_model=IncidentPageResponse)
+def read_incidents(
+    session: SessionDependency,
+    filters: IncidentFilterDependency,
+    limit: Annotated[int, Query(ge=1, le=200)] = 50,
+    offset: Annotated[int, Query(ge=0)] = 0,
+) -> IncidentPageResponse:
     try:
         page = list_incidents(
             session,
