@@ -45,6 +45,21 @@ def test_equal_timestamp_revision_selection_is_deterministic() -> None:
     assert latest_passive_snapshots((corrected, current)) == (corrected,)
 
 
+def test_new_provider_record_can_supersede_previous_record_key() -> None:
+    original = _snapshot()
+    correction = _snapshot(
+        source_record_key="record-2",
+        source_url="https://provider-a.example/records/2",
+        state=PassiveObservationState.CORRECTED,
+        modified_at=NOW + timedelta(minutes=3),
+        active=False,
+        historical_only=True,
+        supersedes_record_key="record-1",
+    )
+
+    assert latest_passive_snapshots((original, correction)) == (correction,)
+
+
 def test_expires_current_observation_at_read_time() -> None:
     result = reconcile_passive_snapshots(
         (
