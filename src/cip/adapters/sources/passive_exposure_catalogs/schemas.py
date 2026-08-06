@@ -54,6 +54,13 @@ class ProviderTechnologyLevel(StrEnum):
     OBSERVED_VERSION = "observed_version"
 
 
+_TERMINAL_STATES = {
+    ProviderObservationState.EXPIRED,
+    ProviderObservationState.RETRACTED,
+    ProviderObservationState.DELETED,
+}
+
+
 class ProviderTechnologyMetadata(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -113,6 +120,15 @@ class PassiveAssetMetadataRecord(BaseModel):
             raise ValueError("modified_at cannot precede published_at")
         if self.expires_at is not None and self.expires_at < self.observed_at:
             raise ValueError("expires_at cannot precede observed_at")
+        if self.state in _TERMINAL_STATES and self.active:
+            raise ValueError("expired, retracted, or deleted records cannot be active")
+        if self.state is ProviderObservationState.HISTORICAL:
+            if self.active:
+                raise ValueError("historical records cannot be active")
+            if not self.historical_only:
+                raise ValueError("historical records must be historical-only")
+        if self.historical_only and self.state is ProviderObservationState.CURRENT:
+            raise ValueError("historical-only records cannot be current")
         if self.binary_payload is not None or self.credential is not None:
             raise ValueError("binary payloads and credentials are forbidden")
         if any(
