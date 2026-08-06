@@ -1,17 +1,19 @@
 from __future__ import annotations
 
 from collections import defaultdict
-from dataclasses import dataclass
 from datetime import datetime
-from uuid import UUID
 
 from cip.modules.passive_exposure.domain.models import (
     AttributionRisk,
     OrganizationLinkStatus,
-    PassiveAsset,
     PassiveObservationSnapshot,
     PassiveObservationState,
     TechnologyObservation,
+)
+from cip.modules.passive_exposure.domain.reconciled_models import (
+    ObservedService,
+    ReconciledOrganizationLink,
+    ReconciledPassiveAsset,
 )
 from cip.shared.kernel.time import require_aware_utc
 
@@ -30,52 +32,6 @@ _CONFLICTING_STATES = {
     PassiveObservationState.RETRACTED,
     PassiveObservationState.DELETED,
 }
-
-
-@dataclass(frozen=True, slots=True)
-class ObservedService:
-    port: int
-    protocol: str
-
-
-@dataclass(frozen=True, slots=True)
-class ReconciledOrganizationLink:
-    status: OrganizationLinkStatus
-    exact_organization_id: UUID | None
-    candidate_organization_ids: tuple[UUID, ...]
-    reasons: tuple[str, ...]
-    attribution_risks: tuple[AttributionRisk, ...]
-
-    @property
-    def requires_review(self) -> bool:
-        return self.status in {
-            OrganizationLinkStatus.CANDIDATE,
-            OrganizationLinkStatus.REVIEW_REQUIRED,
-        }
-
-
-@dataclass(frozen=True, slots=True)
-class ReconciledPassiveAsset:
-    asset: PassiveAsset
-    state: PassiveObservationState
-    observed_states: tuple[PassiveObservationState, ...]
-    first_seen_at: datetime
-    last_seen_at: datetime
-    expires_at: datetime | None
-    last_updated_at: datetime
-    source_count: int
-    independent_source_count: int
-    active: bool
-    historical_only: bool
-    has_conflict: bool
-    organization_link: ReconciledOrganizationLink
-    attribution_risks: tuple[AttributionRisk, ...]
-    technologies: tuple[TechnologyObservation, ...]
-    services: tuple[ObservedService, ...]
-
-    @property
-    def can_support_exposure_conclusion(self) -> bool:
-        return False
 
 
 def reconcile_passive_snapshots(
@@ -220,9 +176,7 @@ def _reconcile_asset(
         expires_at=_maximum_time(
             tuple(snapshot.expires_at for snapshot in expiry_snapshots)
         ),
-        last_updated_at=max(
-            snapshot.modified_at for snapshot in complete_history
-        ),
+        last_updated_at=max(snapshot.modified_at for snapshot in complete_history),
         source_count=len({snapshot.source_id for snapshot in complete_history}),
         independent_source_count=len(
             {snapshot.independence_key for snapshot in active}
