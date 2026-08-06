@@ -102,12 +102,11 @@ def latest_passive_snapshots(
         current = latest.get(key)
         if current is None or _revision_order(snapshot) > _revision_order(current):
             latest[key] = snapshot
-    superseded = {
-        (snapshot.source_id, snapshot.supersedes_record_key)
-        for snapshot in latest.values()
-        if snapshot.supersedes_record_key is not None
-        and snapshot.supersedes_record_key != snapshot.source_record_key
-    }
+    superseded: set[tuple[str, str]] = set()
+    for snapshot in latest.values():
+        target = snapshot.supersedes_record_key
+        if target is not None and target != snapshot.source_record_key:
+            superseded.add((snapshot.source_id, target))
     return tuple(
         latest[key]
         for key in sorted(latest)
