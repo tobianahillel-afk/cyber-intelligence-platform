@@ -84,4 +84,6 @@ The checked-in provider entries remain metadata-only candidates with missing aut
 
 ## Merge rule
 
-PR #45 is non-draft only because draft synchronization events stopped producing workflows during the active GitHub Actions incident. Readiness does not authorize merge. The pull request must not merge until this report is updated from a successful GitHub Actions run on the exact final head. Any later commit invalidates earlier evidence and requires the complete validation chain to run again.
+GitHub Actions is operational again. This documentation-only synchronization intentionally requests a fresh complete validation run on the new exact pull-request head; it does not change the implementation scope or relax any gate.
+
+PR #45 must not merge until this report is updated from a successful GitHub Actions run on that exact final head. Any later commit invalidates earlier evidence and requires the complete validation chain to run again.
