@@ -8,10 +8,10 @@ on:
       - .github/workflows/lot16-release-doc-sync.yml
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
-  generate-release-docs:
+  synchronize-release-docs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
 
@@ -103,12 +103,11 @@ Lot 17 is the next locked implementation lot. It must start from the merged Lot 
           roadmap_path.write_text(roadmap, encoding="utf-8")
           PY
 
-      - name: Upload synchronized documents
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
-        with:
-          name: lot16-release-docs
-          path: |
-            README.md
-            docs/PROJECT_DELIVERY_PLAN.md
-          if-no-files-found: error
-          retention-days: 1
+      - name: Commit synchronized documentation
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add README.md docs/PROJECT_DELIVERY_PLAN.md
+          git diff --cached --check
+          git commit -m "Lot 16: synchronize validated release documentation"
+          git push origin HEAD:agent/passive-exposure-final
