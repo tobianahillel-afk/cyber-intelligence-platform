@@ -30,6 +30,12 @@ def test_settings_have_safe_local_defaults() -> None:
     assert settings.vulnerability_source_portfolio_path == Path(
         "policies/source_portfolio.vulnerability.yml"
     )
+    assert settings.incident_source_registry_path == Path(
+        "policies/sources.incidents.yml"
+    )
+    assert settings.incident_source_portfolio_path == Path(
+        "policies/source_portfolio.incidents.yml"
+    )
     assert settings.greenhouse_board_registry_path == Path(
         "policies/greenhouse_boards.yml"
     )
@@ -77,6 +83,8 @@ def test_database_metadata_contains_foundation_tables() -> None:
         "collection_jobs",
         "commercial_signals",
         "evidence",
+        "incident_claim_snapshots",
+        "incidents",
         "need_hypotheses",
         "need_hypothesis_signals",
         "opportunities",
@@ -145,6 +153,8 @@ def test_metadata_creates_on_sqlite() -> None:
     assert get_metadata().tables["vulnerability_aliases"].foreign_keys
     assert get_metadata().tables["vulnerability_source_snapshots"].foreign_keys
     assert get_metadata().tables["vulnerability_scores"].foreign_keys
+    assert get_metadata().tables["incidents"].foreign_keys
+    assert get_metadata().tables["incident_claim_snapshots"].foreign_keys
 
 
 def test_database_url_is_required() -> None:
