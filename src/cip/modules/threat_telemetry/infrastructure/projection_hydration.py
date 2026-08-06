@@ -19,6 +19,10 @@ from cip.modules.threat_telemetry.infrastructure.models import (
     ThreatIndicatorRelationRecord,
     ThreatIndicatorSnapshotRecord,
 )
+from cip.modules.threat_telemetry.infrastructure.persistence_time import (
+    normalize_optional_utc,
+    normalize_utc,
+)
 
 
 def latest_indicator_snapshots(
@@ -35,7 +39,10 @@ def latest_indicator_snapshots(
     latest: dict[tuple[str, str], ThreatIndicatorSnapshotRecord] = {}
     for record in records:
         latest.setdefault((record.source_id, record.source_record_key), record)
-    relations = _relations_by_snapshot(session, tuple(record.id for record in latest.values()))
+    relations = _relations_by_snapshot(
+        session,
+        tuple(record.id for record in latest.values()),
+    )
     return tuple(
         _to_domain(record, relations.get(record.id, ()))
         for record in latest.values()
@@ -77,11 +84,11 @@ def _to_domain(
         indicator_type=IndicatorType(record.indicator_type),
         indicator_value=record.indicator_value,
         state=IndicatorState(record.state),
-        published_at=record.published_at,
-        modified_at=record.modified_at,
-        first_seen_at=record.first_seen_at,
-        last_seen_at=record.last_seen_at,
-        expires_at=record.expires_at,
+        published_at=normalize_utc(record.published_at),
+        modified_at=normalize_utc(record.modified_at),
+        first_seen_at=normalize_optional_utc(record.first_seen_at),
+        last_seen_at=normalize_optional_utc(record.last_seen_at),
+        expires_at=normalize_optional_utc(record.expires_at),
         independence_key=record.independence_key,
         sensor_scope=SensorScope(record.sensor_scope),
         confidence=record.confidence,
