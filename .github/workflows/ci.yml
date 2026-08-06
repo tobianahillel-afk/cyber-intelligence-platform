@@ -195,22 +195,18 @@ jobs:
               "**Primary business outcome:** Release `0.17.0` with canonical passive assets, immutable provider observations, explicit chronology and expiration, source-aware organization attribution with reviewable risks, separated technology evidence levels, reversible persistence, protected APIs, and the Passive Exposure workspace without active validation or exposure claims.",
               label="roadmap Lot 16 outcome",
           )
-          old_boundary = """## Current release boundary
-
-Version `0.17.0` is the Lot 16 release candidate. Lots `00–15` remain implemented and validated; Lot `16` remains `IN_PROGRESS` until one exact final commit passes every required backend, frontend, architecture, migration, security, documentation, and rollback gate.
-
-The Lot 16 candidate installs canonical passive assets, immutable provider observation snapshots, explicit current/historical/expired/corrected/retracted/deleted states, organization-link confidence and attribution risks, technology evidence levels, reversible persistence, protected APIs, and the Passive Exposure workspace. Its provider schemas are installed behind unauthorized, unscheduled, non-executable candidates without registered adapters. The candidate does not authorize active probes, authentication, service connection, exploitation, credential use, applicability assessment, exposure verification, autonomous opportunity creation, or outreach. Passive metadata cannot independently label a named organization vulnerable, exposed, or compromised.
-
-Lot 17 must start from the merged Lot 16 `main` commit and must preserve the distinction between observed technology evidence, vendor version ranges, applicability, and verified exposure.
-"""
-          new_boundary = """## Current release boundary
-
-Version `0.17.0` implements and validates lots `00–16`. Lot 16 installs canonical passive assets, immutable provider observation snapshots, explicit current/historical/expired/corrected/retracted/deleted states, organization-link confidence and attribution risks, technology evidence levels, reversible persistence, protected APIs, and the Passive Exposure workspace.
-
-Its provider schemas remain behind unauthorized, unscheduled, non-executable candidates without registered adapters. The release does not authorize active probes, authentication, service connection, exploitation, credential use, applicability assessment, exposure verification, autonomous opportunity creation, or outreach. Passive metadata cannot independently label a named organization vulnerable, exposed, or compromised.
-
-Lot 17 is the next locked implementation lot. It must start from the merged Lot 16 `main` commit and preserve the distinction between observed technology evidence, vendor version ranges, applicability, and verified exposure.
-"""
+          old_boundary = (
+              "## Current release boundary\n\n"
+              "Version `0.17.0` is the Lot 16 release candidate. Lots `00–15` remain implemented and validated; Lot `16` remains `IN_PROGRESS` until one exact final commit passes every required backend, frontend, architecture, migration, security, documentation, and rollback gate.\n\n"
+              "The Lot 16 candidate installs canonical passive assets, immutable provider observation snapshots, explicit current/historical/expired/corrected/retracted/deleted states, organization-link confidence and attribution risks, technology evidence levels, reversible persistence, protected APIs, and the Passive Exposure workspace. Its provider schemas are installed behind unauthorized, unscheduled, non-executable candidates without registered adapters. The candidate does not authorize active probes, authentication, service connection, exploitation, credential use, applicability assessment, exposure verification, autonomous opportunity creation, or outreach. Passive metadata cannot independently label a named organization vulnerable, exposed, or compromised.\n\n"
+              "Lot 17 must start from the merged Lot 16 `main` commit and must preserve the distinction between observed technology evidence, vendor version ranges, applicability, and verified exposure.\n"
+          )
+          new_boundary = (
+              "## Current release boundary\n\n"
+              "Version `0.17.0` implements and validates lots `00–16`. Lot 16 installs canonical passive assets, immutable provider observation snapshots, explicit current/historical/expired/corrected/retracted/deleted states, organization-link confidence and attribution risks, technology evidence levels, reversible persistence, protected APIs, and the Passive Exposure workspace.\n\n"
+              "Its provider schemas remain behind unauthorized, unscheduled, non-executable candidates without registered adapters. The release does not authorize active probes, authentication, service connection, exploitation, credential use, applicability assessment, exposure verification, autonomous opportunity creation, or outreach. Passive metadata cannot independently label a named organization vulnerable, exposed, or compromised.\n\n"
+              "Lot 17 is the next locked implementation lot. It must start from the merged Lot 16 `main` commit and preserve the distinction between observed technology evidence, vendor version ranges, applicability, and verified exposure.\n"
+          )
           roadmap = replace_once(
               roadmap,
               old_boundary,
