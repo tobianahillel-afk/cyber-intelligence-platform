@@ -17,6 +17,12 @@ from cip.modules.passive_exposure.domain.reconciled_models import (
     ReconciledOrganizationLink,
     ReconciledPassiveAsset,
 )
+from cip.modules.passive_exposure.domain.reconciliation_values import (
+    active_risks,
+    active_snapshots,
+    maximum_time,
+    observed_states,
+)
 from cip.shared.kernel.time import require_aware_utc
 
 _STATE_PRIORITY = {
@@ -145,17 +151,17 @@ def _reconcile_asset(
     identity = complete_history[0].asset
     if any(snapshot.asset.key != identity.key for snapshot in complete_history):
         raise ValueError("passive reconciliation cannot mix canonical assets")
-    active = _active_snapshots(current, at=at)
-    observed_states = _observed_states(complete_history)
-    risks = _active_risks(active)
+    active = active_snapshots(current, at=at)
+    states = observed_states(complete_history)
+    risks = active_risks(active)
     expiry_snapshots = active or current
     return ReconciledPassiveAsset(
         asset=identity,
         state=_reconciled_state(current, active),
-        observed_states=observed_states,
+        observed_states=states,
         first_seen_at=min(snapshot.observed_at for snapshot in complete_history),
         last_seen_at=max(snapshot.observed_at for snapshot in complete_history),
-        expires_at=_maximum_time(
+        expires_at=maximum_time(
             tuple(snapshot.expires_at for snapshot in expiry_snapshots)
         ),
         last_updated_at=max(snapshot.modified_at for snapshot in complete_history),
@@ -165,45 +171,11 @@ def _reconcile_asset(
         ),
         active=bool(active),
         historical_only=not active or all(snapshot.historical_only for snapshot in active),
-        has_conflict=len(set(observed_states) & _CONFLICTING_STATES) > 1,
+        has_conflict=len(set(states) & _CONFLICTING_STATES) > 1,
         organization_link=_reconcile_organization_link(active, risks=risks),
         attribution_risks=risks,
         technologies=_merge_technologies(active),
         services=_merge_services(active),
-    )
-
-
-def _active_snapshots(
-    snapshots: tuple[PassiveObservationSnapshot, ...],
-    *,
-    at: datetime,
-) -> tuple[PassiveObservationSnapshot, ...]:
-    return tuple(snapshot for snapshot in snapshots if _is_active(snapshot, at=at))
-
-
-def _observed_states(
-    snapshots: tuple[PassiveObservationSnapshot, ...],
-) -> tuple[PassiveObservationState, ...]:
-    return tuple(
-        sorted(
-            {snapshot.state for snapshot in snapshots},
-            key=lambda state: state.value,
-        )
-    )
-
-
-def _active_risks(
-    snapshots: tuple[PassiveObservationSnapshot, ...],
-) -> tuple[AttributionRisk, ...]:
-    return tuple(
-        sorted(
-            {
-                risk
-                for snapshot in snapshots
-                for risk in snapshot.organization_link.attribution_risks
-            },
-            key=lambda risk: risk.value,
-        )
     )
 
 
@@ -302,17 +274,6 @@ def _merge_services(
         ObservedService(port=port, protocol=protocol)
         for port, protocol in sorted(services)
     )
-
-
-def _is_active(snapshot: PassiveObservationSnapshot, *, at: datetime) -> bool:
-    if not snapshot.active:
-        return False
-    return snapshot.expires_at is None or snapshot.expires_at > at
-
-
-def _maximum_time(values: tuple[datetime | None, ...]) -> datetime | None:
-    present = tuple(value for value in values if value is not None)
-    return max(present) if present else None
 
 
 def _merge_text(values: tuple[str, ...]) -> tuple[str, ...]:
