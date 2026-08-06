@@ -136,6 +136,7 @@ def test_maps_shared_cloud_tenancy_as_review_risk() -> None:
         ("exposure_verified", True),
         ("credential", "secret"),
         ("binary_payload", "bytes"),
+        ("source_url", "https://user:secret@provider.example/records/1"),
     ],
 )
 def test_rejects_active_or_sensitive_provider_payloads(field: str, value: object) -> None:
