@@ -37,6 +37,14 @@ def test_keeps_only_latest_revision_for_each_source_record() -> None:
     assert latest == (corrected,)
 
 
+def test_equal_timestamp_revision_selection_is_deterministic() -> None:
+    current = _snapshot()
+    corrected = _snapshot(state=PassiveObservationState.CORRECTED)
+
+    assert latest_passive_snapshots((current, corrected)) == (corrected,)
+    assert latest_passive_snapshots((corrected, current)) == (corrected,)
+
+
 def test_expires_current_observation_at_read_time() -> None:
     result = reconcile_passive_snapshots(
         (
@@ -117,7 +125,47 @@ def test_attribution_risk_prevents_automatic_exact_projection() -> None:
     assert result.attribution_risks == (AttributionRisk.CDN,)
 
 
-def test_preserves_state_conflict_technologies_and_services() -> None:
+def test_inactive_retraction_cannot_override_current_attribution() -> None:
+    current_organization = uuid4()
+    retracted_organization = uuid4()
+    active_technology = TechnologyObservation(
+        evidence_level=TechnologyEvidenceLevel.PASSIVE_OBSERVATION,
+        product_name="Current Product",
+    )
+    retracted_technology = TechnologyObservation(
+        evidence_level=TechnologyEvidenceLevel.PASSIVE_OBSERVATION,
+        product_name="Retracted Product",
+    )
+    result = reconcile_passive_snapshots(
+        (
+            _snapshot(
+                organization_link=_exact_link(current_organization),
+                observation_kind=PassiveObservationKind.PRODUCT,
+                technology=active_technology,
+            ),
+            _snapshot(
+                source_id="provider-b",
+                source_record_key="record-2",
+                source_url="https://provider-b.example/records/2",
+                modified_at=NOW + timedelta(minutes=4),
+                state=PassiveObservationState.RETRACTED,
+                active=False,
+                organization_link=_exact_link(retracted_organization),
+                observation_kind=PassiveObservationKind.PRODUCT,
+                technology=retracted_technology,
+            ),
+        ),
+        at=NOW,
+    )[0]
+
+    assert result.state is PassiveObservationState.CURRENT
+    assert result.organization_link.status is OrganizationLinkStatus.EXACT
+    assert result.organization_link.exact_organization_id == current_organization
+    assert result.organization_link.candidate_organization_ids == ()
+    assert result.technologies == (active_technology,)
+
+
+def test_preserves_state_conflict_while_active_observation_remains_current() -> None:
     product = TechnologyObservation(
         evidence_level=TechnologyEvidenceLevel.PASSIVE_OBSERVATION,
         product_name="Example Server",
@@ -155,7 +203,7 @@ def test_preserves_state_conflict_technologies_and_services() -> None:
     )[0]
 
     assert result.has_conflict is True
-    assert result.state is PassiveObservationState.RETRACTED
+    assert result.state is PassiveObservationState.CURRENT
     assert len(result.technologies) == 2
     assert [(service.port, service.protocol) for service in result.services] == [
         (443, "https")
