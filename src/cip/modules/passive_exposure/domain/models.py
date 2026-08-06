@@ -218,9 +218,16 @@ class PassiveObservationSnapshot:
     supersedes_record_key: str | None = None
 
     def __post_init__(self) -> None:
-        _bounded(self.source_id, "source_id", maximum=200)
-        _bounded(self.source_record_key, "source_record_key", maximum=500)
-        _validate_source_url(self.source_url)
+        source_id = _bounded(self.source_id, "source_id", maximum=200)
+        source_record_key = _bounded(
+            self.source_record_key,
+            "source_record_key",
+            maximum=500,
+        )
+        source_url = _normalize_source_url(self.source_url)
+        object.__setattr__(self, "source_id", source_id)
+        object.__setattr__(self, "source_record_key", source_record_key)
+        object.__setattr__(self, "source_url", source_url)
         if not 0 <= self.confidence <= 1:
             raise ValueError("confidence must be between 0 and 1")
         _validate_safety_flags(self)
@@ -255,14 +262,22 @@ class PassiveObservationSnapshot:
             ):
                 raise ValueError("version observations require observed-version evidence")
         if self.independence_key is None:
-            object.__setattr__(self, "independence_key", self.source_id)
+            object.__setattr__(self, "independence_key", source_id)
         else:
-            _bounded(self.independence_key, "independence_key", maximum=500)
+            object.__setattr__(
+                self,
+                "independence_key",
+                _bounded(self.independence_key, "independence_key", maximum=500),
+            )
         if self.supersedes_record_key is not None:
-            _bounded(
-                self.supersedes_record_key,
+            object.__setattr__(
+                self,
                 "supersedes_record_key",
-                maximum=500,
+                _bounded(
+                    self.supersedes_record_key,
+                    "supersedes_record_key",
+                    maximum=500,
+                ),
             )
 
     @property
@@ -295,12 +310,14 @@ def normalize_asset(kind: PassiveAssetKind, value: str) -> str:
     raise ValueError(f"unsupported passive asset kind: {kind}")
 
 
-def _validate_source_url(value: str) -> None:
-    parsed = urlsplit(value)
+def _normalize_source_url(value: str) -> str:
+    normalized = value.strip()
+    parsed = urlsplit(normalized)
     if parsed.scheme != "https" or not parsed.hostname:
         raise ValueError("source_url must be an absolute HTTPS URL")
     if parsed.username is not None or parsed.password is not None:
         raise ValueError("source_url cannot contain embedded credentials")
+    return normalized
 
 
 def _normalize_timestamps(snapshot: PassiveObservationSnapshot) -> None:
@@ -346,9 +363,11 @@ def _validate_safety_flags(snapshot: PassiveObservationSnapshot) -> None:
         raise ValueError("Lot 16 cannot assess vulnerability applicability or verify exposure")
 
 
-def _bounded(value: str, field_name: str, *, maximum: int) -> None:
-    if not value.strip() or len(value) > maximum:
+def _bounded(value: str, field_name: str, *, maximum: int) -> str:
+    normalized = value.strip()
+    if not normalized or len(normalized) > maximum:
         raise ValueError(f"{field_name} must be between 1 and {maximum} characters")
+    return normalized
 
 
 def _unique_text(values: tuple[str, ...], *, maximum: int) -> tuple[str, ...]:
