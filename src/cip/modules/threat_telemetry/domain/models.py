@@ -132,9 +132,12 @@ class IndicatorSnapshot:
             and self.last_seen_at < self.first_seen_at
         ):
             raise ValueError("last_seen_at cannot precede first_seen_at")
-        if self.expires_at is not None and self.last_seen_at is not None:
-            if self.expires_at < self.last_seen_at:
-                raise ValueError("expires_at cannot precede last_seen_at")
+        if (
+            self.expires_at is not None
+            and self.last_seen_at is not None
+            and self.expires_at < self.last_seen_at
+        ):
+            raise ValueError("expires_at cannot precede last_seen_at")
         if self.independence_key is None:
             object.__setattr__(self, "independence_key", self.source_id)
         else:
