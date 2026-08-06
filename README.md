@@ -23,9 +23,9 @@ Source breadth is useful only when it improves reliable client discovery. Source
 
 ## Current validated baseline
 
-The current release is version `0.17.0`, covering lots `00` through `16`.
+The current validated release is version `0.16.0`, covering lots `00` through `15`.
 
-Implemented capabilities include:
+Implemented and validated capabilities include:
 
 - source governance, authorization, retention, suppression, and provenance;
 - PostgreSQL persistence and reversible Alembic migrations;
@@ -40,8 +40,7 @@ Implemented capabilities include:
 - governed corporate public-footprint resources, immutable versions, tombstones, quarantined search leads, protected APIs, and the Research workspace;
 - canonical vulnerability knowledge with aliases, immutable source history, CVSS, EPSS, CWE, affected ranges, exploitation dimensions, protected APIs, and the Vulnerabilities workspace;
 - canonical public incident records with immutable claims, explicit allegation/report/confirmation/denial/correction/retraction states, syndication controls, protected APIs, and the Incidents workspace;
-- canonical defensive threat indicators with deterministic normalization, immutable source history, conflicting classifications, sensor scope, campaign/malware/CVE relations, protected APIs, and the Threat Intel workspace;
-- canonical passive assets with immutable observations, source-aware organization attribution, explicit shared-infrastructure and reassignment risks, technology evidence levels, protected APIs, and the Passive Exposure workspace.
+- canonical defensive threat indicators with deterministic normalization, immutable source history, conflicting classifications, sensor scope, campaign/malware/CVE relations, protected APIs, and the Threat Intel workspace.
 
 Lot `12` remains under an explicit activation boundary: merging the software does not authorize collection against a real organization. The checked-in public-web example is disabled, unauthorized, unscheduled, and non-executable. Search and archive providers remain disconnected until separately approved.
 
@@ -51,9 +50,9 @@ Lot `14` provides public incident intelligence without contacting threat actors 
 
 Lot `15` provides a global defensive telemetry layer without organization attribution. It normalizes public-safe indicators, preserves malicious, suspicious, benign, sinkholed, expired, shared-infrastructure, and retracted states, and exposes immutable source history. It performs no active connection, scan, binary download, compromise inference, opportunity creation, or outreach. All newly modeled telemetry providers remain non-executable candidates.
 
-Lot `16` provides passive exposure and technographic observations without probing assets or verifying exposure. It normalizes public technical assets, preserves immutable provider revisions, separates technology mentions from passive observations and observed versions, and represents organization attribution as exact, candidate, review-required, rejected, or unresolved with explicit risks. It performs no authentication, service connection, applicability assessment, opportunity creation, or outreach. All newly modeled passive providers remain unauthorized, unscheduled, and non-executable candidates.
+Lot `16` is the active `0.17.0` release candidate and remains `IN_PROGRESS` until one exact final commit passes every required CI gate. The candidate provides passive exposure and technographic observations without probing assets or verifying exposure. It normalizes public technical assets, preserves immutable provider revisions and supersession history, separates technology mentions from passive observations and observed versions, and represents organization attribution as exact, candidate, review-required, rejected, or unresolved with explicit risks. It performs no authentication, service connection, applicability assessment, opportunity creation, or outreach. All newly modeled passive providers remain unauthorized, unscheduled, and non-executable candidates.
 
-The next planned implementation lot is `17`, official advisories, customer technologies, and vulnerability applicability.
+Lot `17`, official advisories, customer technologies, and vulnerability applicability, remains planned and must not start before Lot `16` is validated and merged to `main`.
 
 ## Implemented and modeled source portfolio
 
@@ -222,7 +221,8 @@ Domain modules cannot depend on FastAPI, SQLAlchemy models, adapters, API packag
 
 [`docs/PROJECT_DELIVERY_PLAN.md`](docs/PROJECT_DELIVERY_PLAN.md) is authoritative.
 
-- lots `00–16`: implemented and validated foundations, procurement, hiring, identity, onboarding, source runtime, contracts, public footprint, vulnerability knowledge, public incident intelligence, defensive telemetry, and passive technographic observations;
+- lots `00–15`: implemented and validated foundations, procurement, hiring, identity, onboarding, source runtime, contracts, public footprint, vulnerability knowledge, public incident intelligence, and defensive telemetry;
+- lot `16`: active `0.17.0` release candidate for passive exposure and technographic observations, pending final CI and merge;
 - lots `17–19`: advisories and applicability, corporate changes, and provider relationships;
 - lots `20–23`: entity resolution, professional context, conditional sources, and governed research orchestration;
 - lots `24–27`: signal fusion, need hypotheses, calibrated scoring, native commercial operations, and Company 360;
