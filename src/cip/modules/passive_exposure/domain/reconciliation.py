@@ -132,6 +132,7 @@ def _reconcile_asset(
     selected = max(current, key=_revision_order)
     active = tuple(snapshot for snapshot in current if _is_active(snapshot, at=at))
     selected_active = max(active, key=_revision_order) if active else None
+    expiry_snapshots = active or current
     observed_states = tuple(
         sorted({snapshot.state for snapshot in current}, key=lambda state: state.value)
     )
@@ -154,7 +155,9 @@ def _reconcile_asset(
         observed_states=observed_states,
         first_seen_at=min(snapshot.observed_at for snapshot in current),
         last_seen_at=max(snapshot.observed_at for snapshot in current),
-        expires_at=_maximum_time(tuple(snapshot.expires_at for snapshot in current)),
+        expires_at=_maximum_time(
+            tuple(snapshot.expires_at for snapshot in expiry_snapshots)
+        ),
         last_updated_at=max(snapshot.modified_at for snapshot in current),
         source_count=len({snapshot.source_id for snapshot in current}),
         independent_source_count=len(
