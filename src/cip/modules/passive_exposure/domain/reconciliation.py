@@ -180,19 +180,23 @@ def _reconcile_asset(
     *,
     at: datetime,
 ) -> ReconciledPassiveAsset:
-    history = _latest_revisions(tuple(snapshots))
-    if not history:
+    complete_history = tuple(snapshots)
+    if not complete_history:
         raise ValueError("passive reconciliation requires at least one snapshot")
-    current = _effective_revisions(history)
-    identity = history[0].asset
-    if any(snapshot.asset.key != identity.key for snapshot in history):
+    latest_revisions = _latest_revisions(complete_history)
+    current = _effective_revisions(latest_revisions)
+    identity = complete_history[0].asset
+    if any(snapshot.asset.key != identity.key for snapshot in complete_history):
         raise ValueError("passive reconciliation cannot mix canonical assets")
     selected = max(current, key=_revision_order)
     active = tuple(snapshot for snapshot in current if _is_active(snapshot, at=at))
     selected_active = max(active, key=_revision_order) if active else None
     expiry_snapshots = active or current
     observed_states = tuple(
-        sorted({snapshot.state for snapshot in history}, key=lambda state: state.value)
+        sorted(
+            {snapshot.state for snapshot in complete_history},
+            key=lambda state: state.value,
+        )
     )
     state = selected_active.state if selected_active is not None else selected.state
     if state is PassiveObservationState.CURRENT and not active:
@@ -211,13 +215,15 @@ def _reconcile_asset(
         asset=identity,
         state=state,
         observed_states=observed_states,
-        first_seen_at=min(snapshot.observed_at for snapshot in history),
-        last_seen_at=max(snapshot.observed_at for snapshot in history),
+        first_seen_at=min(snapshot.observed_at for snapshot in complete_history),
+        last_seen_at=max(snapshot.observed_at for snapshot in complete_history),
         expires_at=_maximum_time(
             tuple(snapshot.expires_at for snapshot in expiry_snapshots)
         ),
-        last_updated_at=max(snapshot.modified_at for snapshot in history),
-        source_count=len({snapshot.source_id for snapshot in history}),
+        last_updated_at=max(
+            snapshot.modified_at for snapshot in complete_history
+        ),
+        source_count=len({snapshot.source_id for snapshot in complete_history}),
         independent_source_count=len(
             {snapshot.independence_key for snapshot in active}
         ),
