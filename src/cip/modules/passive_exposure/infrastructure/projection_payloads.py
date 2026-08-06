@@ -76,7 +76,10 @@ def encode_text_values(values: tuple[str, ...]) -> str:
 
 def decode_text_values(value: str) -> tuple[str, ...]:
     loaded = json.loads(value)
-    if not isinstance(loaded, list) or not all(isinstance(item, str) for item in loaded):
+    valid_collection = isinstance(loaded, list) and all(
+        isinstance(item, str) for item in loaded
+    )
+    if not valid_collection:
         raise ValueError("persisted text collection is invalid")
     return tuple(loaded)
 
@@ -89,7 +92,9 @@ def decode_uuid_values(value: str) -> tuple[UUID, ...]:
     return tuple(UUID(item) for item in decode_text_values(value))
 
 
-def _technology_payload(technology: TechnologyObservation | None) -> dict[str, str | None] | None:
+def _technology_payload(
+    technology: TechnologyObservation | None,
+) -> dict[str, str | None] | None:
     if technology is None:
         return None
     return {
