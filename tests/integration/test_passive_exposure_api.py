@@ -220,6 +220,23 @@ def test_replay_is_idempotent_and_correction_preserves_history(
     assert projected["exposure_assessment"] == "not_assessed"
 
 
+def test_source_record_cannot_move_between_assets(
+    passive_client: tuple[TestClient, Session, UUID, tuple[UUID, UUID]],
+) -> None:
+    _, session, _, organization_ids = passive_client
+    original = _current_snapshots(organization_ids)[0]
+    moved = replace(
+        original,
+        asset=PassiveAsset(PassiveAssetKind.HOSTNAME, "other.example.com"),
+        modified_at=NOW + timedelta(minutes=1),
+    )
+
+    with pytest.raises(ValueError, match="cannot move between passive assets"):
+        persist_passive_snapshots(session, (moved,), now=NOW + timedelta(minutes=1))
+
+    session.rollback()
+
+
 def test_missing_passive_asset_returns_not_found(
     passive_client: tuple[TestClient, Session, UUID, tuple[UUID, UUID]],
 ) -> None:
