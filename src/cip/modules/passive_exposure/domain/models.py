@@ -150,8 +150,8 @@ class OrganizationLink:
         if self.status is OrganizationLinkStatus.UNRESOLVED:
             if self.method is not OrganizationLinkMethod.NONE:
                 raise ValueError("unresolved links must use method none")
-            if reasons or risks:
-                raise ValueError("unresolved links cannot retain reasons or risks")
+            if reasons:
+                raise ValueError("unresolved links cannot retain link reasons")
 
     @property
     def requires_review(self) -> bool:
