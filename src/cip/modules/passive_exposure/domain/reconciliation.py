@@ -96,22 +96,38 @@ def reconcile_passive_snapshots(
 def latest_passive_snapshots(
     snapshots: tuple[PassiveObservationSnapshot, ...],
 ) -> tuple[PassiveObservationSnapshot, ...]:
+    history = _latest_revisions(snapshots)
+    return _effective_revisions(history)
+
+
+def _latest_revisions(
+    snapshots: tuple[PassiveObservationSnapshot, ...],
+) -> tuple[PassiveObservationSnapshot, ...]:
     latest: dict[tuple[str, str], PassiveObservationSnapshot] = {}
     for snapshot in snapshots:
         key = (snapshot.source_id, snapshot.source_record_key)
         current = latest.get(key)
         if current is None or _revision_order(snapshot) > _revision_order(current):
             latest[key] = snapshot
+    return tuple(latest[key] for key in sorted(latest))
+
+
+def _effective_revisions(
+    history: tuple[PassiveObservationSnapshot, ...],
+) -> tuple[PassiveObservationSnapshot, ...]:
     superseded: set[tuple[str, str]] = set()
-    for snapshot in latest.values():
+    for snapshot in history:
         target = snapshot.supersedes_record_key
         if target is not None and target != snapshot.source_record_key:
             superseded.add((snapshot.source_id, target))
-    return tuple(
-        latest[key]
-        for key in sorted(latest)
-        if key not in superseded
+    effective = tuple(
+        snapshot
+        for snapshot in history
+        if (snapshot.source_id, snapshot.source_record_key) not in superseded
     )
+    if history and not effective:
+        raise ValueError("passive supersession cycle removes every provider record")
+    return effective
 
 
 def _revision_order(
@@ -132,18 +148,19 @@ def _reconcile_asset(
     *,
     at: datetime,
 ) -> ReconciledPassiveAsset:
-    current = latest_passive_snapshots(tuple(snapshots))
-    if not current:
+    history = _latest_revisions(tuple(snapshots))
+    if not history:
         raise ValueError("passive reconciliation requires at least one snapshot")
-    identity = current[0].asset
-    if any(snapshot.asset.key != identity.key for snapshot in current):
+    current = _effective_revisions(history)
+    identity = history[0].asset
+    if any(snapshot.asset.key != identity.key for snapshot in history):
         raise ValueError("passive reconciliation cannot mix canonical assets")
     selected = max(current, key=_revision_order)
     active = tuple(snapshot for snapshot in current if _is_active(snapshot, at=at))
     selected_active = max(active, key=_revision_order) if active else None
     expiry_snapshots = active or current
     observed_states = tuple(
-        sorted({snapshot.state for snapshot in current}, key=lambda state: state.value)
+        sorted({snapshot.state for snapshot in history}, key=lambda state: state.value)
     )
     state = selected_active.state if selected_active is not None else selected.state
     if state is PassiveObservationState.CURRENT and not active:
@@ -162,13 +179,13 @@ def _reconcile_asset(
         asset=identity,
         state=state,
         observed_states=observed_states,
-        first_seen_at=min(snapshot.observed_at for snapshot in current),
-        last_seen_at=max(snapshot.observed_at for snapshot in current),
+        first_seen_at=min(snapshot.observed_at for snapshot in history),
+        last_seen_at=max(snapshot.observed_at for snapshot in history),
         expires_at=_maximum_time(
             tuple(snapshot.expires_at for snapshot in expiry_snapshots)
         ),
-        last_updated_at=max(snapshot.modified_at for snapshot in current),
-        source_count=len({snapshot.source_id for snapshot in current}),
+        last_updated_at=max(snapshot.modified_at for snapshot in history),
+        source_count=len({snapshot.source_id for snapshot in history}),
         independent_source_count=len(
             {snapshot.independence_key for snapshot in active}
         ),
