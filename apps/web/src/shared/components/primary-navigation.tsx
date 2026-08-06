@@ -12,6 +12,7 @@ const navigation = [
   { label: "Vulnerabilities", href: "/vulnerabilities" },
   { label: "Incidents", href: "/incidents" },
   { label: "Threat Intel", href: "/threat-intelligence" },
+  { label: "Passive Exposure", href: "/passive-exposure" },
   { label: "Alerts", href: null },
   { label: "Contacts", href: null },
   { label: "Offers", href: null },
@@ -29,11 +30,7 @@ export function PrimaryNavigation() {
           <li key={item.label}>
             {item.href ? (
               <Link
-                className={
-                  isActive(pathname, item.href)
-                    ? "nav-active"
-                    : undefined
-                }
+                className={isActive(pathname, item.href) ? "nav-active" : undefined}
                 href={item.href}
               >
                 {item.label}
