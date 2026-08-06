@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from uuid import UUID
 
-from sqlalchemy import select
+from sqlalchemy import case, select
 from sqlalchemy.orm import Session
 
 from cip.modules.passive_exposure.domain.models import (
@@ -30,16 +30,39 @@ from cip.modules.passive_exposure.infrastructure.projection_payloads import (
     decode_text_values,
 )
 
+_STATE_PRIORITY = {
+    PassiveObservationState.DELETED.value: 90,
+    PassiveObservationState.RETRACTED.value: 85,
+    PassiveObservationState.CORRECTED.value: 80,
+    PassiveObservationState.EXPIRED.value: 70,
+    PassiveObservationState.CURRENT.value: 60,
+    PassiveObservationState.HISTORICAL.value: 40,
+    PassiveObservationState.UNKNOWN.value: 10,
+}
+
 
 def latest_passive_snapshots(
     session: Session,
     asset_id: UUID,
 ) -> tuple[PassiveObservationSnapshot, ...]:
+    state_priority = case(
+        _STATE_PRIORITY,
+        value=PassiveObservationSnapshotRecord.state,
+        else_=0,
+    )
     records = tuple(
         session.scalars(
             select(PassiveObservationSnapshotRecord)
             .where(PassiveObservationSnapshotRecord.asset_id == asset_id)
-            .order_by(PassiveObservationSnapshotRecord.modified_at.desc())
+            .order_by(
+                PassiveObservationSnapshotRecord.modified_at.desc(),
+                PassiveObservationSnapshotRecord.published_at.desc(),
+                PassiveObservationSnapshotRecord.observed_at.desc(),
+                state_priority.desc(),
+                PassiveObservationSnapshotRecord.confidence.desc(),
+                PassiveObservationSnapshotRecord.source_url.desc(),
+                PassiveObservationSnapshotRecord.snapshot_key.desc(),
+            )
         )
     )
     latest: dict[tuple[str, str], PassiveObservationSnapshotRecord] = {}
@@ -50,8 +73,8 @@ def latest_passive_snapshots(
         tuple(record.id for record in latest.values()),
     )
     return tuple(
-        _to_domain(record, technologies.get(record.id))
-        for record in latest.values()
+        _to_domain(latest[key], technologies.get(latest[key].id))
+        for key in sorted(latest)
     )
 
 
