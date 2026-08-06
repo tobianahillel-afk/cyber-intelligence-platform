@@ -43,7 +43,7 @@ def test_runtime_syncs_candidates_without_adapters_or_schedules(tmp_path: Path) 
     )
 
     portfolio_by_id = {entry.source_id: entry for entry in runtime.portfolio}
-    assert EXPECTED_IDS <= set(portfolio_by_id)
+    assert set(portfolio_by_id) >= EXPECTED_IDS
     assert all(not portfolio_by_id[source_id].executable for source_id in EXPECTED_IDS)
     assert all(
         source_id not in {adapter_source for adapter_source, _ in runtime.adapters}
