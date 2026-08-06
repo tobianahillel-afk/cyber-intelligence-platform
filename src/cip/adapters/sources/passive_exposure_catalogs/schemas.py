@@ -6,6 +6,8 @@ from urllib.parse import urlsplit
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
+from cip.shared.kernel.time import require_aware_utc
+
 
 class ProviderAssetKind(StrEnum):
     DOMAIN = "domain"
@@ -66,8 +68,8 @@ class ProviderTechnologyMetadata(BaseModel):
 
     evidence_level: ProviderTechnologyLevel
     product_name: str = Field(min_length=1, max_length=300)
-    product_version: str | None = Field(default=None, max_length=200)
-    component_name: str | None = Field(default=None, max_length=300)
+    product_version: str | None = Field(default=None, min_length=1, max_length=200)
+    component_name: str | None = Field(default=None, min_length=1, max_length=300)
 
     @model_validator(mode="after")
     def validate_version_level(self) -> ProviderTechnologyMetadata:
@@ -93,14 +95,18 @@ class PassiveAssetMetadataRecord(BaseModel):
     modified_at: datetime
     expires_at: datetime | None = None
     confidence: float = Field(default=0.5, ge=0, le=1)
-    independence_key: str | None = Field(default=None, max_length=500)
+    independence_key: str | None = Field(default=None, min_length=1, max_length=500)
     attribution_risks: tuple[ProviderAttributionRisk, ...] = ()
     technology: ProviderTechnologyMetadata | None = None
     port: int | None = Field(default=None, ge=1, le=65_535)
-    protocol: str | None = Field(default=None, max_length=32)
+    protocol: str | None = Field(default=None, min_length=1, max_length=32)
     active: bool = True
     historical_only: bool = False
-    supersedes_record_key: str | None = Field(default=None, max_length=500)
+    supersedes_record_key: str | None = Field(
+        default=None,
+        min_length=1,
+        max_length=500,
+    )
     binary_payload: str | None = None
     credential: str | None = None
     active_probe: bool = False
@@ -113,6 +119,23 @@ class PassiveAssetMetadataRecord(BaseModel):
 
     @model_validator(mode="after")
     def validate_passive_metadata_only(self) -> PassiveAssetMetadataRecord:
+        self.observed_at = require_aware_utc(
+            self.observed_at,
+            field_name="observed_at",
+        )
+        self.published_at = require_aware_utc(
+            self.published_at,
+            field_name="published_at",
+        )
+        self.modified_at = require_aware_utc(
+            self.modified_at,
+            field_name="modified_at",
+        )
+        if self.expires_at is not None:
+            self.expires_at = require_aware_utc(
+                self.expires_at,
+                field_name="expires_at",
+            )
         _validate_source_url(self.source_url)
         if self.published_at < self.observed_at:
             raise ValueError("published_at cannot precede observed_at")
@@ -167,7 +190,7 @@ class PassiveAssetMetadataRecord(BaseModel):
 
 
 class PassiveExposureMetadataRecord(PassiveAssetMetadataRecord):
-    provider_asset_id: str | None = Field(default=None, max_length=500)
+    provider_asset_id: str | None = Field(default=None, min_length=1, max_length=500)
 
 
 class TechnographicMetadataRecord(PassiveAssetMetadataRecord):
