@@ -233,6 +233,11 @@ class PassiveObservationSnapshot:
             raise ValueError("expires_at cannot precede observed_at")
         if self.state in _TERMINAL_STATES and self.active:
             raise ValueError("expired, retracted, or deleted observations cannot be active")
+        if self.state is PassiveObservationState.HISTORICAL:
+            if self.active:
+                raise ValueError("historical observations cannot be active")
+            if not self.historical_only:
+                raise ValueError("historical observations must be historical-only")
         if self.historical_only and self.state is PassiveObservationState.CURRENT:
             raise ValueError("historical-only observations cannot be current")
         _normalize_service_fields(self)
