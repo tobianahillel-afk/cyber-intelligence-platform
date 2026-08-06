@@ -121,7 +121,7 @@ class OrganizationLink:
         if not 0 <= self.confidence <= 1:
             raise ValueError("organization-link confidence must be between 0 and 1")
         reasons = _unique_text(self.reasons, maximum=500)
-        risks = tuple(dict.fromkeys(self.attribution_risks))
+        risks = tuple(sorted(set(self.attribution_risks), key=lambda risk: risk.value))
         object.__setattr__(self, "reasons", reasons)
         object.__setattr__(self, "attribution_risks", risks)
         if self.status in {
