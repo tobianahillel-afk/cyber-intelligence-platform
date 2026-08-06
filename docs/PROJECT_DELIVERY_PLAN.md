@@ -175,7 +175,7 @@ A lot is complete only when one final commit passes every applicable backend, fr
 
 **Status:** `IMPLEMENTED_VALIDATED`
 
-**Primary business outcome:** Normalize lawful public or licensed technical threat telemetry into time-bounded infrastructure and campaign context that supports defensive-service hypotheses without scanning prospects or treating an IOC as proof of compromise.
+**Outcome:** Version `0.16.0` normalizes lawful public or licensed technical threat telemetry into time-bounded infrastructure and campaign context that supports defensive analysis without scanning prospects or treating an IOC as proof of compromise.
 
 **Dependencies:** Lots 01–03, 10, 13, and 14.
 
