@@ -10,6 +10,10 @@ from cip.modules.collection_orchestration.infrastructure.models import (
 )
 from cip.modules.data_governance.infrastructure.models import SuppressionRecord
 from cip.modules.evidence.infrastructure.models import EvidenceRecord
+from cip.modules.incident_intelligence.infrastructure.models import (
+    IncidentClaimSnapshotRecord,
+    IncidentRecord,
+)
 from cip.modules.opportunities.infrastructure.models import (
     CommercialSignalRecord,
     NeedHypothesisRecord,
@@ -77,6 +81,8 @@ _IMPORTED_MODELS = (
     CollectionJobRecord,
     CommercialSignalRecord,
     EvidenceRecord,
+    IncidentClaimSnapshotRecord,
+    IncidentRecord,
     NeedHypothesisRecord,
     NeedHypothesisSignalRecord,
     OpportunityEvidenceRecord,
