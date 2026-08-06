@@ -159,6 +159,7 @@ def test_provider_metadata_is_trimmed_before_mapping() -> None:
         ("credential", "secret"),
         ("binary_payload", "bytes"),
         ("source_url", "https://user:secret@provider.example/records/1"),
+        ("record_id", "   "),
     ],
 )
 def test_rejects_active_or_sensitive_provider_payloads(field: str, value: object) -> None:
