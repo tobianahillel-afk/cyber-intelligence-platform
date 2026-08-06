@@ -6,7 +6,7 @@ Final release decision: **PENDING FINAL CI**.
 
 Target release: `0.17.0`.
 
-PR #45 is the authoritative Lot 16 pull request. Superseded PRs #43 and #44 were closed without discarding any implementation commit.
+PR #46 is the authoritative Lot 16 pull request. Superseded PRs #43, #44, and #45 were closed without discarding any implementation commit.
 
 This report records the exact validation boundary for Lot 16. It must be updated with the final pull-request head, GitHub Actions run identifier, test counts, coverage and review state before the pull request can merge.
 
@@ -62,7 +62,7 @@ The exact final pull-request head must pass:
 | Gate | Result |
 | --- | --- |
 | Final pull-request head | Pending |
-| GitHub Actions run | Pending |
+| GitHub Actions run | Blocked by GitHub Actions incident |
 | Dependency consistency | Pending |
 | Python dependency audit | Pending |
 | Ruff | Pending |
@@ -82,8 +82,10 @@ Production activation of the Lot 16 provider candidates is **not authorized by t
 
 The checked-in provider entries remain metadata-only candidates with missing authorization, no approved hosts or paths, no registered adapters, no collection schedule and `executable: false`.
 
+## Current external blocker
+
+GitHub Status reports a major Actions outage. Webhook triggers are being throttled during recovery, so many pushes and pull-request events are not creating workflow runs; queued jobs may also be delayed or fail. PR #46 was opened after the earlier PRs failed to receive a run, but no validation run has yet been created.
+
 ## Merge rule
 
-GitHub Actions is operational again. This documentation-only synchronization intentionally requests a fresh complete validation run on the new exact pull-request head; it does not change the implementation scope or relax any gate.
-
-PR #45 must not merge until this report is updated from a successful GitHub Actions run on that exact final head. Any later commit invalidates earlier evidence and requires the complete validation chain to run again.
+PR #46 must not merge until this report is updated from a successful GitHub Actions run on the exact final head. Any later commit invalidates earlier evidence and requires the complete validation chain to run again.
