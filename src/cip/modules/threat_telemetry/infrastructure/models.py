@@ -58,7 +58,7 @@ class ThreatIndicatorSnapshotRecord(Base):
         ),
     )
 
-    id: Mapped[UUID] = mapped_column(primary_key_key=True)
+    id: Mapped[UUID] = mapped_column(primary_key=True)
     indicator_id: Mapped[UUID] = mapped_column(
         ForeignKey("threat_indicators.id", ondelete="CASCADE"), index=True
     )
