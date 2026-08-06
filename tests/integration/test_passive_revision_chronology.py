@@ -21,6 +21,7 @@ from cip.modules.passive_exposure.infrastructure.models import (
     PassiveAssetRecord,
     PassiveObservationSnapshotRecord,
 )
+from cip.modules.passive_exposure.infrastructure.persistence_time import normalize_utc
 from cip.modules.passive_exposure.infrastructure.projections import (
     persist_passive_snapshots,
 )
@@ -67,8 +68,8 @@ def test_same_record_correction_preserves_complete_canonical_chronology() -> Non
 
     assert asset is not None
     assert snapshot_count == 2
-    assert asset.first_seen_at == NOW - timedelta(days=10)
-    assert asset.last_seen_at == NOW - timedelta(days=1)
+    assert normalize_utc(asset.first_seen_at) == NOW - timedelta(days=10)
+    assert normalize_utc(asset.last_seen_at) == NOW - timedelta(days=1)
     assert set(asset.observed_states.split(",")) == {"current", "corrected"}
     assert asset.state == "corrected"
     assert asset.active is False
