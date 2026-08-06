@@ -35,7 +35,7 @@ class PageCheckpoint:
     content_hash_sha256: str
     version_id: UUID
     canonical_url: str
-    resource_kind: PublicResourceKind
+    resource_kind: PublicResourceKind = PublicResourceKind.WEB_PAGE
 
 
 @dataclass(frozen=True, slots=True)
