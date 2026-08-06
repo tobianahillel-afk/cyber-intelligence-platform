@@ -33,7 +33,7 @@ def test_normalizes_public_passive_asset_identifiers() -> None:
     assert normalize_domain("Tést.Example.COM.") == "xn--tst-bma.example.com"
     assert normalize_ip("2606:4700:4700::1111", version=6) == "2606:4700:4700::1111"
     assert normalize_asn("as13335") == "AS13335"
-    assert normalize_cloud_resource("aws:arn:example") == "aws:arn:example"
+    assert normalize_cloud_resource("AWS:arn:Example") == "aws:arn:Example"
     assert normalize_certificate_fingerprint("AA:" * 31 + "AA") == "aa" * 32
 
 
@@ -50,6 +50,15 @@ def test_rejects_local_or_non_registrable_domains(value: str) -> None:
 def test_rejects_non_global_addresses(value: str) -> None:
     with pytest.raises(ValueError):
         normalize_ip(value)
+
+
+@pytest.mark.parametrize(
+    "value",
+    ["missing-namespace", ":resource", "aws:", "1provider:resource"],
+)
+def test_rejects_invalid_cloud_resource_namespaces(value: str) -> None:
+    with pytest.raises(ValueError, match="provider namespace"):
+        normalize_cloud_resource(value)
 
 
 def test_exact_organization_link_requires_exact_evidence_without_risk() -> None:
