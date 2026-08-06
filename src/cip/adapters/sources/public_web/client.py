@@ -6,11 +6,12 @@ from urllib.robotparser import RobotFileParser
 
 import httpx
 
+from cip import __version__
 from cip.adapters.sources.public_web.registry import PublicWebTarget
 from cip.modules.public_footprint.domain.scope import CrawlUsage
 from cip.modules.public_footprint.domain.url_identity import CanonicalUrl
 
-_USER_AGENT = "CyberIntelligencePlatform/0.12 (+public-evidence-collector)"
+_USER_AGENT = f"CyberIntelligencePlatform/{__version__} (+public-evidence-collector)"
 _REDIRECT_STATUSES = {
     httpx.codes.MOVED_PERMANENTLY,
     httpx.codes.FOUND,
