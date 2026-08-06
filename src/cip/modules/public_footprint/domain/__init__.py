@@ -17,6 +17,12 @@ from cip.modules.public_footprint.domain.scope import (
     CrawlScope,
     CrawlUsage,
 )
+from cip.modules.public_footprint.domain.search import (
+    SearchLeadClaim,
+    SearchQueryTemplate,
+    SearchResultLead,
+    map_search_result_lead,
+)
 from cip.modules.public_footprint.domain.url_identity import (
     CanonicalUrl,
     canonicalize_url,
@@ -40,6 +46,10 @@ __all__ = [
     "PublicResourceVersion",
     "ResourceAccessState",
     "ResourceRetrievalState",
+    "SearchLeadClaim",
+    "SearchQueryTemplate",
+    "SearchResultLead",
     "canonicalize_url",
+    "map_search_result_lead",
     "same_origin",
 ]
