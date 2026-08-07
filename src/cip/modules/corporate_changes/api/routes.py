@@ -36,11 +36,24 @@ router = APIRouter(
 SessionDependency = Annotated[Session, Depends(get_database_session)]
 
 
-def _change_filters(
+def _evidence_filters(
     status: ChangeEventStatus | None = None,
     event_type: ChangeEventType | None = None,
     claim_type: ChangeClaimType | None = None,
     source_kind: ChangeSourceKind | None = None,
+) -> ChangeFilters:
+    return ChangeFilters(
+        status=status.value if status else None,
+        event_type=event_type.value if event_type else None,
+        claim_type=claim_type.value if claim_type else None,
+        source_kind=source_kind.value if source_kind else None,
+    )
+
+
+EvidenceFilterDependency = Annotated[ChangeFilters, Depends(_evidence_filters)]
+
+
+def _context_filters(
     organization_link_status: OrganizationLinkStatus | None = None,
     organization_id: UUID | None = None,
     officially_confirmed: bool | None = None,
@@ -48,10 +61,6 @@ def _change_filters(
     query: Annotated[str | None, Query(alias="q", max_length=200)] = None,
 ) -> ChangeFilters:
     return ChangeFilters(
-        status=status.value if status else None,
-        event_type=event_type.value if event_type else None,
-        claim_type=claim_type.value if claim_type else None,
-        source_kind=source_kind.value if source_kind else None,
         organization_link_status=(
             organization_link_status.value if organization_link_status else None
         ),
@@ -59,6 +68,26 @@ def _change_filters(
         officially_confirmed=officially_confirmed,
         historical_only=historical_only,
         query=query,
+    )
+
+
+ContextFilterDependency = Annotated[ChangeFilters, Depends(_context_filters)]
+
+
+def _change_filters(
+    evidence: EvidenceFilterDependency,
+    context: ContextFilterDependency,
+) -> ChangeFilters:
+    return ChangeFilters(
+        status=evidence.status,
+        event_type=evidence.event_type,
+        claim_type=evidence.claim_type,
+        source_kind=evidence.source_kind,
+        organization_link_status=context.organization_link_status,
+        organization_id=context.organization_id,
+        officially_confirmed=context.officially_confirmed,
+        historical_only=context.historical_only,
+        query=context.query,
     )
 
 
