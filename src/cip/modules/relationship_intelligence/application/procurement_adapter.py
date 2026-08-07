@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
 from datetime import UTC, date, datetime
 
 from cip.modules.procurement_history.domain.models import (
@@ -10,6 +9,9 @@ from cip.modules.procurement_history.domain.models import (
     ProcurementParty,
     ProcurementPartyRole,
     ProcurementPublicationKind,
+)
+from cip.modules.relationship_intelligence.application.bundles import (
+    RelationshipProjectionBundle,
 )
 from cip.modules.relationship_intelligence.domain.models import (
     RelationshipClaimType,
@@ -21,12 +23,6 @@ from cip.modules.relationship_intelligence.domain.models import (
     RelationshipSourceKind,
 )
 from cip.shared.kernel.time import require_aware_utc
-
-
-@dataclass(frozen=True, slots=True)
-class RelationshipProjectionBundle:
-    evidence: tuple[RelationshipEvidenceSnapshot, ...]
-    contexts: tuple[RelationshipContext, ...]
 
 
 def relationship_bundle_from_procurement(
