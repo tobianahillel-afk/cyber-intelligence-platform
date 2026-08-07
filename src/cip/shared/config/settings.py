@@ -37,6 +37,9 @@ class Settings(BaseSettings):
         "policies/sources.passive_exposure.yml"
     )
     advisory_source_registry_path: Path = Path("policies/sources.advisories.yml")
+    corporate_change_source_registry_path: Path = Path(
+        "policies/sources.corporate_changes.yml"
+    )
     provider_onboarding_registry_path: Path = Path("policies/provider_onboarding.yml")
     source_portfolio_path: Path = Path("policies/source_portfolio.yml")
     decp_source_portfolio_path: Path = Path("policies/source_portfolio.decp.yml")
@@ -57,6 +60,9 @@ class Settings(BaseSettings):
     )
     advisory_source_portfolio_path: Path = Path(
         "policies/source_portfolio.advisories.yml"
+    )
+    corporate_change_source_portfolio_path: Path = Path(
+        "policies/source_portfolio.corporate_changes.yml"
     )
     greenhouse_board_registry_path: Path = Path("policies/greenhouse_boards.yml")
     lever_site_registry_path: Path = Path("policies/lever_sites.yml")

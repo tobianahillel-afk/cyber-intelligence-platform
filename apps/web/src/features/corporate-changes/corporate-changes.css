@@ -1,0 +1,148 @@
+.change-warning {
+  border: 1px solid var(--border-strong);
+  border-radius: 12px;
+  padding: 12px 14px;
+  background: var(--panel-muted);
+  color: var(--text-muted);
+}
+
+.change-heading {
+  align-items: flex-start;
+  gap: 20px;
+}
+
+.change-filters {
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  width: min(100%, 920px);
+}
+
+.change-table-wrap {
+  overflow-x: auto;
+}
+
+.change-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.change-table th,
+.change-table td {
+  padding: 14px;
+  border-top: 1px solid var(--border);
+  text-align: left;
+  vertical-align: top;
+}
+
+.change-table td {
+  min-width: 150px;
+}
+
+.change-table td:first-child {
+  min-width: 280px;
+}
+
+.change-link,
+.change-back-link {
+  display: inline-block;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.change-muted {
+  display: block;
+  margin-top: 6px;
+  color: var(--text-muted);
+  font-size: 0.86rem;
+  line-height: 1.45;
+}
+
+.change-status {
+  display: inline-flex;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 4px 8px;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.change-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.change-badges span {
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 3px 7px;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.change-detail-grid,
+.change-mapping-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 18px;
+}
+
+.change-definition-list {
+  display: grid;
+  grid-template-columns: minmax(120px, 0.45fr) 1fr;
+  gap: 8px 12px;
+  margin: 14px 0 0;
+}
+
+.change-definition-list dt {
+  color: var(--text-muted);
+}
+
+.change-definition-list dd {
+  margin: 0;
+}
+
+.change-definition-list.compact {
+  font-size: 0.86rem;
+}
+
+.change-claim-list {
+  display: grid;
+  gap: 12px;
+}
+
+.change-claim-card,
+.change-mapping-card {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 14px;
+  background: var(--panel-muted);
+}
+
+.change-claim-heading {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.change-claim-heading span {
+  display: block;
+  margin-top: 4px;
+  color: var(--text-muted);
+  font-size: 0.82rem;
+}
+
+.change-mapping-card span {
+  color: var(--text-muted);
+  font-size: 0.82rem;
+}
+
+@media (max-width: 760px) {
+  .change-definition-list {
+    grid-template-columns: 1fr;
+  }
+
+  .change-claim-heading {
+    flex-direction: column;
+  }
+}

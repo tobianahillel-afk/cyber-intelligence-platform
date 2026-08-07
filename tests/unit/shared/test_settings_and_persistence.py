@@ -42,6 +42,12 @@ def test_settings_have_safe_local_defaults() -> None:
     assert settings.threat_telemetry_source_portfolio_path == Path(
         "policies/source_portfolio.threat_telemetry.yml"
     )
+    assert settings.corporate_change_source_registry_path == Path(
+        "policies/sources.corporate_changes.yml"
+    )
+    assert settings.corporate_change_source_portfolio_path == Path(
+        "policies/source_portfolio.corporate_changes.yml"
+    )
     assert settings.greenhouse_board_registry_path == Path(
         "policies/greenhouse_boards.yml"
     )
@@ -89,6 +95,9 @@ def test_database_metadata_contains_foundation_tables() -> None:
         "collection_dead_letters",
         "collection_jobs",
         "commercial_signals",
+        "corporate_change_claim_snapshots",
+        "corporate_change_events",
+        "corporate_change_service_mappings",
         "evidence",
         "incident_claim_snapshots",
         "incidents",
@@ -180,6 +189,9 @@ def test_metadata_creates_on_sqlite() -> None:
     assert get_metadata().tables["vendor_advisory_ranges"].foreign_keys
     assert get_metadata().tables["applicability_assessment_snapshots"].foreign_keys
     assert get_metadata().tables["vulnerability_applicability_assessments"].foreign_keys
+    assert get_metadata().tables["corporate_change_events"].foreign_keys
+    assert get_metadata().tables["corporate_change_claim_snapshots"].foreign_keys
+    assert get_metadata().tables["corporate_change_service_mappings"].foreign_keys
 
 
 def test_database_url_is_required() -> None:

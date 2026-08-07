@@ -66,7 +66,7 @@ A lot is complete only when one final commit passes every applicable backend, fr
 | 15 | Malicious infrastructure, phishing, IOC, and attack telemetry | `IMPLEMENTED_VALIDATED` |
 | 16 | Passive exposure and technographic observations | `IMPLEMENTED_VALIDATED` |
 | 17 | Vendor advisories, product versions, and applicability | `IMPLEMENTED_VALIDATED` |
-| 18 | News, regulatory, corporate-disclosure, and change signals | `PLANNED_LOCKED` |
+| 18 | News, regulatory, corporate-disclosure, and change signals | `IMPLEMENTED_VALIDATED` |
 | 19 | Providers, customers, partners, and supply-chain relationships | `PLANNED_LOCKED` |
 | 20 | Entity resolution and temporal corporate knowledge graph | `PLANNED_LOCKED` |
 | 21 | Professional organization maps, contacts, and public community signals | `PLANNED_LOCKED` |
@@ -275,9 +275,9 @@ A lot is complete only when one final commit passes every applicable backend, fr
 
 ## Lot 18 — News, regulatory, corporate-disclosure, and change signals
 
-**Status:** `PLANNED_LOCKED`
+**Status:** `IMPLEMENTED_VALIDATED`
 
-**Primary business outcome:** Detect material public changes that may create cyber needs while distinguishing original disclosures, regulation, reporting, commentary, and speculation.
+**Outcome:** Detect material public changes that may create cyber needs while distinguishing original disclosures, regulation, reporting, commentary, and speculation.
 
 **Dependencies:** Lots 08, 10, 12, 14, and 17.
 
@@ -729,8 +729,8 @@ A lot is complete only when one final commit passes every applicable backend, fr
 
 ## Current release boundary
 
-Version `0.18.0` implements and validates lots `00–17`. Lot 17 installs canonical vendor and product identities, immutable advisory revisions and affected ranges, support lifecycle, fixes and mitigations, explainable organization-specific applicability assessments, immutable assessment history, reversible persistence, protected APIs, and the Vulnerability Applicability workspace.
+Version `0.19.0` implements and validates lots `00–18`. Lot 18 installs canonical material-change events, immutable source/article claim revisions, explicit confirmation/report/speculation/dispute/correction/retraction semantics, syndication-aware corroboration, organization-link review, bounded excerpts, separate service-family mappings, reversible persistence, protected APIs, and the Corporate Changes workspace.
 
-Its advisory provider schemas remain behind unauthorized, unscheduled, non-executable candidates without registered adapters. The release does not authorize active probes, authentication, service connection, exploitation, credential use, exposure verification, autonomous opportunity creation, or outreach. Applicability is computed only from already stored organization-specific technology evidence and official advisory affected-range evidence; it is not verified exposure or proof of compromise.
+Its corporate-change provider schemas remain behind unauthorized, unscheduled, non-executable candidates without registered adapters. The release does not authorize autonomous browsing, paywall or authentication bypass, private-source access, full-article copying, contact enrichment, autonomous opportunity creation, or outreach. Syndicated copies remain one corroboration lineage, and reporting or speculation does not become official confirmation unless an official source confirms it.
 
-Lot 18 is the next locked implementation lot. It must start from the merged Lot 17 `main` commit and preserve source-aware distinctions among original disclosures, regulator statements, company statements, reporting, commentary, speculation, corrections, and retractions.
+Lot 19 is the next locked implementation lot. It must start from the merged Lot 18 `main` commit and preserve direction, role, chronology, source, confidence, and review state across provider, customer, partner, supplier, integrator, auditor, insurer, MSSP, and other relationships. Marketing claims must not silently become contract evidence, and historical providers must not silently become current incumbents.

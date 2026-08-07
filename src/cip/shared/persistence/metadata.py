@@ -8,6 +8,11 @@ from cip.modules.collection_orchestration.infrastructure.models import (
     CollectionDeadLetterRecord,
     CollectionJobRecord,
 )
+from cip.modules.corporate_changes.infrastructure.models import (
+    CorporateChangeClaimSnapshotRecord,
+    CorporateChangeEventRecord,
+    CorporateChangeServiceMappingRecord,
+)
 from cip.modules.data_governance.infrastructure.models import SuppressionRecord
 from cip.modules.evidence.infrastructure.models import EvidenceRecord
 from cip.modules.incident_intelligence.infrastructure.models import (
@@ -99,6 +104,9 @@ _IMPORTED_MODELS = (
     CollectionDeadLetterRecord,
     CollectionJobRecord,
     CommercialSignalRecord,
+    CorporateChangeClaimSnapshotRecord,
+    CorporateChangeEventRecord,
+    CorporateChangeServiceMappingRecord,
     EvidenceRecord,
     IncidentClaimSnapshotRecord,
     IncidentRecord,

@@ -12,6 +12,7 @@ const navigation = [
   { label: "Vulnerabilities", href: "/vulnerabilities" },
   { label: "Applicability", href: "/vulnerability-applicability" },
   { label: "Incidents", href: "/incidents" },
+  { label: "Corporate Changes", href: "/corporate-changes" },
   { label: "Threat Intel", href: "/threat-intelligence" },
   { label: "Passive Exposure", href: "/passive-exposure" },
   { label: "Alerts", href: null },

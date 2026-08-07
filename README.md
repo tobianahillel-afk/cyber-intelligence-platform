@@ -23,7 +23,7 @@ Source breadth is useful only when it improves reliable client discovery. Source
 
 ## Current validated baseline
 
-The current validated release is version `0.18.0`, covering lots `00` through `17`.
+The current validated release is version `0.19.0`, covering lots `00` through `18`.
 
 Implemented and validated capabilities include:
 
@@ -42,7 +42,8 @@ Implemented and validated capabilities include:
 - canonical public incident records with immutable claims, explicit allegation/report/confirmation/denial/correction/retraction states, syndication controls, protected APIs, and the Incidents workspace;
 - canonical defensive threat indicators with deterministic normalization, immutable source history, conflicting classifications, sensor scope, campaign/malware/CVE relations, protected APIs, and the Threat Intel workspace;
 - canonical passive assets and technographic observations with immutable revisions, explicit attribution risks, protected APIs, and the Passive Exposure workspace;
-- canonical vendor advisories, affected-version ranges, organization-specific vulnerability applicability, immutable assessment history, protected APIs, and the Vulnerability Applicability workspace.
+- canonical vendor advisories, affected-version ranges, organization-specific vulnerability applicability, immutable assessment history, protected APIs, and the Vulnerability Applicability workspace;
+- source-aware corporate and regulatory change intelligence with immutable claim history, syndication-aware corroboration, explicit confirmation/report/speculation/dispute/correction/retraction states, separate service mappings, protected APIs, and the Corporate Changes workspace.
 
 Lot `12` remains under an explicit activation boundary: merging the software does not authorize collection against a real organization. The checked-in public-web example is disabled, unauthorized, unscheduled, and non-executable. Search and archive providers remain disconnected until separately approved.
 
@@ -56,7 +57,9 @@ Lot `16` provides validated passive exposure and technographic observations with
 
 Lot `17` provides explainable vulnerability applicability by reconciling organization-specific passive technology evidence with official advisory revisions and affected-version ranges. It preserves unknown and review-required outcomes, immutable assessment history, corrections, withdrawals, support lifecycle, fixes, and mitigations. Applicability is not active validation, verified exposure, compromise, an automatic opportunity, or authorization to contact an organization. All newly modeled advisory providers remain unauthorized, unscheduled, and non-executable candidates.
 
-The next planned implementation lot is `18`: public news, regulatory, corporate-disclosure, and material-change signals.
+Lot `18` provides source-aware public corporate and regulatory change intelligence. It separates official filings, regulator notices, company disclosures, media reporting, analyst commentary, speculation, disputes, corrections, retractions, syndication, and staleness; preserves immutable revisions and distinct event/publication/update times; bounds stored excerpts; and keeps service-family mappings separate from raw evidence. A repeated report is not independent corroboration, reporting is not official confirmation, and a raw change event is not a need, opportunity, or authorization to contact. All newly modeled change-intelligence providers remain unauthorized, unscheduled, and non-executable candidates.
+
+The next planned implementation lot is `19`: temporal provider, customer, partner, supplier, integrator, auditor, insurer, MSSP, and other relationship intelligence.
 
 ## Implemented and modeled source portfolio
 
@@ -95,9 +98,15 @@ Selected advisory schemas and deterministic mappings are implemented for:
 - official Linux distribution security advisories;
 - official package-ecosystem security advisories.
 
-Every newly modeled passive or advisory candidate is `draft`, has missing authorization, has no approved hosts or paths, has no schedule or registered runtime adapter, and is marked `executable: false`. Active probing, authentication, access-control bypass, direct exposure validation, autonomous opportunities, and outreach are explicitly forbidden. Vulnerability applicability operates only on stored evidence from both organization-specific technology observations and advisory affected-range evidence.
+Selected corporate-change schemas and deterministic mappings are implemented for:
 
-OSINT Framework entries remain non-executable catalog candidates. LinkedIn, Discord, BrixHub, browser automation, premium providers, search APIs, archive providers, and every unapproved vulnerability, incident, telemetry, passive-observation, or advisory provider remain disabled unless their exact method, fields, purpose, authorization, retention, licence, and security controls are approved.
+- official corporate disclosures;
+- official regulatory change notices;
+- licensed corporate-news metadata with bounded excerpts and explicit syndication identity.
+
+Every newly modeled passive, advisory, or corporate-change candidate is `draft`, has missing authorization, has no approved hosts or paths, has no schedule or registered runtime adapter, and is marked `executable: false`. Active probing, authentication, access-control bypass, direct exposure validation, autonomous opportunities, and outreach are explicitly forbidden. Vulnerability applicability operates only on stored evidence from both organization-specific technology observations and advisory affected-range evidence.
+
+OSINT Framework entries remain non-executable catalog candidates. LinkedIn, Discord, BrixHub, browser automation, premium providers, search APIs, archive providers, and every unapproved vulnerability, incident, telemetry, passive-observation, advisory, or corporate-change provider remain disabled unless their exact method, fields, purpose, authorization, retention, licence, and security controls are approved.
 
 ## Evidence flow
 
@@ -200,6 +209,23 @@ vulnerability applicability
   != authorization to contact
 ```
 
+Corporate-change intelligence remains a separate source-aware evidence layer:
+
+```text
+public or licensed change metadata
+  -> immutable source/article claim revision
+  -> filing / regulator / company / report / speculation / dispute / correction / retraction
+  -> syndication-aware reconciliation and organization-link review
+  -> canonical material-change event
+
+material change event
+  != independent corroboration merely because it was republished
+  != official confirmation unless an official source confirms it
+  != service mapping
+  != need hypothesis or opportunity
+  != authorization to contact
+```
+
 Provider payloads remain inside adapter packages. Adapters never write directly to company, score, alert, or opportunity projections.
 
 ## Product access model
@@ -210,7 +236,7 @@ Collection is centralized and uses approved public feeds, official APIs, open-da
 
 The product is database-first. Normal page views read stored and indexed evidence; they do not crawl sources on demand. Schedulers refresh sources according to freshness, value, cost, quota, authorization, and change frequency. Stale data remains visible with an explicit freshness state.
 
-The `/research`, `/vulnerabilities`, `/incidents`, `/threat-intelligence`, `/passive-exposure`, and `/vulnerability-applicability` workspaces and their APIs search persisted data only. They never launch external collection from an analyst page view.
+The `/research`, `/vulnerabilities`, `/incidents`, `/threat-intelligence`, `/passive-exposure`, `/vulnerability-applicability`, and `/corporate-changes` workspaces and their APIs search persisted data only. They never launch external collection from an analyst page view.
 
 ## Architecture
 
@@ -226,8 +252,8 @@ Canonical layers are:
 1. source catalog and authorization;
 2. provider onboarding and adapter capabilities;
 3. collection runs and immutable source records;
-4. evidence, observations, public claims, vulnerability snapshots, incident claims, telemetry snapshots, passive observation snapshots, and advisory revisions;
-5. resolved organizations, incidents, vulnerabilities, indicators, passive assets, technologies, products, providers, roles, and temporal relationships;
+4. evidence, observations, public claims, vulnerability snapshots, incident claims, telemetry snapshots, passive observation snapshots, advisory revisions, and corporate-change claim revisions;
+5. resolved organizations, incidents, vulnerabilities, indicators, passive assets, technologies, products, providers, material changes, roles, and temporal relationships;
 6. vulnerability applicability, service mappings, commercial signals, and need hypotheses;
 7. scores, alerts, opportunities, tasks, and analyst decisions.
 
@@ -247,8 +273,8 @@ Domain modules cannot depend on FastAPI, SQLAlchemy models, adapters, API packag
 
 [`docs/PROJECT_DELIVERY_PLAN.md`](docs/PROJECT_DELIVERY_PLAN.md) is authoritative.
 
-- lots `00–17`: implemented and validated foundations, procurement, hiring, identity, onboarding, source runtime, contracts, public footprint, vulnerability knowledge, public incident intelligence, defensive telemetry, passive technographic evidence, vendor advisories, and vulnerability applicability;
-- lots `18–19`: corporate changes and provider relationships;
+- lots `00–18`: implemented and validated foundations, procurement, hiring, identity, onboarding, source runtime, contracts, public footprint, vulnerability knowledge, public incident intelligence, defensive telemetry, passive technographic evidence, vendor advisories, vulnerability applicability, and corporate/regulatory change intelligence;
+- lot `19`: provider, customer, partner, supplier, integrator, auditor, insurer, MSSP, and other temporal relationship intelligence;
 - lots `20–23`: entity resolution, professional context, conditional sources, and governed research orchestration;
 - lots `24–27`: signal fusion, need hypotheses, calibrated scoring, native commercial operations, and Company 360;
 - lots `28–32`: data quality, release security, resilience, optional isolated browser runtime, and controlled production pilot.
@@ -279,7 +305,8 @@ Executable rules include:
 - roadmap lots remain continuous and status-consistent;
 - threat telemetry cannot import network clients, organization modules, or opportunity modules;
 - passive exposure cannot import network clients, collection adapters, opportunity modules, or vulnerability-applicability modules;
-- vulnerability applicability cannot import network clients, collection adapters, opportunity modules, or contact/outreach modules.
+- vulnerability applicability cannot import network clients, collection adapters, opportunity modules, or contact/outreach modules;
+- corporate change intelligence cannot import network clients, collection adapters, opportunity modules, contacts, or outreach modules.
 
 ## Source and data safety
 
@@ -299,7 +326,9 @@ The platform does not:
 - create fake accounts or rotate accounts after a ban;
 - perform autonomous outreach;
 - infer organization exposure from a global CVE, CVSS, EPSS, PoC, or KEV record alone;
-- infer compromise from an IOC, passive observation, applicability assessment, or attacker allegation alone.
+- infer compromise from an IOC, passive observation, applicability assessment, or attacker allegation alone;
+- treat syndicated copies of one report as independent corroboration;
+- turn a public/media material-change report directly into an official confirmation, service need, opportunity, contact target, or outreach action.
 
 LinkedIn collection remains disabled unless official API scopes, a licensed product, or reviewed written authorization covers the exact method and purpose. Discord collection requires an administrator-installed connector, authorized export, or equivalent consented integration. BrixHub remains quarantined.
 
@@ -384,4 +413,6 @@ npm run build
 - [`docs/lots/LOT_16_VALIDATION_REPORT.md`](docs/lots/LOT_16_VALIDATION_REPORT.md)
 - [`docs/lots/LOT_17_VENDOR_ADVISORY_APPLICABILITY.md`](docs/lots/LOT_17_VENDOR_ADVISORY_APPLICABILITY.md)
 - [`docs/lots/LOT_17_VALIDATION_REPORT.md`](docs/lots/LOT_17_VALIDATION_REPORT.md)
+- [`docs/lots/LOT_18_CORPORATE_CHANGE_SIGNALS.md`](docs/lots/LOT_18_CORPORATE_CHANGE_SIGNALS.md)
+- [`docs/lots/LOT_18_VALIDATION_REPORT.md`](docs/lots/LOT_18_VALIDATION_REPORT.md)
 - [`SECURITY.md`](SECURITY.md)

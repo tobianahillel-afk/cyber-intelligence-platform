@@ -1,0 +1,88 @@
+version: 1
+
+sources:
+  - source_id: official-corporate-disclosures
+    display_name: Official Corporate Disclosures
+    canonical_url: https://example.invalid/corporate-disclosures/
+    category: corporate_change_intelligence
+    status: candidate
+    freshness_max_age_seconds: 21600
+    commercial_use_cases: &use_cases
+      - corporate_change_timeline
+      - cybersecurity_need_context
+      - organization_research
+    candidate_origin: lot-18
+    monthly_cost_limit: 0
+    metadata: &disabled_metadata
+      executable: false
+      authorization_status: missing
+      full_text_storage: forbidden
+      paywall_bypass: forbidden
+      authentication_bypass: forbidden
+      private_source_access: forbidden
+      automatic_opportunity: forbidden
+      contact_enrichment: forbidden
+      autonomous_outreach: forbidden
+    adapter:
+      adapter_id: official-corporate-disclosures
+      adapter_version: "1"
+      provider_schema_version: corporate-change-disclosure-v1
+      modes: &modes
+        - historical_backfill
+        - incremental_cursor
+        - conditional_refresh
+      canonical_output_types: &outputs
+        - corporate_change_claim_snapshot
+        - corporate_change_event
+      supports_corrections: true
+      supports_tombstones: true
+      supports_retractions: true
+      max_page_size: 100
+      max_window_days: 30
+      cost_per_request: 0
+
+  - source_id: official-regulatory-change-notices
+    display_name: Official Regulatory Change Notices
+    canonical_url: https://example.invalid/regulatory-notices/
+    category: corporate_change_intelligence
+    status: candidate
+    freshness_max_age_seconds: 21600
+    commercial_use_cases: *use_cases
+    candidate_origin: lot-18
+    monthly_cost_limit: 0
+    metadata: *disabled_metadata
+    adapter:
+      adapter_id: official-regulatory-change-notices
+      adapter_version: "1"
+      provider_schema_version: regulatory-change-notice-v1
+      modes: *modes
+      canonical_output_types: *outputs
+      supports_corrections: true
+      supports_tombstones: true
+      supports_retractions: true
+      max_page_size: 100
+      max_window_days: 30
+      cost_per_request: 0
+
+  - source_id: licensed-corporate-news-metadata
+    display_name: Licensed Corporate News Metadata
+    canonical_url: https://example.invalid/licensed-news/
+    category: corporate_change_intelligence
+    status: candidate
+    freshness_max_age_seconds: 10800
+    commercial_use_cases: *use_cases
+    candidate_origin: lot-18
+    monthly_cost_limit: 0
+    metadata: *disabled_metadata
+    adapter:
+      adapter_id: licensed-corporate-news-metadata
+      adapter_version: "1"
+      provider_schema_version: licensed-change-news-metadata-v1
+      modes: *modes
+      canonical_output_types: *outputs
+      supports_corrections: true
+      supports_tombstones: true
+      supports_retractions: true
+      max_page_size: 100
+      max_window_days: 30
+      cost_per_request: 0
