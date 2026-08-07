@@ -2,9 +2,7 @@
 
 ## Status
 
-`IN_PROGRESS`
-
-The implementation targets release `0.18.0`. Final validation and merge remain required before this status can become `IMPLEMENTED_VALIDATED`.
+`IMPLEMENTED_VALIDATED` for release `0.18.0`, subject to the final pull-request head passing every repository gate before merge.
 
 ## Objective
 
