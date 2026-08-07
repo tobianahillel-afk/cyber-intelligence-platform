@@ -277,7 +277,7 @@ A lot is complete only when one final commit passes every applicable backend, fr
 
 **Status:** `IMPLEMENTED_VALIDATED`
 
-**Primary business outcome:** Detect material public changes that may create cyber needs while distinguishing original disclosures, regulation, reporting, commentary, and speculation.
+**Outcome:** Detect material public changes that may create cyber needs while distinguishing original disclosures, regulation, reporting, commentary, and speculation.
 
 **Dependencies:** Lots 08, 10, 12, 14, and 17.
 
