@@ -1,0 +1,90 @@
+version: 1
+
+sources:
+  - source_id: official-vendor-psirt
+    display_name: Official Vendor PSIRT Advisories
+    canonical_url: https://example.invalid/vendor-psirt/
+    category: vulnerability_advisory
+    status: candidate
+    freshness_max_age_seconds: 21600
+    commercial_use_cases: &use_cases
+      - vulnerability_applicability
+      - product_lifecycle_context
+      - remediation_context
+    candidate_origin: lot-17
+    monthly_cost_limit: 0
+    metadata: &disabled_metadata
+      executable: false
+      authorization_status: missing
+      active_probe: forbidden
+      credential_use: forbidden
+      access_control_bypass: forbidden
+      exposure_verification: forbidden
+      organization_compromise_inference: forbidden
+      automatic_opportunity: forbidden
+      autonomous_outreach: forbidden
+    adapter:
+      adapter_id: official-vendor-psirt
+      adapter_version: "1"
+      provider_schema_version: vendor-advisory-metadata-v1
+      modes: &modes
+        - historical_backfill
+        - incremental_cursor
+        - conditional_refresh
+      canonical_output_types: &outputs
+        - vendor_product
+        - vendor_advisory_revision
+        - affected_version_range
+        - vulnerability_applicability_assessment
+      supports_corrections: true
+      supports_tombstones: true
+      supports_retractions: true
+      max_page_size: 100
+      max_window_days: 30
+      cost_per_request: 0
+
+  - source_id: official-linux-security-advisories
+    display_name: Official Linux Security Advisories
+    canonical_url: https://example.invalid/linux-security-advisories/
+    category: vulnerability_advisory
+    status: candidate
+    freshness_max_age_seconds: 21600
+    commercial_use_cases: *use_cases
+    candidate_origin: lot-17
+    monthly_cost_limit: 0
+    metadata: *disabled_metadata
+    adapter:
+      adapter_id: official-linux-security-advisories
+      adapter_version: "1"
+      provider_schema_version: linux-advisory-metadata-v1
+      modes: *modes
+      canonical_output_types: *outputs
+      supports_corrections: true
+      supports_tombstones: true
+      supports_retractions: true
+      max_page_size: 100
+      max_window_days: 30
+      cost_per_request: 0
+
+  - source_id: official-package-security-advisories
+    display_name: Official Package Security Advisories
+    canonical_url: https://example.invalid/package-security-advisories/
+    category: vulnerability_advisory
+    status: candidate
+    freshness_max_age_seconds: 21600
+    commercial_use_cases: *use_cases
+    candidate_origin: lot-17
+    monthly_cost_limit: 0
+    metadata: *disabled_metadata
+    adapter:
+      adapter_id: official-package-security-advisories
+      adapter_version: "1"
+      provider_schema_version: package-advisory-metadata-v1
+      modes: *modes
+      canonical_output_types: *outputs
+      supports_corrections: true
+      supports_tombstones: true
+      supports_retractions: true
+      max_page_size: 100
+      max_window_days: 30
+      cost_per_request: 0

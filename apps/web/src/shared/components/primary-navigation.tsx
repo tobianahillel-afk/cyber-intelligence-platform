@@ -10,6 +10,7 @@ const navigation = [
   { label: "Organizations", href: null },
   { label: "Research", href: "/research" },
   { label: "Vulnerabilities", href: "/vulnerabilities" },
+  { label: "Applicability", href: "/vulnerability-applicability" },
   { label: "Incidents", href: "/incidents" },
   { label: "Threat Intel", href: "/threat-intelligence" },
   { label: "Passive Exposure", href: "/passive-exposure" },

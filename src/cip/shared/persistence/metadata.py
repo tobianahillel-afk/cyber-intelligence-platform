@@ -70,6 +70,13 @@ from cip.modules.threat_telemetry.infrastructure.models import (
     ThreatIndicatorRelationRecord,
     ThreatIndicatorSnapshotRecord,
 )
+from cip.modules.vulnerability_applicability.infrastructure.models import (
+    ApplicabilityAssessmentRecord,
+    ApplicabilityAssessmentSnapshotRecord,
+    VendorAdvisoryRangeRecord,
+    VendorAdvisoryRevisionRecord,
+    VendorProductRecord,
+)
 from cip.modules.vulnerability_knowledge.infrastructure.models import (
     VulnerabilityAffectedRangeRecord,
     VulnerabilityAliasRecord,
@@ -84,6 +91,8 @@ from cip.shared.persistence.base import Base
 
 _IMPORTED_MODELS = (
     AdapterCapabilityRecord,
+    ApplicabilityAssessmentRecord,
+    ApplicabilityAssessmentSnapshotRecord,
     BackfillPartitionRecord,
     CollectionCheckpointRecord,
     CollectionCircuitRecord,
@@ -131,6 +140,9 @@ _IMPORTED_MODELS = (
     ThreatIndicatorRecord,
     ThreatIndicatorRelationRecord,
     ThreatIndicatorSnapshotRecord,
+    VendorAdvisoryRangeRecord,
+    VendorAdvisoryRevisionRecord,
+    VendorProductRecord,
     VulnerabilityAffectedRangeRecord,
     VulnerabilityAliasRecord,
     VulnerabilityCweRecord,

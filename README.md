@@ -23,7 +23,7 @@ Source breadth is useful only when it improves reliable client discovery. Source
 
 ## Current validated baseline
 
-The current validated release is version `0.17.0`, covering lots `00` through `16`.
+The current validated release is version `0.18.0`, covering lots `00` through `17`.
 
 Implemented and validated capabilities include:
 
@@ -41,7 +41,8 @@ Implemented and validated capabilities include:
 - canonical vulnerability knowledge with aliases, immutable source history, CVSS, EPSS, CWE, affected ranges, exploitation dimensions, protected APIs, and the Vulnerabilities workspace;
 - canonical public incident records with immutable claims, explicit allegation/report/confirmation/denial/correction/retraction states, syndication controls, protected APIs, and the Incidents workspace;
 - canonical defensive threat indicators with deterministic normalization, immutable source history, conflicting classifications, sensor scope, campaign/malware/CVE relations, protected APIs, and the Threat Intel workspace;
-- canonical passive assets and technographic observations with immutable revisions, explicit attribution risks, protected APIs, and the Passive Exposure workspace.
+- canonical passive assets and technographic observations with immutable revisions, explicit attribution risks, protected APIs, and the Passive Exposure workspace;
+- canonical vendor advisories, affected-version ranges, organization-specific vulnerability applicability, immutable assessment history, protected APIs, and the Vulnerability Applicability workspace.
 
 Lot `12` remains under an explicit activation boundary: merging the software does not authorize collection against a real organization. The checked-in public-web example is disabled, unauthorized, unscheduled, and non-executable. Search and archive providers remain disconnected until separately approved.
 
@@ -53,7 +54,9 @@ Lot `15` provides a global defensive telemetry layer without organization attrib
 
 Lot `16` provides validated passive exposure and technographic observations without probing assets or verifying exposure. It normalizes public technical assets, preserves immutable provider revisions and supersession history, separates technology mentions from passive observations and observed versions, and represents organization attribution as exact, candidate, review-required, rejected, or unresolved with explicit risks. It performs no authentication, service connection, applicability assessment, opportunity creation, or outreach. All newly modeled passive providers remain unauthorized, unscheduled, and non-executable candidates.
 
-The next planned implementation lot is `17`: official advisories, customer technologies, product versions and vulnerability applicability.
+Lot `17` provides explainable vulnerability applicability by reconciling organization-specific passive technology evidence with official advisory revisions and affected-version ranges. It preserves unknown and review-required outcomes, immutable assessment history, corrections, withdrawals, support lifecycle, fixes, and mitigations. Applicability is not active validation, verified exposure, compromise, an automatic opportunity, or authorization to contact an organization. All newly modeled advisory providers remain unauthorized, unscheduled, and non-executable candidates.
+
+The next planned implementation lot is `18`: public news, regulatory, corporate-disclosure, and material-change signals.
 
 ## Implemented and modeled source portfolio
 
@@ -86,9 +89,15 @@ Selected passive observation schemas and deterministic mappings are implemented 
 - licensed technographic observations;
 - licensed cloud-asset observations.
 
-Every newly modeled passive candidate is `draft`, has missing authorization, has no approved hosts or paths, has no schedule or registered runtime adapter, and is marked `executable: false`. Active probing, authentication, access-control bypass, direct validation, applicability assessment, exposure verification, autonomous opportunities, and outreach are explicitly forbidden.
+Selected advisory schemas and deterministic mappings are implemented for:
 
-OSINT Framework entries remain non-executable catalog candidates. LinkedIn, Discord, BrixHub, browser automation, premium providers, search APIs, archive providers, and every unapproved vulnerability, incident, telemetry, or passive-observation provider remain disabled unless their exact method, fields, purpose, authorization, retention, licence, and security controls are approved.
+- official vendor PSIRT advisories;
+- official Linux distribution security advisories;
+- official package-ecosystem security advisories.
+
+Every newly modeled passive or advisory candidate is `draft`, has missing authorization, has no approved hosts or paths, has no schedule or registered runtime adapter, and is marked `executable: false`. Active probing, authentication, access-control bypass, direct exposure validation, autonomous opportunities, and outreach are explicitly forbidden. Vulnerability applicability operates only on stored evidence from both organization-specific technology observations and advisory affected-range evidence.
+
+OSINT Framework entries remain non-executable catalog candidates. LinkedIn, Discord, BrixHub, browser automation, premium providers, search APIs, archive providers, and every unapproved vulnerability, incident, telemetry, passive-observation, or advisory provider remain disabled unless their exact method, fields, purpose, authorization, retention, licence, and security controls are approved.
 
 ## Evidence flow
 
@@ -169,10 +178,26 @@ provider passive metadata
 
 passive asset or observed version
   != active validation
-  != vulnerability applicability
+  != vulnerability applicability by itself
   != verified exposure
   != proof of compromise
   != current opportunity
+```
+
+Applicability remains a separate evidence-backed decision layer:
+
+```text
+organization-specific passive technology evidence
+  + official advisory affected-product and version-range evidence
+  -> deterministic or review-required applicability assessment
+  -> immutable assessment snapshot and current projection
+
+vulnerability applicability
+  != active validation
+  != verified exposure
+  != proof of compromise
+  != current opportunity
+  != authorization to contact
 ```
 
 Provider payloads remain inside adapter packages. Adapters never write directly to company, score, alert, or opportunity projections.
@@ -185,7 +210,7 @@ Collection is centralized and uses approved public feeds, official APIs, open-da
 
 The product is database-first. Normal page views read stored and indexed evidence; they do not crawl sources on demand. Schedulers refresh sources according to freshness, value, cost, quota, authorization, and change frequency. Stale data remains visible with an explicit freshness state.
 
-The `/research`, `/vulnerabilities`, `/incidents`, `/threat-intelligence`, and `/passive-exposure` workspaces and their APIs search persisted data only. They never launch external collection from an analyst page view.
+The `/research`, `/vulnerabilities`, `/incidents`, `/threat-intelligence`, `/passive-exposure`, and `/vulnerability-applicability` workspaces and their APIs search persisted data only. They never launch external collection from an analyst page view.
 
 ## Architecture
 
@@ -201,9 +226,9 @@ Canonical layers are:
 1. source catalog and authorization;
 2. provider onboarding and adapter capabilities;
 3. collection runs and immutable source records;
-4. evidence, observations, public claims, vulnerability snapshots, incident claims, telemetry snapshots, and passive observation snapshots;
-5. resolved organizations, incidents, vulnerabilities, indicators, passive assets, technologies, providers, roles, and temporal relationships;
-6. service mappings, commercial signals, and need hypotheses;
+4. evidence, observations, public claims, vulnerability snapshots, incident claims, telemetry snapshots, passive observation snapshots, and advisory revisions;
+5. resolved organizations, incidents, vulnerabilities, indicators, passive assets, technologies, products, providers, roles, and temporal relationships;
+6. vulnerability applicability, service mappings, commercial signals, and need hypotheses;
 7. scores, alerts, opportunities, tasks, and analyst decisions.
 
 Dependencies point inward:
@@ -222,8 +247,8 @@ Domain modules cannot depend on FastAPI, SQLAlchemy models, adapters, API packag
 
 [`docs/PROJECT_DELIVERY_PLAN.md`](docs/PROJECT_DELIVERY_PLAN.md) is authoritative.
 
-- lots `00–16`: implemented and validated foundations, procurement, hiring, identity, onboarding, source runtime, contracts, public footprint, vulnerability knowledge, public incident intelligence, defensive telemetry, and passive technographic evidence;
-- lots `17–19`: advisories and applicability, corporate changes, and provider relationships;
+- lots `00–17`: implemented and validated foundations, procurement, hiring, identity, onboarding, source runtime, contracts, public footprint, vulnerability knowledge, public incident intelligence, defensive telemetry, passive technographic evidence, vendor advisories, and vulnerability applicability;
+- lots `18–19`: corporate changes and provider relationships;
 - lots `20–23`: entity resolution, professional context, conditional sources, and governed research orchestration;
 - lots `24–27`: signal fusion, need hypotheses, calibrated scoring, native commercial operations, and Company 360;
 - lots `28–32`: data quality, release security, resilience, optional isolated browser runtime, and controlled production pilot.
@@ -253,7 +278,8 @@ Executable rules include:
 - UTC-aware persistence;
 - roadmap lots remain continuous and status-consistent;
 - threat telemetry cannot import network clients, organization modules, or opportunity modules;
-- passive exposure cannot import network clients, collection adapters, opportunity modules, or vulnerability-applicability modules.
+- passive exposure cannot import network clients, collection adapters, opportunity modules, or vulnerability-applicability modules;
+- vulnerability applicability cannot import network clients, collection adapters, opportunity modules, or contact/outreach modules.
 
 ## Source and data safety
 
@@ -269,11 +295,11 @@ The platform does not:
 - bypass authentication, paywalls, CAPTCHA, MFA, invitations, or access controls;
 - actively scan or exploit prospects;
 - directly connect to suspicious or malicious infrastructure merely to validate an indicator;
-- turn passive metadata into vulnerability applicability or verified exposure;
+- turn passive metadata alone into vulnerability applicability or verified exposure;
 - create fake accounts or rotate accounts after a ban;
 - perform autonomous outreach;
 - infer organization exposure from a global CVE, CVSS, EPSS, PoC, or KEV record alone;
-- infer compromise from an IOC, passive observation, or attacker allegation alone.
+- infer compromise from an IOC, passive observation, applicability assessment, or attacker allegation alone.
 
 LinkedIn collection remains disabled unless official API scopes, a licensed product, or reviewed written authorization covers the exact method and purpose. Discord collection requires an administrator-installed connector, authorized export, or equivalent consented integration. BrixHub remains quarantined.
 
@@ -356,4 +382,6 @@ npm run build
 - [`docs/lots/LOT_15_VALIDATION_REPORT.md`](docs/lots/LOT_15_VALIDATION_REPORT.md)
 - [`docs/lots/LOT_16_PASSIVE_EXPOSURE.md`](docs/lots/LOT_16_PASSIVE_EXPOSURE.md)
 - [`docs/lots/LOT_16_VALIDATION_REPORT.md`](docs/lots/LOT_16_VALIDATION_REPORT.md)
+- [`docs/lots/LOT_17_VENDOR_ADVISORY_APPLICABILITY.md`](docs/lots/LOT_17_VENDOR_ADVISORY_APPLICABILITY.md)
+- [`docs/lots/LOT_17_VALIDATION_REPORT.md`](docs/lots/LOT_17_VALIDATION_REPORT.md)
 - [`SECURITY.md`](SECURITY.md)

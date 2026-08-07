@@ -65,7 +65,7 @@ A lot is complete only when one final commit passes every applicable backend, fr
 | 14 | Live incidents, ransomware claims, and official confirmation | `IMPLEMENTED_VALIDATED` |
 | 15 | Malicious infrastructure, phishing, IOC, and attack telemetry | `IMPLEMENTED_VALIDATED` |
 | 16 | Passive exposure and technographic observations | `IMPLEMENTED_VALIDATED` |
-| 17 | Vendor advisories, product versions, and applicability | `PLANNED_LOCKED` |
+| 17 | Vendor advisories, product versions, and applicability | `IMPLEMENTED_VALIDATED` |
 | 18 | News, regulatory, corporate-disclosure, and change signals | `PLANNED_LOCKED` |
 | 19 | Providers, customers, partners, and supply-chain relationships | `PLANNED_LOCKED` |
 | 20 | Entity resolution and temporal corporate knowledge graph | `PLANNED_LOCKED` |
@@ -243,9 +243,9 @@ A lot is complete only when one final commit passes every applicable backend, fr
 
 ## Lot 17 — Vendor advisories, product versions, and applicability
 
-**Status:** `PLANNED_LOCKED`
+**Status:** `IMPLEMENTED_VALIDATED`
 
-**Primary business outcome:** Reconcile vendor advisories, product naming, version ranges, support status, fixes, mitigations, and applicability so vulnerability knowledge can be compared with organization-specific technology evidence without unsafe automatic conclusions.
+**Outcome:** Reconcile vendor advisories, product naming, version ranges, support status, fixes, mitigations, and applicability so vulnerability knowledge can be compared with organization-specific technology evidence without unsafe automatic conclusions.
 
 **Dependencies:** Lots 13 and 16.
 
@@ -729,8 +729,8 @@ A lot is complete only when one final commit passes every applicable backend, fr
 
 ## Current release boundary
 
-Version `0.17.0` implements and validates lots `00–16`. Lot 16 installs canonical passive assets, immutable provider observation snapshots, explicit current/historical/expired/corrected/retracted/deleted states, organization-link confidence and attribution risks, technology evidence levels, reversible persistence, protected APIs, and the Passive Exposure workspace.
+Version `0.18.0` implements and validates lots `00–17`. Lot 17 installs canonical vendor and product identities, immutable advisory revisions and affected ranges, support lifecycle, fixes and mitigations, explainable organization-specific applicability assessments, immutable assessment history, reversible persistence, protected APIs, and the Vulnerability Applicability workspace.
 
-Its provider schemas remain behind unauthorized, unscheduled, non-executable candidates without registered adapters. The release does not authorize active probes, authentication, service connection, exploitation, credential use, applicability assessment, exposure verification, autonomous opportunity creation, or outreach. Passive metadata cannot independently label a named organization vulnerable, exposed, or compromised.
+Its advisory provider schemas remain behind unauthorized, unscheduled, non-executable candidates without registered adapters. The release does not authorize active probes, authentication, service connection, exploitation, credential use, exposure verification, autonomous opportunity creation, or outreach. Applicability is computed only from already stored organization-specific technology evidence and official advisory affected-range evidence; it is not verified exposure or proof of compromise.
 
-Lot 17 is the next locked implementation lot. It must start from the merged Lot 16 `main` commit and preserve the distinction between observed technology evidence, vendor version ranges, applicability, and verified exposure.
+Lot 18 is the next locked implementation lot. It must start from the merged Lot 17 `main` commit and preserve source-aware distinctions among original disclosures, regulator statements, company statements, reporting, commentary, speculation, corrections, and retractions.

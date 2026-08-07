@@ -13,6 +13,9 @@ from cip.modules.public_footprint.api.routes import router as public_footprint_r
 from cip.modules.source_governance.api.routes import router as source_governance_router
 from cip.modules.source_portfolio.api.routes import router as source_portfolio_router
 from cip.modules.threat_telemetry.api.routes import router as threat_telemetry_router
+from cip.modules.vulnerability_applicability.api.routes import (
+    router as vulnerability_applicability_router,
+)
 from cip.modules.vulnerability_knowledge.api.routes import router as vulnerability_router
 
 
@@ -26,8 +29,8 @@ def create_app() -> FastAPI:
             "organization identity, provider onboarding, source portfolio health, "
             "procurement contract history, public footprint evidence, canonical "
             "vulnerability knowledge, public incident intelligence, defensive "
-            "threat telemetry, passive technographic observations, and "
-            "evidence-backed opportunity discovery."
+            "threat telemetry, passive technographic observations, vendor advisory "
+            "applicability, and evidence-backed opportunity discovery."
         ),
     )
     application.include_router(source_governance_router)
@@ -36,6 +39,7 @@ def create_app() -> FastAPI:
     application.include_router(procurement_history_router)
     application.include_router(public_footprint_router)
     application.include_router(vulnerability_router)
+    application.include_router(vulnerability_applicability_router)
     application.include_router(incident_router)
     application.include_router(threat_telemetry_router)
     application.include_router(passive_exposure_router)
