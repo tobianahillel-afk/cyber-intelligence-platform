@@ -8,13 +8,11 @@ from cip.modules.corporate_changes.domain.models import (
     ChangeClaimSnapshot,
     ChangeClaimType,
     ChangeEventStatus,
-    ChangeEventType,
     OrganizationLinkStatus,
     ReconciledChangeEvent,
 )
 from cip.shared.kernel.time import require_aware_utc
 
-_TYPE_PRIORITY = {event_type: index for index, event_type in enumerate(ChangeEventType)}
 _LINK_PRIORITY = {
     OrganizationLinkStatus.REJECTED: 0,
     OrganizationLinkStatus.UNRESOLVED: 1,
@@ -54,7 +52,16 @@ def _latest_claim_revisions(
         existing = latest.get(key)
         if existing is None or claim.modified_at > existing.modified_at:
             latest[key] = claim
-    return tuple(latest.values())
+    superseded = {
+        (claim.source_id, claim.supersedes_record_key)
+        for claim in latest.values()
+        if claim.supersedes_record_key is not None
+    }
+    return tuple(
+        claim
+        for key, claim in latest.items()
+        if key not in superseded
+    )
 
 
 def _reconcile_event(
@@ -74,10 +81,7 @@ def _reconcile_event(
     preferred = _preferred_claim(claims)
     return ReconciledChangeEvent(
         event_key=claims[0].event_key,
-        event_type=max(
-            (claim.event_type for claim in claims),
-            key=_TYPE_PRIORITY.__getitem__,
-        ),
+        event_type=preferred.event_type,
         title=preferred.title,
         excerpt=preferred.excerpt,
         status=_event_status(
