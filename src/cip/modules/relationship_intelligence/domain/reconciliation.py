@@ -10,7 +10,6 @@ from cip.modules.relationship_intelligence.domain.models import (
     RelationshipEvidenceClass,
     RelationshipEvidenceSnapshot,
     RelationshipOrganizationLinkStatus,
-    RelationshipRole,
     RelationshipStatus,
     role_can_be_contract_backed_incumbent,
 )
@@ -107,6 +106,10 @@ def _reconcile_relationship(
         for snapshot in contract_evidence
         if snapshot.renewal_at is not None and snapshot.renewal_at >= now
     )
+    confidence = max(
+        (snapshot.confidence for snapshot in assertions),
+        default=preferred.confidence,
+    )
     return ReconciledRelationship(
         relationship_key=evidence[0].relationship_key,
         role=preferred.role,
@@ -131,7 +134,7 @@ def _reconcile_relationship(
             key=_EVIDENCE_PRIORITY.__getitem__,
             default=preferred.evidence_class,
         ),
-        confidence=max((snapshot.confidence for snapshot in assertions), default=preferred.confidence),
+        confidence=confidence,
         has_contract_evidence=bool(contract_evidence),
         contract_backed_current=(
             status is RelationshipStatus.ACTIVE
@@ -143,9 +146,8 @@ def _reconcile_relationship(
         has_dispute=bool(disputes),
         has_correction=bool(corrections),
         has_retraction=bool(retractions),
-        historical_only=bool(evidence) and all(
-            snapshot.is_historical_at(now) for snapshot in evidence
-        ),
+        historical_only=bool(evidence)
+        and all(snapshot.is_historical_at(now) for snapshot in evidence),
     )
 
 
@@ -161,7 +163,11 @@ def _relationship_status(
     if role_conflict:
         return RelationshipStatus.UNDER_REVIEW
     current = tuple(snapshot for snapshot in assertions if snapshot.is_current_at(now))
-    active = tuple(snapshot for snapshot in current if snapshot.supports_active_relationship_at(now))
+    active = tuple(
+        snapshot
+        for snapshot in current
+        if snapshot.supports_active_relationship_at(now)
+    )
     if disputes and current:
         return RelationshipStatus.DISPUTED
     if active:
@@ -215,13 +221,14 @@ def _organization_link(
     *,
     source: bool,
 ) -> tuple[UUID | None, RelationshipOrganizationLinkStatus]:
+    active_evidence = tuple(snapshot for snapshot in evidence if snapshot.active)
+    candidates = active_evidence or evidence
     pairs = tuple(
         (
             snapshot.source_organization_id if source else snapshot.target_organization_id,
             snapshot.source_link_status if source else snapshot.target_link_status,
         )
-        for snapshot in evidence
-        if snapshot.active
+        for snapshot in candidates
     )
     exact_ids = {
         organization_id
