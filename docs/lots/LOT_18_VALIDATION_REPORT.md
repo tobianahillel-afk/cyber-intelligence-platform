@@ -106,4 +106,6 @@ Its relationship model must preserve direction, role, time, source, confidence, 
 
 The exact final pull-request head must rerun and pass every backend and frontend gate after all release, README, roadmap, and validation-document changes.
 
+Transient release-finalization workflows are not part of the release boundary. The final validated head must contain the repository's standard CI workflow only, with all temporary Lot 18 synchronization/finalization workflows removed.
+
 The final SHA, CI run, test count, coverage, review-thread count, and merge decision are recorded in pull request #51. Any commit added after that successful final run invalidates the decision and requires the complete validation chain again.
