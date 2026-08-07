@@ -1,0 +1,90 @@
+version: 1
+reviewed_at: 2026-08-07
+
+sources:
+  - id: official-vendor-psirt
+    name: Official vendor PSIRT advisories
+    base_url: https://example.invalid/vendor-psirt/
+    status: draft
+    source_type: api
+    owner: Deployment-specific vendor security provider
+    terms_url: https://example.invalid/terms
+    licence: Review required
+    allowed_data_categories: &allowed
+      - vulnerability_advisory
+      - technology_observation
+    prohibited_data_categories: &prohibited
+      - credential
+      - victim_file
+      - private_communication
+      - private_personal_data
+      - restricted_content
+    rate_limit_per_minute: 10
+    retention_days: 1825
+    attribution_required: true
+    raw_content_storage: false
+    human_review_required: true
+    authorization: &missing_authorization
+      status: missing
+      document_reference: null
+      reviewed_at: null
+      expires_at: null
+      approved_hosts: []
+      approved_path_prefixes: []
+      approved_purposes: []
+      automated_collection_allowed: false
+      raw_storage_allowed: false
+    economics: &candidate_economics
+      commercial_value: high
+      monthly_cost: 0
+      implementation_cost: medium
+      maintenance_cost: medium
+      expected_stability: medium
+    notes: >-
+      Official vendor advisory metadata, affected products, version ranges, fixes,
+      lifecycle, and mitigations only. No active connection, product validation,
+      exploitation, binary retrieval, or prospect exposure verification is authorized.
+
+  - id: official-linux-security-advisories
+    name: Official Linux distribution security advisories
+    base_url: https://example.invalid/linux-security-advisories/
+    status: draft
+    source_type: api
+    owner: Deployment-specific Linux distribution providers
+    terms_url: https://example.invalid/terms
+    licence: Review required
+    allowed_data_categories: *allowed
+    prohibited_data_categories: *prohibited
+    rate_limit_per_minute: 10
+    retention_days: 1825
+    attribution_required: true
+    raw_content_storage: false
+    human_review_required: true
+    authorization: *missing_authorization
+    economics: *candidate_economics
+    notes: >-
+      Distribution advisory and package metadata for explicit backport and package
+      applicability reasoning. Package metadata cannot independently prove that a
+      named organization runs the affected distribution or build.
+
+  - id: official-package-security-advisories
+    name: Official package ecosystem security advisories
+    base_url: https://example.invalid/package-security-advisories/
+    status: draft
+    source_type: api
+    owner: Deployment-specific package ecosystem providers
+    terms_url: https://example.invalid/terms
+    licence: Review required
+    allowed_data_categories: *allowed
+    prohibited_data_categories: *prohibited
+    rate_limit_per_minute: 10
+    retention_days: 1825
+    attribution_required: true
+    raw_content_storage: false
+    human_review_required: true
+    authorization: *missing_authorization
+    economics: *candidate_economics
+    notes: >-
+      Official ecosystem advisory metadata and package version ranges only. Package
+      identity, ecosystem, component, platform, and observed version must all be
+      reconciled before an applicability assessment can be produced.
