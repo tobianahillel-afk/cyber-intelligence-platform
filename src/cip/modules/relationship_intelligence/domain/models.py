@@ -189,9 +189,7 @@ class RelationshipEvidenceSnapshot:
             return False
         if self.is_historical_at(current):
             return False
-        if self.valid_from is not None and self.valid_from > current:
-            return False
-        return True
+        return self.valid_from is None or self.valid_from <= current
 
     def supports_active_relationship_at(self, now: datetime) -> bool:
         return self.evidence_class in _ACTIVE_EVIDENCE_CLASSES and self.is_current_at(now)
@@ -303,8 +301,13 @@ def _validate_chronology(snapshot: RelationshipEvidenceSnapshot) -> None:
 
 
 def _validate_contract_context(snapshot: RelationshipEvidenceSnapshot) -> None:
-    has_contract_context = snapshot.contract_reference is not None or snapshot.renewal_at is not None
-    if has_contract_context and snapshot.evidence_class is not RelationshipEvidenceClass.CONTRACTED:
+    has_contract_context = (
+        snapshot.contract_reference is not None or snapshot.renewal_at is not None
+    )
+    if (
+        has_contract_context
+        and snapshot.evidence_class is not RelationshipEvidenceClass.CONTRACTED
+    ):
         raise ValueError("contract reference and renewal require contracted evidence")
 
 
