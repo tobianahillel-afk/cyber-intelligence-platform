@@ -1,0 +1,111 @@
+version: 1
+
+sources:
+  - source_id: official-relationship-disclosures
+    display_name: Official Relationship Disclosures
+    canonical_url: https://example.invalid/relationship-disclosures/
+    category: relationship_intelligence
+    status: candidate
+    freshness_max_age_seconds: 21600
+    commercial_use_cases: &use_cases
+      - relationship_timeline
+      - incumbent_context
+      - supplier_dependency_context
+      - organization_research
+    candidate_origin: lot-19
+    monthly_cost_limit: 0
+    metadata: &disabled_metadata
+      executable: false
+      authorization_status: missing
+      private_portal_access: forbidden
+      personal_network_access: forbidden
+      automatic_opportunity: forbidden
+      contact_enrichment: forbidden
+      autonomous_outreach: forbidden
+    adapter:
+      adapter_id: official-relationship-disclosures
+      adapter_version: "1"
+      provider_schema_version: public-relationship-metadata-v1
+      modes: &modes
+        - historical_backfill
+        - incremental_cursor
+        - conditional_refresh
+      canonical_output_types: &outputs
+        - relationship_evidence_snapshot
+        - business_relationship
+        - relationship_context
+      supports_corrections: true
+      supports_tombstones: true
+      supports_retractions: true
+      max_page_size: 100
+      max_window_days: 30
+      cost_per_request: 0
+
+  - source_id: public-partner-directory-metadata
+    display_name: Public Partner Directory Metadata
+    canonical_url: https://example.invalid/partner-directory/
+    category: relationship_intelligence
+    status: candidate
+    freshness_max_age_seconds: 86400
+    commercial_use_cases: *use_cases
+    candidate_origin: lot-19
+    monthly_cost_limit: 0
+    metadata: *disabled_metadata
+    adapter:
+      adapter_id: public-partner-directory-metadata
+      adapter_version: "1"
+      provider_schema_version: public-relationship-metadata-v1
+      modes: *modes
+      canonical_output_types: *outputs
+      supports_corrections: true
+      supports_tombstones: true
+      supports_retractions: true
+      max_page_size: 100
+      max_window_days: 30
+      cost_per_request: 0
+
+  - source_id: public-case-study-metadata
+    display_name: Public Case Study Metadata
+    canonical_url: https://example.invalid/case-studies/
+    category: relationship_intelligence
+    status: candidate
+    freshness_max_age_seconds: 86400
+    commercial_use_cases: *use_cases
+    candidate_origin: lot-19
+    monthly_cost_limit: 0
+    metadata: *disabled_metadata
+    adapter:
+      adapter_id: public-case-study-metadata
+      adapter_version: "1"
+      provider_schema_version: public-relationship-metadata-v1
+      modes: *modes
+      canonical_output_types: *outputs
+      supports_corrections: true
+      supports_tombstones: true
+      supports_retractions: true
+      max_page_size: 100
+      max_window_days: 30
+      cost_per_request: 0
+
+  - source_id: public-certificate-relationship-metadata
+    display_name: Public Certificate Relationship Metadata
+    canonical_url: https://example.invalid/certificates/
+    category: relationship_intelligence
+    status: candidate
+    freshness_max_age_seconds: 86400
+    commercial_use_cases: *use_cases
+    candidate_origin: lot-19
+    monthly_cost_limit: 0
+    metadata: *disabled_metadata
+    adapter:
+      adapter_id: public-certificate-relationship-metadata
+      adapter_version: "1"
+      provider_schema_version: public-relationship-metadata-v1
+      modes: *modes
+      canonical_output_types: *outputs
+      supports_corrections: true
+      supports_tombstones: true
+      supports_retractions: true
+      max_page_size: 100
+      max_window_days: 30
+      cost_per_request: 0
