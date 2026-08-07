@@ -48,6 +48,12 @@ def test_settings_have_safe_local_defaults() -> None:
     assert settings.corporate_change_source_portfolio_path == Path(
         "policies/source_portfolio.corporate_changes.yml"
     )
+    assert settings.relationship_source_registry_path == Path(
+        "policies/sources.relationships.yml"
+    )
+    assert settings.relationship_source_portfolio_path == Path(
+        "policies/source_portfolio.relationships.yml"
+    )
     assert settings.greenhouse_board_registry_path == Path(
         "policies/greenhouse_boards.yml"
     )
