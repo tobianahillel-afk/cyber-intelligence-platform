@@ -23,121 +23,139 @@ jobs:
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           ref: ${{ github.head_ref }}
+          fetch-depth: 1
 
-      - name: Synchronize Lot 18 release documentation
+      - name: Finalize Lot 18 release tree
         shell: bash
         run: |
+          set -euo pipefail
+          git fetch origin main --depth=1
           python - <<'PY'
           from pathlib import Path
+          import re
 
-          def replace_once(text: str, old: str, new: str, label: str) -> str:
+          def replace_if_present(text: str, old: str, new: str) -> str:
+              if new in text:
+                  return text
               if old not in text:
-                  raise SystemExit(f"expected {label} text not found: {old[:100]}")
+                  raise SystemExit(f"expected release text not found: {old[:120]}")
               return text.replace(old, new, 1)
 
           readme_path = Path("README.md")
           readme = readme_path.read_text(encoding="utf-8")
-          replacements = [
-              (
-                  "The current validated release is version `0.18.0`, covering lots `00` through `17`.",
-                  "The current validated release is version `0.19.0`, covering lots `00` through `18`.",
-                  "README release",
-              ),
-              (
-                  "- canonical vendor advisories, affected-version ranges, organization-specific vulnerability applicability, immutable assessment history, protected APIs, and the Vulnerability Applicability workspace.\n",
-                  "- canonical vendor advisories, affected-version ranges, organization-specific vulnerability applicability, immutable assessment history, protected APIs, and the Vulnerability Applicability workspace;\n- source-aware corporate and regulatory change intelligence with immutable claim history, syndication-aware corroboration, explicit confirmation/report/speculation/dispute/correction/retraction states, separate service mappings, protected APIs, and the Corporate Changes workspace.\n",
-                  "README capability",
-              ),
-              (
-                  "Lot `17` provides explainable vulnerability applicability by reconciling organization-specific passive technology evidence with official advisory revisions and affected-version ranges. It preserves unknown and review-required outcomes, immutable assessment history, corrections, withdrawals, support lifecycle, fixes, and mitigations. Applicability is not active validation, verified exposure, compromise, an automatic opportunity, or authorization to contact an organization. All newly modeled advisory providers remain unauthorized, unscheduled, and non-executable candidates.\n\nThe next planned implementation lot is `18`: public news, regulatory, corporate-disclosure, and material-change signals.",
-                  "Lot `17` provides explainable vulnerability applicability by reconciling organization-specific passive technology evidence with official advisory revisions and affected-version ranges. It preserves unknown and review-required outcomes, immutable assessment history, corrections, withdrawals, support lifecycle, fixes, and mitigations. Applicability is not active validation, verified exposure, compromise, an automatic opportunity, or authorization to contact an organization. All newly modeled advisory providers remain unauthorized, unscheduled, and non-executable candidates.\n\nLot `18` provides source-aware public corporate and regulatory change intelligence. It separates official filings, regulator notices, company disclosures, media reporting, analyst commentary, speculation, disputes, corrections, retractions, syndication, and staleness; preserves immutable revisions and distinct event/publication/update times; bounds stored excerpts; and keeps service-family mappings separate from raw evidence. A repeated report is not independent corroboration, reporting is not official confirmation, and a raw change event is not a need, opportunity, or authorization to contact. All newly modeled change-intelligence providers remain unauthorized, unscheduled, and non-executable candidates.\n\nThe next planned implementation lot is `19`: temporal provider, customer, partner, supplier, integrator, auditor, insurer, MSSP, and other relationship intelligence.",
-                  "README lot18 boundary",
-              ),
-              (
-                  "Selected advisory schemas and deterministic mappings are implemented for:\n\n- official vendor PSIRT advisories;\n- official Linux distribution security advisories;\n- official package-ecosystem security advisories.\n\nEvery newly modeled passive or advisory candidate is `draft`, has missing authorization, has no approved hosts or paths, has no schedule or registered runtime adapter, and is marked `executable: false`.",
-                  "Selected advisory schemas and deterministic mappings are implemented for:\n\n- official vendor PSIRT advisories;\n- official Linux distribution security advisories;\n- official package-ecosystem security advisories.\n\nSelected corporate-change schemas and deterministic mappings are implemented for:\n\n- official corporate disclosures;\n- official regulatory change notices;\n- licensed corporate-news metadata with bounded excerpts and explicit syndication identity.\n\nEvery newly modeled passive, advisory, or corporate-change candidate is `draft`, has missing authorization, has no approved hosts or paths, has no schedule or registered runtime adapter, and is marked `executable: false`.",
-                  "README provider portfolio",
-              ),
-              (
-                  "Applicability remains a separate evidence-backed decision layer:\n\n```text\norganization-specific passive technology evidence\n  + official advisory affected-product and version-range evidence\n  -> deterministic or review-required applicability assessment\n  -> immutable assessment snapshot and current projection\n\nvulnerability applicability\n  != active validation\n  != verified exposure\n  != proof of compromise\n  != current opportunity\n  != authorization to contact\n```\n\nProvider payloads remain inside adapter packages.",
-                  "Applicability remains a separate evidence-backed decision layer:\n\n```text\norganization-specific passive technology evidence\n  + official advisory affected-product and version-range evidence\n  -> deterministic or review-required applicability assessment\n  -> immutable assessment snapshot and current projection\n\nvulnerability applicability\n  != active validation\n  != verified exposure\n  != proof of compromise\n  != current opportunity\n  != authorization to contact\n```\n\nCorporate-change intelligence remains a separate source-aware evidence layer:\n\n```text\npublic or licensed change metadata\n  -> immutable source/article claim revision\n  -> filing / regulator / company / report / speculation / dispute / correction / retraction\n  -> syndication-aware reconciliation and organization-link review\n  -> canonical material-change event\n\nmaterial change event\n  != independent corroboration merely because it was republished\n  != official confirmation unless an official source confirms it\n  != service mapping\n  != need hypothesis or opportunity\n  != authorization to contact\n```\n\nProvider payloads remain inside adapter packages.",
-                  "README change evidence flow",
-              ),
-              (
-                  "The `/research`, `/vulnerabilities`, `/incidents`, `/threat-intelligence`, `/passive-exposure`, and `/vulnerability-applicability` workspaces and their APIs search persisted data only.",
-                  "The `/research`, `/vulnerabilities`, `/incidents`, `/threat-intelligence`, `/passive-exposure`, `/vulnerability-applicability`, and `/corporate-changes` workspaces and their APIs search persisted data only.",
-                  "README workspaces",
-              ),
-              (
-                  "4. evidence, observations, public claims, vulnerability snapshots, incident claims, telemetry snapshots, passive observation snapshots, and advisory revisions;\n5. resolved organizations, incidents, vulnerabilities, indicators, passive assets, technologies, products, providers, roles, and temporal relationships;",
-                  "4. evidence, observations, public claims, vulnerability snapshots, incident claims, telemetry snapshots, passive observation snapshots, advisory revisions, and corporate-change claim revisions;\n5. resolved organizations, incidents, vulnerabilities, indicators, passive assets, technologies, products, providers, material changes, roles, and temporal relationships;",
-                  "README architecture layers",
-              ),
-              (
-                  "- lots `00–17`: implemented and validated foundations, procurement, hiring, identity, onboarding, source runtime, contracts, public footprint, vulnerability knowledge, public incident intelligence, defensive telemetry, passive technographic evidence, vendor advisories, and vulnerability applicability;\n- lots `18–19`: corporate changes and provider relationships;",
-                  "- lots `00–18`: implemented and validated foundations, procurement, hiring, identity, onboarding, source runtime, contracts, public footprint, vulnerability knowledge, public incident intelligence, defensive telemetry, passive technographic evidence, vendor advisories, vulnerability applicability, and corporate/regulatory change intelligence;\n- lot `19`: provider, customer, partner, supplier, integrator, auditor, insurer, MSSP, and other temporal relationship intelligence;",
-                  "README roadmap",
-              ),
-              (
-                  "- vulnerability applicability cannot import network clients, collection adapters, opportunity modules, or contact/outreach modules.\n",
-                  "- vulnerability applicability cannot import network clients, collection adapters, opportunity modules, or contact/outreach modules;\n- corporate change intelligence cannot import network clients, collection adapters, opportunity modules, contacts, or outreach modules.\n",
-                  "README executable rules",
-              ),
-              (
-                  "- infer compromise from an IOC, passive observation, applicability assessment, or attacker allegation alone.\n",
-                  "- infer compromise from an IOC, passive observation, applicability assessment, or attacker allegation alone;\n- treat syndicated copies of one report as independent corroboration;\n- turn a public/media material-change report directly into an official confirmation, service need, opportunity, contact target, or outreach action.\n",
-                  "README safety",
-              ),
-              (
-                  "- [`docs/lots/LOT_17_VALIDATION_REPORT.md`](docs/lots/LOT_17_VALIDATION_REPORT.md)\n- [`SECURITY.md`](SECURITY.md)",
-                  "- [`docs/lots/LOT_17_VALIDATION_REPORT.md`](docs/lots/LOT_17_VALIDATION_REPORT.md)\n- [`docs/lots/LOT_18_CORPORATE_CHANGE_SIGNALS.md`](docs/lots/LOT_18_CORPORATE_CHANGE_SIGNALS.md)\n- [`docs/lots/LOT_18_VALIDATION_REPORT.md`](docs/lots/LOT_18_VALIDATION_REPORT.md)\n- [`SECURITY.md`](SECURITY.md)",
-                  "README documents",
-              ),
-          ]
-          for old, new, label in replacements:
-              readme = replace_once(readme, old, new, label)
+          readme = replace_if_present(
+              readme,
+              "The current validated release is version `0.18.0`, covering lots `00` through `17`.",
+              "The current validated release is version `0.19.0`, covering lots `00` through `18`.",
+          )
+          readme = replace_if_present(
+              readme,
+              "- canonical vendor advisories, affected-version ranges, organization-specific vulnerability applicability, immutable assessment history, protected APIs, and the Vulnerability Applicability workspace.\n",
+              "- canonical vendor advisories, affected-version ranges, organization-specific vulnerability applicability, immutable assessment history, protected APIs, and the Vulnerability Applicability workspace;\n- source-aware corporate and regulatory change intelligence with immutable claim history, syndication-aware corroboration, explicit confirmation/report/speculation/dispute/correction/retraction states, separate service mappings, protected APIs, and the Corporate Changes workspace.\n",
+          )
+          readme = replace_if_present(
+              readme,
+              "Lot `17` provides explainable vulnerability applicability by reconciling organization-specific passive technology evidence with official advisory revisions and affected-version ranges. It preserves unknown and review-required outcomes, immutable assessment history, corrections, withdrawals, support lifecycle, fixes, and mitigations. Applicability is not active validation, verified exposure, compromise, an automatic opportunity, or authorization to contact an organization. All newly modeled advisory providers remain unauthorized, unscheduled, and non-executable candidates.\n\nThe next planned implementation lot is `18`: public news, regulatory, corporate-disclosure, and material-change signals.",
+              "Lot `17` provides explainable vulnerability applicability by reconciling organization-specific passive technology evidence with official advisory revisions and affected-version ranges. It preserves unknown and review-required outcomes, immutable assessment history, corrections, withdrawals, support lifecycle, fixes, and mitigations. Applicability is not active validation, verified exposure, compromise, an automatic opportunity, or authorization to contact an organization. All newly modeled advisory providers remain unauthorized, unscheduled, and non-executable candidates.\n\nLot `18` provides source-aware public corporate and regulatory change intelligence. It separates official filings, regulator notices, company disclosures, media reporting, analyst commentary, speculation, disputes, corrections, retractions, syndication, and staleness; preserves immutable revisions and distinct event/publication/update times; bounds stored excerpts; and keeps service-family mappings separate from raw evidence. A repeated report is not independent corroboration, reporting is not official confirmation, and a raw change event is not a need, opportunity, or authorization to contact. All newly modeled change-intelligence providers remain unauthorized, unscheduled, and non-executable candidates.\n\nThe next planned implementation lot is `19`: temporal provider, customer, partner, supplier, integrator, auditor, insurer, MSSP, and other relationship intelligence.",
+          )
+          readme = replace_if_present(
+              readme,
+              "Selected advisory schemas and deterministic mappings are implemented for:\n\n- official vendor PSIRT advisories;\n- official Linux distribution security advisories;\n- official package-ecosystem security advisories.\n\nEvery newly modeled passive or advisory candidate is `draft`, has missing authorization, has no approved hosts or paths, has no schedule or registered runtime adapter, and is marked `executable: false`.",
+              "Selected advisory schemas and deterministic mappings are implemented for:\n\n- official vendor PSIRT advisories;\n- official Linux distribution security advisories;\n- official package-ecosystem security advisories.\n\nSelected corporate-change schemas and deterministic mappings are implemented for:\n\n- official corporate disclosures;\n- official regulatory change notices;\n- licensed corporate-news metadata with bounded excerpts and explicit syndication identity.\n\nEvery newly modeled passive, advisory, or corporate-change candidate is `draft`, has missing authorization, has no approved hosts or paths, has no schedule or registered runtime adapter, and is marked `executable: false`.",
+          )
+          readme = replace_if_present(
+              readme,
+              "Applicability remains a separate evidence-backed decision layer:\n\n```text\norganization-specific passive technology evidence\n  + official advisory affected-product and version-range evidence\n  -> deterministic or review-required applicability assessment\n  -> immutable assessment snapshot and current projection\n\nvulnerability applicability\n  != active validation\n  != verified exposure\n  != proof of compromise\n  != current opportunity\n  != authorization to contact\n```\n\nProvider payloads remain inside adapter packages.",
+              "Applicability remains a separate evidence-backed decision layer:\n\n```text\norganization-specific passive technology evidence\n  + official advisory affected-product and version-range evidence\n  -> deterministic or review-required applicability assessment\n  -> immutable assessment snapshot and current projection\n\nvulnerability applicability\n  != active validation\n  != verified exposure\n  != proof of compromise\n  != current opportunity\n  != authorization to contact\n```\n\nCorporate-change intelligence remains a separate source-aware evidence layer:\n\n```text\npublic or licensed change metadata\n  -> immutable source/article claim revision\n  -> filing / regulator / company / report / speculation / dispute / correction / retraction\n  -> syndication-aware reconciliation and organization-link review\n  -> canonical material-change event\n\nmaterial change event\n  != independent corroboration merely because it was republished\n  != official confirmation unless an official source confirms it\n  != service mapping\n  != need hypothesis or opportunity\n  != authorization to contact\n```\n\nProvider payloads remain inside adapter packages.",
+          )
+          readme = replace_if_present(
+              readme,
+              "The `/research`, `/vulnerabilities`, `/incidents`, `/threat-intelligence`, `/passive-exposure`, and `/vulnerability-applicability` workspaces and their APIs search persisted data only.",
+              "The `/research`, `/vulnerabilities`, `/incidents`, `/threat-intelligence`, `/passive-exposure`, `/vulnerability-applicability`, and `/corporate-changes` workspaces and their APIs search persisted data only.",
+          )
+          readme = replace_if_present(
+              readme,
+              "4. evidence, observations, public claims, vulnerability snapshots, incident claims, telemetry snapshots, passive observation snapshots, and advisory revisions;\n5. resolved organizations, incidents, vulnerabilities, indicators, passive assets, technologies, products, providers, roles, and temporal relationships;",
+              "4. evidence, observations, public claims, vulnerability snapshots, incident claims, telemetry snapshots, passive observation snapshots, advisory revisions, and corporate-change claim revisions;\n5. resolved organizations, incidents, vulnerabilities, indicators, passive assets, technologies, products, providers, material changes, roles, and temporal relationships;",
+          )
+          readme = replace_if_present(
+              readme,
+              "- lots `00–17`: implemented and validated foundations, procurement, hiring, identity, onboarding, source runtime, contracts, public footprint, vulnerability knowledge, public incident intelligence, defensive telemetry, passive technographic evidence, vendor advisories, and vulnerability applicability;\n- lots `18–19`: corporate changes and provider relationships;",
+              "- lots `00–18`: implemented and validated foundations, procurement, hiring, identity, onboarding, source runtime, contracts, public footprint, vulnerability knowledge, public incident intelligence, defensive telemetry, passive technographic evidence, vendor advisories, vulnerability applicability, and corporate/regulatory change intelligence;\n- lot `19`: provider, customer, partner, supplier, integrator, auditor, insurer, MSSP, and other temporal relationship intelligence;",
+          )
+          readme = replace_if_present(
+              readme,
+              "- vulnerability applicability cannot import network clients, collection adapters, opportunity modules, or contact/outreach modules.\n",
+              "- vulnerability applicability cannot import network clients, collection adapters, opportunity modules, or contact/outreach modules;\n- corporate change intelligence cannot import network clients, collection adapters, opportunity modules, contacts, or outreach modules.\n",
+          )
+          readme = replace_if_present(
+              readme,
+              "- infer compromise from an IOC, passive observation, applicability assessment, or attacker allegation alone.\n",
+              "- infer compromise from an IOC, passive observation, applicability assessment, or attacker allegation alone;\n- treat syndicated copies of one report as independent corroboration;\n- turn a public/media material-change report directly into an official confirmation, service need, opportunity, contact target, or outreach action.\n",
+          )
+          readme = replace_if_present(
+              readme,
+              "- [`docs/lots/LOT_17_VALIDATION_REPORT.md`](docs/lots/LOT_17_VALIDATION_REPORT.md)\n- [`SECURITY.md`](SECURITY.md)",
+              "- [`docs/lots/LOT_17_VALIDATION_REPORT.md`](docs/lots/LOT_17_VALIDATION_REPORT.md)\n- [`docs/lots/LOT_18_CORPORATE_CHANGE_SIGNALS.md`](docs/lots/LOT_18_CORPORATE_CHANGE_SIGNALS.md)\n- [`docs/lots/LOT_18_VALIDATION_REPORT.md`](docs/lots/LOT_18_VALIDATION_REPORT.md)\n- [`SECURITY.md`](SECURITY.md)",
+          )
           readme_path.write_text(readme, encoding="utf-8")
 
           roadmap_path = Path("docs/PROJECT_DELIVERY_PLAN.md")
           roadmap = roadmap_path.read_text(encoding="utf-8")
-          roadmap_replacements = [
-              (
-                  "| 18 | News, regulator, corporate disclosure, and change signals | `PLANNED_LOCKED` |",
-                  "| 18 | News, regulator, corporate disclosure, and change signals | `IMPLEMENTED_VALIDATED` |",
-                  "roadmap table",
-              ),
-              (
-                  "## Lot 18 — News, regulator, corporate disclosure, and change signals\n\n**Status:** `PLANNED_LOCKED`\n\n**Primary business outcome:** Detect material public events such as acquisitions, leadership changes, funding, restructuring, geographic expansion, cloud or digital programs, regulatory actions, breaches, audits, certifications, and security programs.",
-                  "## Lot 18 — News, regulator, corporate disclosure, and change signals\n\n**Status:** `IMPLEMENTED_VALIDATED`\n\n**Outcome:** Detect material public events such as acquisitions, leadership changes, funding, restructuring, geographic expansion, cloud or digital programs, regulatory actions, breaches, audits, certifications, and security programs.",
-                  "roadmap lot18 block",
-              ),
-              (
-                  "Version `0.18.0` implements and validates lots `00–17`. Lot 17 installs canonical vendor and product identities, immutable advisory revisions and affected ranges, support lifecycle, fixes and mitigations, explainable organization-specific applicability assessments, immutable assessment history, reversible persistence, protected APIs, and the Vulnerability Applicability workspace.",
-                  "Version `0.19.0` implements and validates lots `00–18`. Lot 18 installs canonical material-change events, immutable source/article claim revisions, official/report/speculation/dispute/correction/retraction semantics, syndication-aware corroboration, organization-link review, bounded excerpts, separate service-family mappings, reversible persistence, protected APIs, and the Corporate Changes workspace.",
-                  "roadmap release boundary",
-              ),
-              (
-                  "Its advisory provider schemas remain behind unauthorized, unscheduled, non-executable candidates without registered adapters. The release does not authorize active probes, authentication, service connection, exploitation, credential use, exposure verification, autonomous opportunity creation, or outreach. Applicability is computed only from already stored organization-specific technology evidence and official advisory affected-range evidence; it is not verified exposure or proof of compromise.",
-                  "Its corporate-change provider schemas remain behind unauthorized, unscheduled, non-executable candidates without registered adapters. The release does not authorize autonomous browsing, paywall or authentication bypass, private-source access, full-article copying, contact enrichment, autonomous opportunity creation, or outreach. Syndicated copies remain one corroboration lineage, and reporting or speculation does not become official confirmation unless an official source confirms it.",
-                  "roadmap safety boundary",
-              ),
-              (
-                  "Lot 18 is the next locked implementation lot. It must start from the merged Lot 17 `main` commit and preserve source-aware distinctions among original disclosures, regulator statements, company statements, reporting, commentary, speculation, corrections, and retractions.",
-                  "Lot 19 is the next locked implementation lot. It must start from the merged Lot 18 `main` commit and preserve direction, role, chronology, source, confidence, and review state across provider, customer, partner, supplier, integrator, auditor, insurer, MSSP, and other relationships. Marketing claims must not silently become contract evidence, and historical providers must not silently become current incumbents.",
-                  "roadmap next lot",
-              ),
-          ]
-          for old, new, label in roadmap_replacements:
-              roadmap = replace_once(roadmap, old, new, label)
+          roadmap, count = re.subn(
+              r"(?m)^(\| 18 \|.*?\| )`PLANNED_LOCKED`( \|)$",
+              r"\1`IMPLEMENTED_VALIDATED`\2",
+              roadmap,
+              count=1,
+          )
+          if count == 0 and not re.search(r"(?m)^\| 18 \|.*?\| `IMPLEMENTED_VALIDATED` \|$", roadmap):
+              raise SystemExit("Lot 18 roadmap table row not found")
+          match = re.search(r"(?ms)(^## Lot 18\b.*?)(?=^## Lot 19\b)", roadmap)
+          if not match:
+              raise SystemExit("Lot 18 roadmap section not found")
+          section = match.group(1)
+          if "**Status:** `IMPLEMENTED_VALIDATED`" not in section:
+              if "**Status:** `PLANNED_LOCKED`" not in section:
+                  raise SystemExit("Lot 18 roadmap status not found")
+              section = section.replace(
+                  "**Status:** `PLANNED_LOCKED`",
+                  "**Status:** `IMPLEMENTED_VALIDATED`",
+                  1,
+              )
+              roadmap = roadmap[: match.start(1)] + section + roadmap[match.end(1) :]
+          boundary = """## Current release boundary
+
+Version `0.19.0` implements and validates lots `00–18`. Lot 18 installs canonical material-change events, immutable source/article claim revisions, explicit confirmation/report/speculation/dispute/correction/retraction semantics, syndication-aware corroboration, organization-link review, bounded excerpts, separate service-family mappings, reversible persistence, protected APIs, and the Corporate Changes workspace.
+
+Its corporate-change provider schemas remain behind unauthorized, unscheduled, non-executable candidates without registered adapters. The release does not authorize autonomous browsing, paywall or authentication bypass, private-source access, full-article copying, contact enrichment, autonomous opportunity creation, or outreach. Syndicated copies remain one corroboration lineage, and reporting or speculation does not become official confirmation unless an official source confirms it.
+
+Lot 19 is the next locked implementation lot. It must start from the merged Lot 18 `main` commit and preserve direction, role, chronology, source, confidence, and review state across provider, customer, partner, supplier, integrator, auditor, insurer, MSSP, and other relationships. Marketing claims must not silently become contract evidence, and historical providers must not silently become current incumbents.
+"""
+          roadmap, count = re.subn(
+              r"(?ms)^## Current release boundary\n.*\Z",
+              boundary,
+              roadmap,
+              count=1,
+          )
+          if count != 1:
+              raise SystemExit("Current release boundary not found")
           roadmap_path.write_text(roadmap, encoding="utf-8")
           PY
+
+          git show origin/main:.github/workflows/ci.yml > .github/workflows/ci.yml
+          rm -f \
+            .github/workflows/lot18-finalize-release.yml \
+            .github/workflows/lot18-release-orchestrator.yml \
+            .github/workflows/lot18-release-sync.yml
+
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add README.md docs/PROJECT_DELIVERY_PLAN.md
+          git add README.md docs/PROJECT_DELIVERY_PLAN.md .github/workflows
           if git diff --cached --quiet; then
+            echo "Lot 18 release tree already finalized"
             exit 0
           fi
-          git commit -m "Lot 18: synchronize release documentation"
+          git commit -m "Lot 18: finalize release documentation and CI"
           git push origin HEAD:${{ github.head_ref }}
 
   backend-quality:
