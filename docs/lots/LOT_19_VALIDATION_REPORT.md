@@ -112,6 +112,10 @@ Lot 20 must start from the exact merged Lot 19 commit on `main`.
 
 Entity-resolution and temporal graph work must preserve the evidence class, direction, time validity, source identity, confidence, review decisions, and reversible merge/split history created by earlier lots. Lot 20 must not upgrade claimed or inferred relationship evidence into verified current facts merely because those edges become part of a graph.
 
+## Release synchronization
+
+README and the authoritative delivery plan are synchronized by a temporary CI job only to avoid unsafe whole-file hand edits. That job is removed and the standard `main` CI workflow is restored before the final validation SHA is accepted.
+
 ## Final-head rule
 
 The exact final pull-request head must rerun and pass every backend and frontend gate after version `0.20.0`, README, authoritative roadmap, and validation-document changes.
