@@ -1,16 +1,16 @@
 # Lot 17 — Validation report
 
-## Decision status
+## Decision
 
-Final release decision: **PENDING FINAL CI**.
+- Technical implementation: **PASS**, subject to the final-head CI rule.
+- Security and source-governance boundary: **PASS**.
+- Production provider activation: **NOT AUTHORIZED**.
+- Active probing, direct validation and exposure verification: **FORBIDDEN**.
+- Automatic opportunity creation, contact enrichment or outreach: **NOT IMPLEMENTED**.
+- Target release: `0.18.0`.
+- Authoritative pull request: #49.
 
-Target release: `0.18.0`.
-
-Authoritative pull request: #49.
-
-This report records the validation boundary for vendor advisories and organization-specific vulnerability applicability. It must be updated with the exact final pull-request head, GitHub Actions run identifier, test count, coverage, review state, and merge decision before release.
-
-## Scope under validation
+## Delivered scope
 
 Lot 17 delivers:
 
@@ -23,6 +23,7 @@ Lot 17 delivers:
 - unknown, not-applicable, potentially-applicable, applicable, review-required, withdrawn, and superseded assessment states;
 - evidence-backed assessments referencing organization, passive asset, technology snapshot, vulnerability, and advisory revision;
 - immutable assessment history and idempotent current projections;
+- correction and withdrawal propagation without destroying earlier evidence;
 - reversible migration `20260807_0017`;
 - protected list and detail APIs;
 - the `/vulnerability-applicability` analyst workspace;
@@ -30,7 +31,7 @@ Lot 17 delivers:
 
 ## Mandatory safety boundary
 
-The release must preserve all of the following:
+The release preserves all of the following:
 
 - no active probe, scan, direct asset connection, or service validation;
 - no authentication, credential use, or authenticated enumeration;
@@ -50,40 +51,36 @@ technology mention
 != current commercial opportunity
 ```
 
-## Required final evidence
+## Non-regression corrections made during final validation
 
-The exact final pull-request head must pass:
+- modernized SQLAlchemy row type aliases to the Python 3.12 syntax required by Ruff;
+- aligned the SQLAlchemy result tuple with the non-null columns selected by the query;
+- shortened the generated PostgreSQL index name that exceeded the 63-byte identifier limit;
+- replaced reserved `.test` integration hostnames with syntactically valid public-domain fixtures without weakening passive-exposure validation;
+- added the Lot 17 tables to the authoritative persistence metadata contract;
+- normalized timestamps returned by persistence backends before comparing them with aware UTC domain timestamps;
+- kept all domain timestamps strictly timezone-aware;
+- added an integration scenario proving that an advisory correction advances the same current assessment projection while preserving immutable assessment history;
+- did not disable or weaken a lint rule, type rule, architecture rule, migration check, security audit, domain invariant, or coverage threshold.
 
-1. dependency consistency;
-2. Python dependency audit;
-3. Ruff;
-4. strict Mypy;
-5. architecture, complexity, dependency, safety, release, and roadmap contracts;
-6. PostgreSQL `upgrade -> downgrade -> upgrade` through migration `20260807_0017`;
-7. complete backend tests with aggregate branch-aware coverage at or above 90 percent;
-8. frontend dependency audit;
-9. TypeScript type checking;
-10. Next.js production build;
-11. zero unresolved review threads.
+## Successful release-candidate evidence
 
-## Evidence table
+PR head `6b85ffb2fbbc57292512212faa08f47c1d829c4c` passed GitHub Actions CI run `#872` (`31188055437`):
 
-| Gate | Result |
-| --- | --- |
-| Final pull-request head | Pending |
-| GitHub Actions run | Pending |
-| Dependency consistency | Pending |
-| Python dependency audit | Pending |
-| Ruff | Pending |
-| Mypy strict | Pending |
-| Architecture and release contracts | Pending |
-| Reversible PostgreSQL migrations | Pending |
-| Backend tests | Pending |
-| Aggregate coverage | Pending |
-| Frontend dependency audit | Pending |
-| TypeScript typecheck | Pending |
-| Next.js production build | Pending |
-| Unresolved review threads | Pending |
+- dependency consistency: pass;
+- Python dependency audit: no known vulnerabilities;
+- Ruff: pass;
+- Mypy strict: pass across **373 source files**;
+- architecture, complexity, dependency, safety, release and roadmap contracts: **21 passed**;
+- PostgreSQL `upgrade -> downgrade -> upgrade`: pass through migration `20260807_0017`;
+- backend suite: **791 passed**, 0 failed;
+- aggregate branch-aware coverage: **91.05%**, above the 90% gate;
+- frontend dependency audit: pass;
+- TypeScript typecheck: pass;
+- Next.js production build: pass;
+- backend diagnostic artifact: `backend-test-diagnostics`, artifact ID `8997664457`.
+
+This run proves the functional release candidate. It is not by itself final merge authorization because this validation report and release-status documentation are committed afterward.
 
 ## Provider activation decision
 
@@ -91,6 +88,14 @@ Production activation of the three advisory candidate families is **not authoriz
 
 The checked-in entries remain metadata-only candidates with missing authorization, no approved hosts or paths, no registered runtime adapters, no schedules, and `executable: false`.
 
-## Merge rule
+## Lot 18 handoff boundary
 
-PR #49 must not merge until this report is updated from a successful GitHub Actions run on the exact final head. Any later commit invalidates earlier evidence and requires the complete validation chain to run again.
+Lot 18 must start from the exact merged Lot 17 commit on `main`. It may add public news, regulatory, company-disclosure and change-event evidence, while preserving the distinctions among original disclosures, regulator statements, company statements, reporting, commentary and speculation.
+
+Lot 18 must not turn a reported or speculative corporate change into a confirmed fact without source-aware evidence, and service-family mappings must remain separate from raw change events.
+
+## Final-head rule
+
+The exact final pull-request head must rerun and pass every backend and frontend gate after all release-documentation changes. The final SHA, CI run, test count, coverage, review-thread count and merge decision are recorded in pull request #49.
+
+No commit may be added after that successful final run without invalidating the decision and requiring the complete validation chain again.
