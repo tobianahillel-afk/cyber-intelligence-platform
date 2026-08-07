@@ -82,6 +82,7 @@ def test_database_metadata_contains_foundation_tables() -> None:
 
     assert set(metadata.tables) == {
         "adapter_capabilities",
+        "applicability_assessment_snapshots",
         "backfill_partitions",
         "collection_checkpoints",
         "collection_circuits",
@@ -129,9 +130,13 @@ def test_database_metadata_contains_foundation_tables() -> None:
         "threat_indicator_relations",
         "threat_indicator_snapshots",
         "threat_indicators",
+        "vendor_advisory_ranges",
+        "vendor_advisory_revisions",
+        "vendor_products",
         "vulnerabilities",
         "vulnerability_affected_ranges",
         "vulnerability_aliases",
+        "vulnerability_applicability_assessments",
         "vulnerability_cwes",
         "vulnerability_exploitation",
         "vulnerability_references",
@@ -172,6 +177,9 @@ def test_metadata_creates_on_sqlite() -> None:
     assert get_metadata().tables["passive_assets"].foreign_keys
     assert get_metadata().tables["passive_observation_snapshots"].foreign_keys
     assert get_metadata().tables["passive_technologies"].foreign_keys
+    assert get_metadata().tables["vendor_advisory_ranges"].foreign_keys
+    assert get_metadata().tables["applicability_assessment_snapshots"].foreign_keys
+    assert get_metadata().tables["vulnerability_applicability_assessments"].foreign_keys
 
 
 def test_database_url_is_required() -> None:
