@@ -1,8 +1,6 @@
 import { loadChangePage } from "@/features/corporate-changes/api";
-import {
-  ChangeFiltersForm,
-  parseChangeFilters,
-} from "@/features/corporate-changes/change-filters";
+import { parseChangeFilters } from "@/features/corporate-changes/change-filter-state";
+import { ChangeFiltersForm } from "@/features/corporate-changes/change-filters";
 import { ChangeTable } from "@/features/corporate-changes/change-table";
 
 interface CorporateChangesPageProps {
