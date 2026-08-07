@@ -1,8 +1,7 @@
 from __future__ import annotations
 
-from dataclasses import replace
 from datetime import UTC, date, datetime
-from uuid import UUID, uuid4
+from uuid import uuid4
 
 from cip.modules.procurement_history.domain.models import (
     ContractStatus,
@@ -160,9 +159,5 @@ def _publication() -> ProcurementPublication:
         title="Managed detection and response services",
         content_hash_sha256="a" * 64,
         collected_at=NOW,
-        published_at=replace_time(NOW),
+        published_at=NOW.replace(hour=18),
     )
-
-
-def replace_time(value: datetime) -> datetime:
-    return value.replace(hour=18)
