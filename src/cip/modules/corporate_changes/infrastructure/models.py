@@ -3,7 +3,17 @@ from __future__ import annotations
 from datetime import datetime
 from uuid import UUID
 
-from sqlalchemy import Boolean, DateTime, Float, ForeignKey, Index, Integer, String, Text, UniqueConstraint
+from sqlalchemy import (
+    Boolean,
+    DateTime,
+    Float,
+    ForeignKey,
+    Index,
+    Integer,
+    String,
+    Text,
+    UniqueConstraint,
+)
 from sqlalchemy.orm import Mapped, mapped_column
 
 from cip.shared.persistence.base import Base
@@ -22,9 +32,15 @@ class CorporateChangeEventRecord(Base):
         ForeignKey("organizations.id", ondelete="SET NULL"), nullable=True, index=True
     )
     organization_link_status: Mapped[str] = mapped_column(String(80), index=True)
-    event_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True, index=True)
-    first_published_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)
-    last_updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)
+    event_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True, index=True
+    )
+    first_published_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), index=True
+    )
+    last_updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), index=True
+    )
     claim_count: Mapped[int] = mapped_column(Integer)
     independent_source_count: Mapped[int] = mapped_column(Integer)
     officially_confirmed: Mapped[bool] = mapped_column(Boolean, index=True)
@@ -58,22 +74,32 @@ class CorporateChangeClaimSnapshotRecord(Base):
     event_type: Mapped[str] = mapped_column(String(80), index=True)
     title: Mapped[str] = mapped_column(String(1_000))
     excerpt: Mapped[str] = mapped_column(String(500))
-    claimed_organization_name: Mapped[str | None] = mapped_column(String(500), nullable=True, index=True)
+    claimed_organization_name: Mapped[str | None] = mapped_column(
+        String(500), nullable=True, index=True
+    )
     organization_id: Mapped[UUID | None] = mapped_column(
         ForeignKey("organizations.id", ondelete="SET NULL"), nullable=True, index=True
     )
     organization_link_status: Mapped[str] = mapped_column(String(80), index=True)
     published_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)
     modified_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)
-    event_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True, index=True)
-    expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True, index=True)
+    event_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True, index=True
+    )
+    expires_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True, index=True
+    )
     independence_key: Mapped[str] = mapped_column(String(500), index=True)
-    syndication_group_key: Mapped[str | None] = mapped_column(String(500), nullable=True, index=True)
+    syndication_group_key: Mapped[str | None] = mapped_column(
+        String(500), nullable=True, index=True
+    )
     confidence: Mapped[float] = mapped_column(Float)
     active: Mapped[bool] = mapped_column(Boolean, index=True)
     historical_only: Mapped[bool] = mapped_column(Boolean, index=True)
     metadata_only: Mapped[bool] = mapped_column(Boolean)
-    supersedes_record_key: Mapped[str | None] = mapped_column(String(500), nullable=True, index=True)
+    supersedes_record_key: Mapped[str | None] = mapped_column(
+        String(500), nullable=True, index=True
+    )
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
 
 
