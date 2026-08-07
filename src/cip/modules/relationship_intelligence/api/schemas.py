@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from dataclasses import asdict
 from datetime import datetime
 from uuid import UUID
 
@@ -47,7 +48,7 @@ class RelationshipSummaryResponse(BaseModel):
 
     @classmethod
     def from_domain(cls, item: RelationshipSummary) -> RelationshipSummaryResponse:
-        return cls(**item.__dict__)
+        return cls(**asdict(item))
 
 
 class RelationshipPageResponse(BaseModel):
@@ -104,8 +105,11 @@ class RelationshipEvidenceResponse(BaseModel):
     supersedes_record_key: str | None
 
     @classmethod
-    def from_domain(cls, item: RelationshipEvidenceView) -> RelationshipEvidenceResponse:
-        return cls(**item.__dict__)
+    def from_domain(
+        cls,
+        item: RelationshipEvidenceView,
+    ) -> RelationshipEvidenceResponse:
+        return cls(**asdict(item))
 
 
 class RelationshipContextResponse(BaseModel):
@@ -120,7 +124,7 @@ class RelationshipContextResponse(BaseModel):
 
     @classmethod
     def from_domain(cls, item: RelationshipContextView) -> RelationshipContextResponse:
-        return cls(**item.__dict__)
+        return cls(**asdict(item))
 
 
 class RelationshipDetailResponse(BaseModel):
@@ -137,10 +141,20 @@ class RelationshipDetailResponse(BaseModel):
     def from_domain(cls, detail: RelationshipDetail) -> RelationshipDetailResponse:
         return cls(
             relationship=RelationshipSummaryResponse.from_domain(detail.relationship),
-            claimed_source_organization_names=list(detail.claimed_source_organization_names),
-            claimed_target_organization_names=list(detail.claimed_target_organization_names),
-            evidence=[RelationshipEvidenceResponse.from_domain(item) for item in detail.evidence],
-            contexts=[RelationshipContextResponse.from_domain(item) for item in detail.contexts],
+            claimed_source_organization_names=list(
+                detail.claimed_source_organization_names
+            ),
+            claimed_target_organization_names=list(
+                detail.claimed_target_organization_names
+            ),
+            evidence=[
+                RelationshipEvidenceResponse.from_domain(item)
+                for item in detail.evidence
+            ],
+            contexts=[
+                RelationshipContextResponse.from_domain(item)
+                for item in detail.contexts
+            ],
             evidence_disclaimer=(
                 "Relationship evidence preserves direction, chronology, evidence class, "
                 "and review state. Marketing claims are not contract evidence, historical "
