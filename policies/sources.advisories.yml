@@ -11,7 +11,7 @@ sources:
     terms_url: https://example.invalid/terms
     licence: Review required
     allowed_data_categories: &allowed
-      - vulnerability_advisory
+      - vulnerability_metadata
       - technology_observation
     prohibited_data_categories: &prohibited
       - credential
