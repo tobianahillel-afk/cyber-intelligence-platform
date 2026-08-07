@@ -104,7 +104,7 @@ def _relationship_evidence(
         renewal_at=_date_time(contract.renewal_date),
         independence_key=publication.source_id,
         confidence=min(contract.confidence, party.confidence),
-        active=contract.status is not ContractStatus.CANCELLED,
+        active=True,
         historical_only=historical_only,
         supersedes_record_key=None,
     )
