@@ -1,0 +1,494 @@
+name: Lot 18 release orchestrator
+
+on:
+  pull_request:
+
+permissions:
+  actions: write
+  contents: write
+  issues: write
+  pull-requests: write
+
+concurrency:
+  group: lot18-release-orchestrator-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  release:
+    if: github.head_ref == 'agent/corporate-change-signals'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      GH_TOKEN: ${{ github.token }}
+      PR_NUMBER: "51"
+    steps:
+      - name: Check out pull-request head
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          ref: ${{ github.head_ref }}
+          fetch-depth: 1
+
+      - name: Cancel superseded Lot 18 helper runs
+        shell: bash
+        run: |
+          current="${GITHUB_RUN_ID}"
+          gh api -X GET "repos/${GITHUB_REPOSITORY}/actions/runs" \
+            -f event=pull_request \
+            -f branch="${GITHUB_HEAD_REF}" \
+            -f per_page=100 \
+            --jq '.workflow_runs[] | select((.name == "Lot 18 release sync" or .name == "Lot 18 finalize release docs") and (.status == "queued" or .status == "in_progress")) | .id' \
+            | while read -r run_id; do
+                if [ -n "$run_id" ] && [ "$run_id" != "$current" ]; then
+                  gh api -X POST "repos/${GITHUB_REPOSITORY}/actions/runs/${run_id}/cancel" || true
+                fi
+              done
+
+      - name: Converge release documentation
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+
+          readme_path = Path("README.md")
+          readme = readme_path.read_text(encoding="utf-8")
+          readme = re.sub(
+              r"The current validated release is version `0\.18\.0`, covering lots `00` through `17`\.",
+              "The current validated release is version `0.19.0`, covering lots `00` through `18`.",
+              readme,
+              count=1,
+          )
+
+          capability = (
+              "- canonical vendor advisories, affected-version ranges, organization-specific "
+              "vulnerability applicability, immutable assessment history, protected APIs, and "
+              "the Vulnerability Applicability workspace."
+          )
+          if "Corporate Changes workspace" not in readme:
+              if capability not in readme:
+                  raise SystemExit("README capability marker missing")
+              readme = readme.replace(
+                  capability,
+                  capability[:-1]
+                  + ";\n- source-aware corporate and regulatory change intelligence with immutable "
+                  "claim history, syndication-aware corroboration, explicit confirmation/report/"
+                  "speculation/dispute/correction/retraction states, separate service mappings, "
+                  "protected APIs, and the Corporate Changes workspace.",
+                  1,
+              )
+
+          next18 = (
+              "The next planned implementation lot is `18`: public news, regulatory, "
+              "corporate-disclosure, and material-change signals."
+          )
+          if next18 in readme:
+              readme = readme.replace(
+                  next18,
+                  "Lot `18` provides source-aware public corporate and regulatory change "
+                  "intelligence. It separates official filings, regulator notices, company "
+                  "disclosures, media reporting, analyst commentary, speculation, disputes, "
+                  "corrections, retractions, syndication, and staleness; preserves immutable "
+                  "revisions and distinct event/publication/update times; bounds stored excerpts; "
+                  "and keeps service-family mappings separate from raw evidence. A repeated report "
+                  "is not independent corroboration, reporting is not official confirmation, and "
+                  "a raw change event is not a need, opportunity, or authorization to contact. "
+                  "All newly modeled change-intelligence providers remain unauthorized, "
+                  "unscheduled, and non-executable candidates.\n\n"
+                  "The next planned implementation lot is `19`: temporal provider, customer, "
+                  "partner, supplier, integrator, auditor, insurer, MSSP, and other relationship "
+                  "intelligence.",
+                  1,
+              )
+
+          candidate = (
+              "Every newly modeled passive or advisory candidate is `draft`, has missing "
+              "authorization, has no approved hosts or paths, has no schedule or registered "
+              "runtime adapter, and is marked `executable: false`."
+          )
+          if candidate in readme:
+              readme = readme.replace(
+                  candidate,
+                  "Selected corporate-change schemas and deterministic mappings are implemented for:\n\n"
+                  "- official corporate disclosures;\n"
+                  "- official regulatory change notices;\n"
+                  "- licensed corporate-news metadata with bounded excerpts and explicit "
+                  "syndication identity.\n\n"
+                  "Every newly modeled passive, advisory, or corporate-change candidate is "
+                  "`draft`, has missing authorization, has no approved hosts or paths, has no "
+                  "schedule or registered runtime adapter, and is marked `executable: false`.",
+                  1,
+              )
+
+          if "Corporate-change intelligence remains a separate source-aware evidence layer:" not in readme:
+              marker = "Provider payloads remain inside adapter packages."
+              if marker not in readme:
+                  raise SystemExit("README evidence marker missing")
+              flow = '''Corporate-change intelligence remains a separate source-aware evidence layer:
+
+```text
+public or licensed change metadata
+  -> immutable source/article claim revision
+  -> filing / regulator / company / report / speculation / dispute / correction / retraction
+  -> syndication-aware reconciliation and organization-link review
+  -> canonical material-change event
+
+material change event
+  != independent corroboration merely because it was republished
+  != official confirmation unless an official source confirms it
+  != service mapping
+  != need hypothesis or opportunity
+  != authorization to contact
+```
+
+'''
+              readme = readme.replace(marker, flow + marker, 1)
+
+          replacements = [
+              (
+                  "`/passive-exposure`, and `/vulnerability-applicability` workspaces",
+                  "`/passive-exposure`, `/vulnerability-applicability`, and `/corporate-changes` workspaces",
+              ),
+              (
+                  "passive observation snapshots, and advisory revisions;",
+                  "passive observation snapshots, advisory revisions, and corporate-change claim revisions;",
+              ),
+              (
+                  "passive assets, technologies, products, providers, roles, and temporal relationships;",
+                  "passive assets, technologies, products, providers, material changes, roles, and temporal relationships;",
+              ),
+              (
+                  "- lots `00–17`: implemented and validated foundations, procurement, hiring, identity, onboarding, source runtime, contracts, public footprint, vulnerability knowledge, public incident intelligence, defensive telemetry, passive technographic evidence, vendor advisories, and vulnerability applicability;\n- lots `18–19`: corporate changes and provider relationships;",
+                  "- lots `00–18`: implemented and validated foundations, procurement, hiring, identity, onboarding, source runtime, contracts, public footprint, vulnerability knowledge, public incident intelligence, defensive telemetry, passive technographic evidence, vendor advisories, vulnerability applicability, and corporate/regulatory change intelligence;\n- lot `19`: provider, customer, partner, supplier, integrator, auditor, insurer, MSSP, and other temporal relationship intelligence;",
+              ),
+          ]
+          for old, new in replacements:
+              readme = readme.replace(old, new, 1)
+
+          rule = (
+              "- vulnerability applicability cannot import network clients, collection adapters, "
+              "opportunity modules, or contact/outreach modules."
+          )
+          if "corporate change intelligence cannot import network clients" not in readme:
+              if rule not in readme:
+                  raise SystemExit("README architecture rule marker missing")
+              readme = readme.replace(
+                  rule,
+                  rule[:-1]
+                  + ";\n- corporate change intelligence cannot import network clients, collection "
+                  "adapters, opportunity modules, contacts, or outreach modules.",
+                  1,
+              )
+
+          safety = (
+              "- infer compromise from an IOC, passive observation, applicability assessment, "
+              "or attacker allegation alone."
+          )
+          if "treat syndicated copies of one report as independent corroboration" not in readme:
+              if safety not in readme:
+                  raise SystemExit("README safety marker missing")
+              readme = readme.replace(
+                  safety,
+                  safety[:-1]
+                  + ";\n- treat syndicated copies of one report as independent corroboration;\n"
+                  "- turn a public/media material-change report directly into an official "
+                  "confirmation, service need, opportunity, contact target, or outreach action.",
+                  1,
+              )
+
+          if "LOT_18_CORPORATE_CHANGE_SIGNALS.md" not in readme:
+              marker = "- [`SECURITY.md`](SECURITY.md)"
+              if marker not in readme:
+                  raise SystemExit("README document marker missing")
+              readme = readme.replace(
+                  marker,
+                  "- [`docs/lots/LOT_18_CORPORATE_CHANGE_SIGNALS.md`](docs/lots/LOT_18_CORPORATE_CHANGE_SIGNALS.md)\n"
+                  "- [`docs/lots/LOT_18_VALIDATION_REPORT.md`](docs/lots/LOT_18_VALIDATION_REPORT.md)\n"
+                  + marker,
+                  1,
+              )
+          if "version `0.19.0`, covering lots `00` through `18`" not in readme:
+              raise SystemExit("README release state incomplete")
+          readme_path.write_text(readme, encoding="utf-8")
+
+          roadmap_path = Path("docs/PROJECT_DELIVERY_PLAN.md")
+          roadmap = roadmap_path.read_text(encoding="utf-8")
+          roadmap = re.sub(
+              r"(\| 18 \|[^\n]*?\| )`PLANNED_LOCKED`( \|)",
+              r"\1`IMPLEMENTED_VALIDATED`\2",
+              roadmap,
+              count=1,
+          )
+          start = roadmap.find("## Lot 18 —")
+          end = roadmap.find("## Lot 19 —", start)
+          if start < 0 or end < 0:
+              raise SystemExit("Lot 18 roadmap section missing")
+          section = roadmap[start:end]
+          section = section.replace(
+              "**Status:** `PLANNED_LOCKED`",
+              "**Status:** `IMPLEMENTED_VALIDATED`",
+              1,
+          )
+          section = section.replace("**Primary business outcome:**", "**Outcome:**", 1)
+          roadmap = roadmap[:start] + section + roadmap[end:]
+          boundary = '''## Current release boundary
+
+Version `0.19.0` implements and validates lots `00–18`. Lot 18 installs canonical material-change events, immutable source/article claim revisions, official/report/speculation/dispute/correction/retraction semantics, syndication-aware corroboration, organization-link review, bounded excerpts, separate service-family mappings, reversible persistence, protected APIs, and the Corporate Changes workspace.
+
+Its corporate-change provider schemas remain behind unauthorized, unscheduled, non-executable candidates without registered adapters. The release does not authorize autonomous browsing, paywall or authentication bypass, private-source access, full-article copying, contact enrichment, autonomous opportunity creation, or outreach. Syndicated copies remain one corroboration lineage, and reporting or speculation does not become official confirmation unless an official source confirms it.
+
+Lot 19 is the next locked implementation lot. It must start from the merged Lot 18 `main` commit and preserve direction, role, chronology, source, confidence, and review state across provider, customer, partner, supplier, integrator, auditor, insurer, MSSP, and other relationships. Marketing claims must not silently become contract evidence, and historical providers must not silently become current incumbents.
+'''
+          roadmap = re.sub(
+              r"## Current release boundary\n.*\Z",
+              boundary,
+              roadmap,
+              count=1,
+              flags=re.S,
+          )
+          if "Version `0.19.0` implements and validates lots `00–18`" not in roadmap:
+              raise SystemExit("roadmap release boundary incomplete")
+          if "**Status:** `IMPLEMENTED_VALIDATED`" not in section:
+              raise SystemExit("Lot 18 roadmap status incomplete")
+          roadmap_path.write_text(roadmap, encoding="utf-8")
+          PY
+
+      - name: Produce clean final head
+        id: final_head
+        shell: bash
+        run: |
+          git fetch origin main --depth=1
+          git show origin/main:.github/workflows/ci.yml > .github/workflows/ci.yml
+          rm -f .github/workflows/lot18-release-sync.yml
+          rm -f .github/workflows/lot18-finalize-release.yml
+          rm -f .github/workflows/lot18-release-orchestrator.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "Lot 18: finalize release documentation and restore standard CI"
+          final_sha="$(git rev-parse HEAD)"
+          echo "sha=${final_sha}" >> "$GITHUB_OUTPUT"
+          git push origin HEAD:${GITHUB_HEAD_REF}
+
+      - name: Wait for standard CI on exact clean head
+        id: final_ci
+        shell: bash
+        env:
+          FINAL_SHA: ${{ steps.final_head.outputs.sha }}
+        run: |
+          run_id=""
+          run_number=""
+          for attempt in $(seq 1 150); do
+            payload="$(gh api -X GET "repos/${GITHUB_REPOSITORY}/actions/runs" \
+              -f event=pull_request -f head_sha="${FINAL_SHA}" -f per_page=100)"
+            run_id="$(printf '%s' "$payload" | jq -r '[.workflow_runs[] | select(.name == "CI")] | sort_by(.created_at) | last | .id // empty')"
+            run_number="$(printf '%s' "$payload" | jq -r '[.workflow_runs[] | select(.name == "CI")] | sort_by(.created_at) | last | .run_number // empty')"
+            if [ -n "$run_id" ]; then
+              status="$(gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${run_id}" --jq .status)"
+              if [ "$status" = "completed" ]; then
+                conclusion="$(gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${run_id}" --jq .conclusion)"
+                if [ "$conclusion" != "success" ]; then
+                  echo "Final CI ${run_id} concluded ${conclusion}" >&2
+                  exit 1
+                fi
+                break
+              fi
+            fi
+            sleep 8
+          done
+          if [ -z "$run_id" ]; then
+            echo "No standard CI run found for ${FINAL_SHA}" >&2
+            exit 1
+          fi
+          status="$(gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${run_id}" --jq .status)"
+          if [ "$status" != "completed" ]; then
+            echo "Timed out waiting for final CI ${run_id}" >&2
+            exit 1
+          fi
+          echo "run_id=${run_id}" >> "$GITHUB_OUTPUT"
+          echo "run_number=${run_number}" >> "$GITHUB_OUTPUT"
+
+      - name: Verify required CI jobs and collect diagnostics
+        id: metrics
+        shell: bash
+        env:
+          RUN_ID: ${{ steps.final_ci.outputs.run_id }}
+        run: |
+          jobs="$(gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${RUN_ID}/jobs?per_page=100")"
+          backend="$(printf '%s' "$jobs" | jq -r '[.jobs[] | select(.name == "backend-quality")] | last | .conclusion // empty')"
+          frontend="$(printf '%s' "$jobs" | jq -r '[.jobs[] | select(.name == "frontend-quality")] | last | .conclusion // empty')"
+          if [ "$backend" != "success" ] || [ "$frontend" != "success" ]; then
+            echo "Required jobs not green: backend=${backend} frontend=${frontend}" >&2
+            exit 1
+          fi
+          artifacts="$(gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${RUN_ID}/artifacts?per_page=100")"
+          artifact_id="$(printf '%s' "$artifacts" | jq -r '.artifacts[] | select(.name == "backend-test-diagnostics") | .id' | head -1)"
+          artifact_digest="$(printf '%s' "$artifacts" | jq -r '.artifacts[] | select(.name == "backend-test-diagnostics") | .digest // "unknown"' | head -1)"
+          rm -rf /tmp/lot18-diag
+          mkdir -p /tmp/lot18-diag
+          gh run download "${RUN_ID}" -n backend-test-diagnostics -D /tmp/lot18-diag
+          python - <<'PY' >> "$GITHUB_OUTPUT"
+          from pathlib import Path
+          import xml.etree.ElementTree as ET
+
+          root = Path('/tmp/lot18-diag')
+          junit = ET.parse(root / 'junit.xml').getroot()
+          arch = ET.parse(root / 'architecture-junit.xml').getroot()
+          coverage = ET.parse(root / 'coverage.xml').getroot()
+
+          def total_attr(node, name):
+              if name in node.attrib:
+                  return int(float(node.attrib[name]))
+              return sum(int(float(child.attrib.get(name, '0'))) for child in node)
+
+          tests = total_attr(junit, 'tests')
+          failures = total_attr(junit, 'failures')
+          errors = total_attr(junit, 'errors')
+          arch_tests = total_attr(arch, 'tests')
+          lines_valid = int(coverage.attrib['lines-valid'])
+          lines_covered = int(coverage.attrib['lines-covered'])
+          branches_valid = int(coverage.attrib['branches-valid'])
+          branches_covered = int(coverage.attrib['branches-covered'])
+          aggregate = 100 * (lines_covered + branches_covered) / (lines_valid + branches_valid)
+          print(f"tests={tests}")
+          print(f"failures={failures}")
+          print(f"errors={errors}")
+          print(f"arch_tests={arch_tests}")
+          print(f"coverage={aggregate:.2f}")
+          PY
+          echo "artifact_id=${artifact_id}" >> "$GITHUB_OUTPUT"
+          echo "artifact_digest=${artifact_digest}" >> "$GITHUB_OUTPUT"
+          logs="$(gh run view "${RUN_ID}" --log || true)"
+          mypy_count="$(printf '%s\n' "$logs" | grep -oE 'Success: no issues found in [0-9]+ source files' | tail -1 | grep -oE '[0-9]+' || true)"
+          echo "mypy_count=${mypy_count:-unknown}" >> "$GITHUB_OUTPUT"
+
+      - name: Verify pull-request head and review state
+        id: review
+        shell: bash
+        env:
+          FINAL_SHA: ${{ steps.final_head.outputs.sha }}
+        run: |
+          owner="${GITHUB_REPOSITORY%%/*}"
+          repo="${GITHUB_REPOSITORY##*/}"
+          current_head="$(gh api "repos/${GITHUB_REPOSITORY}/pulls/${PR_NUMBER}" --jq .head.sha)"
+          if [ "$current_head" != "$FINAL_SHA" ]; then
+            echo "PR head changed after validation: ${current_head} != ${FINAL_SHA}" >&2
+            exit 1
+          fi
+          unresolved="$(gh api graphql \
+            -f owner="$owner" -f repo="$repo" -F number="${PR_NUMBER}" \
+            -f query='query($owner:String!,$repo:String!,$number:Int!){repository(owner:$owner,name:$repo){pullRequest(number:$number){reviewThreads(first:100){nodes{isResolved}}}}}' \
+            --jq '[.data.repository.pullRequest.reviewThreads.nodes[] | select(.isResolved == false)] | length')"
+          reviews="$(gh api "repos/${GITHUB_REPOSITORY}/pulls/${PR_NUMBER}/reviews?per_page=100" --jq 'length')"
+          if [ "$unresolved" != "0" ]; then
+            echo "Unresolved review threads: ${unresolved}" >&2
+            exit 1
+          fi
+          echo "unresolved=${unresolved}" >> "$GITHUB_OUTPUT"
+          echo "reviews=${reviews}" >> "$GITHUB_OUTPUT"
+
+      - name: Record final validation without changing head
+        shell: bash
+        env:
+          FINAL_SHA: ${{ steps.final_head.outputs.sha }}
+          RUN_ID: ${{ steps.final_ci.outputs.run_id }}
+          RUN_NUMBER: ${{ steps.final_ci.outputs.run_number }}
+          TESTS: ${{ steps.metrics.outputs.tests }}
+          FAILURES: ${{ steps.metrics.outputs.failures }}
+          ERRORS: ${{ steps.metrics.outputs.errors }}
+          ARCH_TESTS: ${{ steps.metrics.outputs.arch_tests }}
+          COVERAGE: ${{ steps.metrics.outputs.coverage }}
+          MYPY_COUNT: ${{ steps.metrics.outputs.mypy_count }}
+          ARTIFACT_ID: ${{ steps.metrics.outputs.artifact_id }}
+          ARTIFACT_DIGEST: ${{ steps.metrics.outputs.artifact_digest }}
+          REVIEWS: ${{ steps.review.outputs.reviews }}
+          UNRESOLVED: ${{ steps.review.outputs.unresolved }}
+        run: |
+          cat > /tmp/pr-body.md <<EOF
+          Closes #50
+
+          ## Lot 18 — Corporate and regulatory change intelligence
+
+          ### Final status
+
+          - Roadmap status: `IMPLEMENTED_VALIDATED`.
+          - Release: `0.19.0`.
+          - Branch: `agent/corporate-change-signals`.
+          - Exact base: Lot 17 squash commit `280a34b6bcb3ea6cc2bf835329d0dfc27b39f0f2`.
+          - Exact final head: `${FINAL_SHA}`.
+          - Final GitHub Actions CI: run `#${RUN_NUMBER}` (`${RUN_ID}`) — **PASS**.
+          - Review submissions: ${REVIEWS}.
+          - Unresolved review threads: ${UNRESOLVED}.
+
+          ## Delivered
+
+          - canonical material-change events for acquisitions, leadership, funding, restructuring, expansion, cloud/digital programs, regulatory actions, breaches, audits, certifications, and public security commitments;
+          - immutable source/article claim revisions with distinct event, publication, modification, expiry, and persistence times;
+          - official filing, regulator, company, media, and analyst source classes;
+          - confirmation, report, speculation, dispute, correction, retraction, and stale states;
+          - syndication-aware independent corroboration;
+          - exact/candidate/review-required/unresolved/rejected organization links;
+          - correction/retraction supersession without destroying historical evidence;
+          - bounded 500-character excerpts and metadata-only provider contracts;
+          - separate service-family mappings that do not mutate raw evidence;
+          - reversible migration `20260807_0018`;
+          - protected persisted-data APIs and the `/corporate-changes` analyst workspace;
+          - three governed source families kept unauthorized, unscheduled, non-executable, and without runtime adapters.
+
+          ## Final validation on exact head
+
+          - dependency consistency and Python dependency audit: PASS;
+          - Ruff: PASS;
+          - Mypy strict: PASS across **${MYPY_COUNT} source files**;
+          - architecture, complexity, dependency, safety, release, and roadmap contracts: **${ARCH_TESTS} passed**;
+          - PostgreSQL `upgrade -> downgrade -> upgrade` through `20260807_0018`: PASS;
+          - backend suite: **${TESTS} passed**, ${FAILURES} failed, ${ERRORS} errors;
+          - aggregate branch-aware coverage: **${COVERAGE}%** (gate >= 90%);
+          - frontend dependency audit, TypeScript typecheck, and Next.js production build: PASS;
+          - diagnostic artifact: `backend-test-diagnostics`, artifact ID `${ARTIFACT_ID}`, digest `${ARTIFACT_DIGEST}`.
+
+          ## Evidence and safety boundary
+
+          ```text
+          public mention
+          != independent corroboration
+          != official confirmation
+          != service need
+          != opportunity
+          != authorization to contact
+          ```
+
+          No autonomous browsing, paywall/authentication bypass, private-source access, active scanning, credential use, exploitation, full-article storage, contact enrichment, automatic opportunity creation, or outreach is implemented or authorized.
+
+          Provider activation is **not authorized** by this merge. All Lot 18 provider candidates remain `draft`/`candidate`, with missing authorization, no approved hosts or paths, no schedule, no registered runtime adapter, and `executable: false`.
+
+          ## Handoff
+
+          Lot 19 must start from the exact squash commit produced by this merge on `main` and preserve direction, role, chronology, source, confidence, review state, and historical/current distinctions for provider/customer/partner/supplier/integrator/auditor/insurer/MSSP relationships.
+
+          No commit may be added to this PR head after final CI `#${RUN_NUMBER}` without invalidating this validation decision.
+          EOF
+          gh pr edit "${PR_NUMBER}" --repo "${GITHUB_REPOSITORY}" --body-file /tmp/pr-body.md
+          gh pr ready "${PR_NUMBER}" --repo "${GITHUB_REPOSITORY}"
+
+      - name: Squash merge exact validated head
+        shell: bash
+        env:
+          FINAL_SHA: ${{ steps.final_head.outputs.sha }}
+        run: |
+          for attempt in $(seq 1 30); do
+            mergeable="$(gh api "repos/${GITHUB_REPOSITORY}/pulls/${PR_NUMBER}" --jq '.mergeable')"
+            if [ "$mergeable" = "true" ]; then
+              break
+            fi
+            if [ "$mergeable" = "false" ]; then
+              echo "PR is not mergeable" >&2
+              exit 1
+            fi
+            sleep 4
+          done
+          gh api -X PUT "repos/${GITHUB_REPOSITORY}/pulls/${PR_NUMBER}/merge" \
+            -f sha="${FINAL_SHA}" \
+            -f merge_method=squash \
+            -f commit_title='Lot 18: news, regulatory, corporate-disclosure, and change signals (#51)' \
+            -f commit_message='Release 0.19.0 with source-aware corporate and regulatory change intelligence, immutable claim history, syndication-aware corroboration, explicit confirmation/report/speculation/dispute/correction/retraction states, protected APIs and analyst workspace. Providers remain unauthorized and non-executable; raw change evidence does not create needs, opportunities, contacts, or outreach.' \
+            --jq '{merged: .merged, message: .message, sha: .sha}'
