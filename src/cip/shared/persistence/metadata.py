@@ -60,6 +60,11 @@ from cip.modules.public_footprint.infrastructure.models import (
     PublicResourceVersionRecord,
 )
 from cip.modules.raw_observations.infrastructure.models import RawObservationRecord
+from cip.modules.relationship_intelligence.infrastructure.models import (
+    BusinessRelationshipRecord,
+    RelationshipContextRecord,
+    RelationshipEvidenceSnapshotRecord,
+)
 from cip.modules.source_governance.infrastructure.models import SourceRecord
 from cip.modules.source_portfolio.infrastructure.models import (
     AdapterCapabilityRecord,
@@ -99,6 +104,7 @@ _IMPORTED_MODELS = (
     ApplicabilityAssessmentRecord,
     ApplicabilityAssessmentSnapshotRecord,
     BackfillPartitionRecord,
+    BusinessRelationshipRecord,
     CollectionCheckpointRecord,
     CollectionCircuitRecord,
     CollectionDeadLetterRecord,
@@ -138,6 +144,8 @@ _IMPORTED_MODELS = (
     PublicResourceRecord,
     PublicResourceVersionRecord,
     RawObservationRecord,
+    RelationshipContextRecord,
+    RelationshipEvidenceSnapshotRecord,
     SourceHealthRecord,
     SourcePortfolioAuditRecord,
     SourcePortfolioRecord,

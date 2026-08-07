@@ -67,7 +67,7 @@ A lot is complete only when one final commit passes every applicable backend, fr
 | 16 | Passive exposure and technographic observations | `IMPLEMENTED_VALIDATED` |
 | 17 | Vendor advisories, product versions, and applicability | `IMPLEMENTED_VALIDATED` |
 | 18 | News, regulatory, corporate-disclosure, and change signals | `IMPLEMENTED_VALIDATED` |
-| 19 | Providers, customers, partners, and supply-chain relationships | `PLANNED_LOCKED` |
+| 19 | Providers, customers, partners, and supply-chain relationships | `IMPLEMENTED_VALIDATED` |
 | 20 | Entity resolution and temporal corporate knowledge graph | `PLANNED_LOCKED` |
 | 21 | Professional organization maps, contacts, and public community signals | `PLANNED_LOCKED` |
 | 22 | Conditional, premium, LinkedIn, Discord, and BrixHub integrations | `PLANNED_LOCKED` |
@@ -306,9 +306,9 @@ A lot is complete only when one final commit passes every applicable backend, fr
 
 ## Lot 19 — Providers, customers, partners, and supply-chain relationships
 
-**Status:** `PLANNED_LOCKED`
+**Status:** `IMPLEMENTED_VALIDATED`
 
-**Primary business outcome:** Build temporal, evidence-backed business and technology relationships that explain incumbents, dependencies, partners, customers, suppliers, integrators, auditors, insurers, and MSSPs.
+**Outcome:** Build temporal, evidence-backed business and technology relationships that explain incumbents, dependencies, partners, customers, suppliers, integrators, auditors, insurers, and MSSPs.
 
 **Dependencies:** Lots 08, 11, 12, 14, 16, and 18.
 
@@ -729,8 +729,8 @@ A lot is complete only when one final commit passes every applicable backend, fr
 
 ## Current release boundary
 
-Version `0.19.0` implements and validates lots `00–18`. Lot 18 installs canonical material-change events, immutable source/article claim revisions, explicit confirmation/report/speculation/dispute/correction/retraction semantics, syndication-aware corroboration, organization-link review, bounded excerpts, separate service-family mappings, reversible persistence, protected APIs, and the Corporate Changes workspace.
+Version `0.20.0` implements and validates lots `00–19`. Lot 19 installs directed temporal business relationships, immutable evidence snapshots, claimed/observed/contracted/historical/inferred evidence classes, explicit endpoint identity review, validity and renewal chronology, contract-backed current state, reversible persistence, protected APIs, and the Relationships workspace.
 
-Its corporate-change provider schemas remain behind unauthorized, unscheduled, non-executable candidates without registered adapters. The release does not authorize autonomous browsing, paywall or authentication bypass, private-source access, full-article copying, contact enrichment, autonomous opportunity creation, or outreach. Syndicated copies remain one corroboration lineage, and reporting or speculation does not become official confirmation unless an official source confirms it.
+Existing persisted procurement contracts can project into contracted relationship evidence without authorizing new network collection. Generic public/provider relationship schemas cannot emit contracted evidence. New relationship source candidates remain authorization-missing, unscheduled, non-executable, and forbidden from private portals, personal networks, automatic opportunity creation, contact enrichment, or outreach.
 
-Lot 19 is the next locked implementation lot. It must start from the merged Lot 18 `main` commit and preserve direction, role, chronology, source, confidence, and review state across provider, customer, partner, supplier, integrator, auditor, insurer, MSSP, and other relationships. Marketing claims must not silently become contract evidence, and historical providers must not silently become current incumbents.
+Lot 20 is the next locked implementation lot. It must start from the merged Lot 19 `main` commit and preserve reversible identity decisions, temporal validity, source lineage, evidence class, relationship direction, confidence, correction, suppression, and review state. Claimed or inferred edges must not silently become verified facts merely because they enter the graph.
