@@ -1,0 +1,113 @@
+version: 1
+reviewed_at: 2026-08-07
+
+sources:
+  - id: official-relationship-disclosures
+    name: Official relationship disclosures
+    base_url: https://example.invalid/relationship-disclosures/
+    status: draft
+    source_type: api
+    owner: Deployment-specific official organization disclosure providers
+    terms_url: https://example.invalid/terms
+    licence: Review required
+    allowed_data_categories: &allowed
+      - organization_metadata
+      - contract_award
+      - technology_observation
+      - public_result_metadata
+    prohibited_data_categories: &prohibited
+      - credential
+      - victim_file
+      - private_communication
+      - private_personal_data
+      - restricted_content
+    rate_limit_per_minute: 10
+    retention_days: 1825
+    attribution_required: true
+    raw_content_storage: false
+    human_review_required: true
+    authorization: &missing_authorization
+      status: missing
+      document_reference: null
+      reviewed_at: null
+      expires_at: null
+      approved_hosts: []
+      approved_path_prefixes: []
+      approved_purposes: []
+      automated_collection_allowed: false
+      raw_storage_allowed: false
+    economics: &candidate_economics
+      commercial_value: high
+      monthly_cost: 0
+      implementation_cost: medium
+      maintenance_cost: medium
+      expected_stability: medium
+    notes: >-
+      Public organization relationship metadata only. A company statement or case
+      study remains claimed evidence unless stronger independent evidence exists.
+      Collection is not authorized by this catalog entry.
+
+  - id: public-partner-directory-metadata
+    name: Public partner directory metadata
+    base_url: https://example.invalid/partner-directory/
+    status: draft
+    source_type: static_http
+    owner: Deployment-specific public partner directories
+    terms_url: https://example.invalid/terms
+    licence: Review required
+    allowed_data_categories: *allowed
+    prohibited_data_categories: *prohibited
+    rate_limit_per_minute: 10
+    retention_days: 1095
+    attribution_required: true
+    raw_content_storage: false
+    human_review_required: true
+    authorization: *missing_authorization
+    economics: *candidate_economics
+    notes: >-
+      Public directory metadata only. Directory membership may support an observed
+      partner or reseller relationship but cannot silently become contract evidence,
+      active incumbency, contact enrichment, or an opportunity.
+
+  - id: public-case-study-metadata
+    name: Public case study metadata
+    base_url: https://example.invalid/case-studies/
+    status: draft
+    source_type: static_http
+    owner: Deployment-specific public case-study sources
+    terms_url: https://example.invalid/terms
+    licence: Review required
+    allowed_data_categories: *allowed
+    prohibited_data_categories: *prohibited
+    rate_limit_per_minute: 10
+    retention_days: 1095
+    attribution_required: true
+    raw_content_storage: false
+    human_review_required: true
+    authorization: *missing_authorization
+    economics: *candidate_economics
+    notes: >-
+      Bounded case-study metadata and excerpts only. Marketing claims remain claimed
+      evidence and do not establish a current contract or incumbent relationship.
+
+  - id: public-certificate-relationship-metadata
+    name: Public certificate relationship metadata
+    base_url: https://example.invalid/certificates/
+    status: draft
+    source_type: api
+    owner: Deployment-specific public certificate metadata providers
+    terms_url: https://example.invalid/terms
+    licence: Review required
+    allowed_data_categories: *allowed
+    prohibited_data_categories: *prohibited
+    rate_limit_per_minute: 10
+    retention_days: 1095
+    attribution_required: true
+    raw_content_storage: false
+    human_review_required: true
+    authorization: *missing_authorization
+    economics: *candidate_economics
+    notes: >-
+      Public certificate metadata may support a bounded observed technology or
+      service relationship. It does not prove a commercial contract or current
+      incumbent without separate evidence.
