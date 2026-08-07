@@ -1,0 +1,88 @@
+version: 1
+
+sources:
+  - source_id: licensed-passive-exposure
+    display_name: Licensed Passive Exposure Metadata
+    canonical_url: https://example.invalid/passive-exposure/
+    category: passive_exposure
+    status: candidate
+    freshness_max_age_seconds: 3600
+    commercial_use_cases: &use_cases
+      - passive_asset_context
+      - technographic_context
+      - organization_research
+    candidate_origin: lot-16
+    monthly_cost_limit: 0
+    metadata: &disabled_metadata
+      executable: false
+      authorization_status: missing
+      active_probe: forbidden
+      credential_use: forbidden
+      access_control_bypass: forbidden
+      vulnerability_applicability: not_assessed
+      exposure_verification: forbidden
+      organization_compromise_inference: forbidden
+      autonomous_outreach: forbidden
+    adapter:
+      adapter_id: licensed-passive-exposure
+      adapter_version: "1"
+      provider_schema_version: passive-exposure-metadata-v1
+      modes: &modes
+        - historical_backfill
+        - incremental_cursor
+      canonical_output_types: &outputs
+        - passive_asset
+        - passive_observation_snapshot
+        - passive_technology
+      supports_corrections: true
+      supports_tombstones: true
+      supports_retractions: true
+      max_page_size: 100
+      max_window_days: 30
+      cost_per_request: 0
+
+  - source_id: licensed-technographic-observations
+    display_name: Licensed Passive Technographic Observations
+    canonical_url: https://example.invalid/technographic-observations/
+    category: passive_exposure
+    status: candidate
+    freshness_max_age_seconds: 86400
+    commercial_use_cases: *use_cases
+    candidate_origin: lot-16
+    monthly_cost_limit: 0
+    metadata: *disabled_metadata
+    adapter:
+      adapter_id: licensed-technographic-observations
+      adapter_version: "1"
+      provider_schema_version: passive-technographic-metadata-v1
+      modes: *modes
+      canonical_output_types: *outputs
+      supports_corrections: true
+      supports_tombstones: true
+      supports_retractions: true
+      max_page_size: 100
+      max_window_days: 30
+      cost_per_request: 0
+
+  - source_id: licensed-cloud-asset-observations
+    display_name: Licensed Passive Cloud Asset Observations
+    canonical_url: https://example.invalid/cloud-asset-observations/
+    category: passive_exposure
+    status: candidate
+    freshness_max_age_seconds: 21600
+    commercial_use_cases: *use_cases
+    candidate_origin: lot-16
+    monthly_cost_limit: 0
+    metadata: *disabled_metadata
+    adapter:
+      adapter_id: licensed-cloud-asset-observations
+      adapter_version: "1"
+      provider_schema_version: passive-cloud-asset-metadata-v1
+      modes: *modes
+      canonical_output_types: *outputs
+      supports_corrections: true
+      supports_tombstones: true
+      supports_retractions: true
+      max_page_size: 100
+      max_window_days: 30
+      cost_per_request: 0

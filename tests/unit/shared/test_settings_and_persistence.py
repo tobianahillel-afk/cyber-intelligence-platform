@@ -105,6 +105,9 @@ def test_database_metadata_contains_foundation_tables() -> None:
         "organization_merge_candidates",
         "organization_relationships",
         "organizations",
+        "passive_assets",
+        "passive_observation_snapshots",
+        "passive_technologies",
         "procurement_contract_parties",
         "procurement_contracts",
         "procurement_procedures",
@@ -166,6 +169,9 @@ def test_metadata_creates_on_sqlite() -> None:
     assert get_metadata().tables["incident_claim_snapshots"].foreign_keys
     assert get_metadata().tables["threat_indicator_snapshots"].foreign_keys
     assert get_metadata().tables["threat_indicator_relations"].foreign_keys
+    assert get_metadata().tables["passive_assets"].foreign_keys
+    assert get_metadata().tables["passive_observation_snapshots"].foreign_keys
+    assert get_metadata().tables["passive_technologies"].foreign_keys
 
 
 def test_database_url_is_required() -> None:

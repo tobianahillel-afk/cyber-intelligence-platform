@@ -1,0 +1,240 @@
+.passive-warning {
+  border: 1px solid color-mix(in srgb, var(--warning) 48%, transparent);
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--warning) 10%, var(--surface));
+  padding: 14px 16px;
+  color: var(--text-primary);
+  line-height: 1.55;
+}
+
+.passive-heading {
+  align-items: flex-start;
+  gap: 20px;
+}
+
+.passive-filters {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(150px, 1fr));
+  gap: 12px;
+  width: min(100%, 860px);
+}
+
+.passive-filters label {
+  display: grid;
+  gap: 6px;
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.passive-filters input,
+.passive-filters select {
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface-raised);
+  padding: 9px 10px;
+  color: var(--text-primary);
+  font: inherit;
+  text-transform: none;
+}
+
+.passive-filters button {
+  align-self: end;
+  min-height: 40px;
+}
+
+.passive-table-wrap {
+  overflow-x: auto;
+}
+
+.passive-table {
+  width: 100%;
+  min-width: 1160px;
+  border-collapse: collapse;
+}
+
+.passive-table th,
+.passive-table td {
+  border-bottom: 1px solid var(--border);
+  padding: 14px;
+  text-align: left;
+  vertical-align: top;
+}
+
+.passive-table th {
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.passive-table td {
+  min-width: 190px;
+}
+
+.passive-table td > strong,
+.passive-table td > span {
+  display: block;
+  margin-top: 5px;
+}
+
+.passive-link {
+  display: block;
+  margin-bottom: 7px;
+  color: var(--accent-strong);
+  font-weight: 800;
+  overflow-wrap: anywhere;
+}
+
+.passive-muted {
+  color: var(--text-muted);
+  font-size: 0.82rem;
+  overflow-wrap: anywhere;
+}
+
+.passive-state {
+  display: inline-flex;
+  width: fit-content;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 4px 9px;
+  font-size: 0.75rem;
+  font-weight: 800;
+}
+
+.passive-state-current {
+  border-color: color-mix(in srgb, var(--success) 48%, transparent);
+}
+
+.passive-state-expired,
+.passive-state-retracted,
+.passive-state-deleted {
+  border-color: color-mix(in srgb, var(--danger) 44%, transparent);
+}
+
+.passive-state-corrected,
+.passive-state-historical {
+  border-color: color-mix(in srgb, var(--warning) 50%, transparent);
+}
+
+.passive-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 9px;
+}
+
+.passive-badges span {
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 3px 7px;
+  color: var(--text-muted);
+  font-size: 0.72rem;
+}
+
+.passive-conflict {
+  color: var(--danger);
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.passive-definition-list,
+.passive-observation-facts {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.passive-definition-list > div,
+.passive-observation-facts > div {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface-raised);
+  padding: 12px;
+}
+
+.passive-definition-list dt,
+.passive-observation-facts dt {
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.passive-definition-list dd,
+.passive-observation-facts dd {
+  margin: 6px 0 0;
+  overflow-wrap: anywhere;
+}
+
+.passive-observation-list {
+  display: grid;
+  gap: 14px;
+}
+
+.passive-observation {
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--surface-raised);
+  padding: 16px;
+}
+
+.passive-observation header {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 14px;
+}
+
+.passive-observation h3 {
+  margin: 8px 0 0;
+}
+
+.passive-observation time {
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.passive-observation > a {
+  display: inline-flex;
+  margin-top: 12px;
+  color: var(--accent-strong);
+  font-weight: 700;
+}
+
+.passive-technology {
+  display: grid;
+  gap: 5px;
+  margin-top: 14px;
+  border-left: 3px solid var(--accent-strong);
+  padding: 10px 12px;
+  background: color-mix(in srgb, var(--accent-strong) 8%, transparent);
+}
+
+.passive-technology small {
+  color: var(--text-muted);
+}
+
+@media (max-width: 1000px) {
+  .passive-filters,
+  .passive-definition-list,
+  .passive-observation-facts {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 680px) {
+  .passive-filters,
+  .passive-definition-list,
+  .passive-observation-facts {
+    grid-template-columns: 1fr;
+  }
+
+  .passive-observation header {
+    display: grid;
+  }
+}

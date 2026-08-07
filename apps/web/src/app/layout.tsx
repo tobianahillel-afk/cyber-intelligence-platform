@@ -11,6 +11,7 @@ import "../features/public-footprint/public-footprint.css";
 import "../features/vulnerabilities/vulnerabilities.css";
 import "../features/incidents/incidents.css";
 import "../features/threat-telemetry/threat-telemetry.css";
+import "../features/passive-exposure/passive-exposure.css";
 
 export const metadata: Metadata = {
   title: "Cyber Intelligence Platform",

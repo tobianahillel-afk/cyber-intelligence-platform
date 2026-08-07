@@ -27,7 +27,8 @@ A lot is complete only when one final commit passes every applicable backend, fr
 - Provider payloads never write directly to company, score, alert, or opportunity tables.
 - Evidence, claims, observations, resolved facts, service mappings, signals, hypotheses, and analyst decisions remain distinct.
 - Global vulnerability knowledge never proves that an organization uses an affected product or is exposed.
-- An attacker allegation, public incident claim, or IOC never independently proves that an organization was compromised.
+- An attacker allegation, public incident claim, IOC, or passive observation never independently proves that an organization was compromised or exposed.
+- A technology mention or observed version never independently proves vulnerability applicability.
 - Duplicate reporting increases corroboration; it does not duplicate entities, incidents, signals, alerts, or opportunities.
 - Corrections, retractions, suppression, deletion, and authorization expiry propagate to derived data.
 - Historical backfills must not flood the current analyst Inbox.
@@ -63,7 +64,7 @@ A lot is complete only when one final commit passes every applicable backend, fr
 | 13 | Vulnerability knowledge and exploitation-state reconciliation | `IMPLEMENTED_VALIDATED` |
 | 14 | Live incidents, ransomware claims, and official confirmation | `IMPLEMENTED_VALIDATED` |
 | 15 | Malicious infrastructure, phishing, IOC, and attack telemetry | `IMPLEMENTED_VALIDATED` |
-| 16 | Passive exposure and technographic observations | `PLANNED_LOCKED` |
+| 16 | Passive exposure and technographic observations | `IMPLEMENTED_VALIDATED` |
 | 17 | Vendor advisories, product versions, and applicability | `PLANNED_LOCKED` |
 | 18 | News, regulatory, corporate-disclosure, and change signals | `PLANNED_LOCKED` |
 | 19 | Providers, customers, partners, and supply-chain relationships | `PLANNED_LOCKED` |
@@ -205,35 +206,40 @@ A lot is complete only when one final commit passes every applicable backend, fr
 
 ## Lot 16 — Passive exposure and technographic observations
 
-**Status:** `PLANNED_LOCKED`
+**Status:** `IMPLEMENTED_VALIDATED`
 
-**Primary business outcome:** Build organization-linked passive exposure and technology observations from approved providers so analysts can identify reviewable product, cloud, certificate, DNS, ASN, and service context without active scanning.
+**Outcome:** Release `0.17.0` with canonical passive assets, immutable provider observations, explicit chronology and expiration, source-aware organization attribution with reviewable risks, separated technology evidence levels, reversible persistence, protected APIs, and the Passive Exposure workspace without active validation or exposure claims.
 
 **Dependencies:** Lots 08, 10, 13, 15, and organization identity contracts.
 
 **Deliverables:**
 
-- passive asset, hostname, certificate, DNS, ASN, cloud, service, port, product, and technology observations;
-- exact observation time, provider, confidence, expiry, and historical state;
-- organization-link confidence and review workflow;
-- explicit distinction among technology mention, passive observation, version observation, affected version, and verified exposure;
-- authorized provider adapters and cost/quota controls;
-- suppression and opt-out handling;
-- no active probes, exploitation, credential use, or access-control bypass;
-- asset and technology views with provenance and freshness.
+- canonical public domains, hostnames, globally routable IP addresses, certificate fingerprints, ASNs, cloud resources, services, ports, products, and technology observations;
+- exact observation, publication, modification, expiration, confidence, provider, independence, correction, and historical fields;
+- immutable snapshots and an idempotent source-aware current projection;
+- exact, candidate, review-required, rejected, and unresolved organization links;
+- explicit shared-hosting, CDN, reseller, subsidiary, abandoned-domain, and reassigned-address attribution risks;
+- explicit distinction among technology mention, passive observation, observed version, vulnerability applicability, and verified exposure;
+- deterministic provider metadata mappings and governed provider candidates;
+- three provider candidates that remain unauthorized, hostless, pathless, unscheduled, without adapters, and `executable: false`;
+- protected asset inventory and immutable observation timeline views;
+- suppression-compatible source revisions and correction/deletion history;
+- no active probes, authentication, service connection, exploitation, credential use, applicability assessment, exposure verification, opportunity creation, or outreach.
 
 **Required tests:**
 
-- shared hosting, CDN, reseller, subsidiary, and abandoned-domain false matches;
-- certificate and DNS chronology;
-- passive observation expiration;
+- shared hosting, CDN, reseller, subsidiary, abandoned-domain, and reassigned-address false matches;
+- public asset normalization and rejection of internal or non-global values;
+- certificate, DNS, cloud, service, and technology chronology;
+- passive observation expiration and historical state;
 - technology without version and version without vulnerability applicability;
-- provider correction/deletion;
-- organization-link review;
-- no live-network unit tests or active scans;
+- provider correction, retraction, deletion, and replay idempotence;
+- organization-link conflict and review handling;
+- provider policy and portfolio non-executability;
+- no live-network unit tests or active validation path;
 - migration, API, UI, and full regression gates.
 
-**Exit gate:** Passive observations are useful and reviewable while every exposure conclusion remains bounded by evidence, time, identity confidence, and source authorization.
+**Exit gate:** Passive observations are searchable, historical, attributable, and reviewable while exposure and applicability remain explicitly unassessed and every provider remains non-executable until separately authorized.
 
 ## Lot 17 — Vendor advisories, product versions, and applicability
 
@@ -723,8 +729,8 @@ A lot is complete only when one final commit passes every applicable backend, fr
 
 ## Current release boundary
 
-Version `0.16.0` includes lots `00–15`.
+Version `0.17.0` implements and validates lots `00–16`. Lot 16 installs canonical passive assets, immutable provider observation snapshots, explicit current/historical/expired/corrected/retracted/deleted states, organization-link confidence and attribution risks, technology evidence levels, reversible persistence, protected APIs, and the Passive Exposure workspace.
 
-Lot 15 installs canonical threat-indicator knowledge, immutable source snapshots, explicit malicious/suspicious/benign/sinkholed/expired/historical/shared-infrastructure/unknown/retracted states, campaign and malware relations, reversible persistence, protected APIs, and the Threat Intelligence workspace. Selected STIX/TAXII, phishing, passive-DNS, certificate, and malware-metadata schemas are installed behind non-executable source candidates. The release does not authorize active prospect scanning, direct connections to suspicious infrastructure, malware or victim-file downloads, credential use, autonomous opportunity creation, or outreach. Global technical telemetry cannot independently label a named organization compromised or exposed.
+Its provider schemas remain behind unauthorized, unscheduled, non-executable candidates without registered adapters. The release does not authorize active probes, authentication, service connection, exploitation, credential use, applicability assessment, exposure verification, autonomous opportunity creation, or outreach. Passive metadata cannot independently label a named organization vulnerable, exposed, or compromised.
 
-Lot 16 must start from the merged Lot 15 `main` commit and must preserve the distinction among a technology mention, a passive observation, an observed version, vulnerability applicability, and verified exposure.
+Lot 17 is the next locked implementation lot. It must start from the merged Lot 16 `main` commit and preserve the distinction between observed technology evidence, vendor version ranges, applicability, and verified exposure.
