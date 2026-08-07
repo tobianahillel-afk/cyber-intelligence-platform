@@ -1,0 +1,143 @@
+name: Lot 19 bootstrap
+
+on:
+  push:
+    branches:
+      - automation/lot19-bootstrap
+
+permissions:
+  contents: write
+  issues: write
+  pull-requests: read
+
+jobs:
+  bootstrap:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      GH_TOKEN: ${{ github.token }}
+      LOT18_PR: "51"
+      LOT19_BRANCH: agent/provider-relationship-intelligence
+    steps:
+      - name: Verify Lot 18 merge and release
+        id: lot18
+        shell: bash
+        run: |
+          merged="$(gh api "repos/${GITHUB_REPOSITORY}/pulls/${LOT18_PR}" --jq .merged)"
+          if [ "$merged" != "true" ]; then
+            echo "Lot 18 PR #${LOT18_PR} is not merged; refusing Lot 19 bootstrap." >&2
+            exit 1
+          fi
+          merge_sha="$(gh api "repos/${GITHUB_REPOSITORY}/pulls/${LOT18_PR}" --jq .merge_commit_sha)"
+          if [ -z "$merge_sha" ] || [ "$merge_sha" = "null" ]; then
+            echo "Lot 18 merge SHA is unavailable." >&2
+            exit 1
+          fi
+          package_content="$(gh api "repos/${GITHUB_REPOSITORY}/contents/src/cip/__init__.py?ref=${merge_sha}" --jq .content | tr -d '\n' | base64 -d)"
+          if ! printf '%s' "$package_content" | grep -q '__version__ = "0.19.0"'; then
+            echo "Merged Lot 18 commit does not contain release 0.19.0." >&2
+            exit 1
+          fi
+          echo "merge_sha=${merge_sha}" >> "$GITHUB_OUTPUT"
+
+      - name: Create exact Lot 19 branch
+        shell: bash
+        env:
+          MERGE_SHA: ${{ steps.lot18.outputs.merge_sha }}
+        run: |
+          encoded_branch="${LOT19_BRANCH//\//%2F}"
+          existing="$(gh api "repos/${GITHUB_REPOSITORY}/git/ref/heads/${encoded_branch}" --jq .object.sha 2>/dev/null || true)"
+          if [ -n "$existing" ]; then
+            if [ "$existing" != "$MERGE_SHA" ]; then
+              echo "Existing Lot 19 branch is not at the exact Lot 18 merge SHA." >&2
+              exit 1
+            fi
+          else
+            gh api -X POST "repos/${GITHUB_REPOSITORY}/git/refs" \
+              -f ref="refs/heads/${LOT19_BRANCH}" \
+              -f sha="$MERGE_SHA" >/dev/null
+          fi
+
+      - name: Create Lot 19 tracking issue
+        shell: bash
+        env:
+          MERGE_SHA: ${{ steps.lot18.outputs.merge_sha }}
+        run: |
+          existing="$(gh issue list --repo "${GITHUB_REPOSITORY}" --state all --limit 100 --json number,title --jq '.[] | select(.title == "Lot 19: temporal provider, customer, partner, and supply-chain relationships") | .number' | head -1)"
+          if [ -n "$existing" ]; then
+            echo "Lot 19 issue already exists: #${existing}"
+            exit 0
+          fi
+          cat > /tmp/lot19.md <<EOF
+          ## Outcome
+
+          Build a temporal, source-aware relationship-intelligence layer for providers, customers, partners, suppliers, integrators, MSSPs, auditors, insurers, consultants, resellers, and other relevant third parties without turning marketing claims or historical relationships into current contractual facts.
+
+          ## Exact dependency boundary
+
+          - merged Lot 18 release `0.19.0`;
+          - exact Lot 18 squash commit: `${MERGE_SHA}`;
+          - organization identity and candidate-linking foundations from Lot 08;
+          - procurement contract history and provider parties from Lot 11;
+          - corporate public-footprint evidence from Lot 12;
+          - corporate/regulatory change events from Lot 18.
+
+          Lot 19 implementation branch: `agent/provider-relationship-intelligence`, created exactly from `${MERGE_SHA}`.
+
+          ## Required capability
+
+          - canonical directed organization-to-organization relationships with explicit roles;
+          - provider, customer, partner, supplier, reseller, distributor, integrator, MSSP, auditor, insurer, consultant, cloud/service provider, and other relationship types;
+          - effective-from, effective-to, first-seen, last-seen, publication, update, and persistence times kept distinct;
+          - explicit relationship evidence classes such as contractual/public-award evidence, official disclosure, partner directory, case study, public customer claim, media report, and analyst inference;
+          - current, historical, candidate, disputed, corrected, retracted, and review-required states;
+          - directionality and role preservation: customer-of is not provider-to, and an integrator is not automatically an incumbent MSSP;
+          - organization-link confidence and ambiguity handling on both ends;
+          - immutable source revisions and correction/retraction propagation;
+          - deterministic duplicate convergence and source-independence/syndication handling;
+          - persisted search/detail/timeline APIs and analyst workspace;
+          - relationship evidence remains separate from service needs, scoring, opportunities, contacts, and outreach.
+
+          ## Safety and evidence boundary
+
+          ```text
+          marketing claim
+          != contract evidence
+          != current incumbent
+          != exclusive relationship
+          != service need
+          != opportunity
+          != authorization to contact
+          ```
+
+          No private account access, credential use, paywall/authentication bypass, social-network scraping without explicit authorization, contact enrichment, autonomous opportunity creation, or outreach.
+
+          ## Required tests
+
+          - relationship direction and inverse-role correctness;
+          - current versus historical relationships;
+          - overlapping and conflicting time ranges;
+          - marketing/customer-logo claim versus contractual/public-award evidence;
+          - correction, retraction, and provider change propagation;
+          - duplicate/syndicated source handling;
+          - ambiguous organization identities on either endpoint;
+          - exact and candidate relationship resolution;
+          - no implicit exclusivity or current-incumbent inference;
+          - service mapping kept separate from raw relationship evidence;
+          - immutable history and replay idempotence;
+          - reversible migration, protected APIs, analyst UI, architecture, typing, dependency audits, coverage, and full regression gates.
+
+          ## Exit gate
+
+          Analysts can determine who appears to provide, buy, integrate, audit, insure, resell, or partner with whom, during which period, from which evidence, and with what confidence, while clearly distinguishing public claims from contractual evidence and historical relationships from current incumbency.
+          EOF
+          gh issue create \
+            --repo "${GITHUB_REPOSITORY}" \
+            --title "Lot 19: temporal provider, customer, partner, and supply-chain relationships" \
+            --body-file /tmp/lot19.md >/dev/null
+
+      - name: Remove bootstrap branch
+        if: success()
+        shell: bash
+        run: |
+          gh api -X DELETE "repos/${GITHUB_REPOSITORY}/git/refs/heads/automation%2Flot19-bootstrap" || true
