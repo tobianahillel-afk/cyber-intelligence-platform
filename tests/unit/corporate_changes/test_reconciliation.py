@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import replace
 from datetime import UTC, datetime, timedelta
-from uuid import uuid4
+from uuid import UUID, uuid4
 
 import pytest
 
@@ -200,10 +200,9 @@ def _claim(
     published_at: datetime | None = None,
     modified_at: datetime | None = None,
     syndication_group_key: str | None = None,
-    organization_id: object | None = None,
+    organization_id: UUID | None = None,
     organization_link_status: OrganizationLinkStatus = OrganizationLinkStatus.CANDIDATE,
 ) -> ChangeClaimSnapshot:
-    resolved_id = organization_id if hasattr(organization_id, "hex") else None
     return ChangeClaimSnapshot(
         source_id=source_id,
         source_kind=source_kind,
@@ -216,7 +215,7 @@ def _claim(
         title="Example company announces a digital program",
         excerpt=excerpt,
         claimed_organization_name="Example Company",
-        organization_id=resolved_id,
+        organization_id=organization_id,
         organization_link_status=organization_link_status,
         published_at=published_at or NOW - timedelta(hours=2),
         modified_at=modified_at or NOW - timedelta(hours=1),
