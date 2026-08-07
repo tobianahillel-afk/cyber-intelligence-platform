@@ -3,7 +3,7 @@ from __future__ import annotations
 from uuid import UUID
 
 from cip.adapters.sources.relationship_catalogs.schemas import PublicRelationshipRecord
-from cip.modules.relationship_intelligence.application.procurement_adapter import (
+from cip.modules.relationship_intelligence.application.bundles import (
     RelationshipProjectionBundle,
 )
 from cip.modules.relationship_intelligence.domain.models import (
