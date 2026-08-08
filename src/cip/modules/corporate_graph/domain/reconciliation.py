@@ -29,7 +29,11 @@ def reconcile_node_snapshots(
     current = require_aware_utc(now, field_name="now")
     ordered = sorted(items, key=lambda item: item.observed_at)
     latest = ordered[-1]
-    current_items = tuple(item for item in ordered if item.is_current_at(current))
+    current_items = (
+        ()
+        if latest.suppressed
+        else tuple(item for item in ordered if item.is_current_at(current))
+    )
     organization_ids = {item.organization_id for item in current_items if item.organization_id}
     organization_id = next(iter(organization_ids)) if len(organization_ids) == 1 else None
     active_items = current_items or (latest,)
@@ -41,7 +45,7 @@ def reconcile_node_snapshots(
         source_count=len({item.source_module for item in active_items}),
         confidence=max(item.confidence for item in active_items),
         current=bool(current_items),
-        suppressed=not current_items and all(item.suppressed for item in active_items),
+        suppressed=latest.suppressed,
         first_observed_at=ordered[0].observed_at,
         last_observed_at=latest.observed_at,
     )
