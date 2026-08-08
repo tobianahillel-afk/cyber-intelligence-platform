@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import datetime
 from enum import StrEnum
 from uuid import UUID, uuid4
@@ -49,7 +49,7 @@ class EntityResolutionCandidate:
     reasons: tuple[str, ...]
     created_at: datetime
     state: ResolutionCandidateState = ResolutionCandidateState.PENDING
-    candidate_id: UUID = uuid4()
+    candidate_id: UUID = field(default_factory=uuid4)
     conflicting_organization_ids: tuple[UUID, ...] = ()
     requires_review: bool = True
 
@@ -87,7 +87,7 @@ class ResolutionDecision:
     actor: str
     reason: str
     decided_at: datetime
-    decision_id: UUID = uuid4()
+    decision_id: UUID = field(default_factory=uuid4)
     organization_id: UUID | None = None
     reverses_decision_id: UUID | None = None
     blast_radius_fingerprint: str | None = None
