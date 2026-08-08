@@ -146,7 +146,7 @@ def _decision(
     reverses_decision_id,
     fingerprint: str,
 ) -> ResolutionDecision:
-    return ResolutionDecision.create(
+    return ResolutionDecision(
         candidate_id=candidate_id,
         node_key="brand:restore",
         decision_type=decision_type,
