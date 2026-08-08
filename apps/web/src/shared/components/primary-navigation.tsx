@@ -7,6 +7,7 @@ const navigation = [
   { label: "Command Center", href: null },
   { label: "Opportunities", href: "/" },
   { label: "Contracts", href: "/contracts" },
+  { label: "Relationships", href: "/relationships" },
   { label: "Organizations", href: null },
   { label: "Research", href: "/research" },
   { label: "Vulnerabilities", href: "/vulnerabilities" },

@@ -48,6 +48,12 @@ def test_settings_have_safe_local_defaults() -> None:
     assert settings.corporate_change_source_portfolio_path == Path(
         "policies/source_portfolio.corporate_changes.yml"
     )
+    assert settings.relationship_source_registry_path == Path(
+        "policies/sources.relationships.yml"
+    )
+    assert settings.relationship_source_portfolio_path == Path(
+        "policies/source_portfolio.relationships.yml"
+    )
     assert settings.greenhouse_board_registry_path == Path(
         "policies/greenhouse_boards.yml"
     )
@@ -90,6 +96,7 @@ def test_database_metadata_contains_foundation_tables() -> None:
         "adapter_capabilities",
         "applicability_assessment_snapshots",
         "backfill_partitions",
+        "business_relationships",
         "collection_checkpoints",
         "collection_circuits",
         "collection_dead_letters",
@@ -129,6 +136,8 @@ def test_database_metadata_contains_foundation_tables() -> None:
         "public_resource_versions",
         "public_resources",
         "raw_observations",
+        "relationship_contexts",
+        "relationship_evidence_snapshots",
         "source_health",
         "source_portfolio",
         "source_portfolio_audit",
@@ -192,6 +201,9 @@ def test_metadata_creates_on_sqlite() -> None:
     assert get_metadata().tables["corporate_change_events"].foreign_keys
     assert get_metadata().tables["corporate_change_claim_snapshots"].foreign_keys
     assert get_metadata().tables["corporate_change_service_mappings"].foreign_keys
+    assert get_metadata().tables["business_relationships"].foreign_keys
+    assert get_metadata().tables["relationship_evidence_snapshots"].foreign_keys
+    assert get_metadata().tables["relationship_contexts"].foreign_keys
 
 
 def test_database_url_is_required() -> None:
