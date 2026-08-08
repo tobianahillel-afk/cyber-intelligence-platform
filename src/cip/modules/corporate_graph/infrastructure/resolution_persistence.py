@@ -95,10 +95,13 @@ def record_resolution_decision(
         raise ValueError("resolution decision node does not match candidate")
     if preview.node_key != decision.node_key:
         raise ValueError("blast-radius preview node does not match decision")
+    if decision.organization_id is not None:
+        expected_target = f"organization:{decision.organization_id}"
+        if preview.target_organization_key != expected_target:
+            raise ValueError("blast-radius preview target does not match decision")
+        _require_organization(session, decision.organization_id)
     if preview.fingerprint != decision.blast_radius_fingerprint:
         raise ValueError("blast-radius preview changed; refresh before deciding")
-    if decision.organization_id is not None:
-        _require_organization(session, decision.organization_id)
     if decision.reverses_decision_id is not None:
         prior = session.get(EntityResolutionDecisionRecord, decision.reverses_decision_id)
         if prior is None or prior.node_key != decision.node_key:
