@@ -8,6 +8,7 @@ from hashlib import sha256
 class BlastRadiusPreview:
     node_key: str
     target_organization_key: str | None
+    resolution_state_key: str = "unbound"
     graph_nodes: int = 0
     graph_edges: int = 0
     organization_identities: int = 0
@@ -23,6 +24,8 @@ class BlastRadiusPreview:
             value = self.target_organization_key.strip()
             if not value or len(value) > 500:
                 raise ValueError("target_organization_key must be between 1 and 500 characters")
+        if not self.resolution_state_key.strip() or len(self.resolution_state_key) > 200:
+            raise ValueError("resolution_state_key must be between 1 and 200 characters")
         values = (
             self.graph_nodes,
             self.graph_edges,
@@ -55,6 +58,7 @@ class BlastRadiusPreview:
             (
                 self.node_key,
                 self.target_organization_key or "",
+                self.resolution_state_key,
                 str(self.graph_nodes),
                 str(self.graph_edges),
                 str(self.organization_identities),
