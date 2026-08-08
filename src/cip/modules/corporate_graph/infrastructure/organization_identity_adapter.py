@@ -16,6 +16,7 @@ from cip.modules.organizations.infrastructure.identity_models import (
     OrganizationIdentityRecord,
     OrganizationRelationshipRecord,
 )
+from cip.modules.organizations.infrastructure.persistence_time import coerce_utc
 
 _IDENTITY_NODE_TYPES = {
     "legal_unit": GraphNodeType.ORGANIZATION,
@@ -52,7 +53,7 @@ def _identity_node(record: OrganizationIdentityRecord) -> GraphNodeSnapshot:
         source_entity_id=record.id,
         organization_id=record.organization_id,
         source_url=record.source_url,
-        observed_at=record.observed_at,
+        observed_at=coerce_utc(record.observed_at),
         valid_from=_date_to_datetime(record.valid_from),
         valid_until=_date_to_datetime(record.valid_until),
         confidence=record.confidence,
@@ -72,7 +73,7 @@ def _identity_binding_edge(record: OrganizationIdentityRecord) -> GraphEdgeSnaps
         source_evidence_class="resolved_identity",
         claim_type=GraphClaimType.ASSERTION,
         review_state=GraphReviewState.CONFIRMED,
-        observed_at=record.updated_at,
+        observed_at=coerce_utc(record.updated_at),
         source_url=record.source_url,
         valid_from=_date_to_datetime(record.valid_from),
         valid_until=_date_to_datetime(record.valid_until),
@@ -97,7 +98,7 @@ def _structural_edge(record: OrganizationRelationshipRecord) -> GraphEdgeSnapsho
         source_evidence_class="structural_claim",
         claim_type=GraphClaimType.ASSERTION,
         review_state=GraphReviewState.CONFIRMED,
-        observed_at=record.observed_at,
+        observed_at=coerce_utc(record.observed_at),
         source_url=record.source_url,
         valid_from=_date_to_datetime(record.valid_from),
         valid_until=_date_to_datetime(record.valid_until),
