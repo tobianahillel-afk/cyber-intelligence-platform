@@ -10,6 +10,9 @@ from cip.modules.corporate_graph.application.batches import GraphProjectionBatch
 from cip.modules.corporate_graph.infrastructure.applicability_adapter import (
     load_applicability_graph,
 )
+from cip.modules.corporate_graph.infrastructure.candidate_generation import (
+    generate_resolution_candidates,
+)
 from cip.modules.corporate_graph.infrastructure.corporate_change_adapter import (
     load_corporate_change_graph,
 )
@@ -34,6 +37,7 @@ class GraphRefreshResult:
     edge_ids: tuple[UUID, ...]
     node_snapshot_count: int
     edge_snapshot_count: int
+    candidate_count: int
 
 
 def refresh_corporate_graph(
@@ -54,9 +58,11 @@ def refresh_corporate_graph(
         batch = batch.combine(loader(session))
     node_ids = persist_graph_nodes(session, batch.nodes, now=refreshed_at)
     edge_ids = persist_graph_edges(session, batch.edges, now=refreshed_at)
+    candidates = generate_resolution_candidates(session, now=refreshed_at)
     return GraphRefreshResult(
         node_ids=node_ids,
         edge_ids=edge_ids,
         node_snapshot_count=len(batch.nodes),
         edge_snapshot_count=len(batch.edges),
+        candidate_count=len(candidates),
     )
