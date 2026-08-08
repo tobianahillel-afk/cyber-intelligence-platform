@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from uuid import UUID
 
-from sqlalchemy import func, or_, select
+from sqlalchemy import Select, func, or_, select
 from sqlalchemy.orm import Session
 
 from cip.modules.corporate_graph.domain.blast_radius import BlastRadiusPreview
@@ -105,6 +105,6 @@ def _edge_count(session: Session, node_keys: tuple[str, ...]) -> int:
     )
 
 
-def _count(session: Session, statement: object) -> int:
-    value = session.scalar(statement)  # type: ignore[arg-type]
+def _count(session: Session, statement: Select[tuple[int]]) -> int:
+    value = session.scalar(statement)
     return int(value or 0)
