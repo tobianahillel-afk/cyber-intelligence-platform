@@ -161,6 +161,7 @@ def test_resolution_merge_checks_target_fingerprint_and_can_be_split(
     detail = client.get(
         f"/v1/graph/resolution-candidates/{first['id']}", headers=HEADERS
     ).json()
+    initial_fingerprint = detail["blast_radius"]["fingerprint"]
 
     wrong_target = client.post(
         f"/v1/graph/resolution-candidates/{first['id']}/decisions",
@@ -170,7 +171,7 @@ def test_resolution_merge_checks_target_fingerprint_and_can_be_split(
             "actor": "analyst@example.test",
             "reason": "intentional target mismatch test",
             "organization_id": second["candidate_organization_id"],
-            "blast_radius_fingerprint": detail["blast_radius"]["fingerprint"],
+            "blast_radius_fingerprint": initial_fingerprint,
         },
     )
     assert wrong_target.status_code == 409
@@ -183,7 +184,7 @@ def test_resolution_merge_checks_target_fingerprint_and_can_be_split(
             "actor": "analyst@example.test",
             "reason": "reviewed external identifier evidence",
             "organization_id": first["candidate_organization_id"],
-            "blast_radius_fingerprint": detail["blast_radius"]["fingerprint"],
+            "blast_radius_fingerprint": initial_fingerprint,
         },
     )
     assert merged.status_code == 200
@@ -201,6 +202,22 @@ def test_resolution_merge_checks_target_fingerprint_and_can_be_split(
     refreshed_detail = client.get(
         f"/v1/graph/resolution-candidates/{first['id']}", headers=HEADERS
     ).json()
+    refreshed_fingerprint = refreshed_detail["blast_radius"]["fingerprint"]
+    assert refreshed_fingerprint != initial_fingerprint
+
+    stale_split = client.post(
+        f"/v1/graph/resolution-candidates/{first['id']}/decisions",
+        headers=HEADERS,
+        json={
+            "decision_type": "split",
+            "actor": "analyst@example.test",
+            "reason": "stale preview must be rejected",
+            "reverses_decision_id": merge_decision["id"],
+            "blast_radius_fingerprint": initial_fingerprint,
+        },
+    )
+    assert stale_split.status_code == 409
+
     split = client.post(
         f"/v1/graph/resolution-candidates/{first['id']}/decisions",
         headers=HEADERS,
@@ -209,7 +226,7 @@ def test_resolution_merge_checks_target_fingerprint_and_can_be_split(
             "actor": "analyst@example.test",
             "reason": "later evidence disproved the merge",
             "reverses_decision_id": merge_decision["id"],
-            "blast_radius_fingerprint": refreshed_detail["blast_radius"]["fingerprint"],
+            "blast_radius_fingerprint": refreshed_fingerprint,
         },
     )
 
