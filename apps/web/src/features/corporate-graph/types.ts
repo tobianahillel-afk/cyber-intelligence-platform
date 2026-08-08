@@ -3,6 +3,8 @@ export type GraphNodeType =
   | "establishment"
   | "group"
   | "brand"
+  | "alias"
+  | "identifier"
   | "domain"
   | "asset"
   | "technology"
