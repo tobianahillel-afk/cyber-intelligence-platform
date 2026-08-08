@@ -5,6 +5,8 @@ const NODE_TYPES = [
   "establishment",
   "group",
   "brand",
+  "alias",
+  "identifier",
   "domain",
   "asset",
   "technology",
