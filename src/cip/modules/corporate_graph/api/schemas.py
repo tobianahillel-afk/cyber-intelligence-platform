@@ -257,3 +257,4 @@ class GraphRefreshResponse(BaseModel):
     edge_count: int = Field(ge=0)
     node_snapshot_count: int = Field(ge=0)
     edge_snapshot_count: int = Field(ge=0)
+    candidate_count: int = Field(ge=0)
