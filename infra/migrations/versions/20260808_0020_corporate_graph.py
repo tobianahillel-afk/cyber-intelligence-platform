@@ -197,7 +197,11 @@ def _create_resolution_candidates() -> None:
         sa.Column("requires_review", sa.Boolean(), nullable=False),
         sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
         sa.Column("updated_at", sa.DateTime(timezone=True), nullable=False),
-        sa.ForeignKeyConstraint(["node_key"], ["corporate_graph_nodes.node_key"], ondelete="CASCADE"),
+        sa.ForeignKeyConstraint(
+            ["node_key"],
+            ["corporate_graph_nodes.node_key"],
+            ondelete="CASCADE",
+        ),
         sa.ForeignKeyConstraint(
             ["candidate_organization_id"], ["organizations.id"], ondelete="CASCADE"
         ),
@@ -264,7 +268,11 @@ def _create_resolution_bindings() -> None:
         sa.Column("current", sa.Boolean(), nullable=False),
         sa.Column("bound_at", sa.DateTime(timezone=True), nullable=False),
         sa.Column("updated_at", sa.DateTime(timezone=True), nullable=False),
-        sa.ForeignKeyConstraint(["node_key"], ["corporate_graph_nodes.node_key"], ondelete="CASCADE"),
+        sa.ForeignKeyConstraint(
+            ["node_key"],
+            ["corporate_graph_nodes.node_key"],
+            ondelete="CASCADE",
+        ),
         sa.ForeignKeyConstraint(["organization_id"], ["organizations.id"], ondelete="CASCADE"),
         sa.ForeignKeyConstraint(
             ["candidate_id"], ["entity_resolution_candidates.id"], ondelete="SET NULL"
