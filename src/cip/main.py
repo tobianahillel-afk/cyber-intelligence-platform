@@ -4,6 +4,7 @@ from fastapi import FastAPI
 
 from cip import __version__
 from cip.modules.corporate_changes.api.routes import router as corporate_changes_router
+from cip.modules.corporate_graph.api.routes import router as corporate_graph_router
 from cip.modules.incident_intelligence.api.routes import router as incident_router
 from cip.modules.opportunities.api.routes import router as opportunities_router
 from cip.modules.organizations.api.routes import router as organizations_router
@@ -33,8 +34,8 @@ def create_app() -> FastAPI:
             "vulnerability knowledge, public incident intelligence, defensive "
             "threat telemetry, passive technographic observations, vendor advisory "
             "applicability, corporate and regulatory change intelligence, temporal "
-            "organization relationship intelligence, and evidence-backed opportunity "
-            "discovery."
+            "organization relationship intelligence, reversible entity resolution, "
+            "temporal corporate graph context, and evidence-backed opportunity discovery."
         ),
     )
     application.include_router(source_governance_router)
@@ -47,6 +48,7 @@ def create_app() -> FastAPI:
     application.include_router(incident_router)
     application.include_router(corporate_changes_router)
     application.include_router(relationship_router)
+    application.include_router(corporate_graph_router)
     application.include_router(threat_telemetry_router)
     application.include_router(passive_exposure_router)
     application.include_router(organizations_router)
