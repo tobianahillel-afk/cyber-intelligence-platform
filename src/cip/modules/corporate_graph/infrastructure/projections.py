@@ -7,20 +7,15 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from cip.modules.corporate_graph.domain.models import GraphEdgeSnapshot, GraphNodeSnapshot
-from cip.modules.corporate_graph.domain.reconciliation import (
-    reconcile_edge_snapshots,
-    reconcile_node_snapshots,
-)
+from cip.modules.corporate_graph.domain.reconciliation import reconcile_edge_snapshots
 from cip.modules.corporate_graph.infrastructure.models import (
     CorporateGraphEdgeRecord,
     CorporateGraphEdgeSnapshotRecord,
     CorporateGraphNodeRecord,
     CorporateGraphNodeSnapshotRecord,
 )
-from cip.modules.corporate_graph.infrastructure.projection_hydration import (
-    edge_snapshots,
-    node_snapshots,
-)
+from cip.modules.corporate_graph.infrastructure.node_state import refresh_node_state
+from cip.modules.corporate_graph.infrastructure.projection_hydration import edge_snapshots
 from cip.modules.corporate_graph.infrastructure.projection_payloads import (
     graph_edge_digest,
     graph_node_digest,
@@ -41,7 +36,7 @@ def persist_graph_nodes(
         _insert_node_snapshot(session, node.id, snapshot, now=persisted_at)
         touched.add(node.id)
     for node_id in touched:
-        _refresh_node(session, node_id, now=persisted_at)
+        refresh_node_state(session, node_id, now=persisted_at)
     session.flush()
     return tuple(sorted(touched, key=str))
 
@@ -143,22 +138,6 @@ def _insert_node_snapshot(
     session.add(record)
     session.flush()
     return record
-
-
-def _refresh_node(session: Session, node_id: UUID, *, now: datetime) -> None:
-    record = session.get(CorporateGraphNodeRecord, node_id)
-    if record is None:
-        raise ValueError("graph node disappeared during reconciliation")
-    projection = reconcile_node_snapshots(node_snapshots(session, node_id), now=now)
-    record.display_name = projection.display_name
-    record.organization_id = projection.organization_id
-    record.source_count = projection.source_count
-    record.confidence = projection.confidence
-    record.current = projection.current
-    record.suppressed = projection.suppressed
-    record.first_observed_at = projection.first_observed_at
-    record.last_observed_at = projection.last_observed_at
-    record.updated_at = now
 
 
 def _resolve_edge(
