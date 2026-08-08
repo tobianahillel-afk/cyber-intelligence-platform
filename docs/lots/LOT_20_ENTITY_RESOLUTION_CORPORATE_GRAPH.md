@@ -2,11 +2,11 @@
 
 ## Status
 
-Implementation in progress on `agent/entity-resolution-knowledge-graph`.
+Implementation is complete on `agent/entity-resolution-knowledge-graph`. Functional candidate `993c2853b2475a336b21254e7067b5be34d0857e` passed the complete standard CI as run #1087.
 
 Target release: `0.21.0`.
 
-The lot is not complete until the exact final pull-request head passes every standard backend and frontend gate and is merged into `main`.
+The release remains merge-authorized only when the exact post-version/documentation pull-request head also passes every standard backend and frontend gate and is merged into `main`.
 
 ## Outcome
 

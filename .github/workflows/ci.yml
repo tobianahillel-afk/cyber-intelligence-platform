@@ -6,7 +6,7 @@ on:
   pull_request:
 
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
@@ -120,29 +120,3 @@ jobs:
 
       - name: Build
         run: npm run build
-
-  lot20-release-sync:
-    if: github.event_name == 'pull_request' && github.head_ref == 'agent/entity-resolution-knowledge-graph'
-    runs-on: ubuntu-24.04
-    timeout-minutes: 5
-    steps:
-      - name: Check out Lot 20 branch head
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
-        with:
-          ref: agent/entity-resolution-knowledge-graph
-          fetch-depth: 0
-
-      - name: Produce clean 0.21.0 release head
-        shell: bash
-        run: |
-          set -euo pipefail
-          python .github/lot20_release_sync.py
-          git fetch origin main
-          git checkout origin/main -- .github/workflows/ci.yml
-          rm -f .github/workflows/lot20-release-sync.yml .github/lot20_release_sync.py
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -A
-          git diff --cached --check
-          git commit -m "Lot 20: prepare release 0.21.0"
-          git push origin HEAD:agent/entity-resolution-knowledge-graph
