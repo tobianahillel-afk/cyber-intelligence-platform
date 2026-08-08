@@ -145,9 +145,19 @@ def test_resolution_merge_checks_target_fingerprint_and_can_be_split(
         headers=HEADERS,
         params={"requires_review": "true"},
     ).json()
-    candidates = [item for item in page["items"] if item["node_key"] == "brand:acme-labs"]
-    first = next(item for item in candidates if item["candidate_organization_id"] == str(organization_ids[0]))
-    second = next(item for item in candidates if item["candidate_organization_id"] == str(organization_ids[1]))
+    candidates = [
+        item for item in page["items"] if item["node_key"] == "brand:acme-labs"
+    ]
+    first = next(
+        item
+        for item in candidates
+        if item["candidate_organization_id"] == str(organization_ids[0])
+    )
+    second = next(
+        item
+        for item in candidates
+        if item["candidate_organization_id"] == str(organization_ids[1])
+    )
     detail = client.get(
         f"/v1/graph/resolution-candidates/{first['id']}", headers=HEADERS
     ).json()
