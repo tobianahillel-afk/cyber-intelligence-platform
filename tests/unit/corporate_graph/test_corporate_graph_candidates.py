@@ -68,7 +68,15 @@ def test_reused_domain_creates_review_candidates_for_each_organization() -> None
     _organization(session, "New Owner", "https://www.shared.example/about")
     persist_graph_nodes(
         session,
-        (_node("domain:shared.example", "shared.example", None, "passive-exposure", GraphNodeType.DOMAIN),),
+        (
+            _node(
+                "domain:shared.example",
+                "shared.example",
+                None,
+                "passive-exposure",
+                GraphNodeType.DOMAIN,
+            ),
+        ),
         now=NOW,
     )
 
