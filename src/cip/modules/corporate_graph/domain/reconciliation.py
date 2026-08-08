@@ -1,7 +1,8 @@
 from __future__ import annotations
 
-from collections.abc import Iterable
+from collections.abc import Callable, Iterable
 from datetime import datetime
+from typing import TypeVar
 
 from cip.modules.corporate_graph.domain.models import (
     GraphEdgeProjection,
@@ -11,6 +12,8 @@ from cip.modules.corporate_graph.domain.models import (
     GraphReviewState,
 )
 from cip.shared.kernel.time import require_aware_utc
+
+T = TypeVar("T")
 
 
 def reconcile_node_snapshots(
@@ -85,23 +88,21 @@ def _effective_edge_revisions(
     snapshots: tuple[GraphEdgeSnapshot, ...],
 ) -> tuple[GraphEdgeSnapshot, ...]:
     superseded = {
-        snapshot.supersedes_record_key
+        (snapshot.source_module, snapshot.supersedes_record_key)
         for snapshot in snapshots
         if snapshot.supersedes_record_key is not None
     }
     latest_by_record: dict[tuple[str, str], GraphEdgeSnapshot] = {}
     for snapshot in sorted(snapshots, key=lambda item: item.observed_at):
         latest_by_record[(snapshot.source_module, snapshot.source_record_key)] = snapshot
-    return tuple(
+    effective = tuple(
         snapshot
-        for (source_module, record_key), snapshot in latest_by_record.items()
-        if record_key not in superseded
-        or any(
-            candidate.source_module != source_module
-            and candidate.source_record_key == record_key
-            for candidate in snapshots
-        )
+        for identity, snapshot in latest_by_record.items()
+        if identity not in superseded
     )
+    if not effective:
+        return (max(snapshots, key=lambda item: item.observed_at),)
+    return effective
 
 
 def _review_state(items: tuple[GraphEdgeSnapshot, ...]) -> GraphReviewState:
@@ -133,7 +134,7 @@ def _latest(values: Iterable[datetime | None]) -> datetime | None:
     return max(concrete) if concrete else None
 
 
-def _require_same(items: tuple[object, ...], getter: object, label: str) -> None:
-    values = {getter(item) for item in items}  # type: ignore[operator]
-    if len(values) != 1:
+def _require_same(items: tuple[T, ...], getter: Callable[[T], object], label: str) -> None:
+    expected = getter(items[0])
+    if any(getter(item) != expected for item in items[1:]):
         raise ValueError(f"graph snapshots must share {label}")
