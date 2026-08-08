@@ -59,9 +59,8 @@ def _product_node(record: VendorProductRecord) -> GraphNodeSnapshot:
         source_record_key=record.product_key,
         source_entity_id=record.id,
         observed_at=record.updated_at,
-        valid_until=record.end_of_support_at,
         confidence=1.0,
-        active=record.support_status != "end_of_support",
+        active=True,
     )
 
 
