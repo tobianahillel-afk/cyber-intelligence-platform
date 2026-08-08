@@ -20,6 +20,7 @@ from cip.modules.corporate_graph.infrastructure.models import (
     EntityResolutionCandidateRecord,
     EntityResolutionDecisionRecord,
 )
+from cip.modules.corporate_graph.infrastructure.node_state import refresh_node_state
 from cip.modules.organizations.infrastructure.models import OrganizationRecord
 from cip.shared.kernel.time import require_aware_utc
 
@@ -126,6 +127,8 @@ def record_resolution_decision(
     _apply_candidate_state(candidate, decision.decision_type, now=persisted_at)
     _apply_binding(session, candidate, record, decision, now=persisted_at)
     session.flush()
+    _refresh_decision_node(session, decision.node_key, now=persisted_at)
+    session.flush()
     return record
 
 
@@ -196,6 +199,15 @@ def _apply_binding(
         binding.current = True
         binding.bound_at = decision.decided_at
         binding.updated_at = now
+
+
+def _refresh_decision_node(session: Session, node_key: str, *, now: datetime) -> None:
+    node_id = session.scalar(
+        select(CorporateGraphNodeRecord.id).where(CorporateGraphNodeRecord.node_key == node_key)
+    )
+    if node_id is None:
+        raise ValueError("resolution decision references missing graph node")
+    refresh_node_state(session, node_id, now=now)
 
 
 def _require_node(session: Session, node_key: str) -> None:
