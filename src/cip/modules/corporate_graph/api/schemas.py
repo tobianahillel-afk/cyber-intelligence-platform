@@ -182,6 +182,7 @@ class BlastRadiusResponse(BaseModel):
 
     node_key: str
     target_organization_key: str | None
+    resolution_state_key: str
     graph_nodes: int = Field(ge=0)
     graph_edges: int = Field(ge=0)
     organization_identities: int = Field(ge=0)
