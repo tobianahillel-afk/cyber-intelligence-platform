@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+from collections.abc import Mapping
 
 from cip.modules.corporate_graph.domain.models import GraphEdgeSnapshot, GraphNodeSnapshot
 
@@ -52,6 +53,6 @@ def graph_edge_digest(snapshot: GraphEdgeSnapshot) -> str:
     return _digest(payload)
 
 
-def _digest(payload: dict[str, object]) -> str:
+def _digest(payload: Mapping[str, object]) -> str:
     encoded = json.dumps(payload, sort_keys=True, separators=(",", ":"))
     return hashlib.sha256(encoded.encode("utf-8")).hexdigest()
