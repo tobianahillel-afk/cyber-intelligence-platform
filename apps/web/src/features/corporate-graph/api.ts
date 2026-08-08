@@ -28,6 +28,15 @@ export interface ResolutionQuery {
   offset?: number;
 }
 
+export interface ResolutionDecisionInput {
+  decisionType: "merge" | "reject" | "split" | "override" | "restore";
+  actor: string;
+  reason: string;
+  organizationId?: string;
+  reversesDecisionId?: string;
+  blastRadiusFingerprint: string;
+}
+
 export async function loadGraphNodes(
   query: GraphNodeQuery = {},
 ): Promise<GraphNodePage> {
@@ -75,6 +84,23 @@ export async function loadResolutionCandidate(
   );
 }
 
+export async function submitResolutionDecision(
+  candidateId: string,
+  input: ResolutionDecisionInput,
+): Promise<ResolutionCandidateDetail> {
+  return controlPostJson<ResolutionCandidateDetail>(
+    `/v1/graph/resolution-candidates/${encodeURIComponent(candidateId)}/decisions`,
+    {
+      decision_type: input.decisionType,
+      actor: input.actor,
+      reason: input.reason,
+      organization_id: input.organizationId,
+      reverses_decision_id: input.reversesDecisionId,
+      blast_radius_fingerprint: input.blastRadiusFingerprint,
+    },
+  );
+}
+
 function setOptional(
   parameters: URLSearchParams,
   key: string,
@@ -107,11 +133,29 @@ function controlPlaneToken(): string {
 async function controlRequestJson<T>(path: string): Promise<T> {
   const response = await fetch(`${apiBaseUrl()}${path}`, {
     cache: "no-store",
-    headers: {
-      accept: "application/json",
-      "X-CIP-Control-Token": controlPlaneToken(),
-    },
+    headers: controlHeaders(),
   });
+  return parseResponse<T>(response);
+}
+
+async function controlPostJson<T>(path: string, body: object): Promise<T> {
+  const response = await fetch(`${apiBaseUrl()}${path}`, {
+    method: "POST",
+    cache: "no-store",
+    headers: { ...controlHeaders(), "content-type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  return parseResponse<T>(response);
+}
+
+function controlHeaders(): Record<string, string> {
+  return {
+    accept: "application/json",
+    "X-CIP-Control-Token": controlPlaneToken(),
+  };
+}
+
+async function parseResponse<T>(response: Response): Promise<T> {
   if (!response.ok) throw new Error(await responseMessage(response));
   return (await response.json()) as T;
 }
