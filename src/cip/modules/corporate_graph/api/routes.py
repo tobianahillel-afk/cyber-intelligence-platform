@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from datetime import datetime
 from typing import Annotated
 from uuid import UUID
 
@@ -16,7 +17,10 @@ from cip.modules.corporate_graph.api.schemas import (
     ResolutionCandidatePageResponse,
     ResolutionDecisionRequest,
 )
-from cip.modules.corporate_graph.application.view_models import GraphNodeFilters
+from cip.modules.corporate_graph.application.view_models import (
+    GraphNodeFilters,
+    ResolutionCandidateSummary,
+)
 from cip.modules.corporate_graph.domain.models import GraphNodeType
 from cip.modules.corporate_graph.domain.resolution import (
     ResolutionDecision,
@@ -41,7 +45,7 @@ from cip.modules.corporate_graph.infrastructure.resolution_persistence import (
     record_resolution_decision,
 )
 from cip.modules.source_portfolio.api.dependencies import require_control_plane
-from cip.shared.kernel.time import utc_now
+from cip.shared.kernel.time import require_aware_utc, utc_now
 from cip.shared.persistence.dependencies import get_database_session
 
 router = APIRouter(
@@ -164,6 +168,7 @@ def decide_resolution_candidate(
     request: ResolutionDecisionRequest,
     session: SessionDependency,
 ) -> ResolutionCandidateDetailResponse:
+    _validate_decision_request(request)
     try:
         detail = get_resolution_candidate_detail(session, candidate_id)
     except ResolutionCandidateNotFoundError as exc:
@@ -208,22 +213,32 @@ def refresh_graph(session: SessionDependency) -> GraphRefreshResponse:
 
 def _decision_preview_organization(
     session: Session,
-    candidate: object,
+    candidate: ResolutionCandidateSummary,
     request: ResolutionDecisionRequest,
 ) -> UUID | None:
     if request.organization_id is not None:
         return request.organization_id
     if request.decision_type is ResolutionDecisionType.SPLIT:
-        node_key = getattr(candidate, "node_key")
         binding = session.scalar(
             select(EntityResolutionBindingRecord).where(
-                EntityResolutionBindingRecord.node_key == node_key,
+                EntityResolutionBindingRecord.node_key == candidate.node_key,
                 EntityResolutionBindingRecord.current.is_(True),
             )
         )
         if binding is not None:
             return binding.organization_id
-    return getattr(candidate, "candidate_organization_id")
+    return candidate.candidate_organization_id
+
+
+def _validate_decision_request(request: ResolutionDecisionRequest) -> None:
+    if (
+        request.decision_type in {ResolutionDecisionType.REJECT, ResolutionDecisionType.SPLIT}
+        and request.organization_id is not None
+    ):
+        raise HTTPException(
+            status_code=422,
+            detail="reject and split decisions cannot introduce an organization target",
+        )
 
 
 def _validate_node_key(node_key: str) -> None:
@@ -231,12 +246,14 @@ def _validate_node_key(node_key: str) -> None:
         raise HTTPException(status_code=422, detail="invalid graph node key")
 
 
-def _parse_as_of(value: str | None):
+def _parse_as_of(value: str | None) -> datetime | None:
     if value is None:
         return None
-    from datetime import datetime
-
     try:
-        return datetime.fromisoformat(value.replace("Z", "+00:00"))
+        parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+        return require_aware_utc(parsed, field_name="as_of")
     except ValueError as exc:
-        raise HTTPException(status_code=422, detail="as_of must be an ISO-8601 timestamp") from exc
+        raise HTTPException(
+            status_code=422,
+            detail="as_of must be an ISO-8601 timestamp with timezone",
+        ) from exc
