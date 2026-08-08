@@ -13,6 +13,15 @@ from cip.modules.corporate_changes.infrastructure.models import (
     CorporateChangeEventRecord,
     CorporateChangeServiceMappingRecord,
 )
+from cip.modules.corporate_graph.infrastructure.models import (
+    CorporateGraphEdgeRecord,
+    CorporateGraphEdgeSnapshotRecord,
+    CorporateGraphNodeRecord,
+    CorporateGraphNodeSnapshotRecord,
+    EntityResolutionBindingRecord,
+    EntityResolutionCandidateRecord,
+    EntityResolutionDecisionRecord,
+)
 from cip.modules.data_governance.infrastructure.models import SuppressionRecord
 from cip.modules.evidence.infrastructure.models import EvidenceRecord
 from cip.modules.incident_intelligence.infrastructure.models import (
@@ -113,6 +122,13 @@ _IMPORTED_MODELS = (
     CorporateChangeClaimSnapshotRecord,
     CorporateChangeEventRecord,
     CorporateChangeServiceMappingRecord,
+    CorporateGraphEdgeRecord,
+    CorporateGraphEdgeSnapshotRecord,
+    CorporateGraphNodeRecord,
+    CorporateGraphNodeSnapshotRecord,
+    EntityResolutionBindingRecord,
+    EntityResolutionCandidateRecord,
+    EntityResolutionDecisionRecord,
     EvidenceRecord,
     IncidentClaimSnapshotRecord,
     IncidentRecord,
