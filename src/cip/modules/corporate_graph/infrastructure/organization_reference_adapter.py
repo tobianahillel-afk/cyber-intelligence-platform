@@ -19,12 +19,12 @@ from cip.modules.organizations.infrastructure.models import OrganizationRecord
 def project_organization_references(
     organizations: tuple[OrganizationRecord, ...],
 ) -> GraphProjectionBatch:
-    alias_counts = Counter(_legal_alias(record) for record in organizations if _legal_alias(record))
+    alias_counts = _alias_counts(organizations)
     identifier_counts = Counter(
-        _normalize_identifier(identifier)
+        identifier
         for record in organizations
-        for identifier in record.registration_ids
-        if _normalize_identifier(identifier)
+        for raw_identifier in record.registration_ids
+        if (identifier := _normalize_identifier(raw_identifier))
     )
     nodes: list[GraphNodeSnapshot] = []
     edges: list[GraphEdgeSnapshot] = []
@@ -34,6 +34,15 @@ def project_organization_references(
         _append_alias_graph(nodes, edges, organization, alias_counts)
         _append_identifier_graph(nodes, edges, organization, identifier_counts)
     return GraphProjectionBatch(nodes=tuple(nodes), edges=tuple(edges))
+
+
+def _alias_counts(organizations: tuple[OrganizationRecord, ...]) -> Counter[str]:
+    aliases: list[str] = []
+    for record in organizations:
+        alias = _legal_alias(record)
+        if alias is not None:
+            aliases.append(alias)
+    return Counter(aliases)
 
 
 def _organization_node(record: OrganizationRecord) -> GraphNodeSnapshot:
