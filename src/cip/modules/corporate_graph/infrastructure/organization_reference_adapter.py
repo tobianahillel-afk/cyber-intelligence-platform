@@ -14,6 +14,7 @@ from cip.modules.corporate_graph.domain.models import (
     GraphReviewState,
 )
 from cip.modules.organizations.infrastructure.models import OrganizationRecord
+from cip.modules.organizations.infrastructure.persistence_time import coerce_utc
 
 
 def project_organization_references(
@@ -55,8 +56,8 @@ def _organization_node(record: OrganizationRecord) -> GraphNodeSnapshot:
         source_record_key=str(record.id),
         source_entity_id=record.id,
         organization_id=record.id,
-        observed_at=record.updated_at,
-        valid_from=record.created_at,
+        observed_at=coerce_utc(record.updated_at),
+        valid_from=coerce_utc(record.created_at),
         confidence=1.0,
     )
 
@@ -69,6 +70,7 @@ def _append_domain_graph(
     domain = _website_domain(record.website_url)
     if domain is None:
         return
+    observed_at = coerce_utc(record.updated_at)
     nodes.append(
         GraphNodeSnapshot(
             node_key=f"domain:{domain}",
@@ -79,7 +81,7 @@ def _append_domain_graph(
             source_record_key=f"organization-website:{record.id}:{domain}",
             organization_id=record.id,
             source_url=record.website_url,
-            observed_at=record.updated_at,
+            observed_at=observed_at,
             confidence=0.9,
         )
     )
@@ -94,7 +96,7 @@ def _append_domain_graph(
             source_evidence_class="declared_website",
             claim_type=GraphClaimType.ASSERTION,
             review_state=GraphReviewState.UNREVIEWED,
-            observed_at=record.updated_at,
+            observed_at=observed_at,
             source_url=record.website_url,
             confidence=0.9,
         )
@@ -120,8 +122,8 @@ def _append_alias_graph(
             source_entity_type="legal_name_alias",
             source_record_key=f"legal-name:{record.id}:{alias}",
             organization_id=record.id,
-            observed_at=record.updated_at,
-            valid_from=record.created_at,
+            observed_at=coerce_utc(record.updated_at),
+            valid_from=coerce_utc(record.created_at),
             confidence=1.0,
         )
     )
@@ -158,8 +160,8 @@ def _append_identifier_graph(
                 source_entity_type="registration_identifier",
                 source_record_key=source_record_key,
                 organization_id=record.id,
-                observed_at=record.updated_at,
-                valid_from=record.created_at,
+                observed_at=coerce_utc(record.updated_at),
+                valid_from=coerce_utc(record.created_at),
                 confidence=1.0,
             )
         )
@@ -198,7 +200,7 @@ def _organization_reference_edge(
             if review_required
             else GraphReviewState.CONFIRMED
         ),
-        observed_at=record.updated_at,
+        observed_at=coerce_utc(record.updated_at),
         confidence=1.0,
     )
 
