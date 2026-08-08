@@ -30,6 +30,29 @@ def test_conflicting_current_organization_ids_do_not_force_node_resolution() -> 
     assert projection.current
 
 
+def test_rebrand_keeps_same_node_history_and_latest_display_name() -> None:
+    organization_id = uuid4()
+    former = _node(
+        organization_id=organization_id,
+        source_module="registry",
+        display_name="Old Brand",
+        observed_at=NOW - timedelta(days=30),
+    )
+    current = _node(
+        organization_id=organization_id,
+        source_module="registry",
+        display_name="New Brand",
+        observed_at=NOW,
+    )
+
+    projection = reconcile_node_snapshots((former, current), now=NOW)
+
+    assert projection.organization_id == organization_id
+    assert projection.display_name == "New Brand"
+    assert projection.first_observed_at == former.observed_at
+    assert projection.last_observed_at == current.observed_at
+
+
 def test_source_specific_supersession_removes_old_edge_revision() -> None:
     original = _edge(
         source_record_key="record-1",
@@ -94,16 +117,22 @@ def test_as_of_reconciliation_restores_historical_edge_state() -> None:
     assert after.source_evidence_class == "historical"
 
 
-def _node(*, organization_id, source_module: str) -> GraphNodeSnapshot:
+def _node(
+    *,
+    organization_id,
+    source_module: str,
+    display_name: str = "Acme",
+    observed_at: datetime = NOW,
+) -> GraphNodeSnapshot:
     return GraphNodeSnapshot(
         node_key="brand:acme",
         node_type=GraphNodeType.BRAND,
-        display_name="Acme",
+        display_name=display_name,
         source_module=source_module,
         source_entity_type="brand",
-        source_record_key=f"{source_module}:acme",
+        source_record_key=f"{source_module}:acme:{observed_at.isoformat()}",
         organization_id=organization_id,
-        observed_at=NOW,
+        observed_at=observed_at,
         confidence=0.8,
     )
 
