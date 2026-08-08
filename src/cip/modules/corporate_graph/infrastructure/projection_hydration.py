@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from datetime import datetime
 from uuid import UUID
 
 from sqlalchemy import select
@@ -17,6 +18,7 @@ from cip.modules.corporate_graph.infrastructure.models import (
     CorporateGraphEdgeSnapshotRecord,
     CorporateGraphNodeSnapshotRecord,
 )
+from cip.modules.organizations.infrastructure.persistence_time import coerce_utc
 
 
 def node_snapshots(session: Session, node_id: UUID) -> tuple[GraphNodeSnapshot, ...]:
@@ -48,9 +50,9 @@ def _node_snapshot(record: CorporateGraphNodeSnapshotRecord) -> GraphNodeSnapsho
         source_entity_id=record.source_entity_id,
         organization_id=record.organization_id,
         source_url=record.source_url,
-        observed_at=record.observed_at,
-        valid_from=record.valid_from,
-        valid_until=record.valid_until,
+        observed_at=coerce_utc(record.observed_at),
+        valid_from=_coerce_optional(record.valid_from),
+        valid_until=_coerce_optional(record.valid_until),
         confidence=record.confidence,
         active=record.active,
         suppressed=record.suppressed,
@@ -70,12 +72,16 @@ def _edge_snapshot(record: CorporateGraphEdgeSnapshotRecord) -> GraphEdgeSnapsho
         claim_type=GraphClaimType(record.claim_type),
         review_state=GraphReviewState(record.review_state),
         source_url=record.source_url,
-        observed_at=record.observed_at,
-        valid_from=record.valid_from,
-        valid_until=record.valid_until,
-        expires_at=record.expires_at,
+        observed_at=coerce_utc(record.observed_at),
+        valid_from=_coerce_optional(record.valid_from),
+        valid_until=_coerce_optional(record.valid_until),
+        expires_at=_coerce_optional(record.expires_at),
         confidence=record.confidence,
         active=record.active,
         suppressed=record.suppressed,
         supersedes_record_key=record.supersedes_record_key,
     )
+
+
+def _coerce_optional(value: datetime | None) -> datetime | None:
+    return coerce_utc(value) if value is not None else None
