@@ -33,16 +33,23 @@ def generate_resolution_candidates(
 ) -> tuple[EntityResolutionCandidateRecord, ...]:
     generated_at = require_aware_utc(now, field_name="now")
     organizations = tuple(session.scalars(select(OrganizationRecord)).all())
-    unresolved_nodes = tuple(
+    graph_nodes = tuple(
         session.scalars(
             select(CorporateGraphNodeRecord).where(
-                CorporateGraphNodeRecord.organization_id.is_(None),
-                CorporateGraphNodeRecord.suppressed.is_(False),
+                CorporateGraphNodeRecord.suppressed.is_(False)
             )
         )
     )
     records: list[EntityResolutionCandidateRecord] = []
-    for node in unresolved_nodes:
+    for node in graph_nodes:
+        if node.organization_id is not None:
+            _supersede_stale_candidates(
+                session,
+                node_key=node.node_key,
+                current_keys=set(),
+                now=generated_at,
+            )
+            continue
         candidates = _candidates_for_node(session, node, organizations, now=generated_at)
         current_keys = {
             (candidate.candidate_organization_id, candidate.method.value)
