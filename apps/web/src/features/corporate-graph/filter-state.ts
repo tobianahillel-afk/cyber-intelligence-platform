@@ -6,6 +6,8 @@ const NODE_TYPES = new Set<GraphNodeType>([
   "establishment",
   "group",
   "brand",
+  "alias",
+  "identifier",
   "domain",
   "asset",
   "technology",
