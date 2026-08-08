@@ -190,6 +190,13 @@ def test_resolution_merge_checks_target_fingerprint_and_can_be_split(
     merged_payload = merged.json()
     assert merged_payload["candidate"]["state"] == "confirmed"
     merge_decision = merged_payload["decisions"][-1]
+    merged_node = client.get("/v1/graph/nodes/brand:acme-labs", headers=HEADERS)
+    assert merged_node.status_code == 200
+    assert merged_node.json()["node"]["organization_id"] == str(organization_ids[0])
+
+    client.post("/v1/graph/refresh", headers=HEADERS)
+    refreshed_node = client.get("/v1/graph/nodes/brand:acme-labs", headers=HEADERS)
+    assert refreshed_node.json()["node"]["organization_id"] == str(organization_ids[0])
 
     refreshed_detail = client.get(
         f"/v1/graph/resolution-candidates/{first['id']}", headers=HEADERS
@@ -215,6 +222,8 @@ def test_resolution_merge_checks_target_fingerprint_and_can_be_split(
     assert binding is not None
     assert binding.current is False
     assert len(split.json()["decisions"]) == 2
+    split_node = client.get("/v1/graph/nodes/brand:acme-labs", headers=HEADERS)
+    assert split_node.json()["node"]["organization_id"] is None
 
 
 def _organization(organization_id: UUID, name: str, website_url: str) -> OrganizationRecord:
