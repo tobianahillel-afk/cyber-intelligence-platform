@@ -10,10 +10,15 @@ from cip.modules.corporate_graph.infrastructure.models import (
     CorporateGraphEdgeRecord,
     CorporateGraphNodeRecord,
 )
-from cip.modules.opportunities.infrastructure.models import CommercialSignalRecord, OpportunityRecord
+from cip.modules.opportunities.infrastructure.models import (
+    CommercialSignalRecord,
+    OpportunityRecord,
+)
 from cip.modules.organizations.infrastructure.identity_models import OrganizationIdentityRecord
 from cip.modules.relationship_intelligence.infrastructure.models import BusinessRelationshipRecord
-from cip.modules.vulnerability_applicability.infrastructure.models import ApplicabilityAssessmentRecord
+from cip.modules.vulnerability_applicability.infrastructure.models import (
+    ApplicabilityAssessmentRecord,
+)
 
 
 def build_blast_radius_preview(
@@ -22,7 +27,11 @@ def build_blast_radius_preview(
     node_key: str,
     organization_id: UUID | None,
 ) -> BlastRadiusPreview:
-    node_keys = _affected_node_keys(session, node_key=node_key, organization_id=organization_id)
+    node_keys = _affected_node_keys(
+        session,
+        node_key=node_key,
+        organization_id=organization_id,
+    )
     graph_edges = _edge_count(session, node_keys)
     if organization_id is None:
         return BlastRadiusPreview(
