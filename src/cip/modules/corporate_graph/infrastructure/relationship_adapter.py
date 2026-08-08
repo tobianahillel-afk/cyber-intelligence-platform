@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from uuid import UUID
+
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -84,7 +86,7 @@ def _endpoint_node(
     *,
     node_key: str,
     display_name: str,
-    organization_id: object,
+    organization_id: UUID | None,
     record: RelationshipEvidenceSnapshotRecord,
     side: str,
 ) -> GraphNodeSnapshot:
@@ -192,7 +194,7 @@ def _endpoint_key(relationship_key: str, side: str) -> str:
     return f"relationship-endpoint:{relationship_key}:{side}"
 
 
-def _resolved_name(organization_id: object) -> str:
+def _resolved_name(organization_id: UUID | None) -> str:
     if organization_id is None:
         return "Unresolved organization"
     return f"Resolved organization {organization_id}"
