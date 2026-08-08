@@ -9,6 +9,7 @@ from cip.modules.corporate_graph.domain.blast_radius import BlastRadiusPreview
 from cip.modules.corporate_graph.infrastructure.models import (
     CorporateGraphEdgeRecord,
     CorporateGraphNodeRecord,
+    EntityResolutionBindingRecord,
 )
 from cip.modules.opportunities.infrastructure.models import (
     CommercialSignalRecord,
@@ -33,16 +34,19 @@ def build_blast_radius_preview(
         organization_id=organization_id,
     )
     graph_edges = _edge_count(session, node_keys)
+    resolution_state_key = _resolution_state_key(session, node_key)
     if organization_id is None:
         return BlastRadiusPreview(
             node_key=node_key,
             target_organization_key=None,
+            resolution_state_key=resolution_state_key,
             graph_nodes=len(node_keys),
             graph_edges=graph_edges,
         )
     return BlastRadiusPreview(
         node_key=node_key,
         target_organization_key=f"organization:{organization_id}",
+        resolution_state_key=resolution_state_key,
         graph_nodes=len(node_keys),
         graph_edges=graph_edges,
         organization_identities=_count(
@@ -79,6 +83,19 @@ def build_blast_radius_preview(
             ),
         ),
     )
+
+
+def _resolution_state_key(session: Session, node_key: str) -> str:
+    binding = session.scalar(
+        select(EntityResolutionBindingRecord).where(
+            EntityResolutionBindingRecord.node_key == node_key,
+            EntityResolutionBindingRecord.current.is_(True),
+        )
+    )
+    if binding is None:
+        return "unbound"
+    revision = binding.decision_id or binding.candidate_id or binding.id
+    return f"bound:{binding.organization_id}:{revision}"
 
 
 def _affected_node_keys(
