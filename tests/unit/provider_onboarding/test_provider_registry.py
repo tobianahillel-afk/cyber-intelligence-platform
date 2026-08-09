@@ -13,7 +13,7 @@ def test_repository_provider_catalog_has_safe_defaults() -> None:
     profiles = load_provider_profiles(Path("policies/provider_onboarding.yml"))
     by_source = {profile.source_id: profile for profile in profiles}
 
-    assert len(profiles) == 16
+    assert len(profiles) == 18
     assert by_source["cisa-kev"].initial_state is OnboardingState.CONNECTED
     assert by_source["sirene-api"].auth_mode is AuthMode.NONE
     assert by_source["inpi-rne"].required_secret_names == ("username", "password")
@@ -21,6 +21,11 @@ def test_repository_provider_catalog_has_safe_defaults() -> None:
     assert by_source["brave-search-api"].required_secret_names == ("api_token",)
     assert by_source["brave-search-api"].initial_state is OnboardingState.NOT_CONFIGURED
     assert by_source["internet-archive-cdx"].initial_state is OnboardingState.CONNECTED
+    assert by_source["cloudflare-doh"].auth_mode is AuthMode.NONE
+    assert by_source["cloudflare-doh"].initial_state is OnboardingState.CONNECTED
+    assert by_source["certspotter-ct"].auth_mode is AuthMode.API_KEY
+    assert by_source["certspotter-ct"].required_secret_names == ("api_token",)
+    assert by_source["certspotter-ct"].initial_state is OnboardingState.NOT_CONFIGURED
     assert by_source["linkedin-official-api"].initial_state is OnboardingState.NOT_CONFIGURED
     assert by_source["linkedin-authorized-browser"].initial_state is OnboardingState.BLOCKED
     assert by_source["brixhub"].initial_state is OnboardingState.BLOCKED
