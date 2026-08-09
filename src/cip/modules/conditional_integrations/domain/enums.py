@@ -60,6 +60,7 @@ class ConditionalBlockReason(StrEnum):
     AUTOMATION_NOT_APPROVED = "automation_not_approved"
     ONBOARDING_NOT_READY = "onboarding_not_ready"
     SOURCE_POLICY_DENIED = "source_policy_denied"
+    SOURCE_PORTFOLIO_NOT_EXECUTABLE = "source_portfolio_not_executable"
     CAPABILITY_MISSING = "capability_missing"
     PROVIDER_PAUSED = "provider_paused"
     KILL_SWITCH_ACTIVE = "kill_switch_active"
