@@ -71,7 +71,7 @@ A lot is complete only when one final commit passes every applicable backend, fr
 | 20 | Entity resolution and temporal corporate knowledge graph | `IMPLEMENTED_VALIDATED` |
 | 21 | Professional organization maps, contacts, and public community signals | `IMPLEMENTED_VALIDATED` |
 | 22 | Conditional, premium, LinkedIn, Discord, and BrixHub integrations | `IMPLEMENTED_VALIDATED` |
-| 23 | Analyst research and governed OSINT catalog orchestration | `PLANNED_LOCKED` |
+| 23 | Analyst research and governed OSINT catalog orchestration | `IMPLEMENTED_VALIDATED` |
 | 24 | Signal fusion, need hypotheses, and commercial taxonomy | `PLANNED_LOCKED` |
 | 25 | Advanced scoring, calibration, explainability, and feedback | `PLANNED_LOCKED` |
 | 26 | Native commercial operations, alerts, tasks, and engagement | `PLANNED_LOCKED` |
@@ -428,33 +428,40 @@ A lot is complete only when one final commit passes every applicable backend, fr
 
 ## Lot 23 — Analyst research and governed OSINT catalog orchestration
 
-**Status:** `PLANNED_LOCKED`
+**Status:** `IMPLEMENTED_VALIDATED`
 
-**Primary business outcome:** Turn the broad OSINT catalog into human-operated, policy-aware research plans and evidence capture instead of unrestricted autonomous browsing.
+**Outcome:** Release `0.24.0` provides reproducible, human-operated, policy-aware research plans over existing governed source capabilities without creating a general-purpose web agent or a second collection engine.
 
 **Dependencies:** Lots 10, 12–22.
 
 **Deliverables:**
 
-- research questions, plans, steps, allowed tools, budgets, approvals, results, and analyst decisions;
-- source selection based on value, freshness, cost, quota, authorization, and risk;
-- analyst links for search/dorks when automation is not approved;
-- captured evidence through approved ingestion paths only;
-- no unrestricted agent browsing, authenticated automation, or active probing;
-- reproducible research history and handoff;
-- orchestration UI with explicit manual-action states.
+- persisted research questions, plans, immutable revisions, ordered steps, budgets, approvals, analyst decisions, attempts and results;
+- explicit `persisted_search`, `manual_link`, `automated_adapter`, and `approved_ingestion` execution modes;
+- deterministic source selection based on value, freshness, cost, quota, authorization and risk after unsafe candidates are filtered;
+- persisted runtime resolution across Source Governance, Provider Onboarding, Source Portfolio, exact adapter capability, quota/cost, conditional-provider approval, pause and kill-switch state;
+- exact source/tool/purpose/category/step-key/HTTPS host/path/budget/risk eligibility boundaries;
+- analyst links for search/dorks when automation is not approved, always surfaced as explicit `manual_action_required` state;
+- replay-safe attempts and idempotence keys so interruption/retry cannot silently duplicate external actions;
+- captured result references validated against existing Evidence identity, expected source and recognized provenance rather than duplicating evidence storage;
+- protected research APIs for plans, revisions, decisions, steps, eligibility, attempts, results, usage and ranked source options;
+- analyst Research workspace with explicit manual-action and governed execution states;
+- reversible PostgreSQL migration and UTC-safe hydration across supported persistence tests;
+- no unrestricted agent browsing, arbitrary HTTP, authenticated browser automation, active probing, autonomous opportunity creation, or outreach.
 
 **Required tests:**
 
 - denied tool before execution;
-- budget and domain/path boundaries;
+- plan expiry, budget and domain/path boundaries;
 - analyst-link versus automated-provider distinction;
-- evidence provenance and deduplication;
-- interruption/retry without duplicate actions;
-- no autonomous outreach or unsafe browsing;
-- API, UI, and full regression gates.
+- persisted source-state/capability/quota/conditional-control resolution;
+- evidence provenance, source identity and invalid-reference rejection;
+- interruption/retry/idempotence without duplicate actions;
+- protected API and source-options routing;
+- no autonomous outreach or unsafe browsing imports;
+- migration, API, UI and full regression gates.
 
-**Exit gate:** Analysts can run reproducible governed research while every automated step remains bounded by an executable policy and authorization.
+**Exit gate:** Analysts can run reproducible governed research while every automated step remains bounded by executable policy and authorization, manual actions remain explicit, retries are replay-safe, and captured evidence retains provenance without direct promotion into a commercial conclusion.
 
 ## Lot 24 — Signal fusion, need hypotheses, and commercial taxonomy
 
@@ -729,10 +736,10 @@ A lot is complete only when one final commit passes every applicable backend, fr
 
 ## Current release boundary
 
-Version `0.23.0` implements and validates lots `00–22`. Lot 22 adds provider-specific approval dossiers with immutable actor/reason revisions, explicit provider-method restrictions, persisted-state eligibility resolution across Provider Onboarding, Source Governance and Source Portfolio, append-only pause/kill-switch controls, immutable eligibility audits, safe-default conditional provider catalogues, source-value evidence, protected APIs, and the Conditional Integrations workspace.
+Version `0.24.0` implements and validates lots `00–23`. Lot 23 adds persisted governed research plans, immutable revisions and decisions, ordered steps, budgets, explicit execution modes, replay-safe attempts and results, deterministic source ranking, protected APIs and the analyst Research workspace.
 
-Conditional provider context remains fail-closed. A catalogue entry, account, licence, approval dossier, public professional profile, or observed source-value contribution is not execution authorization. Eligibility requires the exact approved method/scope/field/purpose/category/retention/account plus positive persisted onboarding, Source Governance, executable Source Portfolio, real adapter capability, quota/cost, pause, and kill-switch state. Eligibility preview is a local audit decision and performs no provider request or collection. LinkedIn remains limited to official or licensed API paths; Discord requires an administrator-installed connector or authorized export; BrixHub remains quarantined with no permitted execution method; premium-provider placeholders remain non-executable and deployment-specific.
+Research remains fail-closed. A research question, plan, ranked source, manual link or eligible step is not execution authorization. Automated eligibility requires the exact approved source/tool/purpose/category/step/host/path/budget/risk plus positive persisted Source Governance, Provider Onboarding, executable Source Portfolio, registered adapter capability, quota/cost and applicable conditional-provider controls. Manual links remain analyst actions, and `approved_ingestion` only accepts separately approved paths; the built-in `existing-evidence-reference` path validates an already persisted Evidence reference rather than fetching new content.
 
-No Lot 22 default conditional provider has an enabled collection schedule or runtime adapter. The release adds no fake account, copied-cookie/session, self-bot, CAPTCHA/MFA bypass, ban evasion, private-message collection, credential validation, autonomous opportunity creation, or outreach path.
+Lot 23 preserves the evidence/commercial boundary: an attempt or result is not itself evidence, captured evidence retains source identity and provenance, and no research output directly creates a commercial signal, need hypothesis, opportunity, contact target or outreach authorization. The release adds no arbitrary HTTP tool, unrestricted browser, authenticated automation, active scanning/probing, CAPTCHA/MFA/paywall bypass, fake identity, autonomous opportunity creation or outreach path.
 
-Lot 23 — Analyst research and governed OSINT catalog orchestration — is the next locked implementation lot and must start from the merged Lot 22 `main` commit.
+Lot 24 — Signal fusion, need hypotheses, and commercial taxonomy — is the next locked implementation lot and must start from the merged Lot 23 `main` commit.
