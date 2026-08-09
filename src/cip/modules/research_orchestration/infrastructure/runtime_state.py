@@ -41,6 +41,7 @@ from cip.shared.kernel.time import require_aware_utc
 
 _READY_ONBOARDING = {OnboardingState.CONNECTED.value, OnboardingState.NOT_REQUIRED.value}
 _MANUAL_SOURCE_STATES = {SourceStatus.ENABLED.value, SourceStatus.CONDITIONAL.value}
+_APPROVED_INGESTION_PATHS = frozenset({"existing-evidence-reference"})
 
 
 def resolve_research_runtime(
@@ -63,7 +64,14 @@ def resolve_research_runtime(
             quota_remaining=None,
         )
     if step.mode is ResearchStepMode.APPROVED_INGESTION:
-        return _closed_runtime()
+        return ResearchRuntimeState(
+            source_authorized=False,
+            source_executable=False,
+            adapter_capability_present=False,
+            manual_link_allowed=False,
+            ingestion_path_approved=step.ingestion_path_id in _APPROVED_INGESTION_PATHS,
+            quota_remaining=None,
+        )
     return _automated_runtime(session, plan, step, now=current)
 
 
