@@ -1,0 +1,67 @@
+version: 1
+
+sources:
+  - source_id: brave-search-api
+    display_name: Brave Search API
+    canonical_url: https://api.search.brave.com/res/v1/web/search
+    category: corporate_public_footprint
+    status: executable
+    freshness_max_age_seconds: 86400
+    commercial_use_cases:
+      - public_evidence_map
+      - organization_research
+    candidate_origin: SA-02
+    monthly_cost_limit: 0
+    metadata:
+      executable: true
+      authorization_status: approved
+      provider_onboarding_required: true
+      raw_response_storage: false
+      search_result_is_evidence: false
+      automatic_opportunity: forbidden
+    adapter:
+      adapter_id: brave-web-search
+      adapter_version: "1"
+      provider_schema_version: brave-search-web-v1
+      modes: [conditional_refresh, priority_refresh]
+      canonical_output_types:
+        - raw_observation
+        - public_resource
+        - public_resource_version
+      supports_corrections: true
+      supports_tombstones: false
+      supports_retractions: false
+      max_page_size: 20
+      cost_per_request: 0
+
+  - source_id: internet-archive-cdx
+    display_name: Internet Archive CDX discovery
+    canonical_url: https://web.archive.org/cdx/search/cdx
+    category: corporate_public_footprint
+    status: executable
+    freshness_max_age_seconds: 604800
+    commercial_use_cases:
+      - public_evidence_map
+      - change_history
+    candidate_origin: SA-02
+    monthly_cost_limit: 0
+    metadata:
+      executable: true
+      authorization_status: approved
+      raw_archive_body_storage: false
+      historical_metadata_only: true
+      automatic_opportunity: forbidden
+    adapter:
+      adapter_id: internet-archive-cdx
+      adapter_version: "1"
+      provider_schema_version: cdx-json-v1
+      modes: [incremental_cursor, priority_refresh]
+      canonical_output_types:
+        - raw_observation
+        - public_resource
+        - public_resource_version
+      supports_corrections: true
+      supports_tombstones: false
+      supports_retractions: false
+      max_page_size: 50
+      cost_per_request: 0

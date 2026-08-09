@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass
 
 from cip.adapters.sources.greenhouse.registry import GreenhouseBoard
@@ -21,6 +22,9 @@ from cip.modules.collection_orchestration.application.public_web_adapter import 
 from cip.modules.collection_orchestration.application.reference_adapter import (
     ReferencePortfolioAdapter,
 )
+from cip.modules.collection_orchestration.application.search_archive_registration import (
+    register_search_archive_adapters,
+)
 from cip.modules.collection_orchestration.application.smartrecruiters_adapter import (
     SmartRecruitersAdapter,
 )
@@ -28,6 +32,7 @@ from cip.modules.collection_orchestration.application.ted_adapter import TedSear
 from cip.modules.collection_orchestration.application.vulnerability_registration import (
     register_vulnerability_adapters,
 )
+from cip.modules.public_footprint.domain.search import SearchQueryTemplate
 from cip.modules.source_governance.infrastructure.registry import SourceRegistryEntry
 
 
@@ -39,63 +44,20 @@ class AdapterCompositionInputs:
     smartrecruiters_companies: tuple[SmartRecruitersCompany, ...]
     identity_targets: tuple[OrganizationIdentityTarget, ...]
     public_web_targets: tuple[PublicWebTarget, ...]
+    search_templates: tuple[SearchQueryTemplate, ...]
     vulnerability_targets: tuple[VulnerabilityQueryTarget, ...]
 
 
 def build_runtime_adapters(
     inputs: AdapterCompositionInputs,
     *,
+    brave_token_provider: Callable[[], str | None],
     timeout_seconds: float,
 ) -> dict[tuple[str, str], CollectionAdapter]:
     entries_by_id = {entry.policy.id: entry for entry in inputs.entries}
     adapters: dict[tuple[str, str], CollectionAdapter] = {}
     _register(adapters, ReferencePortfolioAdapter())
-    cisa_entry = entries_by_id.get(CisaKevAdapter.source_id)
-    if cisa_entry is not None:
-        _register(adapters, CisaKevAdapter(cisa_entry, timeout_seconds=timeout_seconds))
-    ted_entry = entries_by_id.get(TedSearchAdapter.source_id)
-    if ted_entry is not None:
-        _register(adapters, TedSearchAdapter(ted_entry, timeout_seconds=timeout_seconds))
-    boamp_entry = entries_by_id.get(BoampAdapter.source_id)
-    if boamp_entry is not None:
-        _register(adapters, BoampAdapter(boamp_entry, timeout_seconds=timeout_seconds))
-    decp_entry = entries_by_id.get(DecpAdapter.source_id)
-    if decp_entry is not None:
-        _register(adapters, DecpAdapter(decp_entry, timeout_seconds=timeout_seconds))
-    greenhouse_entry = entries_by_id.get(GreenhouseAdapter.source_id)
-    if greenhouse_entry is not None and any(
-        board.enabled for board in inputs.greenhouse_boards
-    ):
-        _register(
-            adapters,
-            GreenhouseAdapter(
-                greenhouse_entry,
-                inputs.greenhouse_boards,
-                timeout_seconds=timeout_seconds,
-            ),
-        )
-    lever_entry = entries_by_id.get(LeverAdapter.source_id)
-    if lever_entry is not None and any(site.enabled for site in inputs.lever_sites):
-        _register(
-            adapters,
-            LeverAdapter(
-                lever_entry,
-                inputs.lever_sites,
-                timeout_seconds=timeout_seconds,
-            ),
-        )
-    smartrecruiters_entry = entries_by_id.get(SmartRecruitersAdapter.source_id)
-    if smartrecruiters_entry is not None and any(
-        company.enabled for company in inputs.smartrecruiters_companies
-    ):
-        _register(
-            adapters,
-            SmartRecruitersAdapter(
-                smartrecruiters_entry,
-                inputs.smartrecruiters_companies,
-                timeout_seconds=timeout_seconds,
-            ),
-        )
+    _register_core_adapters(adapters, entries_by_id, inputs, timeout_seconds)
     register_identity_adapters(
         adapters,
         entries_by_id,
@@ -108,6 +70,14 @@ def build_runtime_adapters(
         inputs.public_web_targets,
         timeout_seconds=timeout_seconds,
     )
+    register_search_archive_adapters(
+        adapters,
+        entries_by_id,
+        inputs.public_web_targets,
+        inputs.search_templates,
+        brave_token_provider=brave_token_provider,
+        timeout_seconds=timeout_seconds,
+    )
     register_vulnerability_adapters(
         adapters,
         entries_by_id,
@@ -115,6 +85,70 @@ def build_runtime_adapters(
         timeout_seconds=timeout_seconds,
     )
     return adapters
+
+
+def _register_core_adapters(
+    adapters: dict[tuple[str, str], CollectionAdapter],
+    entries_by_id: dict[str, SourceRegistryEntry],
+    inputs: AdapterCompositionInputs,
+    timeout_seconds: float,
+) -> None:
+    _register_if_present(adapters, entries_by_id, CisaKevAdapter, timeout_seconds)
+    _register_if_present(adapters, entries_by_id, TedSearchAdapter, timeout_seconds)
+    _register_if_present(adapters, entries_by_id, BoampAdapter, timeout_seconds)
+    _register_if_present(adapters, entries_by_id, DecpAdapter, timeout_seconds)
+
+    greenhouse_entry = entries_by_id.get(GreenhouseAdapter.source_id)
+    if greenhouse_entry is not None and any(
+        board.enabled for board in inputs.greenhouse_boards
+    ):
+        _register(
+            adapters,
+            GreenhouseAdapter(
+                greenhouse_entry,
+                inputs.greenhouse_boards,
+                timeout_seconds=timeout_seconds,
+            ),
+        )
+
+    lever_entry = entries_by_id.get(LeverAdapter.source_id)
+    if lever_entry is not None and any(site.enabled for site in inputs.lever_sites):
+        _register(
+            adapters,
+            LeverAdapter(
+                lever_entry,
+                inputs.lever_sites,
+                timeout_seconds=timeout_seconds,
+            ),
+        )
+
+    smartrecruiters_entry = entries_by_id.get(SmartRecruitersAdapter.source_id)
+    if smartrecruiters_entry is not None and any(
+        company.enabled for company in inputs.smartrecruiters_companies
+    ):
+        _register(
+            adapters,
+            SmartRecruitersAdapter(
+                smartrecruiters_entry,
+                inputs.smartrecruiters_companies,
+                timeout_seconds=timeout_seconds,
+            ),
+        )
+
+
+def _register_if_present(
+    adapters: dict[tuple[str, str], CollectionAdapter],
+    entries_by_id: dict[str, SourceRegistryEntry],
+    adapter_type: type[CisaKevAdapter]
+    | type[TedSearchAdapter]
+    | type[BoampAdapter]
+    | type[DecpAdapter],
+    timeout_seconds: float,
+) -> None:
+    entry = entries_by_id.get(adapter_type.source_id)
+    if entry is None:
+        return
+    _register(adapters, adapter_type(entry, timeout_seconds=timeout_seconds))
 
 
 def _register_public_web_adapters(
@@ -129,9 +163,7 @@ def _register_public_web_adapters(
             continue
         entry = entries_by_id.get(target.id)
         if entry is None:
-            raise ValueError(
-                f"enabled public web target has no source policy: {target.id}"
-            )
+            raise ValueError(f"enabled public web target has no source policy: {target.id}")
         _register(
             adapters,
             PublicWebAdapter(

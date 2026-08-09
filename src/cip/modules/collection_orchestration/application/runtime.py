@@ -25,6 +25,9 @@ from cip.modules.collection_orchestration.application.adapter_composition import
     build_runtime_adapters,
 )
 from cip.modules.collection_orchestration.application.ports import CollectionAdapter
+from cip.modules.collection_orchestration.application.provider_secret_supplier import (
+    connected_secret_supplier,
+)
 from cip.modules.collection_orchestration.application.scheduler import schedule_due_jobs
 from cip.modules.collection_orchestration.application.worker import (
     WorkerOutcome,
@@ -37,11 +40,14 @@ from cip.modules.collection_orchestration.infrastructure.schedule_bundle import 
 )
 from cip.modules.data_governance.domain.retention import RetentionPolicy
 from cip.modules.data_governance.infrastructure.retention_loader import load_retention_policy
+from cip.modules.provider_onboarding.application.service import sync_provider_profiles
+from cip.modules.provider_onboarding.infrastructure.registry import load_provider_profiles
+from cip.modules.public_footprint.infrastructure.search_registry import (
+    load_search_query_templates,
+)
 from cip.modules.source_governance.infrastructure.persistence import sync_source_registry
 from cip.modules.source_governance.infrastructure.registry import SourceRegistryEntry
-from cip.modules.source_governance.infrastructure.registry_bundle import (
-    load_source_registry_bundle,
-)
+from cip.modules.source_governance.infrastructure.registry_bundle import load_source_registry_bundle
 from cip.modules.source_portfolio.application.backfill_worker import (
     BackfillWorkerOutcome,
     BackfillWorkerStatus,
@@ -53,9 +59,7 @@ from cip.modules.source_portfolio.application.service import (
     sync_source_portfolio,
 )
 from cip.modules.source_portfolio.domain.models import CatalogStatus, SourceCatalogEntry
-from cip.modules.source_portfolio.infrastructure.registry_bundle import (
-    load_source_portfolio_bundle,
-)
+from cip.modules.source_portfolio.infrastructure.registry_bundle import load_source_portfolio_bundle
 from cip.shared.config.settings import Settings
 from cip.shared.kernel.time import utc_now
 from cip.shared.persistence.session import (
@@ -82,12 +86,19 @@ def build_collection_runtime(settings: Settings) -> CollectionRuntime:
     entries = _load_source_entries(settings)
     portfolio = _load_portfolio(settings)
     adapter_inputs = _load_adapter_inputs(settings, entries)
+    profiles = load_provider_profiles(settings.provider_onboarding_registry_path)
     synchronized_at = utc_now()
     with session_scope(factory) as session:
         sync_source_registry(session, entries)
+        sync_provider_profiles(session, profiles, now=synchronized_at)
         sync_source_portfolio(session, portfolio, now=synchronized_at)
     adapters = build_runtime_adapters(
         adapter_inputs,
+        brave_token_provider=connected_secret_supplier(
+            factory,
+            source_id="brave-search-api",
+            secret_name="api_token",
+        ),
         timeout_seconds=settings.source_http_timeout_seconds,
     )
     with session_scope(factory) as session:
@@ -111,6 +122,7 @@ def _load_source_entries(settings: Settings) -> tuple[SourceRegistryEntry, ...]:
         settings.decp_source_registry_path,
         settings.public_web_source_registry_path,
         settings.vulnerability_source_registry_path,
+        settings.search_archive_source_registry_path,
         settings.incident_source_registry_path,
         settings.threat_telemetry_source_registry_path,
         settings.passive_exposure_source_registry_path,
@@ -127,6 +139,7 @@ def _load_portfolio(settings: Settings) -> tuple[SourceCatalogEntry, ...]:
         settings.decp_source_portfolio_path,
         settings.public_web_source_portfolio_path,
         settings.vulnerability_source_portfolio_path,
+        settings.search_archive_source_portfolio_path,
         settings.incident_source_portfolio_path,
         settings.threat_telemetry_source_portfolio_path,
         settings.passive_exposure_source_portfolio_path,
@@ -152,6 +165,9 @@ def _load_adapter_inputs(
             settings.organization_identity_target_registry_path
         ),
         public_web_targets=load_public_web_targets(settings.public_web_target_registry_path),
+        search_templates=load_search_query_templates(
+            settings.search_query_template_registry_path
+        ),
         vulnerability_targets=load_vulnerability_query_targets(
             settings.vulnerability_query_target_registry_path
         ),
@@ -164,6 +180,7 @@ def _load_schedules(settings: Settings) -> tuple[SourceSchedule, ...]:
         settings.decp_collection_schedule_path,
         settings.public_web_collection_schedule_path,
         settings.vulnerability_collection_schedule_path,
+        settings.search_archive_collection_schedule_path,
     )
 
 
@@ -250,9 +267,7 @@ def _validate_registered_schedules(
         if not conditional:
             missing.append(f"{schedule.source_id}/{schedule.adapter_id}")
     if missing:
-        raise ValueError(
-            f"enabled schedules have no registered adapter: {', '.join(missing)}"
-        )
+        raise ValueError(f"enabled schedules have no registered adapter: {', '.join(missing)}")
 
 
 def _validate_portfolio_adapters(

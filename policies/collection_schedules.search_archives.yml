@@ -1,0 +1,26 @@
+version: 1
+
+schedules:
+  - source_id: brave-search-api
+    adapter_id: brave-web-search
+    enabled: false
+    interval_seconds: 86400
+    lease_seconds: 180
+    retry:
+      max_attempts: 3
+      base_delay_seconds: 300
+      max_delay_seconds: 3600
+      circuit_failure_threshold: 3
+      circuit_reset_seconds: 3600
+
+  - source_id: internet-archive-cdx
+    adapter_id: internet-archive-cdx
+    enabled: true
+    interval_seconds: 604800
+    lease_seconds: 180
+    retry:
+      max_attempts: 3
+      base_delay_seconds: 300
+      max_delay_seconds: 3600
+      circuit_failure_threshold: 3
+      circuit_reset_seconds: 3600
