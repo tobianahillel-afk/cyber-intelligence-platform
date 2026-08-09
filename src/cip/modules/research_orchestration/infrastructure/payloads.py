@@ -14,24 +14,25 @@ from cip.modules.research_orchestration.domain import (
 )
 
 
-def plan_revision_key(plan: ResearchPlan) -> str:
-    return _digest(
-        {
-            "plan_id": str(plan.plan_id),
-            "question": plan.question,
-            "purpose": plan.purpose,
-            "data_category": plan.data_category.value,
-            "state": plan.state.value,
-            "budget": _budget(plan),
-            "allowed_source_ids": sorted(plan.allowed_source_ids),
-            "allowed_tool_ids": sorted(plan.allowed_tool_ids),
-            "approved_step_keys": sorted(plan.approved_step_keys),
-            "allowed_hosts": sorted(plan.allowed_hosts),
-            "allowed_path_prefixes": list(plan.allowed_path_prefixes),
-            "max_risk_level": plan.max_risk_level.value,
-            "expires_at": _time(plan.expires_at),
-        }
-    )
+def plan_revision_key(plan: ResearchPlan, *, context: str | None = None) -> str:
+    payload: dict[str, object] = {
+        "plan_id": str(plan.plan_id),
+        "question": plan.question,
+        "purpose": plan.purpose,
+        "data_category": plan.data_category.value,
+        "state": plan.state.value,
+        "budget": _budget(plan),
+        "allowed_source_ids": sorted(plan.allowed_source_ids),
+        "allowed_tool_ids": sorted(plan.allowed_tool_ids),
+        "approved_step_keys": sorted(plan.approved_step_keys),
+        "allowed_hosts": sorted(plan.allowed_hosts),
+        "allowed_path_prefixes": list(plan.allowed_path_prefixes),
+        "max_risk_level": plan.max_risk_level.value,
+        "expires_at": _time(plan.expires_at),
+    }
+    if context is not None:
+        payload["revision_context"] = context
+    return _digest(payload)
 
 
 def plan_decision_key(
