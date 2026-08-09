@@ -21,6 +21,7 @@ from cip.modules.provider_onboarding.domain.models import OnboardingState
 from cip.modules.source_governance.domain.models import DataCategory
 
 NOW = datetime(2026, 8, 9, 11, 0, tzinfo=UTC)
+TARGET_URL = "https://api.linkedin.example.test/organizations/123"
 
 
 def test_approved_linkedin_official_api_can_pass_all_four_gates() -> None:
@@ -197,6 +198,7 @@ def test_runtime_dependencies_fail_closed_together() -> None:
     dependencies = ConditionalRuntimeDependencies(
         onboarding_state=OnboardingState.REVOKED,
         source_policy_allowed=False,
+        source_portfolio_allowed=False,
         adapter_capability_present=False,
         kill_switch_active=True,
         quota_remaining=0,
@@ -214,6 +216,7 @@ def test_runtime_dependencies_fail_closed_together() -> None:
     assert set(decision.reasons) >= {
         ConditionalBlockReason.ONBOARDING_NOT_READY,
         ConditionalBlockReason.SOURCE_POLICY_DENIED,
+        ConditionalBlockReason.SOURCE_PORTFOLIO_NOT_EXECUTABLE,
         ConditionalBlockReason.CAPABILITY_MISSING,
         ConditionalBlockReason.KILL_SWITCH_ACTIVE,
         ConditionalBlockReason.QUOTA_EXHAUSTED,
@@ -243,6 +246,7 @@ def test_authorized_export_does_not_require_connected_onboarding() -> None:
         access_method=dossier.access_method,
         purpose="professional-context",
         data_category=DataCategory.PROFESSIONAL_CONTACT,
+        target_url="https://discord.example.test/exports/public-members.csv",
         requested_fields=frozenset({"public_member_role"}),
         retention_days=30,
         automated=False,
@@ -302,6 +306,7 @@ def _request() -> ConditionalExecutionRequest:
         access_method=ConditionalAccessMethod.OFFICIAL_API,
         purpose="professional-context",
         data_category=DataCategory.PROFESSIONAL_CONTACT,
+        target_url=TARGET_URL,
         requested_scopes=frozenset({"organizations.read"}),
         requested_fields=frozenset({"organization", "public_professional_role"}),
         retention_days=180,
@@ -314,6 +319,7 @@ def _ready_dependencies() -> ConditionalRuntimeDependencies:
     return ConditionalRuntimeDependencies(
         onboarding_state=OnboardingState.CONNECTED,
         source_policy_allowed=True,
+        source_portfolio_allowed=True,
         adapter_capability_present=True,
         quota_remaining=100,
         monthly_cost_used=10.0,
