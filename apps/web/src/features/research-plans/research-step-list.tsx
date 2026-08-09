@@ -101,10 +101,12 @@ function latestDecisions(
   decisions: readonly ResearchStepDecision[],
 ): Map<string, ResearchStepDecision> {
   const result = new Map<string, ResearchStepDecision>();
-  for (const decision of decisions) {
-    const stepId = String(decision.runtime_snapshot.step_id ?? "");
-    if (stepId && !result.has(stepId)) {
-      result.set(stepId, decision);
+  const ordered = [...decisions].sort(
+    (left, right) => Date.parse(right.evaluated_at) - Date.parse(left.evaluated_at),
+  );
+  for (const decision of ordered) {
+    if (!result.has(decision.step_id)) {
+      result.set(decision.step_id, decision);
     }
   }
   return result;
