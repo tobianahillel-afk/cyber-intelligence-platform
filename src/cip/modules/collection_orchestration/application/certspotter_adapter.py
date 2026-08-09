@@ -34,6 +34,9 @@ from cip.modules.source_governance.domain.models import DataCategory
 from cip.modules.source_governance.infrastructure.registry import SourceRegistryEntry
 from cip.shared.kernel.time import require_aware_utc
 
+_MAX_PAGE_SIZE = 100
+_MAX_CURSOR_TARGETS = 500
+
 
 class CertSpotterAdapter:
     source_id = "certspotter-ct"
@@ -84,32 +87,18 @@ class CertSpotterAdapter:
                 error_code="provider_not_connected",
                 retryable=False,
             )
-        with httpx.Client(
-            timeout=self._timeout_seconds,
-            follow_redirects=False,
-            transport=self._transport,
-        ) as client:
-            body = get_json(
-                client,
-                target_url,
-                params={
-                    "domain": target.domain,
-                    "include_subdomains": "true",
-                    "expand": "dns_names",
-                },
-                headers={"Authorization": f"Bearer {token.strip()}"},
-            )
-        try:
-            certificates = TypeAdapter(list[CertSpotterCertificate]).validate_json(body)
-        except ValidationError as exc:
-            raise AdapterExecutionError(
-                "Cert Spotter response schema changed",
-                error_code="source_schema_drift",
-                retryable=False,
-            ) from exc
-        certificates = tuple(
+        cursors = _cursor_map(checkpoint_payload, self._targets)
+        page = self._request_page(
+            target_url,
+            target,
+            token=token.strip(),
+            after=cursors.get(target.target_id),
+        )
+        if page:
+            cursors[target.target_id] = page[-1].id
+        scoped = tuple(
             certificate
-            for certificate in certificates
+            for certificate in page
             if _matches_target(certificate, target.domain)
         )
         context = PassiveObservationContext(
@@ -130,7 +119,7 @@ class CertSpotterAdapter:
                 observed_at=_observed_at(certificate, collected_at),
                 published_at=collected_at,
             )
-            for certificate in certificates
+            for certificate in scoped
         )
         projections = tuple(
             _map_certificate(
@@ -139,14 +128,59 @@ class CertSpotterAdapter:
                 source_url=target_url,
                 collected_at=collected_at,
             )
-            for certificate in certificates
+            for certificate in scoped
         )
         return AdapterCollectionBatch(
             observations=observations,
             passive_exposure_projections=projections,
-            checkpoint_payload={"target_index": next_index},
+            checkpoint_payload={
+                "target_index": next_index,
+                "after_by_target": cursors,
+            },
             not_modified=not projections,
         )
+
+    def _request_page(
+        self,
+        target_url: str,
+        target: PassiveInfrastructureTarget,
+        *,
+        token: str,
+        after: str | None,
+    ) -> tuple[CertSpotterCertificate, ...]:
+        params = {
+            "domain": target.domain,
+            "include_subdomains": "true",
+            "expand": "dns_names",
+        }
+        if after is not None:
+            params["after"] = after
+        with httpx.Client(
+            timeout=self._timeout_seconds,
+            follow_redirects=False,
+            transport=self._transport,
+        ) as client:
+            body = get_json(
+                client,
+                target_url,
+                params=params,
+                headers={"Authorization": f"Bearer {token}"},
+            )
+        try:
+            page = tuple(TypeAdapter(list[CertSpotterCertificate]).validate_json(body))
+        except ValidationError as exc:
+            raise AdapterExecutionError(
+                "Cert Spotter response schema changed",
+                error_code="source_schema_drift",
+                retryable=False,
+            ) from exc
+        if len(page) > _MAX_PAGE_SIZE:
+            raise AdapterExecutionError(
+                "Cert Spotter page exceeds configured bound",
+                error_code="source_page_too_large",
+                retryable=False,
+            )
+        return page
 
 
 def _map_certificate(
@@ -206,6 +240,25 @@ def _matches_target(certificate: CertSpotterCertificate, target_domain: str) -> 
     return False
 
 
+def _cursor_map(
+    payload: Mapping[str, object] | None,
+    targets: tuple[PassiveInfrastructureTarget, ...],
+) -> dict[str, str]:
+    if payload is None:
+        return {}
+    raw = payload.get("after_by_target", {})
+    if not isinstance(raw, dict) or len(raw) > _MAX_CURSOR_TARGETS:
+        raise _invalid_checkpoint()
+    known_ids = {target.target_id for target in targets}
+    cursors: dict[str, str] = {}
+    for key, value in raw.items():
+        if not isinstance(key, str) or not isinstance(value, str) or not value.strip():
+            raise _invalid_checkpoint()
+        if key in known_ids:
+            cursors[key] = value.strip()
+    return cursors
+
+
 def _observed_at(
     certificate: CertSpotterCertificate,
     collected_at: datetime,
@@ -231,19 +284,23 @@ def _next_target(
         return None, 0
     value = 0 if payload is None else payload.get("target_index", 0)
     if not isinstance(value, int) or value < 0:
-        raise AdapterExecutionError(
-            "invalid passive target checkpoint",
-            error_code="invalid_checkpoint",
-            retryable=False,
-        )
+        raise _invalid_checkpoint()
     index = value % len(targets)
     return targets[index], 0 if index + 1 >= len(targets) else index + 1
+
+
+def _invalid_checkpoint() -> AdapterExecutionError:
+    return AdapterExecutionError(
+        "invalid passive target checkpoint",
+        error_code="invalid_checkpoint",
+        retryable=False,
+    )
 
 
 def _empty_batch() -> AdapterCollectionBatch:
     return AdapterCollectionBatch(
         observations=(),
         passive_exposure_projections=(),
-        checkpoint_payload={"target_index": 0},
+        checkpoint_payload={"target_index": 0, "after_by_target": {}},
         not_modified=True,
     )
