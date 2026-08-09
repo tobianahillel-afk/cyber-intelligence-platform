@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from uuid import UUID
+
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
@@ -67,7 +69,7 @@ def get_runtime_control(
 
 def list_revisions(
     session: Session,
-    approval_id,
+    approval_id: UUID,
 ) -> tuple[ConditionalProviderApprovalRevisionRecord, ...]:
     return tuple(
         session.scalars(
@@ -80,7 +82,7 @@ def list_revisions(
 
 def list_control_decisions(
     session: Session,
-    control_id,
+    control_id: UUID,
 ) -> tuple[ConditionalProviderControlDecisionRecord, ...]:
     return tuple(
         session.scalars(
@@ -93,7 +95,7 @@ def list_control_decisions(
 
 def list_execution_decisions(
     session: Session,
-    approval_id,
+    approval_id: UUID,
     *,
     limit: int = 100,
 ) -> tuple[ConditionalExecutionDecisionRecord, ...]:
