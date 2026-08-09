@@ -187,7 +187,6 @@ def _new_cyber_filings(
                 form=form,
                 item="1.05",
                 filing_date=recent.filingDate[index],
-                report_date=recent.reportDate[index],
                 accepted_at=require_aware_utc(
                     recent.acceptanceDateTime[index],
                     field_name="acceptanceDateTime",
