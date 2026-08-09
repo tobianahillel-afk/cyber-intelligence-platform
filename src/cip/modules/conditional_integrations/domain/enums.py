@@ -42,6 +42,7 @@ class ConditionalBlockReason(StrEnum):
     DOSSIER_EXPIRED = "dossier_expired"
     DOSSIER_REVOKED = "dossier_revoked"
     DOSSIER_PAUSED = "dossier_paused"
+    SOURCE_MISMATCH = "source_mismatch"
     ACCESS_METHOD_NOT_APPROVED = "access_method_not_approved"
     PROVIDER_METHOD_NOT_PERMITTED = "provider_method_not_permitted"
     SCOPE_NOT_APPROVED = "scope_not_approved"
