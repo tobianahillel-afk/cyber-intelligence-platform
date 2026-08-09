@@ -75,6 +75,8 @@ def _create_approval_revisions() -> None:
         *_approval_scope_columns(),
         *_approval_time_columns(),
         sa.Column("paused_reason", sa.String(500), nullable=True),
+        sa.Column("actor", sa.String(200), nullable=False),
+        sa.Column("change_reason", sa.String(1000), nullable=False),
         sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
         _fk("approval_id", "conditional_provider_approvals.id", ondelete="CASCADE"),
         sa.UniqueConstraint("revision_key"),
