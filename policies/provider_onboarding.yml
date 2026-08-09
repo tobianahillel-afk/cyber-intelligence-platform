@@ -1,5 +1,5 @@
 version: 1
-reviewed_at: 2026-08-04
+reviewed_at: 2026-08-09
 
 providers:
   - source_id: cisa-kev
@@ -132,6 +132,35 @@ providers:
       - retrieve_technical_credentials
       - register_secret_reference
     automatic_onboarding: false
+    blocked_reason: null
+
+  - source_id: brave-search-api
+    display_name: Brave Search API
+    auth_mode: api_key
+    documentation_url: https://api-dashboard.search.brave.com/app/documentation/web-search/get-started
+    signup_url: https://api-dashboard.search.brave.com/app/keys
+    console_url: https://api-dashboard.search.brave.com/
+    required_secret_names:
+      - api_token
+    human_actions:
+      - open_official_signup
+      - sign_in
+      - accept_provider_terms
+      - retrieve_technical_credentials
+      - register_secret_reference
+      - enable_source_policy
+    automatic_onboarding: false
+    blocked_reason: null
+
+  - source_id: internet-archive-cdx
+    display_name: Internet Archive CDX
+    auth_mode: none
+    documentation_url: https://github.com/internetarchive/wayback/tree/master/wayback-cdx-server
+    signup_url: null
+    console_url: null
+    required_secret_names: []
+    human_actions: []
+    automatic_onboarding: true
     blocked_reason: null
 
   - source_id: linkedin-official-api

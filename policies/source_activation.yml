@@ -353,16 +353,17 @@ sources:
   - source_id: brave-search-api
     display_name: Brave Search API
     category: public_search
-    disposition: planned
+    disposition: active
     activation_wave: SA-02
-    stages: [catalogued, reviewed]
+    requires_schedule: false
+    stages: [catalogued, reviewed, mapped, adapter_present, authorized, executable]
 
   - source_id: internet-archive-cdx
     display_name: Internet Archive CDX discovery
     category: public_archive
-    disposition: planned
+    disposition: active
     activation_wave: SA-02
-    stages: [catalogued, reviewed]
+    stages: [catalogued, reviewed, mapped, adapter_present, authorized, executable, scheduled]
 
   - source_id: sherlock-local
     display_name: Sherlock username OSINT tool
