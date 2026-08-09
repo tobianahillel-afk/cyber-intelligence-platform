@@ -23,7 +23,7 @@ Source breadth is useful only when it improves reliable client discovery. Source
 
 ## Current validated baseline
 
-The current validated release is version `0.22.0`, covering lots `00` through `21`.
+The current validated release is version `0.23.0`, covering lots `00` through `22`.
 
 Implemented and validated capabilities include:
 
@@ -46,7 +46,8 @@ Implemented and validated capabilities include:
 - source-aware corporate and regulatory change intelligence with immutable claim history, syndication-aware corroboration, explicit confirmation/report/speculation/dispute/correction/retraction states, separate service mappings, protected APIs, and the Corporate Changes workspace;
 - temporal provider, customer, partner, supplier, reseller, integrator, auditor, insurer, MSSP/MDR, cloud-provider, technology-vendor, and subcontractor relationship intelligence with immutable evidence history, explicit evidence classes, reversible chronology, protected APIs, and the Relationships workspace;
 - temporal entity-resolution and corporate-graph intelligence with immutable node/edge history, exact alias/identifier/domain references, review-only probabilistic candidates, historical queries, reversible analyst decisions, versioned blast-radius previews, protected APIs, and the Graph workspace;
-- governed professional-context intelligence with source-qualified people references, temporal roles and direct reporting lines, public business contact channels, consented community metadata, lawful-basis and retention controls, HMAC-backed erasure, protected APIs, and the Professional Context workspace.
+- governed professional-context intelligence with source-qualified people references, temporal roles and direct reporting lines, public business contact channels, consented community metadata, lawful-basis and retention controls, HMAC-backed erasure, protected APIs, and the Professional Context workspace;
+- conditional-provider governance with immutable approval revisions, provider-method restrictions, persisted-state eligibility resolution, append-only pause/kill-switch controls, safe-default non-executable provider catalogues, source-value evidence, protected APIs, and the Conditional Integrations workspace.
 
 Lot `12` remains under an explicit activation boundary: merging the software does not authorize collection against a real organization. The checked-in public-web example is disabled, unauthorized, unscheduled, and non-executable. Search and archive providers remain disconnected until separately approved.
 
@@ -68,7 +69,9 @@ Lot `20` provides a PostgreSQL-backed temporal corporate knowledge graph over pr
 
 Lot `21` provides source-aware professional organization context without building private-life profiles. It preserves source-qualified person references, temporal role/team and direct reporting-line claims, public business contact channels, authorized public-community metadata, lawful-basis and retention state, correction history, and HMAC-backed erasure. Same names are not automatic person merges, a professional role claim is not verified employment, a public profile is not platform-automation authorization, service relevance is not a need or opportunity, and contact relevance is not outreach authorization.
 
-The next planned implementation lot is `22`: conditional, premium, LinkedIn, Discord, and BrixHub integrations.
+Lot `22` provides a fail-closed approval and control layer for conditional, premium, LinkedIn, Discord, BrixHub, licensed CTI, and licensed commercial-data providers. It preserves immutable dossier revisions with actor/reason, resolves onboarding, Source Governance, Source Portfolio, capability, quota, cost, pause, and kill-switch state from PostgreSQL, and records immutable eligibility decisions. Candidate visibility, an account reference, a licence, or a positive dossier is not by itself execution authorization. LinkedIn is limited to official or licensed API methods; Discord requires an administrator-installed connector or authorized export; BrixHub remains quarantined with no permitted execution method. Default Lot 22 catalogues contain no executable adapter or schedule, and the workspace never performs provider login or collection from a page view.
+
+The next planned implementation lot is `23`: Analyst research and governed OSINT catalog orchestration.
 
 ## Implemented and modeled source portfolio
 
@@ -126,9 +129,17 @@ Selected professional-context candidate contracts are implemented for:
 - licensed or explicitly authorized professional-directory metadata;
 - approved community exports or APIs with an explicit authorization reference.
 
+Selected conditional-provider contracts are now modeled for:
+
+- existing governed `linkedin-official-api` and quarantined `brixhub` source identities;
+- an administrator-consented Discord integration candidate;
+- deployment-specific licensed premium-CTI and commercial-data placeholders.
+
+The new Lot 22 candidates are fail-closed: missing authorization, empty approved hosts/paths/purposes, no runtime adapter, no collection schedule, no raw-storage permission, and no automatic opportunity or outreach path. Premium-provider placeholders use `.example.invalid` and do not imply approval of a real vendor.
+
 Every newly modeled passive, advisory, corporate-change, relationship, or professional-context candidate is `draft`, has missing authorization, has no approved hosts or paths, has no schedule or registered runtime adapter, and is marked `executable: false`. Active probing, authentication, access-control bypass, direct exposure validation, autonomous opportunities, and outreach are explicitly forbidden. Vulnerability applicability operates only on stored evidence from both organization-specific technology observations and advisory affected-range evidence.
 
-OSINT Framework entries remain non-executable catalog candidates. LinkedIn, Discord, BrixHub, browser automation, premium providers, search APIs, archive providers, and every unapproved vulnerability, incident, telemetry, passive-observation, advisory, corporate-change, relationship, or professional-context provider remain disabled unless their exact method, fields, purpose, authorization, retention, licence, and security controls are approved.
+OSINT Framework entries remain non-executable catalog candidates. LinkedIn, Discord, BrixHub, browser automation, premium providers, search APIs, archive providers, and every unapproved vulnerability, incident, telemetry, passive-observation, advisory, corporate-change, relationship, professional-context, or conditional provider remain disabled unless their exact method, fields, purpose, authorization, retention, licence, onboarding, runtime capability, quota, cost, and security controls are approved.
 
 ## Evidence flow
 
@@ -289,6 +300,29 @@ contact relevance
   != outreach authorization
 ```
 
+Conditional-provider eligibility remains a local control decision over persisted state:
+
+```text
+provider candidate
+  + immutable provider-specific dossier
+  + persisted onboarding state
+  + Source Governance decision for exact target/purpose/category
+  + executable Source Portfolio state
+  + registered adapter capability
+  + quota/cost state
+  + local pause/kill-switch state
+  -> immutable eligibility audit
+
+provider candidate
+  != approved provider
+approved dossier
+  != registered runtime capability
+eligibility audit
+  != provider request or collection
+source-value contribution
+  != service need or commercial opportunity
+```
+
 Provider payloads remain inside adapter packages. Adapters never write directly to company, score, alert, or opportunity projections.
 
 ## Product access model
@@ -300,6 +334,8 @@ Collection is centralized and uses approved public feeds, official APIs, open-da
 The product is database-first. Normal page views read stored and indexed evidence; they do not crawl sources on demand. Schedulers refresh sources according to freshness, value, cost, quota, authorization, and change frequency. Stale data remains visible with an explicit freshness state.
 
 The `/research`, `/vulnerabilities`, `/incidents`, `/threat-intelligence`, `/passive-exposure`, `/vulnerability-applicability`, `/corporate-changes`, `/relationships`, `/graph`, and `/professional-context` workspaces and their APIs search persisted data only. They never launch external collection from an analyst page view.
+
+The `/conditional-integrations` workspace is a deployment-protected control-plane workspace. It reads and writes local approval/control/audit state and can request a persisted-state eligibility preview, but that preview performs no provider login, HTTP collection, browser automation, outreach, or opportunity creation. Production requires the configured control-plane token at request time.
 
 ## Architecture
 
@@ -313,9 +349,9 @@ The architecture separates:
 Canonical layers are:
 
 1. source catalog and authorization;
-2. provider onboarding and adapter capabilities;
+2. provider onboarding, provider-specific conditional approvals, and adapter capabilities;
 3. collection runs and immutable source records;
-4. evidence, observations, public claims, vulnerability snapshots, incident claims, telemetry snapshots, passive observation snapshots, advisory revisions, corporate-change claim revisions, relationship evidence snapshots, immutable corporate-graph snapshots, and professional-context evidence snapshots;
+4. evidence, observations, public claims, vulnerability snapshots, incident claims, telemetry snapshots, passive observation snapshots, advisory revisions, corporate-change claim revisions, relationship evidence snapshots, immutable corporate-graph snapshots, professional-context evidence snapshots, and conditional-provider control/eligibility audits;
 5. resolved organizations, incidents, vulnerabilities, indicators, passive assets, technologies, products, providers, material changes, business relationships, roles, temporal relationships, professional people references, and reversible entity-resolution bindings;
 6. vulnerability applicability, service mappings, professional service relevance, commercial signals, and need hypotheses;
 7. scores, alerts, opportunities, tasks, and analyst decisions.
@@ -336,9 +372,8 @@ Domain modules cannot depend on FastAPI, SQLAlchemy models, adapters, API packag
 
 [`docs/PROJECT_DELIVERY_PLAN.md`](docs/PROJECT_DELIVERY_PLAN.md) is authoritative.
 
-- lots `00–21`: implemented and validated foundations, procurement, hiring, identity, onboarding, source runtime, contracts, public footprint, vulnerability knowledge, public incident intelligence, defensive telemetry, passive technographic evidence, vendor advisories, vulnerability applicability, corporate/regulatory change intelligence, temporal relationship intelligence, entity resolution, the temporal corporate knowledge graph, and governed professional context;
-- lot `22`: conditional, premium, LinkedIn, Discord, and BrixHub integrations;
-- lots `22–23`: conditional sources and governed research orchestration;
+- lots `00–22`: implemented and validated foundations, procurement, hiring, identity, onboarding, source runtime, contracts, public footprint, vulnerability knowledge, public incident intelligence, defensive telemetry, passive technographic evidence, vendor advisories, vulnerability applicability, corporate/regulatory change intelligence, temporal relationship intelligence, entity resolution, the temporal corporate knowledge graph, governed professional context, and conditional provider governance;
+- lot `23`: analyst research and governed OSINT catalog orchestration;
 - lots `24–27`: signal fusion, need hypotheses, calibrated scoring, native commercial operations, and Company 360;
 - lots `28–32`: data quality, release security, resilience, optional isolated browser runtime, and controlled production pilot.
 
@@ -372,7 +407,8 @@ Executable rules include:
 - corporate change intelligence cannot import network clients, collection adapters, opportunity modules, contacts, or outreach modules;
 - relationship intelligence cannot import network clients, collection adapters, or opportunity modules;
 - corporate graph cannot import network clients, source adapters, browser automation, `neo4j`, or `networkx`, and its domain cannot depend on FastAPI, SQLAlchemy, infrastructure implementations, or opportunity modules;
-- professional context cannot import network clients, browser or platform automation, collection orchestration, opportunity, or outreach modules, and its domain cannot depend on FastAPI, SQLAlchemy, or infrastructure implementations.
+- professional context cannot import network clients, browser or platform automation, collection orchestration, opportunity, or outreach modules, and its domain cannot depend on FastAPI, SQLAlchemy, or infrastructure implementations;
+- conditional integrations cannot import provider network clients, browser/platform automation, collection adapters, opportunity, contact-enrichment, or outreach modules, and provider eligibility must be resolved from persisted governed state rather than client-supplied runtime booleans.
 
 ## Source and data safety
 
@@ -400,9 +436,10 @@ The platform does not:
 - treat shared names, aliases, domains, or identifiers as automatic entity merges;
 - treat graph membership or a resolution candidate as an upgrade in evidence strength;
 - treat a public professional profile as authorization to automate that platform;
-- turn professional role or contact relevance directly into a need, opportunity, or outreach authorization.
+- turn professional role or contact relevance directly into a need, opportunity, or outreach authorization;
+- treat a conditional-provider catalogue entry, account, licence, approval dossier, eligibility preview, or observed source-value contribution as authorization to collect, proof of a service need, a commercial opportunity, or authorization to contact.
 
-LinkedIn collection remains disabled unless official API scopes, a licensed product, or reviewed written authorization covers the exact method and purpose. Discord collection requires an administrator-installed connector, authorized export, or equivalent consented integration. BrixHub remains quarantined.
+LinkedIn collection remains disabled unless official API scopes, a licensed product, or reviewed written authorization covers the exact method and purpose and all shared runtime gates are positive. Discord collection requires an administrator-installed connector, authorized export, or equivalent consented integration plus positive shared gates. BrixHub remains quarantined and has no permitted execution method in Lot 22. Premium provider placeholders are non-executable until a deployment selects a real provider and separately approves its exact contract, fields, scopes, hosts, retention, onboarding, runtime adapter, quota, cost, and security controls.
 
 ## Local development
 
@@ -493,4 +530,6 @@ npm run build
 - [`docs/lots/LOT_20_VALIDATION_REPORT.md`](docs/lots/LOT_20_VALIDATION_REPORT.md)
 - [`docs/lots/LOT_21_PROFESSIONAL_CONTEXT.md`](docs/lots/LOT_21_PROFESSIONAL_CONTEXT.md)
 - [`docs/lots/LOT_21_VALIDATION_REPORT.md`](docs/lots/LOT_21_VALIDATION_REPORT.md)
+- [`docs/lots/LOT_22_CONDITIONAL_INTEGRATIONS.md`](docs/lots/LOT_22_CONDITIONAL_INTEGRATIONS.md)
+- [`docs/lots/LOT_22_VALIDATION_REPORT.md`](docs/lots/LOT_22_VALIDATION_REPORT.md)
 - [`SECURITY.md`](SECURITY.md)
