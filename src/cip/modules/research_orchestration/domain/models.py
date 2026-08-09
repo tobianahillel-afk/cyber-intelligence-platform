@@ -6,9 +6,11 @@ from urllib.parse import urlparse
 from uuid import UUID
 
 from cip.modules.research_orchestration.domain.enums import (
+    ResearchBlockReason,
     ResearchPlanState,
     ResearchRiskLevel,
     ResearchStepMode,
+    ResearchStepState,
 )
 from cip.modules.source_governance.domain.models import DataCategory
 from cip.shared.kernel.time import require_aware_utc
@@ -45,6 +47,7 @@ class ResearchPlan:
     approved_step_keys: frozenset[str]
     allowed_hosts: frozenset[str] = field(default_factory=frozenset)
     allowed_path_prefixes: tuple[str, ...] = ()
+    max_risk_level: ResearchRiskLevel = ResearchRiskLevel.MEDIUM
     expires_at: datetime | None = None
 
     def __post_init__(self) -> None:
@@ -58,7 +61,9 @@ class ResearchPlan:
             "allowed_hosts",
             frozenset(_normalize_host(value) for value in self.allowed_hosts),
         )
-        prefixes = tuple(dict.fromkeys(_normalize_path(value) for value in self.allowed_path_prefixes))
+        prefixes = tuple(
+            dict.fromkeys(_normalize_path(value) for value in self.allowed_path_prefixes)
+        )
         object.__setattr__(self, "allowed_path_prefixes", prefixes)
         if self.expires_at is not None:
             object.__setattr__(
@@ -130,6 +135,26 @@ class ResearchRuntimeState:
     def __post_init__(self) -> None:
         if self.quota_remaining is not None and self.quota_remaining < 0:
             raise ValueError("quota_remaining cannot be negative")
+
+
+@dataclass(frozen=True, slots=True)
+class ResearchStepDecision:
+    allowed: bool
+    next_state: ResearchStepState
+    reasons: tuple[ResearchBlockReason, ...]
+
+    def __post_init__(self) -> None:
+        if self.allowed:
+            if self.reasons != (ResearchBlockReason.ALLOWED,):
+                raise ValueError("allowed decision must contain only allowed")
+            allowed_states = {
+                ResearchStepState.READY,
+                ResearchStepState.MANUAL_ACTION_REQUIRED,
+            }
+            if self.next_state not in allowed_states:
+                raise ValueError("allowed decision requires ready or manual-action state")
+        elif not self.reasons or ResearchBlockReason.ALLOWED in self.reasons:
+            raise ValueError("blocked decision requires blocking reasons")
 
 
 @dataclass(frozen=True, slots=True)
