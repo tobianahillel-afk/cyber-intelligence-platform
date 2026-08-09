@@ -10,13 +10,19 @@ from time import sleep
 
 from sqlalchemy.orm import Session, sessionmaker
 
-from cip.adapters.sources.greenhouse.registry import GreenhouseBoard, load_greenhouse_boards
+from cip.adapters.sources.greenhouse.registry import (
+    GreenhouseBoard,
+    load_greenhouse_boards,
+)
 from cip.adapters.sources.lever.registry import LeverSite, load_lever_sites
 from cip.adapters.sources.organization_identity.registry import (
     OrganizationIdentityTarget,
     load_organization_identity_targets,
 )
-from cip.adapters.sources.public_web.registry import PublicWebTarget, load_public_web_targets
+from cip.adapters.sources.public_web.registry import (
+    PublicWebTarget,
+    load_public_web_targets,
+)
 from cip.adapters.sources.smartrecruiters.registry import (
     SmartRecruitersCompany,
     load_smartrecruiters_companies,
@@ -59,7 +65,9 @@ from cip.modules.data_governance.domain.retention import RetentionPolicy
 from cip.modules.data_governance.infrastructure.retention_loader import load_retention_policy
 from cip.modules.source_governance.infrastructure.persistence import sync_source_registry
 from cip.modules.source_governance.infrastructure.registry import SourceRegistryEntry
-from cip.modules.source_governance.infrastructure.registry_bundle import load_source_registry_bundle
+from cip.modules.source_governance.infrastructure.registry_bundle import (
+    load_source_registry_bundle,
+)
 from cip.modules.source_portfolio.application.backfill_worker import (
     BackfillWorkerOutcome,
     BackfillWorkerStatus,
@@ -70,8 +78,13 @@ from cip.modules.source_portfolio.application.service import (
     reconcile_runtime_adapters,
     sync_source_portfolio,
 )
-from cip.modules.source_portfolio.domain.models import CatalogStatus, SourceCatalogEntry
-from cip.modules.source_portfolio.infrastructure.registry_bundle import load_source_portfolio_bundle
+from cip.modules.source_portfolio.domain.models import (
+    CatalogStatus,
+    SourceCatalogEntry,
+)
+from cip.modules.source_portfolio.infrastructure.registry_bundle import (
+    load_source_portfolio_bundle,
+)
 from cip.shared.config.settings import Settings
 from cip.shared.kernel.time import utc_now
 from cip.shared.persistence.session import (
@@ -139,12 +152,12 @@ def build_collection_runtime(settings: Settings) -> CollectionRuntime:
         sync_source_portfolio(session, portfolio, now=utc_now())
     adapters = _build_adapters(
         entries,
-        greenhouse_boards=greenhouse_boards,
-        lever_sites=lever_sites,
-        smartrecruiters_companies=smartrecruiters_companies,
-        identity_targets=identity_targets,
-        public_web_targets=public_web_targets,
-        vulnerability_targets=vulnerability_targets,
+        greenhouse_boards,
+        lever_sites,
+        smartrecruiters_companies,
+        identity_targets,
+        public_web_targets,
+        vulnerability_targets,
         timeout_seconds=settings.source_http_timeout_seconds,
     )
     with session_scope(factory) as session:
@@ -168,80 +181,113 @@ def build_collection_runtime(settings: Settings) -> CollectionRuntime:
 
 def _build_adapters(
     entries: tuple[SourceRegistryEntry, ...],
-    *,
     greenhouse_boards: tuple[GreenhouseBoard, ...],
     lever_sites: tuple[LeverSite, ...],
     smartrecruiters_companies: tuple[SmartRecruitersCompany, ...],
     identity_targets: tuple[OrganizationIdentityTarget, ...],
     public_web_targets: tuple[PublicWebTarget, ...],
     vulnerability_targets: tuple[VulnerabilityQueryTarget, ...],
+    *,
     timeout_seconds: float,
 ) -> dict[tuple[str, str], CollectionAdapter]:
-    by_id = {entry.policy.id: entry for entry in entries}
-    cisa_entry = by_id.get(CisaKevAdapter.source_id)
-    ted_entry = by_id.get(TedSearchAdapter.source_id)
-    boamp_entry = by_id.get(BoampAdapter.source_id)
-    decp_entry = by_id.get(DecpAdapter.source_id)
-    greenhouse_entry = by_id.get(GreenhouseAdapter.source_id)
-    lever_entry = by_id.get(LeverAdapter.source_id)
-    smartrecruiters_entry = by_id.get(SmartRecruitersAdapter.source_id)
-    public_web_entry = by_id.get(PublicWebAdapter.source_id)
+    entries_by_id = {entry.policy.id: entry for entry in entries}
     adapters: dict[tuple[str, str], CollectionAdapter] = {}
+    _register(adapters, ReferencePortfolioAdapter())
+    cisa_entry = entries_by_id.get(CisaKevAdapter.source_id)
     if cisa_entry is not None:
-        cisa = CisaKevAdapter(cisa_entry, timeout_seconds=timeout_seconds)
-        adapters[(cisa.source_id, cisa.adapter_id)] = cisa
+        _register(adapters, CisaKevAdapter(cisa_entry, timeout_seconds=timeout_seconds))
+    ted_entry = entries_by_id.get(TedSearchAdapter.source_id)
     if ted_entry is not None:
-        ted = TedSearchAdapter(ted_entry, timeout_seconds=timeout_seconds)
-        adapters[(ted.source_id, ted.adapter_id)] = ted
+        _register(adapters, TedSearchAdapter(ted_entry, timeout_seconds=timeout_seconds))
+    boamp_entry = entries_by_id.get(BoampAdapter.source_id)
     if boamp_entry is not None:
-        boamp = BoampAdapter(boamp_entry, timeout_seconds=timeout_seconds)
-        adapters[(boamp.source_id, boamp.adapter_id)] = boamp
+        _register(adapters, BoampAdapter(boamp_entry, timeout_seconds=timeout_seconds))
+    decp_entry = entries_by_id.get(DecpAdapter.source_id)
     if decp_entry is not None:
-        decp = DecpAdapter(decp_entry, timeout_seconds=timeout_seconds)
-        adapters[(decp.source_id, decp.adapter_id)] = decp
-    if greenhouse_entry is not None:
-        greenhouse = GreenhouseAdapter(
-            greenhouse_entry,
-            greenhouse_boards,
-            timeout_seconds=timeout_seconds,
+        _register(adapters, DecpAdapter(decp_entry, timeout_seconds=timeout_seconds))
+    greenhouse_entry = entries_by_id.get(GreenhouseAdapter.source_id)
+    if greenhouse_entry is not None and any(board.enabled for board in greenhouse_boards):
+        _register(
+            adapters,
+            GreenhouseAdapter(
+                greenhouse_entry,
+                greenhouse_boards,
+                timeout_seconds=timeout_seconds,
+            ),
         )
-        adapters[(greenhouse.source_id, greenhouse.adapter_id)] = greenhouse
-    if lever_entry is not None:
-        lever = LeverAdapter(
-            lever_entry,
-            lever_sites,
-            timeout_seconds=timeout_seconds,
+    lever_entry = entries_by_id.get(LeverAdapter.source_id)
+    if lever_entry is not None and any(site.enabled for site in lever_sites):
+        _register(
+            adapters,
+            LeverAdapter(
+                lever_entry,
+                lever_sites,
+                timeout_seconds=timeout_seconds,
+            ),
         )
-        adapters[(lever.source_id, lever.adapter_id)] = lever
-    if smartrecruiters_entry is not None:
-        smartrecruiters = SmartRecruitersAdapter(
-            smartrecruiters_entry,
-            smartrecruiters_companies,
-            timeout_seconds=timeout_seconds,
+    smartrecruiters_entry = entries_by_id.get(SmartRecruitersAdapter.source_id)
+    if smartrecruiters_entry is not None and any(
+        company.enabled for company in smartrecruiters_companies
+    ):
+        _register(
+            adapters,
+            SmartRecruitersAdapter(
+                smartrecruiters_entry,
+                smartrecruiters_companies,
+                timeout_seconds=timeout_seconds,
+            ),
         )
-        adapters[(smartrecruiters.source_id, smartrecruiters.adapter_id)] = smartrecruiters
-    if public_web_entry is not None:
-        public_web = PublicWebAdapter(
-            public_web_entry,
-            public_web_targets,
-            timeout_seconds=timeout_seconds,
-        )
-        adapters[(public_web.source_id, public_web.adapter_id)] = public_web
     register_identity_adapters(
         adapters,
-        by_id,
+        entries_by_id,
         identity_targets,
+        timeout_seconds=timeout_seconds,
+    )
+    _register_public_web_adapters(
+        adapters,
+        entries_by_id,
+        public_web_targets,
         timeout_seconds=timeout_seconds,
     )
     register_vulnerability_adapters(
         adapters,
-        by_id,
+        entries_by_id,
         vulnerability_targets,
         timeout_seconds=timeout_seconds,
     )
-    reference = ReferencePortfolioAdapter()
-    adapters[(reference.source_id, reference.adapter_id)] = reference
     return adapters
+
+
+def _register_public_web_adapters(
+    adapters: dict[tuple[str, str], CollectionAdapter],
+    entries_by_id: dict[str, SourceRegistryEntry],
+    targets: tuple[PublicWebTarget, ...],
+    *,
+    timeout_seconds: float,
+) -> None:
+    for target in targets:
+        if not target.enabled:
+            continue
+        entry = entries_by_id.get(target.id)
+        if entry is None:
+            raise ValueError(
+                f"enabled public web target has no source policy: {target.id}"
+            )
+        _register(
+            adapters,
+            PublicWebAdapter(
+                entry,
+                target,
+                timeout_seconds=timeout_seconds,
+            ),
+        )
+
+
+def _register(
+    adapters: dict[tuple[str, str], CollectionAdapter],
+    adapter: CollectionAdapter,
+) -> None:
+    adapters[(adapter.source_id, adapter.adapter_id)] = adapter
 
 
 def run_scheduler_once(runtime: CollectionRuntime, *, now: datetime | None = None) -> int:
@@ -327,7 +373,9 @@ def _validate_registered_schedules(
         if not conditional:
             missing.append(f"{schedule.source_id}/{schedule.adapter_id}")
     if missing:
-        raise ValueError(f"enabled schedules have no registered adapter: {', '.join(missing)}")
+        raise ValueError(
+            f"enabled schedules have no registered adapter: {', '.join(missing)}"
+        )
 
 
 def _validate_portfolio_adapters(
