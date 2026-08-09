@@ -12,6 +12,7 @@ from cip.modules.research_orchestration.infrastructure.models import (
     ResearchPlanRecord,
     ResearchStepRecord,
 )
+from cip.modules.research_orchestration.infrastructure.persistence_time import persistence_utc
 from cip.modules.source_governance.domain.models import DataCategory
 
 
@@ -34,7 +35,7 @@ def hydrate_plan(record: ResearchPlanRecord) -> ResearchPlan:
         allowed_hosts=frozenset(record.allowed_hosts),
         allowed_path_prefixes=tuple(record.allowed_path_prefixes),
         max_risk_level=ResearchRiskLevel(record.max_risk_level),
-        expires_at=record.expires_at,
+        expires_at=persistence_utc(record.expires_at),
     )
 
 
