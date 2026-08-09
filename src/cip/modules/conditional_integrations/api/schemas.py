@@ -44,6 +44,19 @@ class ProviderControlRequest(BaseModel):
     reason: str = Field(min_length=1, max_length=1000)
 
 
+class EligibilityRequest(BaseModel):
+    access_method: ConditionalAccessMethod
+    purpose: str = Field(min_length=1, max_length=300)
+    data_category: DataCategory
+    target_url: str = Field(min_length=1, max_length=2048)
+    requested_scopes: set[str] = Field(default_factory=set)
+    requested_fields: set[str] = Field(default_factory=set)
+    retention_days: int = Field(ge=1)
+    automated: bool = True
+    store_raw_content: bool = False
+    account_reference: str | None = Field(default=None, max_length=500)
+
+
 class ApprovalResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
@@ -126,13 +139,16 @@ class ExecutionDecisionResponse(BaseModel):
     access_method: str
     purpose: str
     data_category: str
+    target_url: str
     requested_scopes: list[str]
     requested_fields: list[str]
     retention_days: int
     automated: bool
+    store_raw_content: bool
     account_reference: str | None
     onboarding_state: str
     source_policy_allowed: bool
+    source_portfolio_allowed: bool
     adapter_capability_present: bool
     provider_paused: bool
     kill_switch_active: bool
