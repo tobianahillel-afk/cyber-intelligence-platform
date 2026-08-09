@@ -41,6 +41,9 @@ def persist_professional_contacts(
                 ProfessionalContactRecord.contact_key == contact_key
             )
         )
+        if record is not None and record.deleted:
+            records.append(record)
+            continue
         if record is None:
             record = _new_record(reconcile_contact_evidence(incoming, now=current), current)
             session.add(record)
@@ -51,7 +54,10 @@ def persist_professional_contacts(
             contact_snapshot(item)
             for item in session.scalars(
                 select(ProfessionalContactSnapshotRecord)
-                .where(ProfessionalContactSnapshotRecord.contact_id == record.id)
+                .where(
+                    ProfessionalContactSnapshotRecord.contact_id == record.id,
+                    ProfessionalContactSnapshotRecord.deleted.is_(False),
+                )
                 .order_by(ProfessionalContactSnapshotRecord.observed_at)
             )
         )
