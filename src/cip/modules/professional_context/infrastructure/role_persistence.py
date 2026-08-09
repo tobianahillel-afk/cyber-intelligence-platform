@@ -37,6 +37,9 @@ def persist_professional_roles(
         record = session.scalar(
             select(ProfessionalRoleRecord).where(ProfessionalRoleRecord.claim_key == claim_key)
         )
+        if record is not None and record.deleted:
+            records.append(record)
+            continue
         if record is None:
             record = _new_record(reconcile_role_claims(incoming, now=current), current)
             session.add(record)
@@ -47,7 +50,10 @@ def persist_professional_roles(
             role_snapshot(item)
             for item in session.scalars(
                 select(ProfessionalRoleSnapshotRecord)
-                .where(ProfessionalRoleSnapshotRecord.role_id == record.id)
+                .where(
+                    ProfessionalRoleSnapshotRecord.role_id == record.id,
+                    ProfessionalRoleSnapshotRecord.deleted.is_(False),
+                )
                 .order_by(ProfessionalRoleSnapshotRecord.observed_at)
             )
         )
