@@ -17,6 +17,7 @@ from cip.modules.professional_context.api.router import router as professional_c
 from cip.modules.provider_onboarding.api.routes import router as provider_onboarding_router
 from cip.modules.public_footprint.api.routes import router as public_footprint_router
 from cip.modules.relationship_intelligence.api.routes import router as relationship_router
+from cip.modules.research_orchestration.api.router import router as research_router
 from cip.modules.source_governance.api.routes import router as source_governance_router
 from cip.modules.source_portfolio.api.routes import router as source_portfolio_router
 from cip.modules.threat_telemetry.api.routes import router as threat_telemetry_router
@@ -40,14 +41,15 @@ def create_app() -> FastAPI:
             "applicability, corporate and regulatory change intelligence, temporal "
             "organization relationship intelligence, reversible entity resolution, "
             "temporal corporate graph context, governed professional organization "
-            "context, conditional provider approval controls, and evidence-backed "
-            "opportunity discovery."
+            "context, conditional provider approval controls, governed analyst "
+            "research orchestration, and evidence-backed opportunity discovery."
         ),
     )
     application.include_router(source_governance_router)
     application.include_router(provider_onboarding_router)
     application.include_router(source_portfolio_router)
     application.include_router(conditional_integrations_router)
+    application.include_router(research_router)
     application.include_router(procurement_history_router)
     application.include_router(public_footprint_router)
     application.include_router(vulnerability_router)
