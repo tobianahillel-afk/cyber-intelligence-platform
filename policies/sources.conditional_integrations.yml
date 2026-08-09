@@ -1,0 +1,151 @@
+version: 1
+reviewed_at: 2026-08-09
+
+sources:
+  - id: linkedin-official-api
+    name: LinkedIn Official API candidate
+    base_url: https://api.linkedin.com/
+    status: draft
+    source_type: api
+    owner: Conditional provider governance
+    terms_url: https://www.linkedin.com/legal/l/api-terms-of-use
+    licence: Provider-specific approval dossier required
+    allowed_data_categories:
+      - organization_metadata
+      - professional_contact
+    prohibited_data_categories: &prohibited
+      - credential
+      - victim_file
+      - private_communication
+      - private_personal_data
+      - restricted_content
+    rate_limit_per_minute: null
+    retention_days: 365
+    attribution_required: true
+    raw_content_storage: false
+    human_review_required: true
+    authorization: &missing_authorization
+      status: missing
+      document_reference: null
+      reviewed_at: null
+      expires_at: null
+      approved_hosts: []
+      approved_path_prefixes: []
+      approved_purposes: []
+      automated_collection_allowed: false
+      raw_storage_allowed: false
+    economics: &conditional_economics
+      commercial_value: unknown
+      monthly_cost: 0
+      implementation_cost: unknown
+      maintenance_cost: unknown
+      expected_stability: unknown
+    notes: >-
+      Official or separately licensed API access only. This candidate does not
+      authorize collection and has no runtime adapter or schedule. Browser scraping,
+      copied sessions, fake accounts, CAPTCHA/MFA bypass, private-message collection,
+      contact enrichment beyond approved professional fields, and autonomous outreach
+      are prohibited.
+
+  - id: discord-authorized-integration
+    name: Discord authorized integration candidate
+    base_url: https://discord.com/api/
+    status: draft
+    source_type: api
+    owner: Conditional provider governance
+    terms_url: https://discord.com/terms
+    licence: Administrator consent and provider-specific approval required
+    allowed_data_categories:
+      - organization_metadata
+      - public_result_metadata
+    prohibited_data_categories: *prohibited
+    rate_limit_per_minute: null
+    retention_days: 180
+    attribution_required: true
+    raw_content_storage: false
+    human_review_required: true
+    authorization: *missing_authorization
+    economics: *conditional_economics
+    notes: >-
+      Administrator-installed connector or explicitly authorized export only. No
+      private messages, copied user sessions, self-bots, credential reuse, ban
+      evasion, or server access outside an approved administrator scope. No runtime
+      adapter or schedule is included by this candidate.
+
+  - id: brixhub
+    name: BrixHub quarantined candidate
+    base_url: https://brixhub.cc/
+    status: quarantined
+    source_type: licensed_dataset
+    owner: Conditional provider governance
+    terms_url: null
+    licence: Exact legal, licence, access-path, and security review required
+    allowed_data_categories:
+      - organization_metadata
+      - public_result_metadata
+    prohibited_data_categories: *prohibited
+    rate_limit_per_minute: null
+    retention_days: 90
+    attribution_required: true
+    raw_content_storage: false
+    human_review_required: true
+    authorization: *missing_authorization
+    economics: *conditional_economics
+    notes: >-
+      Quarantined. Account creation, authentication, scraping, downloads, imports,
+      credential handling, and browser automation remain prohibited. The Lot 22
+      provider-method policy intentionally permits no BrixHub execution method.
+
+  - id: premium-cti-licensed
+    name: Deployment-specific licensed premium CTI candidate
+    base_url: https://premium-cti.example.invalid/
+    status: draft
+    source_type: licensed_dataset
+    owner: Deployment-specific licensed threat-intelligence provider
+    terms_url: https://premium-cti.example.invalid/terms
+    licence: Exact provider contract and approval dossier required
+    allowed_data_categories:
+      - organization_metadata
+      - public_incident_metadata
+      - vulnerability_metadata
+      - known_exploited_status
+      - public_result_metadata
+    prohibited_data_categories: *prohibited
+    rate_limit_per_minute: null
+    retention_days: 365
+    attribution_required: true
+    raw_content_storage: false
+    human_review_required: true
+    authorization: *missing_authorization
+    economics: *conditional_economics
+    notes: >-
+      Placeholder for a deployment-selected licensed provider. No provider is
+      implied by this entry. Exact contract, fields, scopes, hosts, paths, retention,
+      cost limits, onboarding, adapter code, and authorization must be reviewed
+      before execution.
+
+  - id: commercial-data-licensed
+    name: Deployment-specific licensed commercial dataset candidate
+    base_url: https://commercial-data.example.invalid/
+    status: draft
+    source_type: licensed_dataset
+    owner: Deployment-specific licensed commercial-data provider
+    terms_url: https://commercial-data.example.invalid/terms
+    licence: Exact provider contract and approval dossier required
+    allowed_data_categories:
+      - organization_metadata
+      - professional_contact
+      - public_result_metadata
+    prohibited_data_categories: *prohibited
+    rate_limit_per_minute: null
+    retention_days: 365
+    attribution_required: true
+    raw_content_storage: false
+    human_review_required: true
+    authorization: *missing_authorization
+    economics: *conditional_economics
+    notes: >-
+      Placeholder for a deployment-selected licensed commercial dataset. Only
+      contract-authorized organization and professional-context fields may be
+      considered. No adapter, schedule, provider account, or collection authority is
+      created by this entry.
