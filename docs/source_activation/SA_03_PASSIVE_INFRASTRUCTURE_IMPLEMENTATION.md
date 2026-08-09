@@ -26,7 +26,7 @@ version: 1
 targets: []
 ```
 
-Each future target requires an explicit internal organization UUID, a canonical public domain, and `enabled: true`. Domain validation reuses Lot 16 canonical public-domain normalization. Reserved/local/non-public suffixes are rejected.
+Each future target requires an explicit internal organization UUID, a canonical public domain, and `enabled: true`. Domain validation reuses Lot 16 canonical public-domain normalization. Reserved/local/non-public suffixes are rejected. The registry is bounded to 500 targets.
 
 An empty target registry causes both SA-03 adapters to return a deterministic no-op batch before provider traffic. Cert Spotter also returns before secret resolution when no target exists.
 
@@ -67,6 +67,15 @@ Runtime identity:
 The adapter fails closed when an enabled target exists but the connected provider secret cannot be resolved. No token value is written to RawObservation or canonical persistence.
 
 The provider schema bounds issuance IDs, SHA-256 values and DNS-name arrays. Only issuances whose expanded DNS names match the enabled target domain or one of its subordinate names are retained.
+
+Collection remains bounded and resumable:
+
+- one target and one provider page are processed per adapter execution;
+- enabled targets rotate through a deterministic `target_index` checkpoint;
+- each target keeps its own provider `after` issuance cursor;
+- at most 100 issuances are accepted from one provider page;
+- cursor state is bounded to the same 500-target limit as the registry;
+- a provider page may advance its cursor even when all returned names are out of target scope, preventing a permanently repeated page without promoting those records into observations.
 
 Each retained issuance maps to:
 
