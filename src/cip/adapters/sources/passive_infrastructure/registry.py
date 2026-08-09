@@ -27,7 +27,7 @@ class PassiveInfrastructureTargetFile(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     version: int = Field(ge=1, le=1)
-    targets: list[PassiveInfrastructureTarget] = Field(default_factory=list)
+    targets: list[PassiveInfrastructureTarget] = Field(default_factory=list, max_length=500)
 
 
 def load_passive_infrastructure_targets(
