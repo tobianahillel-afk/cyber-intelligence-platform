@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from uuid import UUID
+
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -14,7 +16,7 @@ from cip.modules.research_orchestration.infrastructure.models import (
 )
 
 
-def resolve_research_usage(session: Session, plan_id: object) -> ResearchUsage:
+def resolve_research_usage(session: Session, plan_id: UUID) -> ResearchUsage:
     steps = tuple(
         session.scalars(
             select(ResearchStepRecord).where(ResearchStepRecord.plan_id == plan_id)
