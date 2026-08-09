@@ -48,7 +48,9 @@ def dossier_from_record(record: ApprovalRow) -> ProviderApprovalDossier:
     )
 
 
-def control_from_record(record: ConditionalProviderRuntimeControlRecord) -> ProviderRuntimeControl:
+def control_from_record(
+    record: ConditionalProviderRuntimeControlRecord,
+) -> ProviderRuntimeControl:
     return ProviderRuntimeControl(
         source_id=record.source_id,
         paused=record.paused,
