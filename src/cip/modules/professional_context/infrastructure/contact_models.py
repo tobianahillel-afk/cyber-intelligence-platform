@@ -15,7 +15,7 @@ class ProfessionalContactRecord(Base):
     id: Mapped[UUID] = mapped_column(primary_key=True)
     contact_key: Mapped[str] = mapped_column(String(500), unique=True, index=True)
     channel_type: Mapped[str] = mapped_column(String(40), index=True)
-    value: Mapped[str] = mapped_column(String(2_048))
+    value: Mapped[str | None] = mapped_column(String(2_048), nullable=True)
     organization_id: Mapped[UUID | None] = mapped_column(
         ForeignKey("organizations.id", ondelete="SET NULL"), nullable=True, index=True
     )
@@ -45,13 +45,13 @@ class ProfessionalContactSnapshotRecord(Base):
     contact_key: Mapped[str] = mapped_column(String(500), index=True)
     channel_type: Mapped[str] = mapped_column(String(40), index=True)
     evidence_scope: Mapped[str] = mapped_column(String(40), index=True)
-    value: Mapped[str] = mapped_column(String(2_048))
+    value: Mapped[str | None] = mapped_column(String(2_048), nullable=True)
     organization_id: Mapped[UUID | None] = mapped_column(
         ForeignKey("organizations.id", ondelete="SET NULL"), nullable=True, index=True
     )
     person_key: Mapped[str | None] = mapped_column(String(200), nullable=True, index=True)
     source_id: Mapped[str] = mapped_column(String(200), index=True)
-    source_record_key: Mapped[str] = mapped_column(String(500))
+    source_record_key: Mapped[str | None] = mapped_column(String(500), nullable=True)
     source_url: Mapped[str | None] = mapped_column(String(2_048), nullable=True)
     claim_type: Mapped[str] = mapped_column(String(32), index=True)
     review_state: Mapped[str] = mapped_column(String(32), index=True)
