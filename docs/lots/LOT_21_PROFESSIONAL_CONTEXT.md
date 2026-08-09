@@ -2,11 +2,9 @@
 
 ## Status
 
-Implementation in progress on `agent/professional-organization-maps` from exact Lot 20 squash `108144a9ad52805c6127dfffb3b31050313e8070`.
+Release candidate `0.22.0` is implemented on `agent/professional-organization-maps` from exact Lot 20 squash `108144a9ad52805c6127dfffb3b31050313e8070`.
 
-Target release: `0.22.0`.
-
-The lot is not complete until the exact final pull-request head passes every standard backend and frontend gate and is squash-merged into `main`.
+The integrated functional candidate `243a9d62acd77314cf7eca7f7c80415ecfa31696` passed every standard backend and frontend gate in CI run `31308364769`. The lot still requires the same complete CI on the exact final release/documentation SHA before squash merge.
 
 ## Outcome
 
@@ -55,7 +53,7 @@ The current policy retains `professional_contact` for 1095 days with a 180-day r
 
 ## Bounded context
 
-The new `professional_context` module owns:
+The `professional_context` module owns:
 
 1. source-aware professional-person references;
 2. immutable employment/role/team claims;
@@ -95,7 +93,7 @@ The model contains no personal-address or private-message channel. A switchboard
 
 Community evidence is accepted only with an explicit authorized acquisition mode such as an approved API, administrator-installed integration, authorized export, or reviewed manual import. It is bounded metadata and cannot contain private-message content or sensitive private-life attributes.
 
-LinkedIn, Discord, premium, account-scoped, and other conditional execution paths remain Lot 22 concerns. Lot 21 may model evidence contracts and non-executable source candidates but does not activate those integrations.
+LinkedIn, Discord, premium, account-scoped, and other conditional execution paths remain Lot 22 concerns. Lot 21 models evidence contracts and non-executable source candidates but does not activate those integrations.
 
 ## Service relevance
 
@@ -108,13 +106,17 @@ role relevance != need hypothesis
 role relevance != opportunity
 ```
 
-## Planned persistence
+## Persistence
 
-The persistence slice will use current projections plus immutable evidence snapshots, with explicit correction/suppression/deletion state and reversible migration `20260809_0021`.
+The implemented persistence slice uses current projections plus source evidence snapshots, with explicit correction/suppression/deletion state and reversible migration `20260809_0021`.
 
-Normal API/UI reads will be persisted-data only. No analyst page view will launch external collection.
+A validated erasure may tombstone raw identifying values in current projections and retained source-history rows while preserving pseudonymous lineage and the HMAC suppression audit. Deleted projections reject ordinary provider replay so erased values are not accidentally resurrected.
 
-## Required regression evidence
+Normal API/UI reads are persisted-data only. No analyst page view launches external collection.
+
+## Regression evidence
+
+The integrated functional candidate validated:
 
 - same-name people never merge by name;
 - stale and historical employment are distinct from current employment;
@@ -125,4 +127,6 @@ Normal API/UI reads will be persisted-data only. No analyst page view will launc
 - retention, suppression, correction, and deletion states propagate;
 - community evidence requires an approved acquisition mode/reference;
 - service relevance remains separate from opportunities and outreach;
-- protected API, UI, migration, architecture, typing, dependency audit, coverage, and full regression gates pass on one exact final SHA.
+- protected API, UI, migration, architecture, typing, dependency audit, coverage, and full regression gates.
+
+The exact final release/documentation SHA must repeat all standard gates before merge.
