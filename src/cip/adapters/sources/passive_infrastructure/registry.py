@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from ipaddress import ip_address
 from pathlib import Path
 from uuid import UUID
 
@@ -20,7 +21,12 @@ class PassiveInfrastructureTarget(BaseModel):
     @field_validator("domain")
     @classmethod
     def validate_domain(cls, value: str) -> str:
-        return normalize_domain(value)
+        candidate = value.strip().rstrip(".")
+        try:
+            ip_address(candidate)
+        except ValueError:
+            return normalize_domain(candidate)
+        raise ValueError("passive infrastructure domain target cannot be an IP literal")
 
 
 class PassiveInfrastructureTargetFile(BaseModel):
