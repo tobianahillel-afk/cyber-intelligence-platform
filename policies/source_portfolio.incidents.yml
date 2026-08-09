@@ -5,7 +5,7 @@ sources:
     display_name: SEC Cybersecurity Disclosures
     canonical_url: https://data.sec.gov/submissions/
     category: live_incidents
-    status: candidate
+    status: executable
     freshness_max_age_seconds: 3600
     commercial_use_cases: &incident_use_cases
       - incident_response_context
@@ -13,27 +13,31 @@ sources:
       - regulatory_notification_context
     candidate_origin: lot-14
     monthly_cost_limit: 0
-    metadata: &disabled_metadata
-      executable: false
-      authorization_status: missing
+    metadata:
+      executable: true
+      authorization_status: approved
+      target_registry_required: true
+      descriptive_user_agent_required: true
+      filing_narrative_collection: forbidden
+      global_issuer_enumeration: forbidden
       victim_content_collection: forbidden
       threat_actor_interaction: forbidden
+      automatic_opportunity: forbidden
       autonomous_outreach: forbidden
     adapter:
-      adapter_id: sec-cyber-disclosures
+      adapter_id: sec-submissions-item-1-05
       adapter_version: "1"
-      provider_schema_version: public-filing-metadata-v1
-      modes: &modes
-        - historical_backfill
+      provider_schema_version: sec-submissions-recent-v1
+      modes:
         - incremental_cursor
-      canonical_output_types: &outputs
-        - incident
+        - priority_refresh
+      canonical_output_types:
+        - raw_observation
         - incident_claim_snapshot
-      supports_corrections: true
+      supports_corrections: false
       supports_tombstones: false
-      supports_retractions: true
-      max_page_size: 100
-      max_window_days: 30
+      supports_retractions: false
+      max_page_size: 2000
       cost_per_request: 0
 
   - source_id: official-company-incident-disclosures
@@ -45,13 +49,22 @@ sources:
     commercial_use_cases: *incident_use_cases
     candidate_origin: lot-14
     monthly_cost_limit: 0
-    metadata: *disabled_metadata
+    metadata: &disabled_metadata
+      executable: false
+      authorization_status: missing
+      victim_content_collection: forbidden
+      threat_actor_interaction: forbidden
+      autonomous_outreach: forbidden
     adapter:
       adapter_id: official-company-disclosures
       adapter_version: "1"
       provider_schema_version: official-incident-disclosure-v1
-      modes: *modes
-      canonical_output_types: *outputs
+      modes: &modes
+        - historical_backfill
+        - incremental_cursor
+      canonical_output_types: &outputs
+        - incident
+        - incident_claim_snapshot
       supports_corrections: true
       supports_tombstones: false
       supports_retractions: true
