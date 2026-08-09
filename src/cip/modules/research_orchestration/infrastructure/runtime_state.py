@@ -3,6 +3,7 @@ from __future__ import annotations
 from datetime import UTC, datetime
 from urllib.parse import urlparse
 
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from cip.modules.conditional_integrations.domain import ApprovalState
@@ -73,7 +74,11 @@ def _automated_runtime(
     health = session.get(SourceHealthRecord, step.source_id)
     authorized = _source_policy_allowed(source, health, plan, step, now=now)
     authorized = authorized and _onboarding_ready(session, step.source_id)
-    authorized = authorized and _conditional_controls_allow(session, step.source_id, now=now)
+    authorized = authorized and _conditional_controls_allow(
+        session,
+        step.source_id,
+        now=now,
+    )
     return ResearchRuntimeState(
         source_authorized=authorized,
         source_executable=_source_executable(
@@ -135,7 +140,10 @@ def _manual_link_allowed(
     if source.status not in _MANUAL_SOURCE_STATES:
         return False
     category = step.data_category.value
-    if category not in source.allowed_data_categories or category in source.prohibited_data_categories:
+    if (
+        category not in source.allowed_data_categories
+        or category in source.prohibited_data_categories
+    ):
         return False
     target = urlparse(step.target_url)
     base = urlparse(source.base_url)
@@ -176,7 +184,11 @@ def _conditional_controls_allow(
     *,
     now: datetime,
 ) -> bool:
-    approval = session.get(ConditionalProviderApprovalRecord, source_id)
+    approval = session.scalar(
+        select(ConditionalProviderApprovalRecord).where(
+            ConditionalProviderApprovalRecord.source_id == source_id
+        )
+    )
     if approval is None:
         return True
     if approval.state != ApprovalState.APPROVED.value:
@@ -184,7 +196,11 @@ def _conditional_controls_allow(
     expires_at = _aware(approval.expires_at)
     if expires_at is not None and expires_at <= now:
         return False
-    control = session.get(ConditionalProviderRuntimeControlRecord, source_id)
+    control = session.scalar(
+        select(ConditionalProviderRuntimeControlRecord).where(
+            ConditionalProviderRuntimeControlRecord.source_id == source_id
+        )
+    )
     return control is None or (not control.paused and not control.kill_switch_active)
 
 
