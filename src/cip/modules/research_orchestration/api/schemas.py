@@ -154,6 +154,7 @@ class ResearchPlanDecisionResponse(BaseModel):
 class ResearchStepDecisionResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
+    step_id: UUID
     decision_key: str
     allowed: bool
     next_state: str
