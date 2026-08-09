@@ -41,6 +41,9 @@ def persist_professional_people(
                 ProfessionalPersonRecord.person_key == person_key
             )
         )
+        if record is not None and record.deleted:
+            records.append(record)
+            continue
         if record is None:
             projection = reconcile_person_references(incoming, now=current)
             record = _new_record(projection, current)
@@ -52,7 +55,10 @@ def persist_professional_people(
             person_snapshot(item)
             for item in session.scalars(
                 select(ProfessionalPersonSnapshotRecord)
-                .where(ProfessionalPersonSnapshotRecord.person_id == record.id)
+                .where(
+                    ProfessionalPersonSnapshotRecord.person_id == record.id,
+                    ProfessionalPersonSnapshotRecord.deleted.is_(False),
+                )
                 .order_by(ProfessionalPersonSnapshotRecord.observed_at)
             )
         )
@@ -107,7 +113,7 @@ def _new_record(
     projection: ProfessionalPersonProjection,
     now: datetime,
 ) -> ProfessionalPersonRecord:
-    record = ProfessionalPersonRecord(
+    return ProfessionalPersonRecord(
         id=uuid4(),
         person_key=projection.person_key,
         display_name=projection.display_name,
@@ -125,7 +131,6 @@ def _new_record(
         created_at=now,
         updated_at=now,
     )
-    return record
 
 
 def _apply_projection(
