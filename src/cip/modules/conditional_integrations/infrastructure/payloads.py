@@ -11,7 +11,6 @@ from cip.modules.conditional_integrations.domain import (
     ConditionalRuntimeDependencies,
     ProviderApprovalDossier,
     ProviderControlDecision,
-    ProviderRuntimeControl,
 )
 
 
@@ -46,10 +45,7 @@ def dossier_payload(dossier: ProviderApprovalDossier) -> dict[str, object]:
     }
 
 
-def control_decision_key(
-    decision: ProviderControlDecision,
-    resulting: ProviderRuntimeControl,
-) -> str:
+def control_decision_key(decision: ProviderControlDecision) -> str:
     return _digest(
         {
             "source_id": decision.source_id,
@@ -57,8 +53,6 @@ def control_decision_key(
             "actor": decision.actor,
             "reason": decision.reason,
             "decided_at": decision.decided_at.isoformat(),
-            "resulting_paused": resulting.paused,
-            "resulting_kill_switch_active": resulting.kill_switch_active,
         }
     )
 
