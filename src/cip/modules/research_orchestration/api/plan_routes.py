@@ -8,6 +8,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
 from cip.modules.research_orchestration.api.schemas import (
+    ResearchAttemptResponse,
     ResearchPlanDecisionRequest,
     ResearchPlanDecisionResponse,
     ResearchPlanDetail,
@@ -18,7 +19,6 @@ from cip.modules.research_orchestration.api.schemas import (
     ResearchResultResponse,
     ResearchStepDecisionResponse,
     ResearchStepResponse,
-    ResearchAttemptResponse,
     ResearchUsageResponse,
 )
 from cip.modules.research_orchestration.domain import (
