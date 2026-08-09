@@ -97,23 +97,29 @@ class ConditionalExecutionRequest:
     access_method: ConditionalAccessMethod
     purpose: str
     data_category: DataCategory
+    target_url: str
     requested_scopes: frozenset[str] = field(default_factory=frozenset)
     requested_fields: frozenset[str] = field(default_factory=frozenset)
     retention_days: int = 1
     automated: bool = True
+    store_raw_content: bool = False
     account_reference: str | None = None
 
     def __post_init__(self) -> None:
         source_id = self.source_id.strip()
         purpose = self.purpose.strip()
+        target_url = self.target_url.strip()
         if not source_id:
             raise ValueError("source_id is required")
         if not purpose:
             raise ValueError("purpose is required")
+        if not target_url or len(target_url) > 2_048:
+            raise ValueError("target_url is required and cannot exceed 2048 characters")
         if self.retention_days < 1:
             raise ValueError("retention_days must be positive")
         object.__setattr__(self, "source_id", source_id)
         object.__setattr__(self, "purpose", purpose)
+        object.__setattr__(self, "target_url", target_url)
         _normalize_set(self, "requested_scopes")
         _normalize_set(self, "requested_fields")
         _normalize_optional_text(self, "account_reference", maximum=500)
@@ -123,6 +129,7 @@ class ConditionalExecutionRequest:
 class ConditionalRuntimeDependencies:
     onboarding_state: OnboardingState
     source_policy_allowed: bool
+    source_portfolio_allowed: bool
     adapter_capability_present: bool
     provider_paused: bool = False
     kill_switch_active: bool = False
