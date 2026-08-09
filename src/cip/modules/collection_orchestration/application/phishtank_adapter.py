@@ -41,7 +41,7 @@ class PhishTankAdapter:
     source_id = "phishtank-verified-online"
     adapter_id = "phishtank-online-valid-json"
     adapter_version = "1"
-    data_category = DataCategory.PUBLIC_INCIDENT_METADATA
+    data_category = DataCategory.TECHNOLOGY_OBSERVATION
 
     def __init__(
         self,
