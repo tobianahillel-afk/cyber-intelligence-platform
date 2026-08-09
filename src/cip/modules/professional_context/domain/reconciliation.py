@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from collections.abc import Iterable
 from datetime import datetime
-from typing import Protocol, TypeVar
+from typing import Protocol
 
 from cip.modules.professional_context.domain.community import PublicCommunityContext
 from cip.modules.professional_context.domain.contacts import ProfessionalContactEvidence
@@ -30,9 +30,6 @@ class _Revision(Protocol):
     source_record_key: str
     supersedes_record_key: str | None
     observed_at: datetime
-
-
-RevisionT = TypeVar("RevisionT", bound=_Revision)
 
 
 def reconcile_person_references(
@@ -237,7 +234,9 @@ def reconcile_community_context(
     )
 
 
-def _effective_revisions(items: tuple[RevisionT, ...]) -> tuple[RevisionT, ...]:
+def _effective_revisions[RevisionT: _Revision](
+    items: tuple[RevisionT, ...],
+) -> tuple[RevisionT, ...]:
     superseded = {
         (item.source_id, item.supersedes_record_key)
         for item in items
