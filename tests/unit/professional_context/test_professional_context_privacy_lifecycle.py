@@ -1,9 +1,10 @@
 from __future__ import annotations
 
 from datetime import UTC, datetime, timedelta
-from uuid import uuid4
+from uuid import UUID, uuid4
 
 from sqlalchemy import func, select
+from sqlalchemy.orm import Session
 
 from cip.modules.data_governance.domain.suppression import (
     SuppressionChannel,
@@ -52,11 +53,11 @@ from cip.modules.professional_context.infrastructure.person_persistence import (
 from cip.modules.professional_context.infrastructure.privacy_lifecycle import (
     erase_professional_person,
 )
-from cip.modules.professional_context.infrastructure.reporting_persistence import (
-    persist_reporting_lines,
-)
 from cip.modules.professional_context.infrastructure.relevance_persistence import (
     persist_service_relevance,
+)
+from cip.modules.professional_context.infrastructure.reporting_persistence import (
+    persist_reporting_lines,
 )
 from cip.modules.professional_context.infrastructure.role_models import (
     ProfessionalReportingLineRecord,
@@ -123,7 +124,7 @@ def test_erasure_redacts_raw_values_and_replay_cannot_restore_them() -> None:
         person_key=person_key,
         identifier=RAW_EMAIL,
         channel=SuppressionChannel.EMAIL,
-        reason=SuppressionReason.DATA_SUBJECT_REQUEST,
+        reason=SuppressionReason.OBJECTION,
         pepper=PEPPER,
         now=NOW + timedelta(minutes=5),
         minimum_retention_days=365,
@@ -158,9 +159,16 @@ def test_erasure_redacts_raw_values_and_replay_cannot_restore_them() -> None:
     assert community is not None and community.context_value is None
     assert community_snapshot is not None and community_snapshot.context_value is None
     assert community_snapshot.source_record_key is None
-    assert session.scalar(select(func.count()).select_from(ProfessionalServiceRelevanceRecord)) == 0
+    assert (
+        session.scalar(select(func.count()).select_from(ProfessionalServiceRelevanceRecord))
+        == 0
+    )
 
-    expected_hash = hash_identifier(RAW_EMAIL, SuppressionChannel.EMAIL, PEPPER)
+    expected_hash = hash_identifier(
+        RAW_EMAIL,
+        SuppressionChannel.EMAIL,
+        pepper=PEPPER,
+    )
     assert audit.subject_hash == expected_hash
     assert audit.subject_hash != RAW_EMAIL
     assert len(audit.subject_hash) == 64
@@ -172,10 +180,13 @@ def test_erasure_redacts_raw_values_and_replay_cannot_restore_them() -> None:
     persist_professional_people(session, (person,), now=NOW + timedelta(minutes=10))
     replayed = session.scalar(select(ProfessionalPersonRecord))
     assert replayed is not None and replayed.display_name is None and replayed.deleted is True
-    assert session.scalar(select(func.count()).select_from(ProfessionalPersonSnapshotRecord)) == snapshot_count
+    assert (
+        session.scalar(select(func.count()).select_from(ProfessionalPersonSnapshotRecord))
+        == snapshot_count
+    )
 
 
-def _session():
+def _session() -> Session:
     engine = create_database_engine("sqlite+pysqlite:///:memory:")
     get_metadata().create_all(engine)
     return create_session_factory(engine)()
@@ -208,7 +219,7 @@ def _person() -> ProfessionalPersonReference:
     )
 
 
-def _organization(session) -> OrganizationRecord:
+def _organization(session: Session) -> OrganizationRecord:
     record = OrganizationRecord(
         id=uuid4(),
         canonical_name="Example Corp",
@@ -224,7 +235,7 @@ def _organization(session) -> OrganizationRecord:
     return record
 
 
-def _role(person_key: str, organization_id) -> ProfessionalRoleClaim:
+def _role(person_key: str, organization_id: UUID) -> ProfessionalRoleClaim:
     return ProfessionalRoleClaim(
         claim_key="role:alice:example-security",
         person_key=person_key,
@@ -243,7 +254,7 @@ def _role(person_key: str, organization_id) -> ProfessionalRoleClaim:
     )
 
 
-def _reporting(person_key: str, organization_id) -> ReportingLineClaim:
+def _reporting(person_key: str, organization_id: UUID) -> ReportingLineClaim:
     return ReportingLineClaim(
         claim_key="reporting:alice:bob",
         subject_person_key=person_key,
@@ -259,7 +270,7 @@ def _reporting(person_key: str, organization_id) -> ReportingLineClaim:
     )
 
 
-def _contact(person_key: str, organization_id) -> ProfessionalContactEvidence:
+def _contact(person_key: str, organization_id: UUID) -> ProfessionalContactEvidence:
     return ProfessionalContactEvidence(
         contact_key="contact:alice:business-email",
         channel_type=ContactChannelType.BUSINESS_EMAIL,
@@ -277,7 +288,7 @@ def _contact(person_key: str, organization_id) -> ProfessionalContactEvidence:
     )
 
 
-def _community(person_key: str, organization_id) -> PublicCommunityContext:
+def _community(person_key: str, organization_id: UUID) -> PublicCommunityContext:
     return PublicCommunityContext(
         context_key="community:alice:event",
         community_name="Security Association",
