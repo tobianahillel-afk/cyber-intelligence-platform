@@ -1,0 +1,75 @@
+version: 1
+
+sources:
+  - source_id: cloudflare-doh
+    display_name: Cloudflare 1.1.1.1 DNS-over-HTTPS
+    canonical_url: https://cloudflare-dns.com/dns-query
+    category: passive_exposure
+    status: executable
+    freshness_max_age_seconds: 86400
+    commercial_use_cases:
+      - passive_asset_context
+      - organization_research
+    candidate_origin: SA-03
+    monthly_cost_limit: 0
+    metadata:
+      executable: true
+      authorization_status: approved
+      target_registry_required: true
+      active_probe: forbidden
+      direct_asset_connection: forbidden
+      vulnerability_applicability: not_assessed
+      exposure_verification: forbidden
+      organization_compromise_inference: forbidden
+      automatic_opportunity: forbidden
+    adapter:
+      adapter_id: cloudflare-dns-json
+      adapter_version: "1"
+      provider_schema_version: cloudflare-doh-json-v1
+      modes: [incremental_cursor, priority_refresh]
+      canonical_output_types:
+        - raw_observation
+        - passive_asset
+        - passive_observation_snapshot
+      supports_corrections: false
+      supports_tombstones: false
+      supports_retractions: false
+      max_page_size: 512
+      cost_per_request: 0
+
+  - source_id: certspotter-ct
+    display_name: Cert Spotter Certificate Transparency Search API
+    canonical_url: https://api.certspotter.com/v1/issuances
+    category: passive_exposure
+    status: executable
+    freshness_max_age_seconds: 86400
+    commercial_use_cases:
+      - passive_asset_context
+      - organization_research
+    candidate_origin: SA-03
+    monthly_cost_limit: 0
+    metadata:
+      executable: true
+      authorization_status: approved
+      provider_onboarding_required: true
+      target_registry_required: true
+      active_probe: forbidden
+      direct_asset_connection: forbidden
+      vulnerability_applicability: not_assessed
+      exposure_verification: forbidden
+      organization_compromise_inference: forbidden
+      automatic_opportunity: forbidden
+    adapter:
+      adapter_id: certspotter-issuances-api
+      adapter_version: "1"
+      provider_schema_version: certspotter-issuances-v1
+      modes: [incremental_cursor, priority_refresh]
+      canonical_output_types:
+        - raw_observation
+        - passive_asset
+        - passive_observation_snapshot
+      supports_corrections: false
+      supports_tombstones: false
+      supports_retractions: false
+      max_page_size: 100
+      cost_per_request: 0
