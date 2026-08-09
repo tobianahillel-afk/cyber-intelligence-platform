@@ -10,6 +10,7 @@ from cip.modules.evidence.domain.entities import Evidence
 from cip.modules.opportunities.domain.entities import CommercialSignal
 from cip.modules.organizations.application.identity import IdentityProjection
 from cip.modules.organizations.domain.entities import Organization
+from cip.modules.passive_exposure.domain.models import PassiveObservationSnapshot
 from cip.modules.procurement_history.domain.models import ProcurementHistoryProjection
 from cip.modules.public_footprint.domain.models import PublicFootprintProjection
 from cip.modules.raw_observations.domain.entities import RawObservation
@@ -48,6 +49,7 @@ class AdapterCollectionBatch:
     procurement_projections: tuple[ProcurementHistoryProjection, ...] = ()
     public_footprint_projections: tuple[PublicFootprintProjection, ...] = ()
     vulnerability_snapshots: tuple[VulnerabilitySnapshot, ...] = ()
+    passive_exposure_projections: tuple[PassiveObservationSnapshot, ...] = ()
     quota_remaining: int | None = None
     request_cost: float = 0.0
 
