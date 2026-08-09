@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from datetime import datetime
+
 from cip.modules.organizations.infrastructure.persistence_time import coerce_utc
 from cip.modules.professional_context.domain import (
     CommunityAcquisitionMode,
@@ -28,6 +30,14 @@ from cip.modules.professional_context.infrastructure.person_models import (
 from cip.modules.professional_context.infrastructure.role_models import (
     ProfessionalReportingSnapshotRecord,
     ProfessionalRoleSnapshotRecord,
+)
+
+ProcessingRow = (
+    ProfessionalPersonSnapshotRecord
+    | ProfessionalRoleSnapshotRecord
+    | ProfessionalReportingSnapshotRecord
+    | ProfessionalContactSnapshotRecord
+    | ProfessionalCommunitySnapshotRecord
 )
 
 
@@ -149,15 +159,15 @@ def community_snapshot(record: ProfessionalCommunitySnapshotRecord) -> PublicCom
     )
 
 
-def _processing(record: object) -> ProfessionalProcessingContext:
+def _processing(record: ProcessingRow) -> ProfessionalProcessingContext:
     return ProfessionalProcessingContext(
-        lawful_basis=LawfulBasis(getattr(record, "lawful_basis")),
-        lawful_basis_reference=getattr(record, "lawful_basis_reference"),
-        purpose=getattr(record, "processing_purpose"),
-        reviewed_at=coerce_utc(getattr(record, "processing_reviewed_at")),
-        retention_until=coerce_utc(getattr(record, "retention_until")),
+        lawful_basis=LawfulBasis(record.lawful_basis),
+        lawful_basis_reference=record.lawful_basis_reference,
+        purpose=record.processing_purpose,
+        reviewed_at=coerce_utc(record.processing_reviewed_at),
+        retention_until=coerce_utc(record.retention_until),
     )
 
 
-def _optional_time(value):
+def _optional_time(value: datetime | None) -> datetime | None:
     return coerce_utc(value) if value is not None else None
