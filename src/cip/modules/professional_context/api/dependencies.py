@@ -1,23 +1,7 @@
 from __future__ import annotations
 
-from secrets import compare_digest
+from cip.modules.source_portfolio.api.dependencies import require_control_plane
 
-from fastapi import Depends, Header, HTTPException, status
+require_control_plane_access = require_control_plane
 
-from cip.shared.config.settings import Settings, get_settings
-
-
-def require_control_plane_access(
-    x_cip_control_token: str | None = Header(default=None, alias="X-CIP-Control-Token"),
-    settings: Settings = Depends(get_settings),
-) -> None:
-    expected = settings.control_plane_token
-    if (
-        not expected
-        or x_cip_control_token is None
-        or not compare_digest(x_cip_control_token, expected)
-    ):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="control-plane authentication required",
-        )
+__all__ = ["require_control_plane_access"]
