@@ -195,11 +195,15 @@ def _map_certificate(
 
 
 def _matches_target(certificate: CertSpotterCertificate, target_domain: str) -> bool:
-    suffix = f".{target_domain}"
-    return any(
-        name.casefold() == target_domain or name.casefold().endswith(suffix)
-        for name in certificate.dns_names
-    )
+    target = target_domain.rstrip(".").casefold()
+    suffix = f".{target}"
+    for raw_name in certificate.dns_names:
+        name = raw_name.strip().rstrip(".").casefold()
+        if name.startswith("*."):
+            name = name[2:]
+        if name == target or name.endswith(suffix):
+            return True
+    return False
 
 
 def _observed_at(
