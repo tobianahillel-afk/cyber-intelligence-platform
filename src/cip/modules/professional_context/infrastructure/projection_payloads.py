@@ -7,6 +7,7 @@ from collections.abc import Mapping
 from cip.modules.professional_context.domain import (
     ProfessionalContactEvidence,
     ProfessionalPersonReference,
+    ProfessionalProcessingContext,
     ProfessionalRoleClaim,
     PublicCommunityContext,
     ReportingLineClaim,
@@ -141,13 +142,13 @@ def community_snapshot_digest(item: PublicCommunityContext) -> str:
     )
 
 
-def _processing_payload(processing: object) -> dict[str, object]:
+def _processing_payload(processing: ProfessionalProcessingContext) -> dict[str, object]:
     return {
-        "lawful_basis": getattr(processing, "lawful_basis").value,
-        "lawful_basis_reference": getattr(processing, "lawful_basis_reference"),
-        "processing_purpose": getattr(processing, "purpose"),
-        "processing_reviewed_at": getattr(processing, "reviewed_at").isoformat(),
-        "retention_until": getattr(processing, "retention_until").isoformat(),
+        "lawful_basis": processing.lawful_basis.value,
+        "lawful_basis_reference": processing.lawful_basis_reference,
+        "processing_purpose": processing.purpose,
+        "processing_reviewed_at": processing.reviewed_at.isoformat(),
+        "retention_until": processing.retention_until.isoformat(),
     }
 
 
