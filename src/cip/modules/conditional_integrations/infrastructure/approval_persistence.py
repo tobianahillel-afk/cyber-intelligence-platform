@@ -11,10 +11,7 @@ from cip.modules.conditional_integrations.infrastructure.models import (
     ConditionalProviderApprovalRecord,
     ConditionalProviderApprovalRevisionRecord,
 )
-from cip.modules.conditional_integrations.infrastructure.payloads import (
-    dossier_payload,
-    dossier_revision_key,
-)
+from cip.modules.conditional_integrations.infrastructure.payloads import dossier_revision_key
 from cip.shared.kernel.time import require_aware_utc
 
 
@@ -61,13 +58,12 @@ def _new_approval_record(
     revision_key: str,
     now: datetime,
 ) -> ConditionalProviderApprovalRecord:
-    payload = dossier_payload(dossier)
     return ConditionalProviderApprovalRecord(
         id=uuid4(),
         current_revision_key=revision_key,
         created_at=now,
         updated_at=now,
-        **payload,
+        **_record_values(dossier),
     )
 
 
@@ -82,7 +78,7 @@ def _new_revision_record(
         approval_id=approval.id,
         revision_key=revision_key,
         created_at=now,
-        **dossier_payload(dossier),
+        **_record_values(dossier),
     )
 
 
@@ -92,8 +88,34 @@ def _apply_dossier(
     revision_key: str,
     now: datetime,
 ) -> None:
-    payload = dossier_payload(dossier)
-    for field_name, value in payload.items():
+    for field_name, value in _record_values(dossier).items():
         setattr(record, field_name, value)
     record.current_revision_key = revision_key
     record.updated_at = now
+
+
+def _record_values(dossier: ProviderApprovalDossier) -> dict[str, object]:
+    return {
+        "source_id": dossier.source_id,
+        "provider_kind": dossier.provider_kind.value,
+        "access_method": dossier.access_method.value,
+        "state": dossier.state.value,
+        "authorization_document_reference": dossier.authorization_document_reference,
+        "licence_reference": dossier.licence_reference,
+        "terms_reference": dossier.terms_reference,
+        "terms_state": dossier.terms_state.value,
+        "approved_scopes": sorted(dossier.approved_scopes),
+        "approved_fields": sorted(dossier.approved_fields),
+        "approved_purposes": sorted(dossier.approved_purposes),
+        "approved_data_categories": sorted(
+            value.value for value in dossier.approved_data_categories
+        ),
+        "retention_days": dossier.retention_days,
+        "automated_collection_allowed": dossier.automated_collection_allowed,
+        "account_reference": dossier.account_reference,
+        "reviewed_at": dossier.reviewed_at,
+        "review_due_at": dossier.review_due_at,
+        "expires_at": dossier.expires_at,
+        "revoked_at": dossier.revoked_at,
+        "paused_reason": dossier.paused_reason,
+    }
