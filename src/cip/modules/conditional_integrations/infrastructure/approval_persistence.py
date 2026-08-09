@@ -11,7 +11,9 @@ from cip.modules.conditional_integrations.infrastructure.models import (
     ConditionalProviderApprovalRecord,
     ConditionalProviderApprovalRevisionRecord,
 )
-from cip.modules.conditional_integrations.infrastructure.payloads import dossier_revision_key
+from cip.modules.conditional_integrations.infrastructure.payloads import (
+    dossier_revision_key,
+)
 from cip.shared.kernel.time import require_aware_utc
 
 
