@@ -1,0 +1,25 @@
+.research-source-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.research-source-table th,
+.research-source-table td {
+  padding: 0.8rem;
+  border-bottom: 1px solid var(--border-color, #d7dce3);
+  text-align: left;
+  vertical-align: top;
+}
+
+.research-source-table th {
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  opacity: 0.75;
+}
+
+.research-source-table td small {
+  display: block;
+  margin-top: 0.25rem;
+  opacity: 0.72;
+}
