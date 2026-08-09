@@ -16,7 +16,7 @@ class ProfessionalCommunityRecord(Base):
     context_key: Mapped[str] = mapped_column(String(500), unique=True, index=True)
     community_name: Mapped[str] = mapped_column(String(300), index=True)
     context_type: Mapped[str] = mapped_column(String(100), index=True)
-    context_value: Mapped[str] = mapped_column(String(500))
+    context_value: Mapped[str | None] = mapped_column(String(500), nullable=True)
     acquisition_mode: Mapped[str] = mapped_column(String(50), index=True)
     organization_id: Mapped[UUID | None] = mapped_column(
         ForeignKey("organizations.id", ondelete="SET NULL"), nullable=True, index=True
@@ -47,7 +47,7 @@ class ProfessionalCommunitySnapshotRecord(Base):
     context_key: Mapped[str] = mapped_column(String(500), index=True)
     community_name: Mapped[str] = mapped_column(String(300), index=True)
     context_type: Mapped[str] = mapped_column(String(100), index=True)
-    context_value: Mapped[str] = mapped_column(String(500))
+    context_value: Mapped[str | None] = mapped_column(String(500), nullable=True)
     acquisition_mode: Mapped[str] = mapped_column(String(50), index=True)
     authorization_reference: Mapped[str] = mapped_column(String(500))
     organization_id: Mapped[UUID | None] = mapped_column(
@@ -55,7 +55,7 @@ class ProfessionalCommunitySnapshotRecord(Base):
     )
     person_key: Mapped[str | None] = mapped_column(String(200), nullable=True, index=True)
     source_id: Mapped[str] = mapped_column(String(200), index=True)
-    source_record_key: Mapped[str] = mapped_column(String(500))
+    source_record_key: Mapped[str | None] = mapped_column(String(500), nullable=True)
     source_url: Mapped[str | None] = mapped_column(String(2_048), nullable=True)
     claim_type: Mapped[str] = mapped_column(String(32), index=True)
     review_state: Mapped[str] = mapped_column(String(32), index=True)
