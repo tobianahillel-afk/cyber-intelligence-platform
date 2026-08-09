@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from sqlalchemy import exists, func, or_, select
 from sqlalchemy.orm import Session
+from sqlalchemy.sql import Select
 
 from cip.modules.organizations.infrastructure.persistence_time import coerce_utc
 from cip.modules.professional_context.application.view_models import (
@@ -13,6 +14,8 @@ from cip.modules.professional_context.infrastructure.person_models import (
     ProfessionalPersonRecord,
 )
 from cip.modules.professional_context.infrastructure.role_models import ProfessionalRoleRecord
+
+PersonSelect = Select[tuple[ProfessionalPersonRecord]]
 
 
 def list_professional_people(
@@ -55,7 +58,10 @@ def get_professional_person_summary(
     return _person_summary(session, record) if record is not None else None
 
 
-def _apply_filters(statement, filters: ProfessionalPersonFilters):
+def _apply_filters(
+    statement: PersonSelect,
+    filters: ProfessionalPersonFilters,
+) -> PersonSelect:
     if not filters.include_suppressed:
         statement = statement.where(ProfessionalPersonRecord.suppressed.is_(False))
     if not filters.include_deleted:
