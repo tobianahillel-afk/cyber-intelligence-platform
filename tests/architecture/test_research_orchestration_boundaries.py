@@ -18,7 +18,8 @@ FORBIDDEN_MODULE_PREFIXES = (
     "cip.modules.contacts",
     "cip.modules.outreach",
 )
-DOMAIN_FORBIDDEN = FORBIDDEN_MODULE_PREFIXES + (
+DOMAIN_FORBIDDEN = (
+    *FORBIDDEN_MODULE_PREFIXES,
     "fastapi",
     "sqlalchemy",
     "cip.modules.research_orchestration.infrastructure",
