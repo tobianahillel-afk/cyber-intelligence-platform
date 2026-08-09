@@ -1,13 +1,12 @@
 from __future__ import annotations
 
-import re
 from pathlib import Path
 from uuid import UUID
 
 import yaml
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
-_HOST_LABEL = re.compile(r"^[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?$")
+from cip.modules.passive_exposure.domain.normalization import normalize_domain
 
 
 class PassiveInfrastructureTarget(BaseModel):
@@ -21,11 +20,7 @@ class PassiveInfrastructureTarget(BaseModel):
     @field_validator("domain")
     @classmethod
     def validate_domain(cls, value: str) -> str:
-        normalized = value.strip().rstrip(".").casefold()
-        labels = normalized.split(".")
-        if len(labels) < 2 or any(not _HOST_LABEL.fullmatch(label) for label in labels):
-            raise ValueError("domain must be a canonical public DNS name")
-        return normalized
+        return normalize_domain(value)
 
 
 class PassiveInfrastructureTargetFile(BaseModel):
