@@ -17,7 +17,7 @@ from cip.modules.professional_context.domain.validation import (
 def source_person_key(source_id: str, source_record_key: str) -> str:
     source = require_text(source_id, "source_id", 200)
     record = require_text(source_record_key, "source_record_key", 500)
-    digest = sha256(f"{source}\x1f{record}".encode("utf-8")).hexdigest()
+    digest = sha256(f"{source}\x1f{record}".encode()).hexdigest()
     return f"professional-person:{digest}"
 
 
