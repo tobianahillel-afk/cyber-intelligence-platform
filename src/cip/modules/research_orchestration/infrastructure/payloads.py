@@ -34,6 +34,27 @@ def plan_revision_key(plan: ResearchPlan) -> str:
     )
 
 
+def plan_decision_key(
+    *,
+    plan_revision: str,
+    decision_type: str,
+    actor: str,
+    reason: str,
+    previous_state: str,
+    resulting_state: str,
+) -> str:
+    return _digest(
+        {
+            "plan_revision": plan_revision,
+            "decision_type": decision_type,
+            "actor": actor.strip(),
+            "reason": reason.strip(),
+            "previous_state": previous_state,
+            "resulting_state": resulting_state,
+        }
+    )
+
+
 def step_definition_key(plan_id: UUID, step: ResearchStep) -> str:
     return _digest({"plan_id": str(plan_id), **step_payload(step)})
 
