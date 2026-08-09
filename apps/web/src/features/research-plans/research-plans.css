@@ -1,0 +1,238 @@
+.research-workspace,
+.research-plan-page {
+  display: grid;
+  gap: 1.25rem;
+}
+
+.research-safety-banner {
+  border-left: 3px solid currentColor;
+  line-height: 1.55;
+}
+
+.research-plan-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.research-plan-table th,
+.research-plan-table td {
+  padding: 0.8rem;
+  border-bottom: 1px solid var(--border-color, #d7dce3);
+  text-align: left;
+  vertical-align: top;
+}
+
+.research-plan-table th {
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  opacity: 0.75;
+}
+
+.research-plan-table td small {
+  display: block;
+  margin-top: 0.25rem;
+  opacity: 0.72;
+}
+
+.research-plan-link,
+.research-back-link,
+.research-manual-link {
+  font-weight: 700;
+}
+
+.research-state {
+  display: inline-flex;
+  width: fit-content;
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  padding: 0.25rem 0.55rem;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.research-state-approved,
+.research-state-ready,
+.research-state-completed {
+  font-weight: 700;
+}
+
+.research-state-paused,
+.research-state-blocked,
+.research-state-cancelled,
+.research-state-failed {
+  text-decoration: underline;
+}
+
+.research-plan-facts,
+.research-step-facts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 0.85rem;
+  margin: 0;
+}
+
+.research-plan-facts div,
+.research-step-facts div {
+  min-width: 0;
+  border: 1px solid var(--border-color, #d7dce3);
+  border-radius: 0.65rem;
+  padding: 0.75rem;
+}
+
+.research-plan-facts dt,
+.research-step-facts dt {
+  font-size: 0.75rem;
+  opacity: 0.7;
+}
+
+.research-plan-facts dd,
+.research-step-facts dd {
+  margin: 0.3rem 0 0;
+  overflow-wrap: anywhere;
+  font-weight: 600;
+}
+
+.research-step-list {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.research-step-card {
+  display: grid;
+  gap: 0.8rem;
+  border: 1px solid var(--border-color, #d7dce3);
+  border-radius: 0.8rem;
+  padding: 1rem;
+}
+
+.research-step-card header {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 0.8rem;
+}
+
+.research-step-card h3,
+.research-step-card p {
+  margin: 0;
+}
+
+.research-step-card header p {
+  margin-top: 0.2rem;
+  opacity: 0.75;
+}
+
+.research-step-sequence {
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  border: 1px solid currentColor;
+  border-radius: 50%;
+  font-weight: 700;
+}
+
+.research-block-reasons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.research-block-reasons span {
+  border: 1px solid var(--border-color, #d7dce3);
+  border-radius: 999px;
+  padding: 0.2rem 0.5rem;
+  font-size: 0.78rem;
+}
+
+.research-runtime-note,
+.muted-copy {
+  opacity: 0.78;
+}
+
+.research-manual-link {
+  width: fit-content;
+  border: 1px solid currentColor;
+  border-radius: 0.45rem;
+  padding: 0.5rem 0.7rem;
+}
+
+.research-query {
+  display: block;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+  border: 1px solid var(--border-color, #d7dce3);
+  border-radius: 0.45rem;
+  padding: 0.65rem;
+}
+
+.research-history-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 1rem;
+}
+
+.research-history-card {
+  border: 1px solid var(--border-color, #d7dce3);
+  border-radius: 0.8rem;
+  padding: 1rem;
+}
+
+.research-history-card h3 {
+  margin-top: 0;
+}
+
+.research-timeline {
+  display: grid;
+  gap: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.research-timeline li {
+  display: grid;
+  gap: 0.25rem;
+  padding: 0.7rem 0;
+  border-bottom: 1px solid var(--border-color, #d7dce3);
+  overflow-wrap: anywhere;
+}
+
+.research-timeline li:last-child {
+  border-bottom: 0;
+}
+
+.research-timeline small {
+  opacity: 0.68;
+}
+
+.research-timeline p,
+.research-timeline code {
+  margin: 0;
+}
+
+.research-evidence-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  margin: 0 0 1rem;
+}
+
+.research-evidence-summary span {
+  border: 1px solid var(--border-color, #d7dce3);
+  border-radius: 999px;
+  padding: 0.3rem 0.6rem;
+  font-size: 0.82rem;
+}
+
+@media (max-width: 700px) {
+  .research-step-card header {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .research-step-card header .research-state {
+    grid-column: 1 / -1;
+  }
+}

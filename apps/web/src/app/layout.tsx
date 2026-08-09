@@ -8,6 +8,7 @@ import "../features/opportunities/opportunities.css";
 import "../features/sources/sources.css";
 import "../features/contracts/contracts.css";
 import "../features/public-footprint/public-footprint.css";
+import "../features/research-plans/research-plans.css";
 import "../features/vulnerabilities/vulnerabilities.css";
 import "../features/incidents/incidents.css";
 import "../features/threat-telemetry/threat-telemetry.css";

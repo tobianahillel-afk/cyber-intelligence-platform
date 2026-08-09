@@ -162,6 +162,13 @@ def test_database_metadata_contains_foundation_tables() -> None:
         "raw_observations",
         "relationship_contexts",
         "relationship_evidence_snapshots",
+        "research_plan_decisions",
+        "research_plan_revisions",
+        "research_plans",
+        "research_results",
+        "research_step_attempts",
+        "research_step_decisions",
+        "research_steps",
         "source_health",
         "source_portfolio",
         "source_portfolio_audit",
@@ -251,6 +258,12 @@ def test_metadata_creates_on_sqlite() -> None:
         "professional_community_snapshots",
         "professional_service_relevance",
         "professional_deletion_audit",
+        "research_plan_revisions",
+        "research_steps",
+        "research_plan_decisions",
+        "research_step_decisions",
+        "research_step_attempts",
+        "research_results",
     )
     for table_name in foreign_key_tables:
         assert get_metadata().tables[table_name].foreign_keys
