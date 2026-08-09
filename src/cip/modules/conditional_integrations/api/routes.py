@@ -13,11 +13,16 @@ from cip.modules.conditional_integrations.api.schemas import (
     ConditionalProviderDetail,
     ConditionalProviderListResponse,
     ConditionalProviderSummary,
+    ConditionalProviderValueResponse,
     ControlDecisionResponse,
     EligibilityRequest,
     ExecutionDecisionResponse,
     ProviderControlRequest,
     RuntimeControlResponse,
+    SourceValueSummaryResponse,
+)
+from cip.modules.conditional_integrations.application.value import (
+    summarize_conditional_provider_value,
 )
 from cip.modules.conditional_integrations.domain import (
     ConditionalExecutionRequest,
@@ -46,6 +51,7 @@ from cip.modules.conditional_integrations.infrastructure.runtime_dependencies im
     resolve_runtime_dependencies,
 )
 from cip.modules.source_portfolio.api.dependencies import require_control_plane
+from cip.modules.source_portfolio.application.value import SourceValueSummary
 from cip.shared.persistence.dependencies import get_database_session
 
 router = APIRouter(
@@ -101,6 +107,30 @@ def get_conditional_provider(
             ExecutionDecisionResponse.model_validate(record)
             for record in list_execution_decisions(session, approval.id)
         ],
+    )
+
+
+@router.get(
+    "/providers/{source_id}/value",
+    response_model=ConditionalProviderValueResponse,
+)
+def get_conditional_provider_value(
+    source_id: str,
+    session: SessionDependency,
+) -> ConditionalProviderValueResponse:
+    try:
+        get_approval(session, source_id)
+    except ConditionalProviderNotFoundError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="provider not found",
+        ) from exc
+    summary = summarize_conditional_provider_value(session, source_id)
+    return ConditionalProviderValueResponse(
+        source_id=summary.source_id,
+        evidence_available=summary.evidence_available,
+        source=_source_value_response(summary.source),
+        portfolio_without_source=_source_value_response(summary.portfolio_without_source),
     )
 
 
@@ -212,6 +242,17 @@ def evaluate_provider_eligibility(
             detail=str(exc),
         ) from exc
     return ExecutionDecisionResponse.model_validate(record)
+
+
+def _source_value_response(summary: SourceValueSummary) -> SourceValueSummaryResponse:
+    return SourceValueSummaryResponse(
+        executions=summary.executions,
+        modified_executions=summary.modified_executions,
+        observations_written=summary.observations_written,
+        commercial_projections=summary.commercial_projections,
+        identity_projections=summary.identity_projections,
+        request_cost=summary.request_cost,
+    )
 
 
 def _summary(session: Session, source_id: str) -> ConditionalProviderSummary:
