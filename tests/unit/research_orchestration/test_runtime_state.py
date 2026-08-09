@@ -142,15 +142,64 @@ def test_revoked_onboarding_blocks_source_authorization() -> None:
     assert runtime.source_authorized is False
 
 
-def test_conditional_provider_pause_blocks_automated_authorization() -> None:
+def test_conditional_provider_requires_persisted_access_method_mapping() -> None:
     session = _ready_session()
-    persist_provider_approval(
-        session,
-        _approval_dossier(),
-        actor="research-admin@example.test",
-        change_reason="approved controlled provider",
-        now=NOW,
+    _persist_conditional_approval(session)
+
+    runtime = resolve_research_runtime(session, _plan(), _step(), now=NOW)
+
+    assert runtime.source_authorized is False
+
+
+def test_conditional_provider_matching_scope_can_authorize() -> None:
+    session = _ready_session(
+        conditional_access_method=ConditionalAccessMethod.OFFICIAL_API.value
     )
+    _persist_conditional_approval(session)
+
+    runtime = resolve_research_runtime(session, _plan(), _step(), now=NOW)
+
+    assert runtime.source_authorized is True
+
+
+def test_conditional_provider_scope_or_terms_mismatch_blocks() -> None:
+    session = _ready_session(
+        conditional_access_method=ConditionalAccessMethod.OFFICIAL_API.value
+    )
+    _persist_conditional_approval(
+        session,
+        replace(
+            _approval_dossier(),
+            approved_purposes=frozenset({"different-purpose"}),
+        ),
+    )
+
+    wrong_purpose = resolve_research_runtime(session, _plan(), _step(), now=NOW)
+    assert wrong_purpose.source_authorized is False
+
+    session = _ready_session(
+        conditional_access_method=ConditionalAccessMethod.OFFICIAL_API.value
+    )
+    _persist_conditional_approval(
+        session,
+        replace(
+            _approval_dossier(),
+            state=ApprovalState.PENDING_REVIEW,
+            terms_state=TermsReviewState.CHANGED,
+        ),
+    )
+    changed_terms = resolve_research_runtime(session, _plan(), _step(), now=NOW)
+    assert changed_terms.source_authorized is False
+
+
+def test_conditional_provider_pause_blocks_automated_authorization() -> None:
+    session = _ready_session(
+        conditional_access_method=ConditionalAccessMethod.OFFICIAL_API.value
+    )
+    _persist_conditional_approval(session)
+    before_pause = resolve_research_runtime(session, _plan(), _step(), now=NOW)
+    assert before_pause.source_authorized is True
+
     apply_persisted_control_decision(
         session,
         ProviderControlDecision(
@@ -231,10 +280,18 @@ def _session() -> Session:
     return create_session_factory(engine)()
 
 
-def _ready_session(*, quota: int = 100) -> Session:
+def _ready_session(
+    *,
+    quota: int = 100,
+    conditional_access_method: str | None = None,
+) -> Session:
     session = _session()
     _persist_source(session)
-    sync_source_portfolio(session, (_portfolio(),), now=NOW)
+    sync_source_portfolio(
+        session,
+        (_portfolio(conditional_access_method=conditional_access_method),),
+        now=NOW,
+    )
     health = session.get(SourceHealthRecord, SOURCE_ID)
     assert health is not None
     health.quota_remaining = quota
@@ -277,7 +334,7 @@ def _persist_source(
     session.flush()
 
 
-def _portfolio() -> SourceCatalogEntry:
+def _portfolio(*, conditional_access_method: str | None) -> SourceCatalogEntry:
     capability = AdapterCapabilityManifest(
         source_id=SOURCE_ID,
         adapter_id=TOOL_ID,
@@ -288,6 +345,9 @@ def _portfolio() -> SourceCatalogEntry:
         max_page_size=25,
         cost_per_request=0.0,
     )
+    metadata: dict[str, object] = {}
+    if conditional_access_method is not None:
+        metadata["conditional_access_method"] = conditional_access_method
     return SourceCatalogEntry(
         source_id=SOURCE_ID,
         display_name="Research approved source",
@@ -298,6 +358,7 @@ def _portfolio() -> SourceCatalogEntry:
         commercial_use_cases=("organization_research",),
         adapter=capability,
         monthly_cost_limit=100.0,
+        metadata=metadata,
     )
 
 
@@ -321,6 +382,19 @@ def _onboarding(state: OnboardingState) -> ProviderOnboardingRecord:
         last_error_message=None,
         created_at=NOW,
         updated_at=NOW,
+    )
+
+
+def _persist_conditional_approval(
+    session: Session,
+    dossier: ProviderApprovalDossier | None = None,
+) -> None:
+    persist_provider_approval(
+        session,
+        dossier or _approval_dossier(),
+        actor="research-admin@example.test",
+        change_reason="approved controlled provider",
+        now=NOW,
     )
 
 
