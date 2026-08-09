@@ -95,7 +95,7 @@ def select_ranked_research_sources(
         )
         if manual is not None:
             candidates.append(manual)
-    return rank_research_sources(candidates)
+    return rank_research_sources(tuple(candidates))
 
 
 def _persisted_candidate() -> ResearchSourceCandidate:
