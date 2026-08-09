@@ -3,6 +3,9 @@ from __future__ import annotations
 from fastapi import FastAPI
 
 from cip import __version__
+from cip.modules.conditional_integrations.api.routes import (
+    router as conditional_integrations_router,
+)
 from cip.modules.corporate_changes.api.routes import router as corporate_changes_router
 from cip.modules.corporate_graph.api.routes import router as corporate_graph_router
 from cip.modules.incident_intelligence.api.routes import router as incident_router
@@ -37,12 +40,14 @@ def create_app() -> FastAPI:
             "applicability, corporate and regulatory change intelligence, temporal "
             "organization relationship intelligence, reversible entity resolution, "
             "temporal corporate graph context, governed professional organization "
-            "context, and evidence-backed opportunity discovery."
+            "context, conditional provider approval controls, and evidence-backed "
+            "opportunity discovery."
         ),
     )
     application.include_router(source_governance_router)
     application.include_router(provider_onboarding_router)
     application.include_router(source_portfolio_router)
+    application.include_router(conditional_integrations_router)
     application.include_router(procurement_history_router)
     application.include_router(public_footprint_router)
     application.include_router(vulnerability_router)

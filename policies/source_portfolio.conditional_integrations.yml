@@ -1,0 +1,112 @@
+version: 1
+
+sources:
+  - source_id: linkedin-official-api
+    display_name: LinkedIn Official API candidate
+    canonical_url: https://api.linkedin.com/
+    category: conditional_professional_context
+    status: candidate
+    freshness_max_age_seconds: 86400
+    commercial_use_cases:
+      - professional_context
+      - organization_research
+    candidate_origin: lot-22
+    monthly_cost_limit: 0
+    metadata:
+      executable: false
+      conditional_approval_required: true
+      authorization_status: missing
+      runtime_adapter_present: false
+      schedule_enabled: false
+      allowed_access_methods:
+        - official_api
+        - licensed_api
+      browser_automation: forbidden
+      copied_session_credentials: forbidden
+      captcha_mfa_bypass: forbidden
+      private_message_collection: forbidden
+      automatic_opportunity: forbidden
+      autonomous_outreach: forbidden
+
+  - source_id: discord-authorized-integration
+    display_name: Discord authorized integration candidate
+    canonical_url: https://discord.com/api/
+    category: conditional_community_context
+    status: candidate
+    freshness_max_age_seconds: 86400
+    commercial_use_cases:
+      - public_community_context
+      - organization_research
+    candidate_origin: lot-22
+    monthly_cost_limit: 0
+    metadata:
+      executable: false
+      conditional_approval_required: true
+      authorization_status: missing
+      runtime_adapter_present: false
+      schedule_enabled: false
+      allowed_access_methods:
+        - admin_installed_connector
+        - authorized_export
+      copied_session_credentials: forbidden
+      self_bot_automation: forbidden
+      captcha_mfa_bypass: forbidden
+      private_message_collection: forbidden
+      automatic_opportunity: forbidden
+      autonomous_outreach: forbidden
+
+  - source_id: premium-cti-licensed
+    display_name: Deployment-specific licensed premium CTI candidate
+    canonical_url: https://premium-cti.example.invalid/
+    category: conditional_premium_cti
+    status: candidate
+    freshness_max_age_seconds: 21600
+    commercial_use_cases:
+      - threat_context
+      - vulnerability_context
+      - incident_context
+    candidate_origin: lot-22
+    monthly_cost_limit: 0
+    metadata:
+      executable: false
+      conditional_approval_required: true
+      authorization_status: missing
+      deployment_provider_required: true
+      runtime_adapter_present: false
+      schedule_enabled: false
+      allowed_access_methods:
+        - licensed_api
+        - authorized_export
+      raw_secret_storage: forbidden
+      bypass_access: forbidden
+      direct_malicious_infrastructure_connection: forbidden
+      automatic_opportunity: forbidden
+      autonomous_outreach: forbidden
+
+  - source_id: commercial-data-licensed
+    display_name: Deployment-specific licensed commercial dataset candidate
+    canonical_url: https://commercial-data.example.invalid/
+    category: conditional_commercial_data
+    status: candidate
+    freshness_max_age_seconds: 86400
+    commercial_use_cases:
+      - organization_research
+      - professional_context
+    candidate_origin: lot-22
+    monthly_cost_limit: 0
+    metadata:
+      executable: false
+      conditional_approval_required: true
+      authorization_status: missing
+      deployment_provider_required: true
+      runtime_adapter_present: false
+      schedule_enabled: false
+      allowed_access_methods:
+        - licensed_api
+        - authorized_export
+        - customer_provided_access
+      private_personal_data: forbidden
+      raw_secret_storage: forbidden
+      bypass_access: forbidden
+      automatic_opportunity: forbidden
+      autonomous_outreach: forbidden

@@ -112,6 +112,7 @@ def build_collection_runtime(settings: Settings) -> CollectionRuntime:
         settings.passive_exposure_source_registry_path,
         settings.advisory_source_registry_path,
         settings.corporate_change_source_registry_path,
+        settings.conditional_integration_source_registry_path,
     )
     portfolio = load_source_portfolio_bundle(
         settings.source_portfolio_path,
@@ -123,6 +124,7 @@ def build_collection_runtime(settings: Settings) -> CollectionRuntime:
         settings.passive_exposure_source_portfolio_path,
         settings.advisory_source_portfolio_path,
         settings.corporate_change_source_portfolio_path,
+        settings.conditional_integration_source_portfolio_path,
     )
     greenhouse_boards = load_greenhouse_boards(settings.greenhouse_board_registry_path)
     lever_sites = load_lever_sites(settings.lever_site_registry_path)
