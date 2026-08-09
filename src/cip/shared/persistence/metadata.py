@@ -8,6 +8,13 @@ from cip.modules.collection_orchestration.infrastructure.models import (
     CollectionDeadLetterRecord,
     CollectionJobRecord,
 )
+from cip.modules.conditional_integrations.infrastructure.models import (
+    ConditionalExecutionDecisionRecord,
+    ConditionalProviderApprovalRecord,
+    ConditionalProviderApprovalRevisionRecord,
+    ConditionalProviderControlDecisionRecord,
+    ConditionalProviderRuntimeControlRecord,
+)
 from cip.modules.corporate_changes.infrastructure.models import (
     CorporateChangeClaimSnapshotRecord,
     CorporateChangeEventRecord,
@@ -133,6 +140,11 @@ _IMPORTED_MODELS = (
     CollectionDeadLetterRecord,
     CollectionJobRecord,
     CommercialSignalRecord,
+    ConditionalExecutionDecisionRecord,
+    ConditionalProviderApprovalRecord,
+    ConditionalProviderApprovalRevisionRecord,
+    ConditionalProviderControlDecisionRecord,
+    ConditionalProviderRuntimeControlRecord,
     CorporateChangeClaimSnapshotRecord,
     CorporateChangeEventRecord,
     CorporateChangeServiceMappingRecord,
