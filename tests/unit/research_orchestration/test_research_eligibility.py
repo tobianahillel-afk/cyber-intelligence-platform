@@ -153,6 +153,23 @@ def test_step_automation_and_cost_budgets_fail_closed() -> None:
     }
 
 
+def test_running_automated_step_already_consumes_automation_budget() -> None:
+    plan = replace(
+        _plan(),
+        budget=ResearchBudget(
+            max_steps=3,
+            max_automated_steps=1,
+            max_total_cost=5.0,
+            max_step_cost=2.0,
+        ),
+    )
+    usage = ResearchUsage(completed_steps=0, automated_steps=1, cost_used=1.0)
+
+    decision = evaluate_research_step(plan, _step(), usage, _runtime(), now=NOW)
+
+    assert ResearchBlockReason.AUTOMATION_BUDGET_EXHAUSTED in decision.reasons
+
+
 def test_expired_or_unapproved_plan_blocks_before_execution() -> None:
     expired = replace(_plan(), expires_at=NOW)
     draft = replace(_plan(), state=ResearchPlanState.DRAFT)
