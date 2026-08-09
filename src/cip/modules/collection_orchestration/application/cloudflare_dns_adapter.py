@@ -1,8 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
-from datetime import datetime
-from hashlib import sha256
+from datetime import datetime, timedelta
 from uuid import UUID
 
 import httpx
@@ -23,23 +22,25 @@ from cip.modules.collection_orchestration.application.ports import (
     AdapterCollectionBatch,
     AdapterExecutionError,
 )
-from cip.modules.passive_exposure.domain.asset_models import AssetRef, PassiveAsset
-from cip.modules.passive_exposure.domain.enums import (
-    AssetState,
-    AssetType,
+from cip.modules.passive_exposure.domain.models import (
     AttributionRisk,
+    OrganizationLink,
+    OrganizationLinkMethod,
     OrganizationLinkStatus,
-    PassiveObservationType,
-)
-from cip.modules.passive_exposure.domain.models import PassiveObservationSnapshot
-from cip.modules.passive_exposure.domain.observation_models import (
-    OrganizationAssetLink,
-    PassiveObservation,
+    PassiveAsset,
+    PassiveAssetKind,
+    PassiveObservationKind,
+    PassiveObservationSnapshot,
+    PassiveObservationState,
 )
 from cip.modules.source_governance.domain.models import DataCategory
 from cip.modules.source_governance.infrastructure.registry import SourceRegistryEntry
 
 _DNS_TYPES = ("A", "AAAA")
+_DNS_ASSET_KINDS = {
+    1: PassiveAssetKind.IPV4,
+    28: PassiveAssetKind.IPV6,
+}
 
 
 class CloudflareDnsAdapter:
@@ -99,8 +100,13 @@ class CloudflareDnsAdapter:
         ) as client:
             for record_type in _DNS_TYPES:
                 response = _query(client, target_url, target.domain, record_type)
-                for answer in response.Answer:
-                    snapshot = _map_answer(answer, target=target, observed_at=collected_at)
+                for answer in response.answers:
+                    snapshot = _map_answer(
+                        answer,
+                        target=target,
+                        source_url=target_url,
+                        observed_at=collected_at,
+                    )
                     if snapshot is None:
                         continue
                     observations.append(
@@ -142,9 +148,9 @@ def _query(
             error_code="source_schema_drift",
             retryable=False,
         ) from exc
-    if result.Status != 0:
+    if result.status != 0:
         raise AdapterExecutionError(
-            f"Cloudflare DNS returned DNS status {result.Status}",
+            f"Cloudflare DNS returned DNS status {result.status}",
             error_code="provider_dns_error",
             retryable=False,
         )
@@ -155,70 +161,39 @@ def _map_answer(
     answer: CloudflareDnsAnswer,
     *,
     target: PassiveInfrastructureTarget,
+    source_url: str,
     observed_at: datetime,
 ) -> PassiveObservationSnapshot | None:
-    if answer.type not in {1, 28}:
+    asset_kind = _DNS_ASSET_KINDS.get(answer.record_type)
+    if asset_kind is None:
         return None
     try:
-        asset_ref = AssetRef.from_value(AssetType.IP, answer.data)
+        asset = PassiveAsset(kind=asset_kind, value=answer.data)
     except ValueError:
         return None
-    record_key = f"{target.domain}:{answer.type}:{asset_ref.value}"
-    revision_key = sha256(answer.model_dump_json().encode("utf-8")).hexdigest()
-    asset = PassiveAsset(
-        ref=asset_ref,
-        first_seen_at=observed_at,
-        last_seen_at=observed_at,
-        state=AssetState.OBSERVED,
-    )
-    link = OrganizationAssetLink(
-        id=_stable_uuid(f"cloudflare-link:{target.target_id}:{asset_ref.value}"),
-        organization_id=target.organization_id,
-        asset=asset_ref,
-        status=OrganizationLinkStatus.REVIEW_REQUIRED,
-        confidence=0.65,
-        risks=(AttributionRisk.SHARED_HOSTING,),
-        valid_from=observed_at,
-        valid_to=None,
-        reason="DNS resolution can point to shared or CDN infrastructure",
-        provenance_refs=(f"target:{target.target_id}", f"dns:{target.domain}"),
-    )
-    observation = PassiveObservation(
-        id=_stable_uuid(f"cloudflare-observation:{record_key}:{revision_key}"),
-        provider=CloudflareDnsAdapter.source_id,
-        source_record_key=record_key,
-        source_revision_key=revision_key,
-        observation_type=PassiveObservationType.PASSIVE_DNS,
-        subject_asset=asset_ref,
-        observed_at=observed_at,
-        valid_from=observed_at,
-        valid_to=None,
-        confidence=0.75,
-        collection_method="official_dns_over_https",
-        hostname_value=target.domain,
-        service_name=None,
-        port=None,
-        certificate_fingerprint=None,
-        technology_observation_id=None,
-        active_validation=False,
-        credential_use=False,
-        authenticated_access=False,
-        direct_connection_to_asset=False,
-        exploitation_attempted=False,
-    )
+    record_key = f"{target.domain}:{answer.record_type}:{asset.value}"
     return PassiveObservationSnapshot(
-        provider=CloudflareDnsAdapter.source_id,
+        source_id=CloudflareDnsAdapter.source_id,
         source_record_key=record_key,
-        source_revision_key=revision_key,
+        source_url=source_url,
         asset=asset,
-        organization_link=link,
-        observation=observation,
+        observation_kind=PassiveObservationKind.PASSIVE_DNS,
+        state=PassiveObservationState.CURRENT,
+        observed_at=observed_at,
+        published_at=observed_at,
+        modified_at=observed_at,
+        expires_at=observed_at + timedelta(seconds=answer.ttl),
+        confidence=0.75,
+        independence_key=f"cloudflare-doh:{target.domain}",
+        organization_link=OrganizationLink(
+            status=OrganizationLinkStatus.REVIEW_REQUIRED,
+            method=OrganizationLinkMethod.PASSIVE_CORRELATION,
+            confidence=0.65,
+            organization_id=target.organization_id,
+            reasons=("DNS resolution can point to shared or CDN infrastructure",),
+            attribution_risks=(AttributionRisk.SHARED_HOSTING,),
+        ),
     )
-
-
-def _stable_uuid(value: str) -> UUID:
-    digest = sha256(value.encode("utf-8")).hexdigest()
-    return UUID(digest[:32])
 
 
 def _next_target(
