@@ -18,7 +18,8 @@ from cip.modules.source_governance.domain.models import (
 )
 from cip.modules.source_governance.infrastructure.registry import SourceRegistryEntry
 
-MAX_JSON_BYTES = 8 * 1024 * 1024
+DEFAULT_MAX_JSON_BYTES = 8 * 1024 * 1024
+HARD_MAX_JSON_BYTES = 64 * 1024 * 1024
 
 
 @dataclass(frozen=True, slots=True)
@@ -66,7 +67,10 @@ def get_json(
     target_url: str,
     *,
     headers: Mapping[str, str],
+    max_bytes: int = DEFAULT_MAX_JSON_BYTES,
 ) -> bytes:
+    if not 1 <= max_bytes <= HARD_MAX_JSON_BYTES:
+        raise ValueError("max_bytes is outside the intelligence response bound")
     try:
         response = client.get(target_url, headers=headers)
         response.raise_for_status()
@@ -89,7 +93,7 @@ def get_json(
             error_code="unsafe_source_response",
             retryable=False,
         )
-    if len(response.content) > MAX_JSON_BYTES:
+    if len(response.content) > max_bytes:
         raise AdapterExecutionError(
             "intelligence provider response exceeds size limit",
             error_code="unsafe_source_response",
