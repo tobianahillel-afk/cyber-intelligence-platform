@@ -52,13 +52,18 @@ def resolve_research_runtime(
 ) -> ResearchRuntimeState:
     current = require_aware_utc(now, field_name="now")
     if step.mode is ResearchStepMode.PERSISTED_SEARCH:
-        return ResearchRuntimeState()
+        return _closed_runtime()
     if step.mode is ResearchStepMode.MANUAL_LINK:
         return ResearchRuntimeState(
-            manual_link_allowed=_manual_link_allowed(session, plan, step)
+            source_authorized=False,
+            source_executable=False,
+            adapter_capability_present=False,
+            manual_link_allowed=_manual_link_allowed(session, plan, step),
+            ingestion_path_approved=False,
+            quota_remaining=None,
         )
     if step.mode is ResearchStepMode.APPROVED_INGESTION:
-        return ResearchRuntimeState(ingestion_path_approved=False)
+        return _closed_runtime()
     return _automated_runtime(session, plan, step, now=current)
 
 
@@ -89,7 +94,20 @@ def _automated_runtime(
             now=now,
         ),
         adapter_capability_present=_exact_capability_present(session, step),
+        manual_link_allowed=False,
+        ingestion_path_approved=False,
         quota_remaining=health.quota_remaining if health is not None else None,
+    )
+
+
+def _closed_runtime() -> ResearchRuntimeState:
+    return ResearchRuntimeState(
+        source_authorized=False,
+        source_executable=False,
+        adapter_capability_present=False,
+        manual_link_allowed=False,
+        ingestion_path_approved=False,
+        quota_remaining=None,
     )
 
 
