@@ -10,48 +10,22 @@ from time import sleep
 
 from sqlalchemy.orm import Session, sessionmaker
 
-from cip.adapters.sources.greenhouse.registry import (
-    GreenhouseBoard,
-    load_greenhouse_boards,
-)
-from cip.adapters.sources.lever.registry import LeverSite, load_lever_sites
+from cip.adapters.sources.greenhouse.registry import load_greenhouse_boards
+from cip.adapters.sources.lever.registry import load_lever_sites
 from cip.adapters.sources.organization_identity.registry import (
-    OrganizationIdentityTarget,
     load_organization_identity_targets,
 )
-from cip.adapters.sources.public_web.registry import (
-    PublicWebTarget,
-    load_public_web_targets,
-)
-from cip.adapters.sources.smartrecruiters.registry import (
-    SmartRecruitersCompany,
-    load_smartrecruiters_companies,
-)
+from cip.adapters.sources.public_web.registry import load_public_web_targets
+from cip.adapters.sources.smartrecruiters.registry import load_smartrecruiters_companies
 from cip.adapters.sources.vulnerability_catalogs.registry import (
-    VulnerabilityQueryTarget,
     load_vulnerability_query_targets,
 )
-from cip.modules.collection_orchestration.application.adapters import CisaKevAdapter
-from cip.modules.collection_orchestration.application.boamp_adapter import BoampAdapter
-from cip.modules.collection_orchestration.application.decp_adapter import DecpAdapter
-from cip.modules.collection_orchestration.application.greenhouse_adapter import GreenhouseAdapter
-from cip.modules.collection_orchestration.application.identity_adapters import (
-    register_identity_adapters,
+from cip.modules.collection_orchestration.application.adapter_composition import (
+    AdapterCompositionInputs,
+    build_runtime_adapters,
 )
-from cip.modules.collection_orchestration.application.lever_adapter import LeverAdapter
 from cip.modules.collection_orchestration.application.ports import CollectionAdapter
-from cip.modules.collection_orchestration.application.public_web_adapter import PublicWebAdapter
-from cip.modules.collection_orchestration.application.reference_adapter import (
-    ReferencePortfolioAdapter,
-)
 from cip.modules.collection_orchestration.application.scheduler import schedule_due_jobs
-from cip.modules.collection_orchestration.application.smartrecruiters_adapter import (
-    SmartRecruitersAdapter,
-)
-from cip.modules.collection_orchestration.application.ted_adapter import TedSearchAdapter
-from cip.modules.collection_orchestration.application.vulnerability_registration import (
-    register_vulnerability_adapters,
-)
 from cip.modules.collection_orchestration.application.worker import (
     WorkerOutcome,
     WorkerStatus,
@@ -78,10 +52,7 @@ from cip.modules.source_portfolio.application.service import (
     reconcile_runtime_adapters,
     sync_source_portfolio,
 )
-from cip.modules.source_portfolio.domain.models import (
-    CatalogStatus,
-    SourceCatalogEntry,
-)
+from cip.modules.source_portfolio.domain.models import CatalogStatus, SourceCatalogEntry
 from cip.modules.source_portfolio.infrastructure.registry_bundle import (
     load_source_portfolio_bundle,
 )
@@ -108,7 +79,33 @@ class CollectionRuntime:
 def build_collection_runtime(settings: Settings) -> CollectionRuntime:
     engine = create_database_engine(settings.database_url)
     factory = create_session_factory(engine)
-    entries = load_source_registry_bundle(
+    entries = _load_source_entries(settings)
+    portfolio = _load_portfolio(settings)
+    adapter_inputs = _load_adapter_inputs(settings, entries)
+    synchronized_at = utc_now()
+    with session_scope(factory) as session:
+        sync_source_registry(session, entries)
+        sync_source_portfolio(session, portfolio, now=synchronized_at)
+    adapters = build_runtime_adapters(
+        adapter_inputs,
+        timeout_seconds=settings.source_http_timeout_seconds,
+    )
+    with session_scope(factory) as session:
+        reconcile_runtime_adapters(session, adapters.keys(), now=utc_now())
+    _validate_portfolio_adapters(portfolio, adapters)
+    schedules = _load_schedules(settings)
+    _validate_registered_schedules(schedules, adapters, portfolio)
+    return CollectionRuntime(
+        factory=factory,
+        schedules=schedules,
+        adapters=adapters,
+        retention_policy=load_retention_policy(settings.retention_policy_path),
+        portfolio=portfolio,
+    )
+
+
+def _load_source_entries(settings: Settings) -> tuple[SourceRegistryEntry, ...]:
+    return load_source_registry_bundle(
         settings.source_registry_path,
         settings.identity_source_registry_path,
         settings.decp_source_registry_path,
@@ -122,7 +119,10 @@ def build_collection_runtime(settings: Settings) -> CollectionRuntime:
         settings.relationship_source_registry_path,
         settings.conditional_integration_source_registry_path,
     )
-    portfolio = load_source_portfolio_bundle(
+
+
+def _load_portfolio(settings: Settings) -> tuple[SourceCatalogEntry, ...]:
+    return load_source_portfolio_bundle(
         settings.source_portfolio_path,
         settings.decp_source_portfolio_path,
         settings.public_web_source_portfolio_path,
@@ -135,159 +135,36 @@ def build_collection_runtime(settings: Settings) -> CollectionRuntime:
         settings.relationship_source_portfolio_path,
         settings.conditional_integration_source_portfolio_path,
     )
-    greenhouse_boards = load_greenhouse_boards(settings.greenhouse_board_registry_path)
-    lever_sites = load_lever_sites(settings.lever_site_registry_path)
-    smartrecruiters_companies = load_smartrecruiters_companies(
-        settings.smartrecruiters_company_registry_path
+
+
+def _load_adapter_inputs(
+    settings: Settings,
+    entries: tuple[SourceRegistryEntry, ...],
+) -> AdapterCompositionInputs:
+    return AdapterCompositionInputs(
+        entries=entries,
+        greenhouse_boards=load_greenhouse_boards(settings.greenhouse_board_registry_path),
+        lever_sites=load_lever_sites(settings.lever_site_registry_path),
+        smartrecruiters_companies=load_smartrecruiters_companies(
+            settings.smartrecruiters_company_registry_path
+        ),
+        identity_targets=load_organization_identity_targets(
+            settings.organization_identity_target_registry_path
+        ),
+        public_web_targets=load_public_web_targets(settings.public_web_target_registry_path),
+        vulnerability_targets=load_vulnerability_query_targets(
+            settings.vulnerability_query_target_registry_path
+        ),
     )
-    identity_targets = load_organization_identity_targets(
-        settings.organization_identity_target_registry_path
-    )
-    public_web_targets = load_public_web_targets(settings.public_web_target_registry_path)
-    vulnerability_targets = load_vulnerability_query_targets(
-        settings.vulnerability_query_target_registry_path
-    )
-    with session_scope(factory) as session:
-        sync_source_registry(session, entries)
-        sync_source_portfolio(session, portfolio, now=utc_now())
-    adapters = _build_adapters(
-        entries,
-        greenhouse_boards,
-        lever_sites,
-        smartrecruiters_companies,
-        identity_targets,
-        public_web_targets,
-        vulnerability_targets,
-        timeout_seconds=settings.source_http_timeout_seconds,
-    )
-    with session_scope(factory) as session:
-        reconcile_runtime_adapters(session, adapters.keys(), now=utc_now())
-    _validate_portfolio_adapters(portfolio, adapters)
-    schedules = load_collection_schedule_bundle(
+
+
+def _load_schedules(settings: Settings) -> tuple[SourceSchedule, ...]:
+    return load_collection_schedule_bundle(
         settings.collection_schedule_path,
         settings.decp_collection_schedule_path,
         settings.public_web_collection_schedule_path,
         settings.vulnerability_collection_schedule_path,
     )
-    _validate_registered_schedules(schedules, adapters, portfolio)
-    return CollectionRuntime(
-        factory=factory,
-        schedules=schedules,
-        adapters=adapters,
-        retention_policy=load_retention_policy(settings.retention_policy_path),
-        portfolio=portfolio,
-    )
-
-
-def _build_adapters(
-    entries: tuple[SourceRegistryEntry, ...],
-    greenhouse_boards: tuple[GreenhouseBoard, ...],
-    lever_sites: tuple[LeverSite, ...],
-    smartrecruiters_companies: tuple[SmartRecruitersCompany, ...],
-    identity_targets: tuple[OrganizationIdentityTarget, ...],
-    public_web_targets: tuple[PublicWebTarget, ...],
-    vulnerability_targets: tuple[VulnerabilityQueryTarget, ...],
-    *,
-    timeout_seconds: float,
-) -> dict[tuple[str, str], CollectionAdapter]:
-    entries_by_id = {entry.policy.id: entry for entry in entries}
-    adapters: dict[tuple[str, str], CollectionAdapter] = {}
-    _register(adapters, ReferencePortfolioAdapter())
-    cisa_entry = entries_by_id.get(CisaKevAdapter.source_id)
-    if cisa_entry is not None:
-        _register(adapters, CisaKevAdapter(cisa_entry, timeout_seconds=timeout_seconds))
-    ted_entry = entries_by_id.get(TedSearchAdapter.source_id)
-    if ted_entry is not None:
-        _register(adapters, TedSearchAdapter(ted_entry, timeout_seconds=timeout_seconds))
-    boamp_entry = entries_by_id.get(BoampAdapter.source_id)
-    if boamp_entry is not None:
-        _register(adapters, BoampAdapter(boamp_entry, timeout_seconds=timeout_seconds))
-    decp_entry = entries_by_id.get(DecpAdapter.source_id)
-    if decp_entry is not None:
-        _register(adapters, DecpAdapter(decp_entry, timeout_seconds=timeout_seconds))
-    greenhouse_entry = entries_by_id.get(GreenhouseAdapter.source_id)
-    if greenhouse_entry is not None and any(board.enabled for board in greenhouse_boards):
-        _register(
-            adapters,
-            GreenhouseAdapter(
-                greenhouse_entry,
-                greenhouse_boards,
-                timeout_seconds=timeout_seconds,
-            ),
-        )
-    lever_entry = entries_by_id.get(LeverAdapter.source_id)
-    if lever_entry is not None and any(site.enabled for site in lever_sites):
-        _register(
-            adapters,
-            LeverAdapter(
-                lever_entry,
-                lever_sites,
-                timeout_seconds=timeout_seconds,
-            ),
-        )
-    smartrecruiters_entry = entries_by_id.get(SmartRecruitersAdapter.source_id)
-    if smartrecruiters_entry is not None and any(
-        company.enabled for company in smartrecruiters_companies
-    ):
-        _register(
-            adapters,
-            SmartRecruitersAdapter(
-                smartrecruiters_entry,
-                smartrecruiters_companies,
-                timeout_seconds=timeout_seconds,
-            ),
-        )
-    register_identity_adapters(
-        adapters,
-        entries_by_id,
-        identity_targets,
-        timeout_seconds=timeout_seconds,
-    )
-    _register_public_web_adapters(
-        adapters,
-        entries_by_id,
-        public_web_targets,
-        timeout_seconds=timeout_seconds,
-    )
-    register_vulnerability_adapters(
-        adapters,
-        entries_by_id,
-        vulnerability_targets,
-        timeout_seconds=timeout_seconds,
-    )
-    return adapters
-
-
-def _register_public_web_adapters(
-    adapters: dict[tuple[str, str], CollectionAdapter],
-    entries_by_id: dict[str, SourceRegistryEntry],
-    targets: tuple[PublicWebTarget, ...],
-    *,
-    timeout_seconds: float,
-) -> None:
-    for target in targets:
-        if not target.enabled:
-            continue
-        entry = entries_by_id.get(target.id)
-        if entry is None:
-            raise ValueError(
-                f"enabled public web target has no source policy: {target.id}"
-            )
-        _register(
-            adapters,
-            PublicWebAdapter(
-                entry,
-                target,
-                timeout_seconds=timeout_seconds,
-            ),
-        )
-
-
-def _register(
-    adapters: dict[tuple[str, str], CollectionAdapter],
-    adapter: CollectionAdapter,
-) -> None:
-    adapters[(adapter.source_id, adapter.adapter_id)] = adapter
 
 
 def run_scheduler_once(runtime: CollectionRuntime, *, now: datetime | None = None) -> int:
