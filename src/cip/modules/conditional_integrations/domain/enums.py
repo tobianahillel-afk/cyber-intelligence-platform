@@ -61,6 +61,7 @@ class ConditionalBlockReason(StrEnum):
     ONBOARDING_NOT_READY = "onboarding_not_ready"
     SOURCE_POLICY_DENIED = "source_policy_denied"
     CAPABILITY_MISSING = "capability_missing"
+    PROVIDER_PAUSED = "provider_paused"
     KILL_SWITCH_ACTIVE = "kill_switch_active"
     QUOTA_EXHAUSTED = "quota_exhausted"
     COST_BUDGET_EXHAUSTED = "cost_budget_exhausted"
