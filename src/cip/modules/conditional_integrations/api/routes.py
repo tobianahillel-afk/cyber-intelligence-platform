@@ -14,11 +14,13 @@ from cip.modules.conditional_integrations.api.schemas import (
     ConditionalProviderListResponse,
     ConditionalProviderSummary,
     ControlDecisionResponse,
+    EligibilityRequest,
     ExecutionDecisionResponse,
     ProviderControlRequest,
     RuntimeControlResponse,
 )
 from cip.modules.conditional_integrations.domain import (
+    ConditionalExecutionRequest,
     ProviderApprovalDossier,
     ProviderControlDecision,
 )
@@ -28,6 +30,9 @@ from cip.modules.conditional_integrations.infrastructure.approval_persistence im
 from cip.modules.conditional_integrations.infrastructure.control_persistence import (
     apply_persisted_control_decision,
 )
+from cip.modules.conditional_integrations.infrastructure.execution_audit import (
+    evaluate_and_audit_conditional_execution,
+)
 from cip.modules.conditional_integrations.infrastructure.queries import (
     ConditionalProviderNotFoundError,
     get_approval,
@@ -36,6 +41,9 @@ from cip.modules.conditional_integrations.infrastructure.queries import (
     list_control_decisions,
     list_execution_decisions,
     list_revisions,
+)
+from cip.modules.conditional_integrations.infrastructure.runtime_dependencies import (
+    resolve_runtime_dependencies,
 )
 from cip.modules.source_portfolio.api.dependencies import require_control_plane
 from cip.shared.persistence.dependencies import get_database_session
@@ -115,7 +123,7 @@ def upsert_conditional_provider_approval(
     except ValueError as exc:
         session.rollback()
         raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
             detail=str(exc),
         ) from exc
     return ApprovalResponse.model_validate(record)
@@ -147,10 +155,63 @@ def apply_provider_control(
     except ValueError as exc:
         session.rollback()
         raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
             detail=str(exc),
         ) from exc
     return RuntimeControlResponse.model_validate(record)
+
+
+@router.post(
+    "/providers/{source_id}/eligibility",
+    response_model=ExecutionDecisionResponse,
+)
+def evaluate_provider_eligibility(
+    source_id: str,
+    request: EligibilityRequest,
+    session: SessionDependency,
+) -> ExecutionDecisionResponse:
+    now = datetime.now(UTC)
+    execution_request = ConditionalExecutionRequest(
+        source_id=source_id,
+        access_method=request.access_method,
+        purpose=request.purpose,
+        data_category=request.data_category,
+        target_url=request.target_url,
+        requested_scopes=frozenset(request.requested_scopes),
+        requested_fields=frozenset(request.requested_fields),
+        retention_days=request.retention_days,
+        automated=request.automated,
+        store_raw_content=request.store_raw_content,
+        account_reference=request.account_reference,
+    )
+    try:
+        dependencies = resolve_runtime_dependencies(
+            session,
+            execution_request,
+            now=now,
+        )
+        evaluate_and_audit_conditional_execution(
+            session,
+            execution_request,
+            dependencies,
+            now=now,
+        )
+        approval = get_approval(session, source_id)
+        record = list_execution_decisions(session, approval.id, limit=1)[0]
+        session.commit()
+    except LookupError as exc:
+        session.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="provider not found",
+        ) from exc
+    except ValueError as exc:
+        session.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+            detail=str(exc),
+        ) from exc
+    return ExecutionDecisionResponse.model_validate(record)
 
 
 def _summary(session: Session, source_id: str) -> ConditionalProviderSummary:
