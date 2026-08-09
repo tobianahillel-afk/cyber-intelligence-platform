@@ -141,6 +141,8 @@ def _append_runtime_reasons(
         reasons.append(ConditionalBlockReason.ONBOARDING_NOT_READY)
     if not dependencies.source_policy_allowed:
         reasons.append(ConditionalBlockReason.SOURCE_POLICY_DENIED)
+    if not dependencies.source_portfolio_allowed:
+        reasons.append(ConditionalBlockReason.SOURCE_PORTFOLIO_NOT_EXECUTABLE)
     if not dependencies.adapter_capability_present:
         reasons.append(ConditionalBlockReason.CAPABILITY_MISSING)
     if dependencies.kill_switch_active:
