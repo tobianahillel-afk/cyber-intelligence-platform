@@ -35,7 +35,7 @@ def test_conditional_source_governance_is_fail_closed_by_default() -> None:
     )
     by_id = {entry.policy.id: entry for entry in entries}
 
-    assert LOT22_SOURCE_IDS <= set(by_id)
+    assert set(by_id) >= LOT22_SOURCE_IDS
     assert by_id["linkedin-official-api"].policy.status is SourceStatus.PENDING_REVIEW
     assert by_id["brixhub"].policy.status is SourceStatus.QUARANTINED
     for source_id in LOT22_SOURCE_IDS - {"linkedin-official-api", "brixhub"}:
@@ -65,7 +65,7 @@ def test_conditional_portfolio_candidates_have_no_adapter_capability() -> None:
     )
     by_id = {entry.source_id: entry for entry in entries}
 
-    assert LOT22_SOURCE_IDS <= set(by_id)
+    assert set(by_id) >= LOT22_SOURCE_IDS
     for source_id in LOT22_SOURCE_IDS:
         entry = by_id[source_id]
         assert entry.status is CatalogStatus.CANDIDATE
