@@ -26,9 +26,7 @@ class Settings(BaseSettings):
     identity_source_registry_path: Path = Path("policies/identity_sources.yml")
     decp_source_registry_path: Path = Path("policies/sources.decp.yml")
     public_web_source_registry_path: Path = Path("policies/sources.public_web.yml")
-    vulnerability_source_registry_path: Path = Path(
-        "policies/sources.vulnerability.yml"
-    )
+    vulnerability_source_registry_path: Path = Path("policies/sources.vulnerability.yml")
     incident_source_registry_path: Path = Path("policies/sources.incidents.yml")
     threat_telemetry_source_registry_path: Path = Path(
         "policies/sources.threat_telemetry.yml"
@@ -53,18 +51,14 @@ class Settings(BaseSettings):
     vulnerability_source_portfolio_path: Path = Path(
         "policies/source_portfolio.vulnerability.yml"
     )
-    incident_source_portfolio_path: Path = Path(
-        "policies/source_portfolio.incidents.yml"
-    )
+    incident_source_portfolio_path: Path = Path("policies/source_portfolio.incidents.yml")
     threat_telemetry_source_portfolio_path: Path = Path(
         "policies/source_portfolio.threat_telemetry.yml"
     )
     passive_exposure_source_portfolio_path: Path = Path(
         "policies/source_portfolio.passive_exposure.yml"
     )
-    advisory_source_portfolio_path: Path = Path(
-        "policies/source_portfolio.advisories.yml"
-    )
+    advisory_source_portfolio_path: Path = Path("policies/source_portfolio.advisories.yml")
     corporate_change_source_portfolio_path: Path = Path(
         "policies/source_portfolio.corporate_changes.yml"
     )
@@ -84,11 +78,17 @@ class Settings(BaseSettings):
         "policies/organization_identity_targets.yml"
     )
     public_web_target_registry_path: Path = Path("policies/public_web_targets.yml")
+    vulnerability_query_target_registry_path: Path = Path(
+        "policies/vulnerability_query_targets.yml"
+    )
     retention_policy_path: Path = Path("policies/retention.yml")
     collection_schedule_path: Path = Path("policies/collection_schedules.yml")
     decp_collection_schedule_path: Path = Path("policies/collection_schedules.decp.yml")
     public_web_collection_schedule_path: Path = Path(
         "policies/collection_schedules.public_web.yml"
+    )
+    vulnerability_collection_schedule_path: Path = Path(
+        "policies/collection_schedules.vulnerability.yml"
     )
     control_plane_token: str = Field(
         default="development-control-token",
