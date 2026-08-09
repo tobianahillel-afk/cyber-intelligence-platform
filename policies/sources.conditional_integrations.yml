@@ -2,17 +2,17 @@ version: 1
 reviewed_at: 2026-08-09
 
 sources:
-  - id: linkedin-official-api
-    name: LinkedIn Official API candidate
-    base_url: https://api.linkedin.com/
+  - id: discord-authorized-integration
+    name: Discord authorized integration candidate
+    base_url: https://discord.com/api/
     status: draft
     source_type: api
     owner: Conditional provider governance
-    terms_url: https://www.linkedin.com/legal/l/api-terms-of-use
-    licence: Provider-specific approval dossier required
+    terms_url: https://discord.com/terms
+    licence: Administrator consent and provider-specific approval required
     allowed_data_categories:
       - organization_metadata
-      - professional_contact
+      - public_result_metadata
     prohibited_data_categories: &prohibited
       - credential
       - victim_file
@@ -20,7 +20,7 @@ sources:
       - private_personal_data
       - restricted_content
     rate_limit_per_minute: null
-    retention_days: 365
+    retention_days: 180
     attribution_required: true
     raw_content_storage: false
     human_review_required: true
@@ -41,60 +41,10 @@ sources:
       maintenance_cost: unknown
       expected_stability: unknown
     notes: >-
-      Official or separately licensed API access only. This candidate does not
-      authorize collection and has no runtime adapter or schedule. Browser scraping,
-      copied sessions, fake accounts, CAPTCHA/MFA bypass, private-message collection,
-      contact enrichment beyond approved professional fields, and autonomous outreach
-      are prohibited.
-
-  - id: discord-authorized-integration
-    name: Discord authorized integration candidate
-    base_url: https://discord.com/api/
-    status: draft
-    source_type: api
-    owner: Conditional provider governance
-    terms_url: https://discord.com/terms
-    licence: Administrator consent and provider-specific approval required
-    allowed_data_categories:
-      - organization_metadata
-      - public_result_metadata
-    prohibited_data_categories: *prohibited
-    rate_limit_per_minute: null
-    retention_days: 180
-    attribution_required: true
-    raw_content_storage: false
-    human_review_required: true
-    authorization: *missing_authorization
-    economics: *conditional_economics
-    notes: >-
       Administrator-installed connector or explicitly authorized export only. No
       private messages, copied user sessions, self-bots, credential reuse, ban
       evasion, or server access outside an approved administrator scope. No runtime
       adapter or schedule is included by this candidate.
-
-  - id: brixhub
-    name: BrixHub quarantined candidate
-    base_url: https://brixhub.cc/
-    status: quarantined
-    source_type: licensed_dataset
-    owner: Conditional provider governance
-    terms_url: null
-    licence: Exact legal, licence, access-path, and security review required
-    allowed_data_categories:
-      - organization_metadata
-      - public_result_metadata
-    prohibited_data_categories: *prohibited
-    rate_limit_per_minute: null
-    retention_days: 90
-    attribution_required: true
-    raw_content_storage: false
-    human_review_required: true
-    authorization: *missing_authorization
-    economics: *conditional_economics
-    notes: >-
-      Quarantined. Account creation, authentication, scraping, downloads, imports,
-      credential handling, and browser automation remain prohibited. The Lot 22
-      provider-method policy intentionally permits no BrixHub execution method.
 
   - id: premium-cti-licensed
     name: Deployment-specific licensed premium CTI candidate
