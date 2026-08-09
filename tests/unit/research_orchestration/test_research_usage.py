@@ -41,6 +41,19 @@ def test_usage_counts_external_automated_step_once() -> None:
     assert usage.cost_used == 2.5
 
 
+def test_running_external_automated_step_already_consumes_budget() -> None:
+    session = _session()
+    session.add(_step(state=ResearchStepState.RUNNING))
+    session.add(_attempt(state=ResearchStepState.RUNNING, completed_at=None))
+    session.flush()
+
+    usage = resolve_research_usage(session, PLAN_ID)
+
+    assert usage.completed_steps == 0
+    assert usage.automated_steps == 1
+    assert usage.cost_used == 2.5
+
+
 def test_replayed_attempt_for_same_step_does_not_double_charge() -> None:
     session = _session()
     session.add(_step())
@@ -77,7 +90,10 @@ def _session() -> Session:
     return create_session_factory(engine)()
 
 
-def _step() -> ResearchStepRecord:
+def _step(
+    *,
+    state: ResearchStepState = ResearchStepState.COMPLETED,
+) -> ResearchStepRecord:
     return ResearchStepRecord(
         id=STEP_ID,
         plan_id=PLAN_ID,
@@ -93,26 +109,30 @@ def _step() -> ResearchStepRecord:
         target_url="https://research.example.test/results",
         query_text="acme",
         ingestion_path_id=None,
-        state=ResearchStepState.COMPLETED.value,
+        state=state.value,
         created_at=NOW,
         updated_at=NOW,
     )
 
 
-def _attempt() -> ResearchStepAttemptRecord:
+def _attempt(
+    *,
+    state: ResearchStepState = ResearchStepState.COMPLETED,
+    completed_at: datetime | None = NOW,
+) -> ResearchStepAttemptRecord:
     return ResearchStepAttemptRecord(
         id=ATTEMPT_ID,
         plan_id=PLAN_ID,
         step_id=STEP_ID,
         attempt_key="first-attempt",
         mode=ResearchStepMode.AUTOMATED_ADAPTER.value,
-        state=ResearchStepState.COMPLETED.value,
+        state=state.value,
         actor="researcher@example.test",
         external_action_started=True,
         external_action_reference="collection-job:first",
         error_code=None,
         started_at=NOW,
-        completed_at=NOW,
+        completed_at=completed_at,
         created_at=NOW,
         updated_at=NOW,
     )
