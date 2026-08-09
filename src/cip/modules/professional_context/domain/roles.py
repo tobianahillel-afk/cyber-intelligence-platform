@@ -102,6 +102,7 @@ class ReportingLineClaim:
     active: bool = True
     suppressed: bool = False
     deleted: bool = False
+    supersedes_record_key: str | None = None
 
     def __post_init__(self) -> None:
         for field_name in ("claim_key", "subject_person_key", "manager_person_key"):
@@ -123,7 +124,22 @@ class ReportingLineClaim:
         object.__setattr__(self, "source_url", optional_url(self.source_url, "source_url"))
         object.__setattr__(self, "valid_from", optional_time(self.valid_from, "valid_from"))
         object.__setattr__(self, "valid_until", optional_time(self.valid_until, "valid_until"))
+        object.__setattr__(
+            self,
+            "supersedes_record_key",
+            optional_text(self.supersedes_record_key, "supersedes_record_key", 500),
+        )
         validity(self.valid_from, self.valid_until)
+
+    @property
+    def current_evidence(self) -> bool:
+        return (
+            self.active
+            and not self.suppressed
+            and not self.deleted
+            and self.claim_type
+            not in {ProfessionalClaimType.DISPUTE, ProfessionalClaimType.RETRACTION}
+        )
 
     @property
     def permits_transitive_inference(self) -> bool:
