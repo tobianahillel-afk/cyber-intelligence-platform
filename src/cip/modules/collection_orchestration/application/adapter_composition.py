@@ -6,6 +6,7 @@ from dataclasses import dataclass
 from cip.adapters.sources.greenhouse.registry import GreenhouseBoard
 from cip.adapters.sources.lever.registry import LeverSite
 from cip.adapters.sources.organization_identity.registry import OrganizationIdentityTarget
+from cip.adapters.sources.passive_infrastructure.registry import PassiveInfrastructureTarget
 from cip.adapters.sources.public_web.registry import PublicWebTarget
 from cip.adapters.sources.smartrecruiters.registry import SmartRecruitersCompany
 from cip.adapters.sources.vulnerability_catalogs.registry import VulnerabilityQueryTarget
@@ -17,6 +18,9 @@ from cip.modules.collection_orchestration.application.identity_adapters import (
     register_identity_adapters,
 )
 from cip.modules.collection_orchestration.application.lever_adapter import LeverAdapter
+from cip.modules.collection_orchestration.application.passive_infrastructure_registration import (
+    register_passive_infrastructure_adapters,
+)
 from cip.modules.collection_orchestration.application.ports import CollectionAdapter
 from cip.modules.collection_orchestration.application.public_web_adapter import PublicWebAdapter
 from cip.modules.collection_orchestration.application.reference_adapter import (
@@ -46,12 +50,14 @@ class AdapterCompositionInputs:
     public_web_targets: tuple[PublicWebTarget, ...]
     search_templates: tuple[SearchQueryTemplate, ...]
     vulnerability_targets: tuple[VulnerabilityQueryTarget, ...]
+    passive_infrastructure_targets: tuple[PassiveInfrastructureTarget, ...]
 
 
 def build_runtime_adapters(
     inputs: AdapterCompositionInputs,
     *,
     brave_token_provider: Callable[[], str | None],
+    certspotter_token_provider: Callable[[], str | None],
     timeout_seconds: float,
 ) -> dict[tuple[str, str], CollectionAdapter]:
     entries_by_id = {entry.policy.id: entry for entry in inputs.entries}
@@ -82,6 +88,13 @@ def build_runtime_adapters(
         adapters,
         entries_by_id,
         inputs.vulnerability_targets,
+        timeout_seconds=timeout_seconds,
+    )
+    register_passive_infrastructure_adapters(
+        adapters,
+        entries_by_id,
+        inputs.passive_infrastructure_targets,
+        certspotter_token_provider=certspotter_token_provider,
         timeout_seconds=timeout_seconds,
     )
     return adapters

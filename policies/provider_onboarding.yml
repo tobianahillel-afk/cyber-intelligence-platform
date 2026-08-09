@@ -163,6 +163,35 @@ providers:
     automatic_onboarding: true
     blocked_reason: null
 
+  - source_id: cloudflare-doh
+    display_name: Cloudflare 1.1.1.1 DNS-over-HTTPS
+    auth_mode: none
+    documentation_url: https://developers.cloudflare.com/1.1.1.1/encryption/dns-over-https/make-api-requests/
+    signup_url: null
+    console_url: null
+    required_secret_names: []
+    human_actions: []
+    automatic_onboarding: true
+    blocked_reason: null
+
+  - source_id: certspotter-ct
+    display_name: Cert Spotter Certificate Transparency Search API
+    auth_mode: api_key
+    documentation_url: https://sslmate.com/help/reference/ct_search_api_v1
+    signup_url: https://sslmate.com/account
+    console_url: https://sslmate.com/account/api_keys
+    required_secret_names:
+      - api_token
+    human_actions:
+      - open_official_signup
+      - sign_in
+      - accept_provider_terms
+      - retrieve_technical_credentials
+      - register_secret_reference
+      - enable_source_policy
+    automatic_onboarding: false
+    blocked_reason: null
+
   - source_id: linkedin-official-api
     display_name: LinkedIn Official API
     auth_mode: manual

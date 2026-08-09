@@ -1,0 +1,78 @@
+version: 1
+reviewed_at: 2026-08-09
+
+sources:
+  - id: cloudflare-doh
+    name: Cloudflare 1.1.1.1 DNS-over-HTTPS
+    base_url: https://cloudflare-dns.com/dns-query
+    status: enabled
+    source_type: api
+    owner: Cloudflare
+    terms_url: https://developers.cloudflare.com/1.1.1.1/terms-of-use/
+    licence: Cloudflare 1.1.1.1 public resolver terms
+    allowed_data_categories: [technology_observation]
+    prohibited_data_categories: &prohibited
+      - credential
+      - victim_file
+      - private_communication
+      - private_personal_data
+      - restricted_content
+    rate_limit_per_minute: 12
+    retention_days: 365
+    attribution_required: true
+    raw_content_storage: false
+    human_review_required: false
+    authorization:
+      status: approved
+      document_reference: docs/source_activation/SA_03_PROVIDER_AUTHORIZATION.md#cloudflare-dns-over-https
+      reviewed_at: "2026-08-09T22:30:00+00:00"
+      expires_at: null
+      approved_hosts: [cloudflare-dns.com]
+      approved_path_prefixes: [/dns-query]
+      approved_purposes: [passive-infrastructure-intelligence]
+      automated_collection_allowed: true
+      raw_storage_allowed: false
+    economics:
+      commercial_value: medium
+      monthly_cost: 0
+      implementation_cost: low
+      maintenance_cost: low
+      expected_stability: medium
+    notes: >-
+      A and AAAA lookups for explicitly enabled domains only. Returned IP addresses are never
+      contacted by this adapter and remain review-required organization associations.
+
+  - id: certspotter-ct
+    name: Cert Spotter Certificate Transparency Search API
+    base_url: https://api.certspotter.com/v1/issuances
+    status: enabled
+    source_type: api
+    owner: Opsmate, Inc. / SSLMate
+    terms_url: https://sslmate.com/policies/tos
+    licence: SSLMate CT Search API terms; authenticated account required for production
+    allowed_data_categories: [technology_observation]
+    prohibited_data_categories: *prohibited
+    rate_limit_per_minute: 6
+    retention_days: 365
+    attribution_required: true
+    raw_content_storage: false
+    human_review_required: false
+    authorization:
+      status: approved
+      document_reference: docs/source_activation/SA_03_PROVIDER_AUTHORIZATION.md#cert-spotter--sslmate-ct-search-api
+      reviewed_at: "2026-08-09T22:30:00+00:00"
+      expires_at: null
+      approved_hosts: [api.certspotter.com]
+      approved_path_prefixes: [/v1/issuances]
+      approved_purposes: [passive-infrastructure-intelligence]
+      automated_collection_allowed: true
+      raw_storage_allowed: false
+    economics:
+      commercial_value: medium
+      monthly_cost: 0
+      implementation_cost: low
+      maintenance_cost: medium
+      expected_stability: medium
+    notes: >-
+      Production execution requires connected Provider Onboarding with secret reference api_token.
+      Certificate issuance is passive CT metadata and never verifies endpoint deployment or exposure.

@@ -197,14 +197,14 @@ sources:
     display_name: Licensed Passive DNS Metadata
     category: threat_telemetry
     disposition: planned
-    activation_wave: SA-03
+    activation_wave: SA-07
     stages: [catalogued, reviewed, mapped]
 
   - source_id: licensed-certificate-telemetry
     display_name: Licensed Certificate Telemetry
     category: threat_telemetry
     disposition: planned
-    activation_wave: SA-03
+    activation_wave: SA-07
     stages: [catalogued, reviewed, mapped]
 
   - source_id: licensed-malware-metadata
@@ -218,22 +218,38 @@ sources:
     display_name: Licensed Passive Exposure Metadata
     category: passive_exposure
     disposition: planned
-    activation_wave: SA-03
+    activation_wave: SA-07
     stages: [catalogued, reviewed, mapped]
 
   - source_id: licensed-technographic-observations
     display_name: Licensed Passive Technographic Observations
     category: passive_exposure
     disposition: planned
-    activation_wave: SA-03
+    activation_wave: SA-07
     stages: [catalogued, reviewed, mapped]
 
   - source_id: licensed-cloud-asset-observations
     display_name: Licensed Passive Cloud Asset Observations
     category: passive_exposure
     disposition: planned
-    activation_wave: SA-03
+    activation_wave: SA-07
     stages: [catalogued, reviewed, mapped]
+
+  - source_id: cloudflare-doh
+    display_name: Cloudflare 1.1.1.1 DNS-over-HTTPS
+    category: passive_exposure
+    disposition: active
+    activation_wave: SA-03
+    requires_schedule: false
+    stages: [catalogued, reviewed, mapped, adapter_present, authorized, executable]
+
+  - source_id: certspotter-ct
+    display_name: Cert Spotter Certificate Transparency Search API
+    category: passive_exposure
+    disposition: active
+    activation_wave: SA-03
+    requires_schedule: false
+    stages: [catalogued, reviewed, mapped, adapter_present, authorized, executable]
 
   - source_id: official-vendor-psirt
     display_name: Official Vendor PSIRT Advisories

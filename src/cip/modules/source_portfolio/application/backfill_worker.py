@@ -17,6 +17,9 @@ from cip.modules.collection_orchestration.infrastructure.repository_completion i
 )
 from cip.modules.data_governance.domain.retention import RetentionPolicy
 from cip.modules.organizations.infrastructure.persistence import upsert_organizations
+from cip.modules.passive_exposure.infrastructure.projections import (
+    persist_passive_snapshots,
+)
 from cip.modules.procurement_history.infrastructure.projections import (
     persist_procurement_projections,
 )
@@ -129,6 +132,11 @@ def run_backfill_once(
         persist_vulnerability_snapshots(
             session,
             batch.vulnerability_snapshots,
+            now=completed_at,
+        )
+        persist_passive_snapshots(
+            session,
+            batch.passive_exposure_projections,
             now=completed_at,
         )
         record_collection_success(

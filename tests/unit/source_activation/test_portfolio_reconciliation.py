@@ -18,6 +18,7 @@ def test_every_checked_in_source_portfolio_entry_has_activation_record() -> None
         settings.incident_source_portfolio_path,
         settings.threat_telemetry_source_portfolio_path,
         settings.passive_exposure_source_portfolio_path,
+        settings.passive_infrastructure_source_portfolio_path,
         settings.advisory_source_portfolio_path,
         settings.corporate_change_source_portfolio_path,
         settings.relationship_source_portfolio_path,

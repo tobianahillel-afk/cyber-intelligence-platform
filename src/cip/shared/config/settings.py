@@ -35,6 +35,9 @@ class Settings(BaseSettings):
     passive_exposure_source_registry_path: Path = Path(
         "policies/sources.passive_exposure.yml"
     )
+    passive_infrastructure_source_registry_path: Path = Path(
+        "policies/sources.passive_infrastructure.yml"
+    )
     advisory_source_registry_path: Path = Path("policies/sources.advisories.yml")
     corporate_change_source_registry_path: Path = Path(
         "policies/sources.corporate_changes.yml"
@@ -62,6 +65,9 @@ class Settings(BaseSettings):
     passive_exposure_source_portfolio_path: Path = Path(
         "policies/source_portfolio.passive_exposure.yml"
     )
+    passive_infrastructure_source_portfolio_path: Path = Path(
+        "policies/source_portfolio.passive_infrastructure.yml"
+    )
     advisory_source_portfolio_path: Path = Path("policies/source_portfolio.advisories.yml")
     corporate_change_source_portfolio_path: Path = Path(
         "policies/source_portfolio.corporate_changes.yml"
@@ -86,6 +92,9 @@ class Settings(BaseSettings):
     vulnerability_query_target_registry_path: Path = Path(
         "policies/vulnerability_query_targets.yml"
     )
+    passive_infrastructure_target_registry_path: Path = Path(
+        "policies/passive_infrastructure_targets.yml"
+    )
     retention_policy_path: Path = Path("policies/retention.yml")
     collection_schedule_path: Path = Path("policies/collection_schedules.yml")
     decp_collection_schedule_path: Path = Path("policies/collection_schedules.decp.yml")
@@ -97,6 +106,9 @@ class Settings(BaseSettings):
     )
     search_archive_collection_schedule_path: Path = Path(
         "policies/collection_schedules.search_archives.yml"
+    )
+    passive_infrastructure_collection_schedule_path: Path = Path(
+        "policies/collection_schedules.passive_infrastructure.yml"
     )
     control_plane_token: str = Field(
         default="development-control-token",

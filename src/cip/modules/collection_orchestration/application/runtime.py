@@ -15,6 +15,9 @@ from cip.adapters.sources.lever.registry import load_lever_sites
 from cip.adapters.sources.organization_identity.registry import (
     load_organization_identity_targets,
 )
+from cip.adapters.sources.passive_infrastructure.registry import (
+    load_passive_infrastructure_targets,
+)
 from cip.adapters.sources.public_web.registry import load_public_web_targets
 from cip.adapters.sources.smartrecruiters.registry import load_smartrecruiters_companies
 from cip.adapters.sources.vulnerability_catalogs.registry import (
@@ -99,6 +102,11 @@ def build_collection_runtime(settings: Settings) -> CollectionRuntime:
             source_id="brave-search-api",
             secret_name="api_token",
         ),
+        certspotter_token_provider=connected_secret_supplier(
+            factory,
+            source_id="certspotter-ct",
+            secret_name="api_token",
+        ),
         timeout_seconds=settings.source_http_timeout_seconds,
     )
     with session_scope(factory) as session:
@@ -126,6 +134,7 @@ def _load_source_entries(settings: Settings) -> tuple[SourceRegistryEntry, ...]:
         settings.incident_source_registry_path,
         settings.threat_telemetry_source_registry_path,
         settings.passive_exposure_source_registry_path,
+        settings.passive_infrastructure_source_registry_path,
         settings.advisory_source_registry_path,
         settings.corporate_change_source_registry_path,
         settings.relationship_source_registry_path,
@@ -143,6 +152,7 @@ def _load_portfolio(settings: Settings) -> tuple[SourceCatalogEntry, ...]:
         settings.incident_source_portfolio_path,
         settings.threat_telemetry_source_portfolio_path,
         settings.passive_exposure_source_portfolio_path,
+        settings.passive_infrastructure_source_portfolio_path,
         settings.advisory_source_portfolio_path,
         settings.corporate_change_source_portfolio_path,
         settings.relationship_source_portfolio_path,
@@ -171,6 +181,9 @@ def _load_adapter_inputs(
         vulnerability_targets=load_vulnerability_query_targets(
             settings.vulnerability_query_target_registry_path
         ),
+        passive_infrastructure_targets=load_passive_infrastructure_targets(
+            settings.passive_infrastructure_target_registry_path
+        ),
     )
 
 
@@ -181,6 +194,7 @@ def _load_schedules(settings: Settings) -> tuple[SourceSchedule, ...]:
         settings.public_web_collection_schedule_path,
         settings.vulnerability_collection_schedule_path,
         settings.search_archive_collection_schedule_path,
+        settings.passive_infrastructure_collection_schedule_path,
     )
 
 
