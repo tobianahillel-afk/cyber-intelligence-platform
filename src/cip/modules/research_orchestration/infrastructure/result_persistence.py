@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from dataclasses import dataclass
 from datetime import datetime
 from uuid import UUID, uuid4
 
@@ -15,29 +16,39 @@ from cip.modules.research_orchestration.infrastructure.payloads import result_ke
 from cip.shared.kernel.time import require_aware_utc
 
 
+@dataclass(frozen=True, slots=True)
+class ResearchResultCapture:
+    attempt_id: UUID | None
+    result_type: str
+    evidence_reference: str
+    provenance_reference: str
+    source_id: str
+    summary: str | None
+    recorded_by: str
+
+
 def record_research_result(
     session: Session,
     plan_id: UUID,
     step_key: str,
+    capture: ResearchResultCapture,
     *,
-    attempt_id: UUID | None,
-    result_type: str,
-    evidence_reference: str,
-    provenance_reference: str,
-    source_id: str,
-    summary: str | None,
-    recorded_by: str,
     now: datetime,
 ) -> ResearchResultRecord:
     current = require_aware_utc(now, field_name="now")
     step = _step(session, plan_id, step_key)
-    normalized_type = _required(result_type, "result_type", 60)
-    evidence = _required(evidence_reference, "evidence_reference", 500)
-    provenance = _required(provenance_reference, "provenance_reference", 500)
-    normalized_source = _required(source_id, "source_id", 100)
-    actor = _required(recorded_by, "recorded_by", 200)
-    normalized_summary = _optional(summary, "summary", 1000)
-    _validate_attempt(session, attempt_id, plan_id=plan_id, step_id=step.id)
+    normalized_type = _required(capture.result_type, "result_type", 60)
+    evidence = _required(capture.evidence_reference, "evidence_reference", 500)
+    provenance = _required(capture.provenance_reference, "provenance_reference", 500)
+    normalized_source = _required(capture.source_id, "source_id", 100)
+    actor = _required(capture.recorded_by, "recorded_by", 200)
+    normalized_summary = _optional(capture.summary, "summary", 1000)
+    _validate_attempt(
+        session,
+        capture.attempt_id,
+        plan_id=plan_id,
+        step_id=step.id,
+    )
     key = result_key(
         plan_id=plan_id,
         step_key=step.step_key,
@@ -54,7 +65,7 @@ def record_research_result(
         id=uuid4(),
         plan_id=plan_id,
         step_id=step.id,
-        attempt_id=attempt_id,
+        attempt_id=capture.attempt_id,
         result_key=key,
         result_type=normalized_type,
         evidence_reference=evidence,
