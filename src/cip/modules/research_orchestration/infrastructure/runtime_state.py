@@ -6,7 +6,7 @@ from urllib.parse import urlparse
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from cip.modules.conditional_integrations.domain import ApprovalState
+from cip.modules.conditional_integrations.domain import ApprovalState, TermsReviewState
 from cip.modules.conditional_integrations.infrastructure.models import (
     ConditionalProviderApprovalRecord,
     ConditionalProviderRuntimeControlRecord,
@@ -81,7 +81,8 @@ def _automated_runtime(
     authorized = authorized and _onboarding_ready(session, step.source_id)
     authorized = authorized and _conditional_controls_allow(
         session,
-        step.source_id,
+        portfolio,
+        step,
         now=now,
     )
     return ResearchRuntimeState(
@@ -198,28 +199,55 @@ def _onboarding_ready(session: Session, source_id: str) -> bool:
 
 def _conditional_controls_allow(
     session: Session,
-    source_id: str,
+    portfolio: SourcePortfolioRecord | None,
+    step: ResearchStep,
     *,
     now: datetime,
 ) -> bool:
     approval = session.scalar(
         select(ConditionalProviderApprovalRecord).where(
-            ConditionalProviderApprovalRecord.source_id == source_id
+            ConditionalProviderApprovalRecord.source_id == step.source_id
         )
     )
     if approval is None:
         return True
+    if portfolio is None or not _approval_scope_matches(approval, portfolio, step, now=now):
+        return False
+    control = session.scalar(
+        select(ConditionalProviderRuntimeControlRecord).where(
+            ConditionalProviderRuntimeControlRecord.source_id == step.source_id
+        )
+    )
+    return control is None or (not control.paused and not control.kill_switch_active)
+
+
+def _approval_scope_matches(
+    approval: ConditionalProviderApprovalRecord,
+    portfolio: SourcePortfolioRecord,
+    step: ResearchStep,
+    *,
+    now: datetime,
+) -> bool:
     if approval.state != ApprovalState.APPROVED.value:
+        return False
+    if approval.terms_state != TermsReviewState.CURRENT.value:
+        return False
+    if approval.revoked_at is not None:
+        return False
+    review_due = _aware(approval.review_due_at)
+    if review_due is not None and review_due <= now:
         return False
     expires_at = _aware(approval.expires_at)
     if expires_at is not None and expires_at <= now:
         return False
-    control = session.scalar(
-        select(ConditionalProviderRuntimeControlRecord).where(
-            ConditionalProviderRuntimeControlRecord.source_id == source_id
-        )
-    )
-    return control is None or (not control.paused and not control.kill_switch_active)
+    if step.purpose not in approval.approved_purposes:
+        return False
+    if step.data_category.value not in approval.approved_data_categories:
+        return False
+    if not approval.automated_collection_allowed:
+        return False
+    access_method = portfolio.extra_metadata.get("conditional_access_method")
+    return isinstance(access_method, str) and access_method == approval.access_method
 
 
 def _policy(record: SourceRecord) -> SourcePolicy:
