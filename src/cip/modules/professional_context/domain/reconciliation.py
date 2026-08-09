@@ -26,10 +26,17 @@ from cip.modules.professional_context.domain.validation import aware_time
 
 
 class _Revision(Protocol):
-    source_id: str
-    source_record_key: str
-    supersedes_record_key: str | None
-    observed_at: datetime
+    @property
+    def source_id(self) -> str: ...
+
+    @property
+    def source_record_key(self) -> str: ...
+
+    @property
+    def supersedes_record_key(self) -> str | None: ...
+
+    @property
+    def observed_at(self) -> datetime: ...
 
 
 def reconcile_person_references(
