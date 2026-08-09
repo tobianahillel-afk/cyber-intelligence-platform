@@ -41,6 +41,7 @@ from cip.shared.persistence.session import create_database_engine, create_sessio
 
 NOW = datetime(2026, 8, 9, 12, 0, tzinfo=UTC)
 ACTOR = "provider-admin@example.test"
+TARGET_URL = "https://api.linkedin.example.test/organizations/123"
 
 
 def test_dossier_replay_is_idempotent_and_changes_append_revision() -> None:
@@ -220,6 +221,11 @@ def test_pause_and_kill_switch_block_and_are_audited_idempotently() -> None:
     )
     assert allowed.allowed is True
     assert _count(session, ConditionalExecutionDecisionRecord) == 1
+    first_audit = session.scalar(select(ConditionalExecutionDecisionRecord))
+    assert first_audit is not None
+    assert first_audit.target_url == TARGET_URL
+    assert first_audit.store_raw_content is False
+    assert first_audit.source_portfolio_allowed is True
 
     apply_persisted_control_decision(
         session,
@@ -334,6 +340,7 @@ def _request() -> ConditionalExecutionRequest:
         access_method=ConditionalAccessMethod.OFFICIAL_API,
         purpose="professional-context",
         data_category=DataCategory.PROFESSIONAL_CONTACT,
+        target_url=TARGET_URL,
         requested_scopes=frozenset({"organizations.read"}),
         requested_fields=frozenset({"organization", "public_professional_role"}),
         retention_days=180,
@@ -346,6 +353,7 @@ def _ready_dependencies() -> ConditionalRuntimeDependencies:
     return ConditionalRuntimeDependencies(
         onboarding_state=OnboardingState.CONNECTED,
         source_policy_allowed=True,
+        source_portfolio_allowed=True,
         adapter_capability_present=True,
         quota_remaining=100,
         monthly_cost_used=10.0,
