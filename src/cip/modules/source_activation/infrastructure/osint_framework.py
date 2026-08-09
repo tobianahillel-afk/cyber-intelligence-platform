@@ -50,7 +50,7 @@ def _walk(
     for key, child in node.items():
         if key in {"name", "title", "label", "url", "link", "href"}:
             continue
-        if isinstance(child, (dict, list)):
+        if isinstance(child, dict | list):
             _walk(child, child_path, found)
 
 
