@@ -1,7 +1,49 @@
 version: 1
-reviewed_at: 2026-08-06
+reviewed_at: 2026-08-09
 
 sources:
+  - id: phishtank-verified-online
+    name: PhishTank verified online phishing database
+    base_url: https://data.phishtank.com/data/
+    status: enabled
+    source_type: bulk_file
+    owner: PhishTank / OpenDNS
+    terms_url: https://www.phishtank.org/terms.php
+    licence: PhishTank data terms permit commercial and non-commercial use
+    allowed_data_categories: &allowed [technology_observation]
+    prohibited_data_categories: &prohibited
+      - credential
+      - victim_file
+      - private_communication
+      - private_personal_data
+      - restricted_content
+    rate_limit_per_minute: 1
+    retention_days: 365
+    attribution_required: true
+    raw_content_storage: false
+    human_review_required: false
+    authorization:
+      status: approved
+      document_reference: docs/source_activation/SA_04_PROVIDER_AUTHORIZATION.md#phishtank-verified-online-phishing-data
+      reviewed_at: "2026-08-09T23:20:00+00:00"
+      expires_at: null
+      approved_hosts: [data.phishtank.com]
+      approved_path_prefixes: [/data/]
+      approved_purposes: [threat-telemetry]
+      automated_collection_allowed: true
+      raw_storage_allowed: false
+    economics:
+      commercial_value: medium
+      monthly_cost: 0
+      implementation_cost: low
+      maintenance_cost: medium
+      expected_stability: medium
+    notes: >-
+      Automated production retrieval requires a Provider Onboarding application key and a
+      descriptive deployment User-Agent. Only verified-online URL metadata is projected;
+      the phishing URL is never visited and the provider target/brand field never becomes
+      organization-compromise evidence.
+
   - id: licensed-stix-taxii
     name: Licensed STIX and TAXII threat telemetry
     base_url: https://example.invalid/stix-taxii/
@@ -10,13 +52,8 @@ sources:
     owner: Deployment-specific licensed CTI provider
     terms_url: https://example.invalid/terms
     licence: Contract required
-    allowed_data_categories: &allowed [technology_observation]
-    prohibited_data_categories: &prohibited
-      - credential
-      - victim_file
-      - private_communication
-      - private_personal_data
-      - restricted_content
+    allowed_data_categories: *allowed
+    prohibited_data_categories: *prohibited
     rate_limit_per_minute: 10
     retention_days: 1825
     attribution_required: true
