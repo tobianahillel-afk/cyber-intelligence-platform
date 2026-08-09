@@ -95,6 +95,15 @@ from cip.modules.relationship_intelligence.infrastructure.models import (
     RelationshipContextRecord,
     RelationshipEvidenceSnapshotRecord,
 )
+from cip.modules.research_orchestration.infrastructure.models import (
+    ResearchPlanDecisionRecord,
+    ResearchPlanRecord,
+    ResearchPlanRevisionRecord,
+    ResearchResultRecord,
+    ResearchStepAttemptRecord,
+    ResearchStepDecisionRecord,
+    ResearchStepRecord,
+)
 from cip.modules.source_governance.infrastructure.models import SourceRecord
 from cip.modules.source_portfolio.infrastructure.models import (
     AdapterCapabilityRecord,
@@ -200,6 +209,13 @@ _IMPORTED_MODELS = (
     RawObservationRecord,
     RelationshipContextRecord,
     RelationshipEvidenceSnapshotRecord,
+    ResearchPlanDecisionRecord,
+    ResearchPlanRecord,
+    ResearchPlanRevisionRecord,
+    ResearchResultRecord,
+    ResearchStepAttemptRecord,
+    ResearchStepDecisionRecord,
+    ResearchStepRecord,
     SourceHealthRecord,
     SourcePortfolioAuditRecord,
     SourcePortfolioRecord,
