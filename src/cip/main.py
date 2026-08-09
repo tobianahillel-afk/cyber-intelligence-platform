@@ -10,6 +10,7 @@ from cip.modules.opportunities.api.routes import router as opportunities_router
 from cip.modules.organizations.api.routes import router as organizations_router
 from cip.modules.passive_exposure.api.routes import router as passive_exposure_router
 from cip.modules.procurement_history.api.routes import router as procurement_history_router
+from cip.modules.professional_context.api.router import router as professional_context_router
 from cip.modules.provider_onboarding.api.routes import router as provider_onboarding_router
 from cip.modules.public_footprint.api.routes import router as public_footprint_router
 from cip.modules.relationship_intelligence.api.routes import router as relationship_router
@@ -35,7 +36,8 @@ def create_app() -> FastAPI:
             "threat telemetry, passive technographic observations, vendor advisory "
             "applicability, corporate and regulatory change intelligence, temporal "
             "organization relationship intelligence, reversible entity resolution, "
-            "temporal corporate graph context, and evidence-backed opportunity discovery."
+            "temporal corporate graph context, governed professional organization "
+            "context, and evidence-backed opportunity discovery."
         ),
     )
     application.include_router(source_governance_router)
@@ -49,6 +51,7 @@ def create_app() -> FastAPI:
     application.include_router(corporate_changes_router)
     application.include_router(relationship_router)
     application.include_router(corporate_graph_router)
+    application.include_router(professional_context_router)
     application.include_router(threat_telemetry_router)
     application.include_router(passive_exposure_router)
     application.include_router(organizations_router)

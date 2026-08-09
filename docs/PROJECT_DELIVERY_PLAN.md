@@ -69,7 +69,7 @@ A lot is complete only when one final commit passes every applicable backend, fr
 | 18 | News, regulatory, corporate-disclosure, and change signals | `IMPLEMENTED_VALIDATED` |
 | 19 | Providers, customers, partners, and supply-chain relationships | `IMPLEMENTED_VALIDATED` |
 | 20 | Entity resolution and temporal corporate knowledge graph | `IMPLEMENTED_VALIDATED` |
-| 21 | Professional organization maps, contacts, and public community signals | `PLANNED_LOCKED` |
+| 21 | Professional organization maps, contacts, and public community signals | `IMPLEMENTED_VALIDATED` |
 | 22 | Conditional, premium, LinkedIn, Discord, and BrixHub integrations | `PLANNED_LOCKED` |
 | 23 | Analyst research and governed OSINT catalog orchestration | `PLANNED_LOCKED` |
 | 24 | Signal fusion, need hypotheses, and commercial taxonomy | `PLANNED_LOCKED` |
@@ -366,16 +366,16 @@ A lot is complete only when one final commit passes every applicable backend, fr
 
 ## Lot 21 — Professional organization maps, contacts, and public community signals
 
-**Status:** `PLANNED_LOCKED`
+**Status:** `IMPLEMENTED_VALIDATED`
 
-**Primary business outcome:** Identify relevant professional roles, teams, public business contact channels, and consented community context without building private-life profiles or bypassing platform rules.
+**Outcome:** Identify relevant professional roles, teams, public business contact channels, and consented community context without building private-life profiles or bypassing platform rules.
 
 **Dependencies:** Lots 08, 12, 19, and 20 plus privacy controls.
 
 **Deliverables:**
 
 - professional role, team, reporting-line claim, business email pattern, switchboard, contact form, and public professional profile references;
-- relevance to service families and opportunities;
+- relevance to service families for analyst context, kept separate from signals, opportunities, and outreach authorization;
 - source, freshness, confidence, and employment-history transitions;
 - lawful-basis, minimization, suppression, correction, and deletion handling;
 - public community signals only through approved exports, APIs, or administrator-installed integrations;
@@ -729,8 +729,10 @@ A lot is complete only when one final commit passes every applicable backend, fr
 
 ## Current release boundary
 
-Version `0.21.0` implements and validates lots `00–20`. Lot 20 installs a PostgreSQL-backed temporal corporate knowledge graph with immutable node and edge snapshots, exact alias/identifier/domain references, explainable review-only probabilistic candidates, conflict queues, historical `as_of` reads, reversible merge/reject/split/override/restore decisions, and resolution-state-aware blast-radius previews.
+Version `0.22.0` implements and validates lots `00–21`. Lot 21 adds source-aware professional organization context with temporal role/team and direct reporting-line evidence, public business contact channels, authorized public-community metadata, explicit lawful-basis/purpose/retention state, correction and retraction history, protected persisted-data-only APIs, and the Professional Context analyst workspace.
 
-The graph is a metadata projection over already persisted evidence and PostgreSQL remains the source of truth. Shared names, aliases, domains, identifiers, weak/historical/inferred relationship evidence, incident reports, material changes, passive observations, and vulnerability applicability never silently become verified entity identity, exposure, compromise, service need, opportunity, contact target, or outreach authorization merely because they enter the graph.
+Professional context remains a bounded evidence layer. Same display names never create automatic person merges; role claims do not become verified employment; reporting lines are not inferred transitively; public business contacts are not personal contact details; public professional profiles do not authorize platform automation; service relevance does not create a commercial signal, need hypothesis, or opportunity; and contact relevance does not authorize outreach. Valid erasure tombstones raw identifying values while retaining pseudonymous technical lineage and HMAC suppression audit, and ordinary source replay cannot resurrect a deleted subject.
 
-Lot 21 is the next locked implementation lot. It must start from the merged Lot 20 `main` commit and add professional roles, teams, public business contact channels, employment chronology, lawful-basis/minimization/suppression/deletion controls, and consented public community context without private messages, friend graphs, personal addresses, private-life profiling, or unauthorized LinkedIn/Discord automation.
+All newly modeled Lot 21 source families remain non-executable candidates without approved hosts, paths, schedules, or runtime adapters. LinkedIn, Discord, BrixHub, premium providers, and other account- or licence-dependent paths remain disabled unless Lot 22 records a positive provider-specific approval dossier covering exact method, scopes, fields, purpose, retention, licence, security, revocation, quota, and cost.
+
+Lot 22 is the next locked implementation lot and must start from the merged Lot 21 `main` commit.

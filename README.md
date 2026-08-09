@@ -23,7 +23,7 @@ Source breadth is useful only when it improves reliable client discovery. Source
 
 ## Current validated baseline
 
-The current validated release is version `0.21.0`, covering lots `00` through `20`.
+The current validated release is version `0.22.0`, covering lots `00` through `21`.
 
 Implemented and validated capabilities include:
 
@@ -45,7 +45,8 @@ Implemented and validated capabilities include:
 - canonical vendor advisories, affected-version ranges, organization-specific vulnerability applicability, immutable assessment history, protected APIs, and the Vulnerability Applicability workspace;
 - source-aware corporate and regulatory change intelligence with immutable claim history, syndication-aware corroboration, explicit confirmation/report/speculation/dispute/correction/retraction states, separate service mappings, protected APIs, and the Corporate Changes workspace;
 - temporal provider, customer, partner, supplier, reseller, integrator, auditor, insurer, MSSP/MDR, cloud-provider, technology-vendor, and subcontractor relationship intelligence with immutable evidence history, explicit evidence classes, reversible chronology, protected APIs, and the Relationships workspace;
-- temporal entity-resolution and corporate-graph intelligence with immutable node/edge history, exact alias/identifier/domain references, review-only probabilistic candidates, historical queries, reversible analyst decisions, versioned blast-radius previews, protected APIs, and the Graph workspace.
+- temporal entity-resolution and corporate-graph intelligence with immutable node/edge history, exact alias/identifier/domain references, review-only probabilistic candidates, historical queries, reversible analyst decisions, versioned blast-radius previews, protected APIs, and the Graph workspace;
+- governed professional-context intelligence with source-qualified people references, temporal roles and direct reporting lines, public business contact channels, consented community metadata, lawful-basis and retention controls, HMAC-backed erasure, protected APIs, and the Professional Context workspace.
 
 Lot `12` remains under an explicit activation boundary: merging the software does not authorize collection against a real organization. The checked-in public-web example is disabled, unauthorized, unscheduled, and non-executable. Search and archive providers remain disconnected until separately approved.
 
@@ -65,7 +66,9 @@ Lot `19` provides temporal, directed, evidence-backed organization relationships
 
 Lot `20` provides a PostgreSQL-backed temporal corporate knowledge graph over previously persisted evidence. It preserves source lineage, evidence class, chronology, suppression and correction state; treats shared names, aliases, domains and identifiers as conflicts rather than automatic merges; separates deterministic exact resolution from review-only probabilistic candidates; and makes merge, reject, split, override and restore decisions append-only and reversible through versioned blast-radius previews. Graph membership is not an evidence upgrade, verified exposure, compromise, service need, opportunity, contact target, or outreach authorization.
 
-The next planned implementation lot is `21`: professional organization maps, contacts, and public community signals.
+Lot `21` provides source-aware professional organization context without building private-life profiles. It preserves source-qualified person references, temporal role/team and direct reporting-line claims, public business contact channels, authorized public-community metadata, lawful-basis and retention state, correction history, and HMAC-backed erasure. Same names are not automatic person merges, a professional role claim is not verified employment, a public profile is not platform-automation authorization, service relevance is not a need or opportunity, and contact relevance is not outreach authorization.
+
+The next planned implementation lot is `22`: conditional, premium, LinkedIn, Discord, and BrixHub integrations.
 
 ## Implemented and modeled source portfolio
 
@@ -117,9 +120,15 @@ Selected relationship schemas and deterministic mappings are implemented for:
 - bounded public case-study metadata;
 - public certificate relationship metadata.
 
-Every newly modeled passive, advisory, corporate-change, or relationship candidate is `draft`, has missing authorization, has no approved hosts or paths, has no schedule or registered runtime adapter, and is marked `executable: false`. Active probing, authentication, access-control bypass, direct exposure validation, autonomous opportunities, and outreach are explicitly forbidden. Vulnerability applicability operates only on stored evidence from both organization-specific technology observations and advisory affected-range evidence.
+Selected professional-context candidate contracts are implemented for:
 
-OSINT Framework entries remain non-executable catalog candidates. LinkedIn, Discord, BrixHub, browser automation, premium providers, search APIs, archive providers, and every unapproved vulnerability, incident, telemetry, passive-observation, advisory, or corporate-change provider remain disabled unless their exact method, fields, purpose, authorization, retention, licence, and security controls are approved.
+- organization-published team and business-contact metadata;
+- licensed or explicitly authorized professional-directory metadata;
+- approved community exports or APIs with an explicit authorization reference.
+
+Every newly modeled passive, advisory, corporate-change, relationship, or professional-context candidate is `draft`, has missing authorization, has no approved hosts or paths, has no schedule or registered runtime adapter, and is marked `executable: false`. Active probing, authentication, access-control bypass, direct exposure validation, autonomous opportunities, and outreach are explicitly forbidden. Vulnerability applicability operates only on stored evidence from both organization-specific technology observations and advisory affected-range evidence.
+
+OSINT Framework entries remain non-executable catalog candidates. LinkedIn, Discord, BrixHub, browser automation, premium providers, search APIs, archive providers, and every unapproved vulnerability, incident, telemetry, passive-observation, advisory, corporate-change, relationship, or professional-context provider remain disabled unless their exact method, fields, purpose, authorization, retention, licence, and security controls are approved.
 
 ## Evidence flow
 
@@ -259,6 +268,27 @@ resolution decision
   != opportunity or authorization to contact
 ```
 
+Professional context remains a bounded, source-aware evidence layer:
+
+```text
+approved professional source evidence
+  -> source-qualified person reference
+  -> temporal role / team / direct reporting-line claim
+  -> public business contact or authorized community metadata
+  -> analyst professional-context workspace
+
+same display name
+  != same person
+role claim
+  != verified employment
+public profile
+  != authorization to automate the platform
+service relevance
+  != need hypothesis or opportunity
+contact relevance
+  != outreach authorization
+```
+
 Provider payloads remain inside adapter packages. Adapters never write directly to company, score, alert, or opportunity projections.
 
 ## Product access model
@@ -269,7 +299,7 @@ Collection is centralized and uses approved public feeds, official APIs, open-da
 
 The product is database-first. Normal page views read stored and indexed evidence; they do not crawl sources on demand. Schedulers refresh sources according to freshness, value, cost, quota, authorization, and change frequency. Stale data remains visible with an explicit freshness state.
 
-The `/research`, `/vulnerabilities`, `/incidents`, `/threat-intelligence`, `/passive-exposure`, `/vulnerability-applicability`, `/corporate-changes`, `/relationships`, and `/graph` workspaces and their APIs search persisted data only. They never launch external collection from an analyst page view.
+The `/research`, `/vulnerabilities`, `/incidents`, `/threat-intelligence`, `/passive-exposure`, `/vulnerability-applicability`, `/corporate-changes`, `/relationships`, `/graph`, and `/professional-context` workspaces and their APIs search persisted data only. They never launch external collection from an analyst page view.
 
 ## Architecture
 
@@ -285,9 +315,9 @@ Canonical layers are:
 1. source catalog and authorization;
 2. provider onboarding and adapter capabilities;
 3. collection runs and immutable source records;
-4. evidence, observations, public claims, vulnerability snapshots, incident claims, telemetry snapshots, passive observation snapshots, advisory revisions, corporate-change claim revisions, relationship evidence snapshots, and immutable corporate-graph snapshots;
-5. resolved organizations, incidents, vulnerabilities, indicators, passive assets, technologies, products, providers, material changes, business relationships, roles, temporal relationships, and reversible entity-resolution bindings;
-6. vulnerability applicability, service mappings, commercial signals, and need hypotheses;
+4. evidence, observations, public claims, vulnerability snapshots, incident claims, telemetry snapshots, passive observation snapshots, advisory revisions, corporate-change claim revisions, relationship evidence snapshots, immutable corporate-graph snapshots, and professional-context evidence snapshots;
+5. resolved organizations, incidents, vulnerabilities, indicators, passive assets, technologies, products, providers, material changes, business relationships, roles, temporal relationships, professional people references, and reversible entity-resolution bindings;
+6. vulnerability applicability, service mappings, professional service relevance, commercial signals, and need hypotheses;
 7. scores, alerts, opportunities, tasks, and analyst decisions.
 
 Dependencies point inward:
@@ -306,9 +336,9 @@ Domain modules cannot depend on FastAPI, SQLAlchemy models, adapters, API packag
 
 [`docs/PROJECT_DELIVERY_PLAN.md`](docs/PROJECT_DELIVERY_PLAN.md) is authoritative.
 
-- lots `00–20`: implemented and validated foundations, procurement, hiring, identity, onboarding, source runtime, contracts, public footprint, vulnerability knowledge, public incident intelligence, defensive telemetry, passive technographic evidence, vendor advisories, vulnerability applicability, corporate/regulatory change intelligence, temporal relationship intelligence, entity resolution, and the temporal corporate knowledge graph;
-- lot `21`: professional organization maps, contacts, and public community signals;
-- lots `21–23`: professional context, conditional sources, and governed research orchestration;
+- lots `00–21`: implemented and validated foundations, procurement, hiring, identity, onboarding, source runtime, contracts, public footprint, vulnerability knowledge, public incident intelligence, defensive telemetry, passive technographic evidence, vendor advisories, vulnerability applicability, corporate/regulatory change intelligence, temporal relationship intelligence, entity resolution, the temporal corporate knowledge graph, and governed professional context;
+- lot `22`: conditional, premium, LinkedIn, Discord, and BrixHub integrations;
+- lots `22–23`: conditional sources and governed research orchestration;
 - lots `24–27`: signal fusion, need hypotheses, calibrated scoring, native commercial operations, and Company 360;
 - lots `28–32`: data quality, release security, resilience, optional isolated browser runtime, and controlled production pilot.
 
@@ -341,7 +371,8 @@ Executable rules include:
 - vulnerability applicability cannot import network clients, collection adapters, opportunity modules, or contact/outreach modules;
 - corporate change intelligence cannot import network clients, collection adapters, opportunity modules, contacts, or outreach modules;
 - relationship intelligence cannot import network clients, collection adapters, or opportunity modules;
-- corporate graph cannot import network clients, source adapters, browser automation, `neo4j`, or `networkx`, and its domain cannot depend on FastAPI, SQLAlchemy, infrastructure implementations, or opportunity modules.
+- corporate graph cannot import network clients, source adapters, browser automation, `neo4j`, or `networkx`, and its domain cannot depend on FastAPI, SQLAlchemy, infrastructure implementations, or opportunity modules;
+- professional context cannot import network clients, browser or platform automation, collection orchestration, opportunity, or outreach modules, and its domain cannot depend on FastAPI, SQLAlchemy, or infrastructure implementations.
 
 ## Source and data safety
 
@@ -367,7 +398,9 @@ The platform does not:
 - treat a marketing claim as contract evidence or an active incumbent;
 - treat a historical or inferred organization relationship as a verified current relationship;
 - treat shared names, aliases, domains, or identifiers as automatic entity merges;
-- treat graph membership or a resolution candidate as an upgrade in evidence strength.
+- treat graph membership or a resolution candidate as an upgrade in evidence strength;
+- treat a public professional profile as authorization to automate that platform;
+- turn professional role or contact relevance directly into a need, opportunity, or outreach authorization.
 
 LinkedIn collection remains disabled unless official API scopes, a licensed product, or reviewed written authorization covers the exact method and purpose. Discord collection requires an administrator-installed connector, authorized export, or equivalent consented integration. BrixHub remains quarantined.
 
@@ -458,4 +491,6 @@ npm run build
 - [`docs/lots/LOT_19_VALIDATION_REPORT.md`](docs/lots/LOT_19_VALIDATION_REPORT.md)
 - [`docs/lots/LOT_20_ENTITY_RESOLUTION_CORPORATE_GRAPH.md`](docs/lots/LOT_20_ENTITY_RESOLUTION_CORPORATE_GRAPH.md)
 - [`docs/lots/LOT_20_VALIDATION_REPORT.md`](docs/lots/LOT_20_VALIDATION_REPORT.md)
+- [`docs/lots/LOT_21_PROFESSIONAL_CONTEXT.md`](docs/lots/LOT_21_PROFESSIONAL_CONTEXT.md)
+- [`docs/lots/LOT_21_VALIDATION_REPORT.md`](docs/lots/LOT_21_VALIDATION_REPORT.md)
 - [`SECURITY.md`](SECURITY.md)

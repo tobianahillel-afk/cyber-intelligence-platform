@@ -137,6 +137,18 @@ def test_database_metadata_contains_foundation_tables() -> None:
         "procurement_procedures",
         "procurement_publications",
         "procurement_service_classifications",
+        "professional_community_contexts",
+        "professional_community_snapshots",
+        "professional_contact_snapshots",
+        "professional_contacts",
+        "professional_deletion_audit",
+        "professional_people",
+        "professional_person_snapshots",
+        "professional_reporting_lines",
+        "professional_reporting_snapshots",
+        "professional_role_snapshots",
+        "professional_roles",
+        "professional_service_relevance",
         "provider_onboarding",
         "provider_onboarding_audit",
         "public_claims",
@@ -175,49 +187,64 @@ def test_metadata_creates_on_sqlite() -> None:
 
     get_metadata().create_all(engine)
 
-    assert get_metadata().tables["raw_observations"].foreign_keys
-    assert get_metadata().tables["collection_jobs"].foreign_keys
-    assert get_metadata().tables["opportunities"].foreign_keys
-    assert get_metadata().tables["commercial_signals"].foreign_keys
-    assert get_metadata().tables["organization_identities"].foreign_keys
-    assert get_metadata().tables["organization_identity_claims"].foreign_keys
-    assert get_metadata().tables["provider_onboarding"].foreign_keys
-    assert get_metadata().tables["provider_onboarding_audit"].foreign_keys
-    assert get_metadata().tables["source_health"].foreign_keys
-    assert get_metadata().tables["backfill_partitions"].foreign_keys
-    assert get_metadata().tables["source_value_events"].foreign_keys
-    assert get_metadata().tables["procurement_publications"].foreign_keys
-    assert get_metadata().tables["procurement_contracts"].foreign_keys
-    assert get_metadata().tables["procurement_contract_parties"].foreign_keys
-    assert get_metadata().tables["public_resources"].foreign_keys
-    assert get_metadata().tables["public_resource_versions"].foreign_keys
-    assert get_metadata().tables["public_claims"].foreign_keys
-    assert get_metadata().tables["vulnerability_aliases"].foreign_keys
-    assert get_metadata().tables["vulnerability_source_snapshots"].foreign_keys
-    assert get_metadata().tables["vulnerability_scores"].foreign_keys
-    assert get_metadata().tables["incidents"].foreign_keys
-    assert get_metadata().tables["incident_claim_snapshots"].foreign_keys
-    assert get_metadata().tables["threat_indicator_snapshots"].foreign_keys
-    assert get_metadata().tables["threat_indicator_relations"].foreign_keys
-    assert get_metadata().tables["passive_assets"].foreign_keys
-    assert get_metadata().tables["passive_observation_snapshots"].foreign_keys
-    assert get_metadata().tables["passive_technologies"].foreign_keys
-    assert get_metadata().tables["vendor_advisory_ranges"].foreign_keys
-    assert get_metadata().tables["applicability_assessment_snapshots"].foreign_keys
-    assert get_metadata().tables["vulnerability_applicability_assessments"].foreign_keys
-    assert get_metadata().tables["corporate_change_events"].foreign_keys
-    assert get_metadata().tables["corporate_change_claim_snapshots"].foreign_keys
-    assert get_metadata().tables["corporate_change_service_mappings"].foreign_keys
-    assert get_metadata().tables["business_relationships"].foreign_keys
-    assert get_metadata().tables["relationship_evidence_snapshots"].foreign_keys
-    assert get_metadata().tables["relationship_contexts"].foreign_keys
-    assert get_metadata().tables["corporate_graph_nodes"].foreign_keys
-    assert get_metadata().tables["corporate_graph_node_snapshots"].foreign_keys
-    assert get_metadata().tables["corporate_graph_edges"].foreign_keys
-    assert get_metadata().tables["corporate_graph_edge_snapshots"].foreign_keys
-    assert get_metadata().tables["entity_resolution_candidates"].foreign_keys
-    assert get_metadata().tables["entity_resolution_decisions"].foreign_keys
-    assert get_metadata().tables["entity_resolution_bindings"].foreign_keys
+    foreign_key_tables = (
+        "raw_observations",
+        "collection_jobs",
+        "opportunities",
+        "commercial_signals",
+        "organization_identities",
+        "organization_identity_claims",
+        "provider_onboarding",
+        "provider_onboarding_audit",
+        "source_health",
+        "backfill_partitions",
+        "source_value_events",
+        "procurement_publications",
+        "procurement_contracts",
+        "procurement_contract_parties",
+        "public_resources",
+        "public_resource_versions",
+        "public_claims",
+        "vulnerability_aliases",
+        "vulnerability_source_snapshots",
+        "vulnerability_scores",
+        "incidents",
+        "incident_claim_snapshots",
+        "threat_indicator_snapshots",
+        "threat_indicator_relations",
+        "passive_assets",
+        "passive_observation_snapshots",
+        "passive_technologies",
+        "vendor_advisory_ranges",
+        "applicability_assessment_snapshots",
+        "vulnerability_applicability_assessments",
+        "corporate_change_events",
+        "corporate_change_claim_snapshots",
+        "corporate_change_service_mappings",
+        "business_relationships",
+        "relationship_evidence_snapshots",
+        "relationship_contexts",
+        "corporate_graph_nodes",
+        "corporate_graph_node_snapshots",
+        "corporate_graph_edges",
+        "corporate_graph_edge_snapshots",
+        "entity_resolution_candidates",
+        "entity_resolution_decisions",
+        "entity_resolution_bindings",
+        "professional_person_snapshots",
+        "professional_roles",
+        "professional_role_snapshots",
+        "professional_reporting_lines",
+        "professional_reporting_snapshots",
+        "professional_contacts",
+        "professional_contact_snapshots",
+        "professional_community_contexts",
+        "professional_community_snapshots",
+        "professional_service_relevance",
+        "professional_deletion_audit",
+    )
+    for table_name in foreign_key_tables:
+        assert get_metadata().tables[table_name].foreign_keys
 
 
 def test_database_url_is_required() -> None:
