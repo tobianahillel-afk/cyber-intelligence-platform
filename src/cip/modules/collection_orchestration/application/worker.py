@@ -33,6 +33,9 @@ from cip.modules.organizations.infrastructure.identity_persistence import (
     persist_identity_projections,
 )
 from cip.modules.organizations.infrastructure.persistence import upsert_organizations
+from cip.modules.passive_exposure.infrastructure.projections import (
+    persist_passive_observations,
+)
 from cip.modules.procurement_history.infrastructure.projections import (
     persist_procurement_projections,
 )
@@ -189,6 +192,11 @@ def _complete_success(
         persist_vulnerability_snapshots(
             session,
             batch.vulnerability_snapshots,
+            now=now,
+        )
+        persist_passive_observations(
+            session,
+            batch.passive_exposure_projections,
             now=now,
         )
         _record_success_health(
