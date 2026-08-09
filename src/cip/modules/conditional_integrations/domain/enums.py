@@ -36,6 +36,13 @@ class TermsReviewState(StrEnum):
     REVIEW_REQUIRED = "review_required"
 
 
+class ProviderControlAction(StrEnum):
+    PAUSE = "pause"
+    RESUME = "resume"
+    ACTIVATE_KILL_SWITCH = "activate_kill_switch"
+    CLEAR_KILL_SWITCH = "clear_kill_switch"
+
+
 class ConditionalBlockReason(StrEnum):
     ALLOWED = "allowed"
     DOSSIER_NOT_APPROVED = "dossier_not_approved"
