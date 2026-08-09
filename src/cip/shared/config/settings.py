@@ -74,6 +74,7 @@ class Settings(BaseSettings):
     conditional_integration_source_portfolio_path: Path = Path(
         "policies/source_portfolio.conditional_integrations.yml"
     )
+    source_activation_path: Path = Path("policies/source_activation.yml")
     greenhouse_board_registry_path: Path = Path("policies/greenhouse_boards.yml")
     lever_site_registry_path: Path = Path("policies/lever_sites.yml")
     smartrecruiters_company_registry_path: Path = Path(
