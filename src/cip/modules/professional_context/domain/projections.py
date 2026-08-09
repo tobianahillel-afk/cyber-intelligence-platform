@@ -8,6 +8,7 @@ from cip.modules.professional_context.domain.enums import (
     CommunityAcquisitionMode,
     ContactChannelType,
     EmploymentState,
+    LawfulBasis,
     ProfessionalReviewState,
 )
 
@@ -19,6 +20,9 @@ class ProfessionalPersonProjection:
     source_id: str
     confidence: float
     review_state: ProfessionalReviewState
+    lawful_basis: LawfulBasis
+    lawful_basis_reference: str
+    purpose: str
     current: bool
     suppressed: bool
     deleted: bool
@@ -37,6 +41,11 @@ class ProfessionalRoleProjection:
     employment_state: EmploymentState
     confidence: float
     review_state: ProfessionalReviewState
+    lawful_basis: LawfulBasis
+    lawful_basis_reference: str
+    purpose: str
+    suppressed: bool
+    deleted: bool
     evidence_count: int
     first_observed_at: datetime
     last_observed_at: datetime
@@ -51,7 +60,12 @@ class ReportingLineProjection:
     organization_id: UUID | None
     confidence: float
     review_state: ProfessionalReviewState
+    lawful_basis: LawfulBasis
+    lawful_basis_reference: str
+    purpose: str
     current: bool
+    suppressed: bool
+    deleted: bool
     first_observed_at: datetime
     last_observed_at: datetime
     retention_until: datetime
@@ -66,6 +80,9 @@ class ProfessionalContactProjection:
     person_key: str | None
     confidence: float
     review_state: ProfessionalReviewState
+    lawful_basis: LawfulBasis
+    lawful_basis_reference: str
+    purpose: str
     current: bool
     suppressed: bool
     deleted: bool
@@ -84,6 +101,11 @@ class PublicCommunityProjection:
     person_key: str | None
     confidence: float
     review_state: ProfessionalReviewState
+    lawful_basis: LawfulBasis
+    lawful_basis_reference: str
+    purpose: str
     current: bool
+    suppressed: bool
+    deleted: bool
     last_observed_at: datetime
     retention_until: datetime
