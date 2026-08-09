@@ -37,7 +37,7 @@ SOURCE_RECORD_KEY = "provider-record-42"
 def test_source_record_provenance_must_match_existing_evidence() -> None:
     session = _session_with_evidence()
 
-    evidence = validate_research_result_capture(
+    evidence = _validate(
         session,
         _capture(provenance_reference=f"source-record:{SOURCE_RECORD_KEY}"),
     )
@@ -50,7 +50,7 @@ def test_raw_observation_provenance_must_match_source_and_record() -> None:
     session.add(_observation())
     session.flush()
 
-    evidence = validate_research_result_capture(
+    evidence = _validate(
         session,
         _capture(provenance_reference=f"raw-observation:{OBSERVATION_ID}"),
     )
@@ -62,34 +62,42 @@ def test_missing_or_arbitrary_references_fail_closed() -> None:
     session = _session_with_evidence()
 
     with pytest.raises(ValueError, match="evidence:<uuid>"):
-        validate_research_result_capture(
-            session,
-            _capture(evidence_reference="public-resource:42"),
-        )
+        _validate(session, _capture(evidence_reference="public-resource:42"))
     with pytest.raises(LookupError, match="evidence reference not found"):
-        validate_research_result_capture(
+        _validate(
             session,
             _capture(
                 evidence_reference="evidence:ffffffff-ffff-4fff-8fff-fffffffffff9"
             ),
         )
     with pytest.raises(ValueError, match="unsupported provenance"):
-        validate_research_result_capture(
+        _validate(
             session,
             _capture(provenance_reference="arbitrary:reference"),
         )
 
 
-def test_source_mismatch_and_provenance_mismatch_are_rejected() -> None:
+def test_step_source_capture_source_and_evidence_source_must_match() -> None:
     session = _session_with_evidence()
 
-    with pytest.raises(ValueError, match="evidence source"):
-        validate_research_result_capture(
+    with pytest.raises(ValueError, match="capture source does not match step source"):
+        _validate(
             session,
             _capture(source_id="different-source"),
         )
+    with pytest.raises(ValueError, match="capture source does not match step source"):
+        _validate(
+            session,
+            _capture(),
+            expected_source_id="different-step-source",
+        )
+
+
+def test_provenance_mismatch_is_rejected() -> None:
+    session = _session_with_evidence()
+
     with pytest.raises(ValueError, match="source-record provenance"):
-        validate_research_result_capture(
+        _validate(
             session,
             _capture(provenance_reference="source-record:different-record"),
         )
@@ -101,10 +109,23 @@ def test_raw_observation_with_different_record_is_rejected() -> None:
     session.flush()
 
     with pytest.raises(ValueError, match="source record"):
-        validate_research_result_capture(
+        _validate(
             session,
             _capture(provenance_reference=f"raw-observation:{OBSERVATION_ID}"),
         )
+
+
+def _validate(
+    session: Session,
+    capture: ResearchResultCapture,
+    *,
+    expected_source_id: str = SOURCE_ID,
+) -> EvidenceRecord:
+    return validate_research_result_capture(
+        session,
+        capture,
+        expected_source_id=expected_source_id,
+    )
 
 
 def _session() -> Session:
