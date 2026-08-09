@@ -124,6 +124,7 @@ class ConditionalRuntimeDependencies:
     onboarding_state: OnboardingState
     source_policy_allowed: bool
     adapter_capability_present: bool
+    provider_paused: bool = False
     kill_switch_active: bool = False
     quota_remaining: int | None = None
     monthly_cost_used: float = 0.0
