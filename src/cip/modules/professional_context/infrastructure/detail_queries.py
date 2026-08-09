@@ -12,6 +12,7 @@ from cip.modules.professional_context.application.view_models import (
     ProfessionalContactView,
     ProfessionalEvidenceView,
     ProfessionalPersonDetail,
+    ProfessionalPersonFilters,
     ProfessionalRoleView,
     ReportingLineView,
     ServiceRelevanceView,
@@ -38,7 +39,13 @@ from cip.modules.professional_context.infrastructure.role_models import (
     ProfessionalRoleRecord,
     ProfessionalRoleSnapshotRecord,
 )
-from cip.modules.professional_context.application.view_models import ProfessionalPersonFilters
+
+ClaimEvidenceRow = (
+    ProfessionalRoleSnapshotRecord
+    | ProfessionalContactSnapshotRecord
+    | ProfessionalCommunitySnapshotRecord
+    | ProfessionalReportingSnapshotRecord
+)
 
 
 class ProfessionalPersonNotFoundError(LookupError):
@@ -283,7 +290,7 @@ def _person_evidence(row: ProfessionalPersonSnapshotRecord) -> ProfessionalEvide
     )
 
 
-def _claim_evidence(row, label: str) -> ProfessionalEvidenceView:
+def _claim_evidence(row: ClaimEvidenceRow, label: str) -> ProfessionalEvidenceView:
     return ProfessionalEvidenceView(
         evidence_type=label,
         source_id=row.source_id,
