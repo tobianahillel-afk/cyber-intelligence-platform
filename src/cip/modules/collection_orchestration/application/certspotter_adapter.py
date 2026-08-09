@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from collections.abc import Callable, Mapping
 from datetime import datetime
-from hashlib import sha256
 from uuid import UUID
 
 import httpx
@@ -20,18 +19,16 @@ from cip.modules.collection_orchestration.application.ports import (
     AdapterCollectionBatch,
     AdapterExecutionError,
 )
-from cip.modules.passive_exposure.domain.asset_models import AssetRef, PassiveAsset
-from cip.modules.passive_exposure.domain.enums import (
-    AssetState,
-    AssetType,
+from cip.modules.passive_exposure.domain.models import (
     AttributionRisk,
+    OrganizationLink,
+    OrganizationLinkMethod,
     OrganizationLinkStatus,
-    PassiveObservationType,
-)
-from cip.modules.passive_exposure.domain.models import PassiveObservationSnapshot
-from cip.modules.passive_exposure.domain.observation_models import (
-    OrganizationAssetLink,
-    PassiveObservation,
+    PassiveAsset,
+    PassiveAssetKind,
+    PassiveObservationKind,
+    PassiveObservationSnapshot,
+    PassiveObservationState,
 )
 from cip.modules.source_governance.domain.models import DataCategory
 from cip.modules.source_governance.infrastructure.registry import SourceRegistryEntry
@@ -110,6 +107,11 @@ class CertSpotterAdapter:
                 error_code="source_schema_drift",
                 retryable=False,
             ) from exc
+        certificates = tuple(
+            certificate
+            for certificate in certificates
+            if _matches_target(certificate, target.domain)
+        )
         context = PassiveObservationContext(
             source_id=self.source_id,
             adapter_id=self.adapter_id,
@@ -125,20 +127,25 @@ class CertSpotterAdapter:
                 source_url=target_url,
                 source_record_key=certificate.id,
                 source_record_type="certspotter-issuance",
-                observed_at=_certificate_time(certificate, collected_at),
-                published_at=_certificate_time(certificate, collected_at),
+                observed_at=_observed_at(certificate, collected_at),
+                published_at=collected_at,
             )
             for certificate in certificates
         )
         projections = tuple(
-            _map_certificate(certificate, target=target, collected_at=collected_at)
+            _map_certificate(
+                certificate,
+                target=target,
+                source_url=target_url,
+                collected_at=collected_at,
+            )
             for certificate in certificates
         )
         return AdapterCollectionBatch(
             observations=observations,
             passive_exposure_projections=projections,
             checkpoint_payload={"target_index": next_index},
-            not_modified=not certificates,
+            not_modified=not projections,
         )
 
 
@@ -146,76 +153,70 @@ def _map_certificate(
     certificate: CertSpotterCertificate,
     *,
     target: PassiveInfrastructureTarget,
+    source_url: str,
     collected_at: datetime,
 ) -> PassiveObservationSnapshot:
-    fingerprint = certificate.tbs_sha256.casefold()
-    asset_ref = AssetRef.from_value(AssetType.CERTIFICATE, fingerprint)
-    observed_at = _certificate_time(certificate, collected_at)
-    revision_key = sha256(certificate.model_dump_json().encode("utf-8")).hexdigest()
-    asset = PassiveAsset(
-        ref=asset_ref,
-        first_seen_at=observed_at,
-        last_seen_at=collected_at,
-        expires_at=certificate.not_after,
-        state=AssetState.OBSERVED,
-    )
-    link = OrganizationAssetLink(
-        id=_stable_uuid(f"certspotter-link:{target.target_id}:{fingerprint}"),
-        organization_id=target.organization_id,
-        asset=asset_ref,
-        status=OrganizationLinkStatus.REVIEW_REQUIRED,
-        confidence=0.7,
-        risks=(AttributionRisk.UNVERIFIED_OWNERSHIP,),
-        valid_from=observed_at,
-        valid_to=certificate.not_after,
-        reason="certificate issuance can cover shared or third-party managed infrastructure",
-        provenance_refs=(f"target:{target.target_id}", f"certificate:{certificate.id}"),
-    )
-    observation = PassiveObservation(
-        id=_stable_uuid(f"certspotter-observation:{certificate.id}:{revision_key}"),
-        provider=CertSpotterAdapter.source_id,
-        source_record_key=certificate.id,
-        source_revision_key=revision_key,
-        observation_type=PassiveObservationType.CERTIFICATE_TRANSPARENCY,
-        subject_asset=asset_ref,
-        observed_at=observed_at,
-        valid_from=observed_at,
-        valid_to=certificate.not_after,
-        confidence=0.8,
-        collection_method="certificate_transparency_search_api",
-        hostname_value=target.domain,
-        service_name=None,
-        port=None,
-        certificate_fingerprint=fingerprint,
-        technology_observation_id=None,
-        active_validation=False,
-        credential_use=False,
-        authenticated_access=False,
-        direct_connection_to_asset=False,
-        exploitation_attempted=False,
+    observed_at = _observed_at(certificate, collected_at)
+    expires_at = _optional_utc(certificate.not_after, "not_after")
+    active = expires_at is None or expires_at >= collected_at
+    state = (
+        PassiveObservationState.CURRENT
+        if active
+        else PassiveObservationState.EXPIRED
     )
     return PassiveObservationSnapshot(
-        provider=CertSpotterAdapter.source_id,
+        source_id=CertSpotterAdapter.source_id,
         source_record_key=certificate.id,
-        source_revision_key=revision_key,
-        asset=asset,
-        organization_link=link,
-        observation=observation,
+        source_url=source_url,
+        asset=PassiveAsset(
+            kind=PassiveAssetKind.CERTIFICATE,
+            value=certificate.tbs_sha256,
+        ),
+        observation_kind=PassiveObservationKind.CERTIFICATE,
+        state=state,
+        observed_at=observed_at,
+        published_at=collected_at,
+        modified_at=collected_at,
+        expires_at=expires_at,
+        confidence=0.8,
+        independence_key=f"certspotter-ct:{target.domain}",
+        organization_link=OrganizationLink(
+            status=OrganizationLinkStatus.REVIEW_REQUIRED,
+            method=OrganizationLinkMethod.PASSIVE_CORRELATION,
+            confidence=0.7,
+            organization_id=target.organization_id,
+            reasons=(
+                "certificate issuance can cover shared or third-party managed infrastructure",
+            ),
+            attribution_risks=(AttributionRisk.SHARED_HOSTING,),
+        ),
+        active=active,
     )
 
 
-def _certificate_time(
+def _matches_target(certificate: CertSpotterCertificate, target_domain: str) -> bool:
+    suffix = f".{target_domain}"
+    return any(
+        name.casefold() == target_domain or name.casefold().endswith(suffix)
+        for name in certificate.dns_names
+    )
+
+
+def _observed_at(
     certificate: CertSpotterCertificate,
-    fallback: datetime,
+    collected_at: datetime,
 ) -> datetime:
+    collected = require_aware_utc(collected_at, field_name="collected_at")
     if certificate.not_before is None:
-        return fallback
-    return require_aware_utc(certificate.not_before, field_name="not_before")
+        return collected
+    not_before = require_aware_utc(certificate.not_before, field_name="not_before")
+    return min(not_before, collected)
 
 
-def _stable_uuid(value: str) -> UUID:
-    digest = sha256(value.encode("utf-8")).hexdigest()
-    return UUID(digest[:32])
+def _optional_utc(value: datetime | None, field_name: str) -> datetime | None:
+    if value is None:
+        return None
+    return require_aware_utc(value, field_name=field_name)
 
 
 def _next_target(
