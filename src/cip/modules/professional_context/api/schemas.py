@@ -237,7 +237,9 @@ class OrganizationProfessionalMapResponse(BaseModel):
         return cls(
             organization_id=item.organization_id,
             people=[ProfessionalPersonResponse.from_domain(value) for value in item.people],
-            reporting_lines=[ReportingLineResponse.from_domain(value) for value in item.reporting_lines],
+            reporting_lines=[
+                ReportingLineResponse.from_domain(value) for value in item.reporting_lines
+            ],
             organization_contacts=[
                 ProfessionalContactResponse.from_domain(value)
                 for value in item.organization_contacts
