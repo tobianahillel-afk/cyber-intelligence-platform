@@ -250,20 +250,31 @@ def _evidence_history(
     person_key: str,
 ) -> tuple[ProfessionalEvidenceView, ...]:
     rows: list[ProfessionalEvidenceView] = []
-    for snapshot in session.scalars(
+    for person_snapshot in session.scalars(
         select(ProfessionalPersonSnapshotRecord).where(
             ProfessionalPersonSnapshotRecord.person_key == person_key
         )
     ):
-        rows.append(_person_evidence(snapshot))
-    for model, label in (
-        (ProfessionalRoleSnapshotRecord, "role"),
-        (ProfessionalContactSnapshotRecord, "contact"),
-        (ProfessionalCommunitySnapshotRecord, "community"),
+        rows.append(_person_evidence(person_snapshot))
+    for role_snapshot in session.scalars(
+        select(ProfessionalRoleSnapshotRecord).where(
+            ProfessionalRoleSnapshotRecord.person_key == person_key
+        )
     ):
-        for snapshot in session.scalars(select(model).where(model.person_key == person_key)):
-            rows.append(_claim_evidence(snapshot, label))
-    for snapshot in session.scalars(
+        rows.append(_claim_evidence(role_snapshot, "role"))
+    for contact_snapshot in session.scalars(
+        select(ProfessionalContactSnapshotRecord).where(
+            ProfessionalContactSnapshotRecord.person_key == person_key
+        )
+    ):
+        rows.append(_claim_evidence(contact_snapshot, "contact"))
+    for community_snapshot in session.scalars(
+        select(ProfessionalCommunitySnapshotRecord).where(
+            ProfessionalCommunitySnapshotRecord.person_key == person_key
+        )
+    ):
+        rows.append(_claim_evidence(community_snapshot, "community"))
+    for reporting_snapshot in session.scalars(
         select(ProfessionalReportingSnapshotRecord).where(
             or_(
                 ProfessionalReportingSnapshotRecord.subject_person_key == person_key,
@@ -271,7 +282,7 @@ def _evidence_history(
             )
         )
     ):
-        rows.append(_claim_evidence(snapshot, "reporting_line"))
+        rows.append(_claim_evidence(reporting_snapshot, "reporting_line"))
     return tuple(sorted(rows, key=lambda item: item.observed_at, reverse=True))
 
 
