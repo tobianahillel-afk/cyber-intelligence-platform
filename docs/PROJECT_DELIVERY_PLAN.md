@@ -70,7 +70,7 @@ A lot is complete only when one final commit passes every applicable backend, fr
 | 19 | Providers, customers, partners, and supply-chain relationships | `IMPLEMENTED_VALIDATED` |
 | 20 | Entity resolution and temporal corporate knowledge graph | `IMPLEMENTED_VALIDATED` |
 | 21 | Professional organization maps, contacts, and public community signals | `IMPLEMENTED_VALIDATED` |
-| 22 | Conditional, premium, LinkedIn, Discord, and BrixHub integrations | `PLANNED_LOCKED` |
+| 22 | Conditional, premium, LinkedIn, Discord, and BrixHub integrations | `IMPLEMENTED_VALIDATED` |
 | 23 | Analyst research and governed OSINT catalog orchestration | `PLANNED_LOCKED` |
 | 24 | Signal fusion, need hypotheses, and commercial taxonomy | `PLANNED_LOCKED` |
 | 25 | Advanced scoring, calibration, explainability, and feedback | `PLANNED_LOCKED` |
@@ -396,9 +396,9 @@ A lot is complete only when one final commit passes every applicable backend, fr
 
 ## Lot 22 — Conditional, premium, LinkedIn, Discord, and BrixHub integrations
 
-**Status:** `PLANNED_LOCKED`
+**Status:** `IMPLEMENTED_VALIDATED`
 
-**Primary business outcome:** Provide a controlled framework for sources whose use depends on licence, account scopes, administrator consent, customer-provided access, or written authorization.
+**Outcome:** Provide a controlled framework for sources whose use depends on licence, account scopes, administrator consent, customer-provided access, or written authorization.
 
 **Dependencies:** Lots 09, 10, 21, privacy controls, and repository hardening.
 
@@ -729,10 +729,10 @@ A lot is complete only when one final commit passes every applicable backend, fr
 
 ## Current release boundary
 
-Version `0.22.0` implements and validates lots `00–21`. Lot 21 adds source-aware professional organization context with temporal role/team and direct reporting-line evidence, public business contact channels, authorized public-community metadata, explicit lawful-basis/purpose/retention state, correction and retraction history, protected persisted-data-only APIs, and the Professional Context analyst workspace.
+Version `0.23.0` implements and validates lots `00–22`. Lot 22 adds provider-specific approval dossiers with immutable actor/reason revisions, explicit provider-method restrictions, persisted-state eligibility resolution across Provider Onboarding, Source Governance and Source Portfolio, append-only pause/kill-switch controls, immutable eligibility audits, safe-default conditional provider catalogues, source-value evidence, protected APIs, and the Conditional Integrations workspace.
 
-Professional context remains a bounded evidence layer. Same display names never create automatic person merges; role claims do not become verified employment; reporting lines are not inferred transitively; public business contacts are not personal contact details; public professional profiles do not authorize platform automation; service relevance does not create a commercial signal, need hypothesis, or opportunity; and contact relevance does not authorize outreach. Valid erasure tombstones raw identifying values while retaining pseudonymous technical lineage and HMAC suppression audit, and ordinary source replay cannot resurrect a deleted subject.
+Conditional provider context remains fail-closed. A catalogue entry, account, licence, approval dossier, public professional profile, or observed source-value contribution is not execution authorization. Eligibility requires the exact approved method/scope/field/purpose/category/retention/account plus positive persisted onboarding, Source Governance, executable Source Portfolio, real adapter capability, quota/cost, pause, and kill-switch state. Eligibility preview is a local audit decision and performs no provider request or collection. LinkedIn remains limited to official or licensed API paths; Discord requires an administrator-installed connector or authorized export; BrixHub remains quarantined with no permitted execution method; premium-provider placeholders remain non-executable and deployment-specific.
 
-All newly modeled Lot 21 source families remain non-executable candidates without approved hosts, paths, schedules, or runtime adapters. LinkedIn, Discord, BrixHub, premium providers, and other account- or licence-dependent paths remain disabled unless Lot 22 records a positive provider-specific approval dossier covering exact method, scopes, fields, purpose, retention, licence, security, revocation, quota, and cost.
+No Lot 22 default conditional provider has an enabled collection schedule or runtime adapter. The release adds no fake account, copied-cookie/session, self-bot, CAPTCHA/MFA bypass, ban evasion, private-message collection, credential validation, autonomous opportunity creation, or outreach path.
 
-Lot 22 is the next locked implementation lot and must start from the merged Lot 21 `main` commit.
+Lot 23 — Analyst research and governed OSINT catalog orchestration — is the next locked implementation lot and must start from the merged Lot 22 `main` commit.
