@@ -8,7 +8,6 @@ from sqlalchemy.orm import Session
 
 from cip.modules.conditional_integrations.domain import (
     ProviderControlDecision,
-    ProviderRuntimeControl,
     apply_control_decision,
 )
 from cip.modules.conditional_integrations.infrastructure.hydration import control_from_record
@@ -32,11 +31,10 @@ def apply_persisted_control_decision(
         raise ValueError("control decision cannot be in the future")
     approval = _approval(session, decision.source_id)
     control = _control(session, approval, decision, current_time)
-    current = control_from_record(control)
-    resulting = apply_control_decision(current, decision)
-    decision_key = control_decision_key(decision, resulting)
+    decision_key = control_decision_key(decision)
     if _decision_exists(session, decision_key):
         return control
+    resulting = apply_control_decision(control_from_record(control), decision)
     session.add(
         ConditionalProviderControlDecisionRecord(
             id=uuid4(),
