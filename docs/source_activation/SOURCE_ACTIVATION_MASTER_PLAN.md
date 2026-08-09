@@ -56,9 +56,16 @@ manual link != automated execution
 
 The `source_activation` bounded context is prohibited from importing HTTP clients, browser runtimes, provider adapters, collection orchestration, Opportunities or Outreach. Architecture tests enforce this boundary.
 
-## Wave A
+## Wave A sequencing
 
-Wave A is delivered as three separately reviewable SA units stacked on the active Lot 23 development line until Lot 23 is merged.
+Lot 23 is merged and validated as release `0.24.0` on `main`. Wave A is therefore delivered as three separately reviewable SA units **merged sequentially**, not as a permanent stacked branch chain:
+
+1. SA-00 starts from the validated Lot 23 squash and is fully validated, then squash-merged to `main`;
+2. SA-01 is rebuilt from the merged SA-00 `main` commit, fully validated, then squash-merged;
+3. SA-02 is rebuilt from the merged SA-01 `main` commit, fully validated, then squash-merged;
+4. SA-03 does not start until SA-02 is merged and the Wave A activation truth is coherent.
+
+This sequencing prevents stale Lot 23 ancestry, makes each SA diff independently reviewable, and gives each unit one exact final SHA for CI evidence.
 
 ### SA-00 — Exhaustive source activation audit
 
@@ -71,7 +78,7 @@ Outcome:
 - coverage matrix distinguishing modelled from genuinely executable sources;
 - architecture and unit tests.
 
-Exact initial base: Lot 23 development commit `2de6a2e30bccc485618e8541a48198252c84b1c4`.
+Clean restack base: Lot 23 squash `56944513fb4b30adbd40c02865f1a3e1899cb0d4` (`0.24.0`).
 
 ### SA-01 — Official vulnerability and open-data providers
 
@@ -128,7 +135,7 @@ Each SA must satisfy the same repository development standards as numbered lots:
 7. provider adapter contract tests and deterministic fixtures;
 8. no live-network unit tests;
 9. controlled live validation only after positive authorization;
-10. exact final SHA CI before a stacked PR can be considered validated.
+10. exact final SHA CI before an SA can be considered validated.
 
 Any code or documentation commit after the validated SHA invalidates the validation and requires a new full run.
 
