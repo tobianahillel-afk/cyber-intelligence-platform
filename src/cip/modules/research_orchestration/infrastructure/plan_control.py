@@ -92,6 +92,7 @@ def apply_research_plan_decision(
         actor=normalized_actor,
         change_reason=f"{decision_type.value}: {normalized_reason}",
         now=current,
+        revision_context=decision_key,
     )
     decision = ResearchPlanDecisionRecord(
         id=uuid4(),
