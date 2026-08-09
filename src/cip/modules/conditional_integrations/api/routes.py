@@ -37,19 +37,20 @@ from cip.modules.conditional_integrations.infrastructure.queries import (
     list_execution_decisions,
     list_revisions,
 )
-from cip.modules.source_portfolio.api.dependencies import require_control_plane_access
-from cip.shared.persistence.session import get_session
+from cip.modules.source_portfolio.api.dependencies import require_control_plane
+from cip.shared.persistence.dependencies import get_database_session
 
 router = APIRouter(
     prefix="/v1/conditional-integrations",
     tags=["conditional-integrations"],
-    dependencies=[Depends(require_control_plane_access)],
+    dependencies=[Depends(require_control_plane)],
 )
+SessionDependency = Annotated[Session, Depends(get_database_session)]
 
 
 @router.get("/providers", response_model=ConditionalProviderListResponse)
 def list_conditional_providers(
-    session: Annotated[Session, Depends(get_session)],
+    session: SessionDependency,
     limit: Annotated[int, Query(ge=1, le=200)] = 100,
     offset: Annotated[int, Query(ge=0)] = 0,
 ) -> ConditionalProviderListResponse:
@@ -63,12 +64,15 @@ def list_conditional_providers(
 @router.get("/providers/{source_id}", response_model=ConditionalProviderDetail)
 def get_conditional_provider(
     source_id: str,
-    session: Annotated[Session, Depends(get_session)],
+    session: SessionDependency,
 ) -> ConditionalProviderDetail:
     try:
         approval = get_approval(session, source_id)
     except ConditionalProviderNotFoundError as exc:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="provider not found") from exc
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="provider not found",
+        ) from exc
     control = get_runtime_control(session, source_id)
     return ConditionalProviderDetail(
         approval=ApprovalResponse.model_validate(approval),
@@ -96,7 +100,7 @@ def get_conditional_provider(
 def upsert_conditional_provider_approval(
     source_id: str,
     request: ApprovalUpsertRequest,
-    session: Annotated[Session, Depends(get_session)],
+    session: SessionDependency,
 ) -> ApprovalResponse:
     try:
         dossier = _dossier(source_id, request)
@@ -121,7 +125,7 @@ def upsert_conditional_provider_approval(
 def apply_provider_control(
     source_id: str,
     request: ProviderControlRequest,
-    session: Annotated[Session, Depends(get_session)],
+    session: SessionDependency,
 ) -> RuntimeControlResponse:
     now = datetime.now(UTC)
     decision = ProviderControlDecision(
@@ -136,7 +140,10 @@ def apply_provider_control(
         session.commit()
     except LookupError as exc:
         session.rollback()
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="provider not found") from exc
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="provider not found",
+        ) from exc
     except ValueError as exc:
         session.rollback()
         raise HTTPException(
