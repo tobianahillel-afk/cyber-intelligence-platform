@@ -44,10 +44,10 @@ ProcessingRow = (
 def person_snapshot(record: ProfessionalPersonSnapshotRecord) -> ProfessionalPersonReference:
     return ProfessionalPersonReference(
         person_key=record.person_key,
-        display_name=record.display_name,
+        display_name=_unredacted(record.display_name, "display_name"),
         source_id=record.source_id,
         source_kind=record.source_kind,
-        source_record_key=record.source_record_key,
+        source_record_key=_unredacted(record.source_record_key, "source_record_key"),
         source_url=record.source_url,
         observed_at=coerce_utc(record.observed_at),
         confidence=record.confidence,
@@ -64,9 +64,9 @@ def role_snapshot(record: ProfessionalRoleSnapshotRecord) -> ProfessionalRoleCla
         claim_key=record.claim_key,
         person_key=record.person_key,
         source_id=record.source_id,
-        source_record_key=record.source_record_key,
+        source_record_key=_unredacted(record.source_record_key, "source_record_key"),
         source_url=record.source_url,
-        role_title=record.role_title,
+        role_title=_unredacted(record.role_title, "role_title"),
         team_name=record.team_name,
         organization_id=record.organization_id,
         claimed_organization_name=record.claimed_organization_name,
@@ -94,7 +94,7 @@ def reporting_snapshot(record: ProfessionalReportingSnapshotRecord) -> Reporting
         manager_person_key=record.manager_person_key,
         organization_id=record.organization_id,
         source_id=record.source_id,
-        source_record_key=record.source_record_key,
+        source_record_key=_unredacted(record.source_record_key, "source_record_key"),
         source_url=record.source_url,
         claim_type=ProfessionalClaimType(record.claim_type),
         review_state=ProfessionalReviewState(record.review_state),
@@ -115,11 +115,11 @@ def contact_snapshot(record: ProfessionalContactSnapshotRecord) -> ProfessionalC
         contact_key=record.contact_key,
         channel_type=ContactChannelType(record.channel_type),
         evidence_scope=ContactEvidenceScope(record.evidence_scope),
-        value=record.value,
+        value=_unredacted(record.value, "contact value"),
         organization_id=record.organization_id,
         person_key=record.person_key,
         source_id=record.source_id,
-        source_record_key=record.source_record_key,
+        source_record_key=_unredacted(record.source_record_key, "source_record_key"),
         source_url=record.source_url,
         claim_type=ProfessionalClaimType(record.claim_type),
         review_state=ProfessionalReviewState(record.review_state),
@@ -138,13 +138,13 @@ def community_snapshot(record: ProfessionalCommunitySnapshotRecord) -> PublicCom
         context_key=record.context_key,
         community_name=record.community_name,
         context_type=record.context_type,
-        context_value=record.context_value,
+        context_value=_unredacted(record.context_value, "context_value"),
         acquisition_mode=CommunityAcquisitionMode(record.acquisition_mode),
         authorization_reference=record.authorization_reference,
         organization_id=record.organization_id,
         person_key=record.person_key,
         source_id=record.source_id,
-        source_record_key=record.source_record_key,
+        source_record_key=_unredacted(record.source_record_key, "source_record_key"),
         source_url=record.source_url,
         claim_type=ProfessionalClaimType(record.claim_type),
         review_state=ProfessionalReviewState(record.review_state),
@@ -171,3 +171,9 @@ def _processing(record: ProcessingRow) -> ProfessionalProcessingContext:
 
 def _optional_time(value: datetime | None) -> datetime | None:
     return coerce_utc(value) if value is not None else None
+
+
+def _unredacted(value: str | None, field_name: str) -> str:
+    if value is None:
+        raise ValueError(f"redacted {field_name} cannot be hydrated as source evidence")
+    return value
