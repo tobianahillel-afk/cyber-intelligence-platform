@@ -16,6 +16,7 @@ from cip.modules.collection_orchestration.infrastructure.repository_completion i
     insert_observations,
 )
 from cip.modules.data_governance.domain.retention import RetentionPolicy
+from cip.modules.incident_intelligence.infrastructure.projections import persist_incident_claims
 from cip.modules.organizations.infrastructure.persistence import upsert_organizations
 from cip.modules.passive_exposure.infrastructure.projections import (
     persist_passive_snapshots,
@@ -42,6 +43,7 @@ from cip.modules.source_portfolio.application.service import (
 )
 from cip.modules.source_portfolio.domain.models import SchemaState
 from cip.modules.source_portfolio.infrastructure.models import BackfillPartitionRecord
+from cip.modules.threat_telemetry.infrastructure.projections import persist_indicator_snapshots
 from cip.modules.vulnerability_knowledge.infrastructure.projections import (
     persist_vulnerability_snapshots,
 )
@@ -137,6 +139,12 @@ def run_backfill_once(
         persist_passive_snapshots(
             session,
             batch.passive_exposure_projections,
+            now=completed_at,
+        )
+        persist_incident_claims(session, batch.incident_claims, now=completed_at)
+        persist_indicator_snapshots(
+            session,
+            batch.threat_indicator_snapshots,
             now=completed_at,
         )
         record_collection_success(
