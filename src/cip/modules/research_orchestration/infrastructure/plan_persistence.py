@@ -22,11 +22,12 @@ def persist_research_plan(
     actor: str,
     change_reason: str,
     now: datetime,
+    revision_context: str | None = None,
 ) -> ResearchPlanRecord:
     current = require_aware_utc(now, field_name="now")
     normalized_actor = _required(actor, "actor", 200)
     normalized_reason = _required(change_reason, "change_reason", 1000)
-    revision_key = plan_revision_key(plan)
+    revision_key = plan_revision_key(plan, context=revision_context)
     record = session.get(ResearchPlanRecord, plan.plan_id)
     if record is None:
         record = _new_plan_record(plan, revision_key, current)
