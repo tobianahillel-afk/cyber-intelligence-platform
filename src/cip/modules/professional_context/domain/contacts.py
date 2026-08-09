@@ -8,6 +8,7 @@ from cip.modules.data_governance.domain.suppression import SuppressionChannel
 from cip.modules.professional_context.domain.enums import (
     ContactChannelType,
     ContactEvidenceScope,
+    ProfessionalClaimType,
     ProfessionalReviewState,
 )
 from cip.modules.professional_context.domain.privacy import ProfessionalProcessingContext
@@ -34,6 +35,7 @@ class ProfessionalContactEvidence:
     organization_id: UUID | None = None
     person_key: str | None = None
     source_url: str | None = None
+    claim_type: ProfessionalClaimType = ProfessionalClaimType.ASSERTION
     review_state: ProfessionalReviewState = ProfessionalReviewState.REVIEW_REQUIRED
     active: bool = True
     suppressed: bool = False
@@ -69,6 +71,16 @@ class ProfessionalContactEvidence:
         if self.organization_id is None and self.person_key is None:
             raise ValueError("business contact evidence requires organization or person context")
         _validate_channel(self)
+
+    @property
+    def current_evidence(self) -> bool:
+        return (
+            self.active
+            and not self.suppressed
+            and not self.deleted
+            and self.claim_type
+            not in {ProfessionalClaimType.DISPUTE, ProfessionalClaimType.RETRACTION}
+        )
 
     @property
     def suppression_channel(self) -> SuppressionChannel:
