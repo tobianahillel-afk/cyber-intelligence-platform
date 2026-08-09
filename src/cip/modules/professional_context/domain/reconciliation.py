@@ -43,7 +43,7 @@ def reconcile_person_references(
     items = tuple(references)
     if not items:
         raise ValueError("at least one professional person reference is required")
-    _require_same(item.person_key for item in items, "person_key")
+    _require_same((item.person_key for item in items), "person_key")
     current = aware_time(now, "now")
     latest = max(items, key=lambda item: item.observed_at)
     visible = latest.visible and latest.processing.permits_processing_at(current)
@@ -72,8 +72,8 @@ def reconcile_role_claims(
     items = tuple(claims)
     if not items:
         raise ValueError("at least one professional role claim is required")
-    _require_same(item.claim_key for item in items, "claim_key")
-    _require_same(item.person_key for item in items, "person_key")
+    _require_same((item.claim_key for item in items), "claim_key")
+    _require_same((item.person_key for item in items), "person_key")
     current = aware_time(now, "now")
     effective = _effective_revisions(items)
     latest = max(effective, key=lambda item: item.observed_at)
@@ -124,9 +124,9 @@ def reconcile_reporting_claims(
     items = tuple(claims)
     if not items:
         raise ValueError("at least one reporting-line claim is required")
-    _require_same(item.claim_key for item in items, "claim_key")
-    _require_same(item.subject_person_key for item in items, "subject_person_key")
-    _require_same(item.manager_person_key for item in items, "manager_person_key")
+    _require_same((item.claim_key for item in items), "claim_key")
+    _require_same((item.subject_person_key for item in items), "subject_person_key")
+    _require_same((item.manager_person_key for item in items), "manager_person_key")
     current = aware_time(now, "now")
     effective = _effective_revisions(items)
     latest = max(effective, key=lambda item: item.observed_at)
@@ -159,7 +159,7 @@ def reconcile_contact_evidence(
     items = tuple(evidence)
     if not items:
         raise ValueError("at least one professional contact evidence record is required")
-    _require_same(item.contact_key for item in items, "contact_key")
+    _require_same((item.contact_key for item in items), "contact_key")
     current = aware_time(now, "now")
     effective = _effective_revisions(items)
     live = tuple(
@@ -201,7 +201,7 @@ def reconcile_community_context(
     items = tuple(contexts)
     if not items:
         raise ValueError("at least one public community context record is required")
-    _require_same(item.context_key for item in items, "context_key")
+    _require_same((item.context_key for item in items), "context_key")
     current = aware_time(now, "now")
     effective = _effective_revisions(items)
     live = tuple(
