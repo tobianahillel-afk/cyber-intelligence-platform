@@ -160,6 +160,22 @@ class ExecutionDecisionResponse(BaseModel):
     evaluated_at: datetime
 
 
+class SourceValueSummaryResponse(BaseModel):
+    executions: int
+    modified_executions: int
+    observations_written: int
+    commercial_projections: int
+    identity_projections: int
+    request_cost: float
+
+
+class ConditionalProviderValueResponse(BaseModel):
+    source_id: str
+    evidence_available: bool
+    source: SourceValueSummaryResponse
+    portfolio_without_source: SourceValueSummaryResponse
+
+
 class ConditionalProviderSummary(BaseModel):
     approval: ApprovalResponse
     control: RuntimeControlResponse | None
