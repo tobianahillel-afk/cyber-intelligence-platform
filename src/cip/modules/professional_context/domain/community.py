@@ -72,7 +72,9 @@ class PublicCommunityContext:
             optional_text(self.supersedes_record_key, "supersedes_record_key", 500),
         )
         if self.person_key is None and self.organization_id is None:
-            raise ValueError("community context requires professional person or organization context")
+            raise ValueError(
+                "community context requires professional person or organization context"
+            )
         if not self.metadata_only:
             raise ValueError("community context accepts metadata only")
 
