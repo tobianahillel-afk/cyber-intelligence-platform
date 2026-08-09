@@ -261,17 +261,20 @@ def test_manual_link_rejects_quarantined_or_browser_source() -> None:
     assert runtime.manual_link_allowed is False
 
 
-def test_approved_ingestion_stays_closed_until_reference_validation_exists() -> None:
-    step = replace(
+def test_approved_ingestion_accepts_only_validated_internal_path() -> None:
+    approved = replace(
         _step(),
         mode=ResearchStepMode.APPROVED_INGESTION,
         target_url=None,
         ingestion_path_id="existing-evidence-reference",
     )
+    unapproved = replace(approved, ingestion_path_id="arbitrary-import")
 
-    runtime = resolve_research_runtime(_session(), _plan(), step, now=NOW)
+    approved_runtime = resolve_research_runtime(_session(), _plan(), approved, now=NOW)
+    denied_runtime = resolve_research_runtime(_session(), _plan(), unapproved, now=NOW)
 
-    assert runtime.ingestion_path_approved is False
+    assert approved_runtime.ingestion_path_approved is True
+    assert denied_runtime.ingestion_path_approved is False
 
 
 def _session() -> Session:
