@@ -3,7 +3,6 @@ version: 1
 # Activation truth layer. This file never grants network authorization.
 # `active` does not mean fully integrated unless every mandatory stage is proven.
 sources:
-  # Existing executable runtime sources. Live-network validation remains a separate gate.
   - source_id: cisa-kev
     display_name: CISA Known Exploited Vulnerabilities
     category: vulnerability_intelligence
@@ -84,7 +83,6 @@ sources:
     requires_schedule: false
     stages: [catalogued, reviewed, mapped, adapter_present, authorized, executable, live_tested]
 
-  # Catalogue and Wave A.
   - source_id: osint-framework-import
     display_name: OSINT Framework imported candidates
     category: catalog_candidate
@@ -103,50 +101,49 @@ sources:
   - source_id: cve-org-services
     display_name: CVE Services
     category: vulnerability_knowledge
-    disposition: planned
+    disposition: active
     activation_wave: SA-01
     requires_schedule: false
-    stages: [catalogued, reviewed, mapped]
+    stages: [catalogued, reviewed, mapped, adapter_present, authorized, executable]
 
   - source_id: nvd-vulnerabilities
     display_name: NVD CVE API 2.0
     category: vulnerability_knowledge
-    disposition: planned
+    disposition: active
     activation_wave: SA-01
-    stages: [catalogued, reviewed, mapped]
+    stages: [catalogued, reviewed, mapped, adapter_present, authorized, executable, scheduled]
 
   - source_id: first-epss
     display_name: FIRST EPSS API
     category: vulnerability_knowledge
-    disposition: planned
+    disposition: active
     activation_wave: SA-01
     requires_schedule: false
-    stages: [catalogued, reviewed, mapped]
+    stages: [catalogued, reviewed, mapped, adapter_present, authorized, executable]
 
   - source_id: osv-api
     display_name: OSV API
     category: vulnerability_knowledge
-    disposition: planned
+    disposition: active
     activation_wave: SA-01
     requires_schedule: false
-    stages: [catalogued, reviewed, mapped]
+    stages: [catalogued, reviewed, mapped, adapter_present, authorized, executable]
 
   - source_id: github-global-advisories
     display_name: GitHub Global Security Advisories
     category: vulnerability_knowledge
-    disposition: planned
+    disposition: active
     activation_wave: SA-01
-    stages: [catalogued, reviewed, mapped]
+    stages: [catalogued, reviewed, mapped, adapter_present, authorized, executable, scheduled]
 
   - source_id: circl-vulnerability-lookup
     display_name: CIRCL Vulnerability-Lookup
     category: vulnerability_knowledge
-    disposition: planned
+    disposition: active
     activation_wave: SA-01
     requires_schedule: false
-    stages: [catalogued, reviewed, mapped]
+    stages: [catalogued, reviewed, mapped, adapter_present, authorized, executable]
 
-  # Incident intelligence candidates delivered by Lot 14; activation remains future work.
   - source_id: sec-cyber-disclosures
     display_name: SEC Cybersecurity Disclosures
     category: live_incidents
@@ -182,7 +179,6 @@ sources:
     activation_wave: SA-04
     stages: [catalogued, reviewed, mapped]
 
-  # Defensive threat telemetry candidates delivered by Lot 15.
   - source_id: licensed-stix-taxii
     display_name: Licensed STIX/TAXII Threat Telemetry
     category: threat_telemetry
@@ -218,7 +214,6 @@ sources:
     activation_wave: SA-04
     stages: [catalogued, reviewed, mapped]
 
-  # Passive exposure candidates delivered by Lot 16.
   - source_id: licensed-passive-exposure
     display_name: Licensed Passive Exposure Metadata
     category: passive_exposure
@@ -240,7 +235,6 @@ sources:
     activation_wave: SA-03
     stages: [catalogued, reviewed, mapped]
 
-  # Advisory candidates delivered by Lot 17.
   - source_id: official-vendor-psirt
     display_name: Official Vendor PSIRT Advisories
     category: vulnerability_advisory
@@ -262,7 +256,6 @@ sources:
     activation_wave: SA-04
     stages: [catalogued, reviewed, mapped]
 
-  # Corporate-change candidates delivered by Lot 18.
   - source_id: official-corporate-disclosures
     display_name: Official Corporate Disclosures
     category: corporate_change_intelligence
@@ -284,7 +277,6 @@ sources:
     activation_wave: SA-06
     stages: [catalogued, reviewed, mapped]
 
-  # Relationship candidates delivered by Lot 19.
   - source_id: official-relationship-disclosures
     display_name: Official Relationship Disclosures
     category: relationship_intelligence
@@ -313,7 +305,6 @@ sources:
     activation_wave: SA-06
     stages: [catalogued, reviewed, mapped]
 
-  # Conditional providers delivered by Lot 22.
   - source_id: linkedin-official-api
     display_name: LinkedIn Official API candidate
     category: conditional_professional_context
@@ -359,7 +350,6 @@ sources:
     reason: Provider access method, licence, permitted fields, retention and automation path require explicit review before an adapter can exist.
     stages: [catalogued, reviewed]
 
-  # Additional source-activation candidates that are not yet Source Portfolio entries.
   - source_id: brave-search-api
     display_name: Brave Search API
     category: public_search

@@ -39,6 +39,9 @@ from cip.modules.source_portfolio.application.service import (
 )
 from cip.modules.source_portfolio.domain.models import SchemaState
 from cip.modules.source_portfolio.infrastructure.models import BackfillPartitionRecord
+from cip.modules.vulnerability_knowledge.infrastructure.projections import (
+    persist_vulnerability_snapshots,
+)
 from cip.shared.kernel.time import require_aware_utc, utc_now
 from cip.shared.persistence.session import session_scope
 
@@ -121,6 +124,11 @@ def run_backfill_once(
         persist_public_footprint_projections(
             session,
             batch.public_footprint_projections,
+            now=completed_at,
+        )
+        persist_vulnerability_snapshots(
+            session,
+            batch.vulnerability_snapshots,
             now=completed_at,
         )
         record_collection_success(

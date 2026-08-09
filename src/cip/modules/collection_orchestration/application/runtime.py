@@ -10,41 +10,38 @@ from time import sleep
 
 from sqlalchemy.orm import Session, sessionmaker
 
-from cip.adapters.sources.greenhouse.registry import (
-    GreenhouseBoard,
-    load_greenhouse_boards,
-)
+from cip.adapters.sources.greenhouse.registry import GreenhouseBoard, load_greenhouse_boards
 from cip.adapters.sources.lever.registry import LeverSite, load_lever_sites
 from cip.adapters.sources.organization_identity.registry import (
     OrganizationIdentityTarget,
     load_organization_identity_targets,
 )
-from cip.adapters.sources.public_web.registry import (
-    PublicWebTarget,
-    load_public_web_targets,
-)
+from cip.adapters.sources.public_web.registry import PublicWebTarget, load_public_web_targets
 from cip.adapters.sources.smartrecruiters.registry import (
     SmartRecruitersCompany,
     load_smartrecruiters_companies,
+)
+from cip.adapters.sources.vulnerability_catalogs.registry import (
+    VulnerabilityQueryTarget,
+    load_vulnerability_query_targets,
 )
 from cip.modules.collection_orchestration.application.adapters import CisaKevAdapter
 from cip.modules.collection_orchestration.application.boamp_adapter import BoampAdapter
 from cip.modules.collection_orchestration.application.decp_adapter import DecpAdapter
 from cip.modules.collection_orchestration.application.greenhouse_adapter import GreenhouseAdapter
-from cip.modules.collection_orchestration.application.identity_adapters import (
-    register_identity_adapters,
-)
+from cip.modules.collection_orchestration.application.identity_adapters import register_identity_adapters
 from cip.modules.collection_orchestration.application.lever_adapter import LeverAdapter
 from cip.modules.collection_orchestration.application.ports import CollectionAdapter
 from cip.modules.collection_orchestration.application.public_web_adapter import PublicWebAdapter
-from cip.modules.collection_orchestration.application.reference_adapter import (
-    ReferencePortfolioAdapter,
-)
+from cip.modules.collection_orchestration.application.reference_adapter import ReferencePortfolioAdapter
 from cip.modules.collection_orchestration.application.scheduler import schedule_due_jobs
 from cip.modules.collection_orchestration.application.smartrecruiters_adapter import (
     SmartRecruitersAdapter,
 )
 from cip.modules.collection_orchestration.application.ted_adapter import TedSearchAdapter
+from cip.modules.collection_orchestration.application.vulnerability_registration import (
+    register_vulnerability_adapters,
+)
 from cip.modules.collection_orchestration.application.worker import (
     WorkerOutcome,
     WorkerStatus,
@@ -58,9 +55,7 @@ from cip.modules.data_governance.domain.retention import RetentionPolicy
 from cip.modules.data_governance.infrastructure.retention_loader import load_retention_policy
 from cip.modules.source_governance.infrastructure.persistence import sync_source_registry
 from cip.modules.source_governance.infrastructure.registry import SourceRegistryEntry
-from cip.modules.source_governance.infrastructure.registry_bundle import (
-    load_source_registry_bundle,
-)
+from cip.modules.source_governance.infrastructure.registry_bundle import load_source_registry_bundle
 from cip.modules.source_portfolio.application.backfill_worker import (
     BackfillWorkerOutcome,
     BackfillWorkerStatus,
@@ -71,13 +66,8 @@ from cip.modules.source_portfolio.application.service import (
     reconcile_runtime_adapters,
     sync_source_portfolio,
 )
-from cip.modules.source_portfolio.domain.models import (
-    CatalogStatus,
-    SourceCatalogEntry,
-)
-from cip.modules.source_portfolio.infrastructure.registry_bundle import (
-    load_source_portfolio_bundle,
-)
+from cip.modules.source_portfolio.domain.models import CatalogStatus, SourceCatalogEntry
+from cip.modules.source_portfolio.infrastructure.registry_bundle import load_source_portfolio_bundle
 from cip.shared.config.settings import Settings
 from cip.shared.kernel.time import utc_now
 from cip.shared.persistence.session import (
@@ -112,6 +102,7 @@ def build_collection_runtime(settings: Settings) -> CollectionRuntime:
         settings.passive_exposure_source_registry_path,
         settings.advisory_source_registry_path,
         settings.corporate_change_source_registry_path,
+        settings.relationship_source_registry_path,
         settings.conditional_integration_source_registry_path,
     )
     portfolio = load_source_portfolio_bundle(
@@ -124,6 +115,7 @@ def build_collection_runtime(settings: Settings) -> CollectionRuntime:
         settings.passive_exposure_source_portfolio_path,
         settings.advisory_source_portfolio_path,
         settings.corporate_change_source_portfolio_path,
+        settings.relationship_source_portfolio_path,
         settings.conditional_integration_source_portfolio_path,
     )
     greenhouse_boards = load_greenhouse_boards(settings.greenhouse_board_registry_path)
@@ -135,6 +127,9 @@ def build_collection_runtime(settings: Settings) -> CollectionRuntime:
         settings.organization_identity_target_registry_path
     )
     public_web_targets = load_public_web_targets(settings.public_web_target_registry_path)
+    vulnerability_targets = load_vulnerability_query_targets(
+        settings.vulnerability_query_target_registry_path
+    )
     with session_scope(factory) as session:
         sync_source_registry(session, entries)
         sync_source_portfolio(session, portfolio, now=utc_now())
@@ -145,6 +140,7 @@ def build_collection_runtime(settings: Settings) -> CollectionRuntime:
         smartrecruiters_companies,
         identity_targets,
         public_web_targets,
+        vulnerability_targets,
         timeout_seconds=settings.source_http_timeout_seconds,
     )
     with session_scope(factory) as session:
@@ -154,6 +150,7 @@ def build_collection_runtime(settings: Settings) -> CollectionRuntime:
         settings.collection_schedule_path,
         settings.decp_collection_schedule_path,
         settings.public_web_collection_schedule_path,
+        settings.vulnerability_collection_schedule_path,
     )
     _validate_registered_schedules(schedules, adapters, portfolio)
     return CollectionRuntime(
@@ -172,6 +169,7 @@ def _build_adapters(
     smartrecruiters_companies: tuple[SmartRecruitersCompany, ...],
     identity_targets: tuple[OrganizationIdentityTarget, ...],
     public_web_targets: tuple[PublicWebTarget, ...],
+    vulnerability_targets: tuple[VulnerabilityQueryTarget, ...],
     *,
     timeout_seconds: float,
 ) -> dict[tuple[str, str], CollectionAdapter]:
@@ -234,6 +232,12 @@ def _build_adapters(
         public_web_targets,
         timeout_seconds=timeout_seconds,
     )
+    register_vulnerability_adapters(
+        adapters,
+        entries_by_id,
+        vulnerability_targets,
+        timeout_seconds=timeout_seconds,
+    )
     return adapters
 
 
@@ -249,9 +253,7 @@ def _register_public_web_adapters(
             continue
         entry = entries_by_id.get(target.id)
         if entry is None:
-            raise ValueError(
-                f"enabled public web target has no source policy: {target.id}"
-            )
+            raise ValueError(f"enabled public web target has no source policy: {target.id}")
         _register(
             adapters,
             PublicWebAdapter(
@@ -352,9 +354,7 @@ def _validate_registered_schedules(
         if not conditional:
             missing.append(f"{schedule.source_id}/{schedule.adapter_id}")
     if missing:
-        raise ValueError(
-            f"enabled schedules have no registered adapter: {', '.join(missing)}"
-        )
+        raise ValueError(f"enabled schedules have no registered adapter: {', '.join(missing)}")
 
 
 def _validate_portfolio_adapters(
