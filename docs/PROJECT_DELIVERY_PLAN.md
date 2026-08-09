@@ -68,7 +68,7 @@ A lot is complete only when one final commit passes every applicable backend, fr
 | 17 | Vendor advisories, product versions, and applicability | `IMPLEMENTED_VALIDATED` |
 | 18 | News, regulatory, corporate-disclosure, and change signals | `IMPLEMENTED_VALIDATED` |
 | 19 | Providers, customers, partners, and supply-chain relationships | `IMPLEMENTED_VALIDATED` |
-| 20 | Entity resolution and temporal corporate knowledge graph | `PLANNED_LOCKED` |
+| 20 | Entity resolution and temporal corporate knowledge graph | `IMPLEMENTED_VALIDATED` |
 | 21 | Professional organization maps, contacts, and public community signals | `PLANNED_LOCKED` |
 | 22 | Conditional, premium, LinkedIn, Discord, and BrixHub integrations | `PLANNED_LOCKED` |
 | 23 | Analyst research and governed OSINT catalog orchestration | `PLANNED_LOCKED` |
@@ -336,9 +336,9 @@ A lot is complete only when one final commit passes every applicable backend, fr
 
 ## Lot 20 — Entity resolution and temporal corporate knowledge graph
 
-**Status:** `PLANNED_LOCKED`
+**Status:** `IMPLEMENTED_VALIDATED`
 
-**Primary business outcome:** Reconcile organizations, establishments, groups, brands, domains, products, incidents, assets, providers, and relationships into a temporal graph with reversible merge/split decisions.
+**Outcome:** Reconcile organizations, establishments, groups, brands, domains, products, incidents, assets, providers, and relationships into a temporal graph with reversible merge/split decisions.
 
 **Dependencies:** Lots 08 and 11–19.
 
@@ -729,8 +729,8 @@ A lot is complete only when one final commit passes every applicable backend, fr
 
 ## Current release boundary
 
-Version `0.20.0` implements and validates lots `00–19`. Lot 19 installs directed temporal business relationships, immutable evidence snapshots, claimed/observed/contracted/historical/inferred evidence classes, explicit endpoint identity review, validity and renewal chronology, contract-backed current state, reversible persistence, protected APIs, and the Relationships workspace.
+Version `0.21.0` implements and validates lots `00–20`. Lot 20 installs a PostgreSQL-backed temporal corporate knowledge graph with immutable node and edge snapshots, exact alias/identifier/domain references, explainable review-only probabilistic candidates, conflict queues, historical `as_of` reads, reversible merge/reject/split/override/restore decisions, and resolution-state-aware blast-radius previews.
 
-Existing persisted procurement contracts can project into contracted relationship evidence without authorizing new network collection. Generic public/provider relationship schemas cannot emit contracted evidence. New relationship source candidates remain authorization-missing, unscheduled, non-executable, and forbidden from private portals, personal networks, automatic opportunity creation, contact enrichment, or outreach.
+The graph is a metadata projection over already persisted evidence and PostgreSQL remains the source of truth. Shared names, aliases, domains, identifiers, weak/historical/inferred relationship evidence, incident reports, material changes, passive observations, and vulnerability applicability never silently become verified entity identity, exposure, compromise, service need, opportunity, contact target, or outreach authorization merely because they enter the graph.
 
-Lot 20 is the next locked implementation lot. It must start from the merged Lot 19 `main` commit and preserve reversible identity decisions, temporal validity, source lineage, evidence class, relationship direction, confidence, correction, suppression, and review state. Claimed or inferred edges must not silently become verified facts merely because they enter the graph.
+Lot 21 is the next locked implementation lot. It must start from the merged Lot 20 `main` commit and add professional roles, teams, public business contact channels, employment chronology, lawful-basis/minimization/suppression/deletion controls, and consented public community context without private messages, friend graphs, personal addresses, private-life profiling, or unauthorized LinkedIn/Discord automation.

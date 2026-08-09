@@ -23,7 +23,7 @@ Source breadth is useful only when it improves reliable client discovery. Source
 
 ## Current validated baseline
 
-The current validated release is version `0.20.0`, covering lots `00` through `19`.
+The current validated release is version `0.21.0`, covering lots `00` through `20`.
 
 Implemented and validated capabilities include:
 
@@ -44,7 +44,8 @@ Implemented and validated capabilities include:
 - canonical passive assets and technographic observations with immutable revisions, explicit attribution risks, protected APIs, and the Passive Exposure workspace;
 - canonical vendor advisories, affected-version ranges, organization-specific vulnerability applicability, immutable assessment history, protected APIs, and the Vulnerability Applicability workspace;
 - source-aware corporate and regulatory change intelligence with immutable claim history, syndication-aware corroboration, explicit confirmation/report/speculation/dispute/correction/retraction states, separate service mappings, protected APIs, and the Corporate Changes workspace;
-- temporal provider, customer, partner, supplier, reseller, integrator, auditor, insurer, MSSP/MDR, cloud-provider, technology-vendor, and subcontractor relationship intelligence with immutable evidence history, explicit evidence classes, reversible chronology, protected APIs, and the Relationships workspace.
+- temporal provider, customer, partner, supplier, reseller, integrator, auditor, insurer, MSSP/MDR, cloud-provider, technology-vendor, and subcontractor relationship intelligence with immutable evidence history, explicit evidence classes, reversible chronology, protected APIs, and the Relationships workspace;
+- temporal entity-resolution and corporate-graph intelligence with immutable node/edge history, exact alias/identifier/domain references, review-only probabilistic candidates, historical queries, reversible analyst decisions, versioned blast-radius previews, protected APIs, and the Graph workspace.
 
 Lot `12` remains under an explicit activation boundary: merging the software does not authorize collection against a real organization. The checked-in public-web example is disabled, unauthorized, unscheduled, and non-executable. Search and archive providers remain disconnected until separately approved.
 
@@ -62,7 +63,9 @@ Lot `18` provides source-aware public corporate and regulatory change intelligen
 
 Lot `19` provides temporal, directed, evidence-backed organization relationships. It separates claimed, observed, contracted, historical, and inferred evidence; preserves source/target direction, endpoint identity review, validity, expiry, corrections and retractions; and keeps contract/product/service contexts separate from source evidence. Marketing claims are not contract evidence, historical or inferred relationships are not current incumbents, and relationship evidence is not a need, opportunity, or authorization to contact. New relationship providers remain unauthorized, unscheduled, and non-executable candidates.
 
-The next planned implementation lot is `20`: entity resolution and the temporal corporate knowledge graph.
+Lot `20` provides a PostgreSQL-backed temporal corporate knowledge graph over previously persisted evidence. It preserves source lineage, evidence class, chronology, suppression and correction state; treats shared names, aliases, domains and identifiers as conflicts rather than automatic merges; separates deterministic exact resolution from review-only probabilistic candidates; and makes merge, reject, split, override and restore decisions append-only and reversible through versioned blast-radius previews. Graph membership is not an evidence upgrade, verified exposure, compromise, service need, opportunity, contact target, or outreach authorization.
+
+The next planned implementation lot is `21`: professional organization maps, contacts, and public community signals.
 
 ## Implemented and modeled source portfolio
 
@@ -236,6 +239,26 @@ material change event
   != authorization to contact
 ```
 
+Entity resolution remains a reversible projection over source-aware evidence:
+
+```text
+persisted organization / identity / relationship / asset / incident / change / applicability evidence
+  -> immutable graph node and edge snapshots
+  -> deterministic exact resolution or review-only candidate
+  -> temporal projection and analyst conflict queue
+  -> versioned blast-radius preview
+  -> append-only human merge / reject / split / override / restore decision
+
+same name, alias, domain, or identifier
+  != same legal entity
+graph membership
+  != evidence upgrade
+historical or inferred edge
+  != verified current fact
+resolution decision
+  != opportunity or authorization to contact
+```
+
 Provider payloads remain inside adapter packages. Adapters never write directly to company, score, alert, or opportunity projections.
 
 ## Product access model
@@ -246,7 +269,7 @@ Collection is centralized and uses approved public feeds, official APIs, open-da
 
 The product is database-first. Normal page views read stored and indexed evidence; they do not crawl sources on demand. Schedulers refresh sources according to freshness, value, cost, quota, authorization, and change frequency. Stale data remains visible with an explicit freshness state.
 
-The `/research`, `/vulnerabilities`, `/incidents`, `/threat-intelligence`, `/passive-exposure`, `/vulnerability-applicability`, `/corporate-changes`, and `/relationships` workspaces and their APIs search persisted data only. They never launch external collection from an analyst page view.
+The `/research`, `/vulnerabilities`, `/incidents`, `/threat-intelligence`, `/passive-exposure`, `/vulnerability-applicability`, `/corporate-changes`, `/relationships`, and `/graph` workspaces and their APIs search persisted data only. They never launch external collection from an analyst page view.
 
 ## Architecture
 
@@ -262,8 +285,8 @@ Canonical layers are:
 1. source catalog and authorization;
 2. provider onboarding and adapter capabilities;
 3. collection runs and immutable source records;
-4. evidence, observations, public claims, vulnerability snapshots, incident claims, telemetry snapshots, passive observation snapshots, advisory revisions, corporate-change claim revisions, and relationship evidence snapshots;
-5. resolved organizations, incidents, vulnerabilities, indicators, passive assets, technologies, products, providers, material changes, business relationships, roles, and temporal relationships;
+4. evidence, observations, public claims, vulnerability snapshots, incident claims, telemetry snapshots, passive observation snapshots, advisory revisions, corporate-change claim revisions, relationship evidence snapshots, and immutable corporate-graph snapshots;
+5. resolved organizations, incidents, vulnerabilities, indicators, passive assets, technologies, products, providers, material changes, business relationships, roles, temporal relationships, and reversible entity-resolution bindings;
 6. vulnerability applicability, service mappings, commercial signals, and need hypotheses;
 7. scores, alerts, opportunities, tasks, and analyst decisions.
 
@@ -283,9 +306,9 @@ Domain modules cannot depend on FastAPI, SQLAlchemy models, adapters, API packag
 
 [`docs/PROJECT_DELIVERY_PLAN.md`](docs/PROJECT_DELIVERY_PLAN.md) is authoritative.
 
-- lots `00–19`: implemented and validated foundations, procurement, hiring, identity, onboarding, source runtime, contracts, public footprint, vulnerability knowledge, public incident intelligence, defensive telemetry, passive technographic evidence, vendor advisories, vulnerability applicability, corporate/regulatory change intelligence, and temporal relationship intelligence;
-- lot `20`: entity resolution and temporal corporate knowledge graph;
-- lots `20–23`: entity resolution, professional context, conditional sources, and governed research orchestration;
+- lots `00–20`: implemented and validated foundations, procurement, hiring, identity, onboarding, source runtime, contracts, public footprint, vulnerability knowledge, public incident intelligence, defensive telemetry, passive technographic evidence, vendor advisories, vulnerability applicability, corporate/regulatory change intelligence, temporal relationship intelligence, entity resolution, and the temporal corporate knowledge graph;
+- lot `21`: professional organization maps, contacts, and public community signals;
+- lots `21–23`: professional context, conditional sources, and governed research orchestration;
 - lots `24–27`: signal fusion, need hypotheses, calibrated scoring, native commercial operations, and Company 360;
 - lots `28–32`: data quality, release security, resilience, optional isolated browser runtime, and controlled production pilot.
 
@@ -317,7 +340,8 @@ Executable rules include:
 - passive exposure cannot import network clients, collection adapters, opportunity modules, or vulnerability-applicability modules;
 - vulnerability applicability cannot import network clients, collection adapters, opportunity modules, or contact/outreach modules;
 - corporate change intelligence cannot import network clients, collection adapters, opportunity modules, contacts, or outreach modules;
-- relationship intelligence cannot import network clients, collection adapters, or opportunity modules.
+- relationship intelligence cannot import network clients, collection adapters, or opportunity modules;
+- corporate graph cannot import network clients, source adapters, browser automation, `neo4j`, or `networkx`, and its domain cannot depend on FastAPI, SQLAlchemy, infrastructure implementations, or opportunity modules.
 
 ## Source and data safety
 
@@ -341,7 +365,9 @@ The platform does not:
 - treat syndicated copies of one report as independent corroboration;
 - turn a public/media material-change report directly into an official confirmation, service need, opportunity, contact target, or outreach action;
 - treat a marketing claim as contract evidence or an active incumbent;
-- treat a historical or inferred organization relationship as a verified current relationship.
+- treat a historical or inferred organization relationship as a verified current relationship;
+- treat shared names, aliases, domains, or identifiers as automatic entity merges;
+- treat graph membership or a resolution candidate as an upgrade in evidence strength.
 
 LinkedIn collection remains disabled unless official API scopes, a licensed product, or reviewed written authorization covers the exact method and purpose. Discord collection requires an administrator-installed connector, authorized export, or equivalent consented integration. BrixHub remains quarantined.
 
@@ -430,4 +456,6 @@ npm run build
 - [`docs/lots/LOT_18_VALIDATION_REPORT.md`](docs/lots/LOT_18_VALIDATION_REPORT.md)
 - [`docs/lots/LOT_19_RELATIONSHIP_INTELLIGENCE.md`](docs/lots/LOT_19_RELATIONSHIP_INTELLIGENCE.md)
 - [`docs/lots/LOT_19_VALIDATION_REPORT.md`](docs/lots/LOT_19_VALIDATION_REPORT.md)
+- [`docs/lots/LOT_20_ENTITY_RESOLUTION_CORPORATE_GRAPH.md`](docs/lots/LOT_20_ENTITY_RESOLUTION_CORPORATE_GRAPH.md)
+- [`docs/lots/LOT_20_VALIDATION_REPORT.md`](docs/lots/LOT_20_VALIDATION_REPORT.md)
 - [`SECURITY.md`](SECURITY.md)

@@ -105,6 +105,13 @@ def test_database_metadata_contains_foundation_tables() -> None:
         "corporate_change_claim_snapshots",
         "corporate_change_events",
         "corporate_change_service_mappings",
+        "corporate_graph_edge_snapshots",
+        "corporate_graph_edges",
+        "corporate_graph_node_snapshots",
+        "corporate_graph_nodes",
+        "entity_resolution_bindings",
+        "entity_resolution_candidates",
+        "entity_resolution_decisions",
         "evidence",
         "incident_claim_snapshots",
         "incidents",
@@ -204,6 +211,13 @@ def test_metadata_creates_on_sqlite() -> None:
     assert get_metadata().tables["business_relationships"].foreign_keys
     assert get_metadata().tables["relationship_evidence_snapshots"].foreign_keys
     assert get_metadata().tables["relationship_contexts"].foreign_keys
+    assert get_metadata().tables["corporate_graph_nodes"].foreign_keys
+    assert get_metadata().tables["corporate_graph_node_snapshots"].foreign_keys
+    assert get_metadata().tables["corporate_graph_edges"].foreign_keys
+    assert get_metadata().tables["corporate_graph_edge_snapshots"].foreign_keys
+    assert get_metadata().tables["entity_resolution_candidates"].foreign_keys
+    assert get_metadata().tables["entity_resolution_decisions"].foreign_keys
+    assert get_metadata().tables["entity_resolution_bindings"].foreign_keys
 
 
 def test_database_url_is_required() -> None:

@@ -1,0 +1,269 @@
+.graph-warning,
+.graph-as-of {
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 14px 16px;
+  background: var(--panel);
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.graph-heading {
+  align-items: flex-start;
+  gap: 24px;
+}
+
+.graph-filters {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(150px, 1fr));
+  gap: 10px;
+  width: min(620px, 100%);
+}
+
+.graph-filters label,
+.resolution-decision-form label {
+  display: grid;
+  gap: 5px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.graph-filters input,
+.graph-filters select,
+.resolution-decision-form input,
+.resolution-decision-form textarea {
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  padding: 9px 10px;
+  background: var(--background);
+  color: var(--foreground);
+}
+
+.graph-filters button {
+  align-self: end;
+  min-height: 38px;
+}
+
+.table-wrap {
+  overflow-x: auto;
+}
+
+.graph-table {
+  width: 100%;
+  min-width: 950px;
+  border-collapse: collapse;
+}
+
+.graph-table th,
+.graph-table td {
+  padding: 14px 12px;
+  border-top: 1px solid var(--border);
+  text-align: left;
+  vertical-align: top;
+}
+
+.graph-table th {
+  color: var(--muted);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.graph-table td > span,
+.graph-table td > code {
+  display: block;
+  margin-top: 6px;
+}
+
+.graph-table code,
+.graph-detail-stack code,
+.resolution-card code {
+  overflow-wrap: anywhere;
+  font-size: 11px;
+}
+
+.graph-subline {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.graph-badge {
+  display: inline-flex;
+  width: fit-content;
+  margin-right: 6px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 3px 8px;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.graph-badge-current,
+.graph-badge-confirmed {
+  background: var(--panel);
+}
+
+.graph-badge-review,
+.graph-badge-history {
+  color: var(--muted);
+}
+
+.graph-badge-rejected {
+  text-decoration: line-through;
+  color: var(--muted);
+}
+
+.resolution-list,
+.graph-detail-stack,
+.graph-edge-list,
+.graph-history-list {
+  display: grid;
+  gap: 14px;
+}
+
+.resolution-card,
+.graph-edge-list article,
+.graph-history-list article {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 14px;
+}
+
+.resolution-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(280px, 1fr) auto;
+  align-items: center;
+  gap: 18px;
+}
+
+.resolution-card h3,
+.graph-history-list strong {
+  margin: 8px 0 4px;
+}
+
+.resolution-card p,
+.graph-edge-list p,
+.graph-history-list p {
+  color: var(--muted);
+}
+
+.resolution-card dl,
+.graph-node-overview dl,
+.resolution-overview dl {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin: 0;
+}
+
+.resolution-card dl div,
+.graph-node-overview dl div,
+.resolution-overview dl div {
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  padding: 9px;
+}
+
+.resolution-card dt,
+.graph-node-overview dt,
+.resolution-overview dt {
+  color: var(--muted);
+  font-size: 11px;
+  text-transform: uppercase;
+}
+
+.resolution-card dd,
+.graph-node-overview dd,
+.resolution-overview dd {
+  margin: 5px 0 0;
+  overflow-wrap: anywhere;
+}
+
+.graph-review-link {
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.graph-node-overview,
+.resolution-overview {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(320px, 1fr);
+  gap: 20px;
+}
+
+.graph-edge-state {
+  margin-bottom: 8px;
+}
+
+.blast-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(135px, 1fr));
+  gap: 10px;
+}
+
+.blast-grid div {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 11px;
+}
+
+.blast-grid span,
+.blast-grid strong {
+  display: block;
+}
+
+.blast-grid span {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.blast-grid strong {
+  margin-top: 5px;
+  font-size: 20px;
+}
+
+.blast-fingerprint {
+  display: block;
+  margin-top: 14px;
+  overflow-wrap: anywhere;
+  color: var(--muted);
+}
+
+.resolution-decision-form {
+  display: grid;
+  gap: 12px;
+  max-width: 720px;
+}
+
+.resolution-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.resolution-actions .secondary,
+.resolution-actions .danger {
+  background: var(--panel);
+  color: var(--foreground);
+  border: 1px solid var(--border);
+}
+
+@media (max-width: 1000px) {
+  .graph-heading,
+  .resolution-card,
+  .graph-node-overview,
+  .resolution-overview {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .graph-filters,
+  .resolution-card dl,
+  .graph-node-overview dl,
+  .resolution-overview dl {
+    grid-template-columns: 1fr;
+  }
+}

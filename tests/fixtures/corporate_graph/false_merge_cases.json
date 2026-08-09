@@ -1,0 +1,34 @@
+[
+  {
+    "name": "homonym_same_normalized_name",
+    "node_key": "brand:benchmark-acme",
+    "node_type": "brand",
+    "display_name": "Acme Labs",
+    "organizations": [
+      {"name": "Acme Labs", "website": "https://acme-one.example", "registration_ids": []},
+      {"name": "ACME LABS", "website": "https://acme-two.example", "registration_ids": []}
+    ],
+    "expected_candidates": 2
+  },
+  {
+    "name": "reused_domain",
+    "node_key": "domain:shared.example",
+    "node_type": "domain",
+    "display_name": "shared.example",
+    "organizations": [
+      {"name": "Former Owner", "website": "https://shared.example", "registration_ids": []},
+      {"name": "Current Owner", "website": "https://www.shared.example/about", "registration_ids": []}
+    ],
+    "expected_candidates": 2
+  },
+  {
+    "name": "similar_name_is_not_exact_name",
+    "node_key": "brand:acme-holding",
+    "node_type": "brand",
+    "display_name": "Acme Holding",
+    "organizations": [
+      {"name": "Acme Holdings", "website": "https://holdings.example", "registration_ids": []}
+    ],
+    "expected_candidates": 0
+  }
+]

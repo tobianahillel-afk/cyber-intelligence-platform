@@ -8,6 +8,7 @@ const navigation = [
   { label: "Opportunities", href: "/" },
   { label: "Contracts", href: "/contracts" },
   { label: "Relationships", href: "/relationships" },
+  { label: "Corporate Graph", href: "/graph" },
   { label: "Organizations", href: null },
   { label: "Research", href: "/research" },
   { label: "Vulnerabilities", href: "/vulnerabilities" },
