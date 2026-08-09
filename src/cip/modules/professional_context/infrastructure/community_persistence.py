@@ -43,6 +43,9 @@ def persist_community_context(
                 ProfessionalCommunityRecord.context_key == context_key
             )
         )
+        if record is not None and record.deleted:
+            records.append(record)
+            continue
         if record is None:
             record = _new_record(reconcile_community_context(incoming, now=current), current)
             session.add(record)
@@ -53,7 +56,10 @@ def persist_community_context(
             community_snapshot(item)
             for item in session.scalars(
                 select(ProfessionalCommunitySnapshotRecord)
-                .where(ProfessionalCommunitySnapshotRecord.context_id == record.id)
+                .where(
+                    ProfessionalCommunitySnapshotRecord.context_id == record.id,
+                    ProfessionalCommunitySnapshotRecord.deleted.is_(False),
+                )
                 .order_by(ProfessionalCommunitySnapshotRecord.observed_at)
             )
         )
