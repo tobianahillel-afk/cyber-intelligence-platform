@@ -39,6 +39,7 @@ from cip.modules.research_orchestration.infrastructure.plan_persistence import (
     persist_research_plan,
 )
 from cip.modules.research_orchestration.infrastructure.result_persistence import (
+    ResearchResultCapture,
     record_research_result,
 )
 from cip.modules.research_orchestration.infrastructure.step_persistence import (
@@ -284,10 +285,7 @@ def _persist_plan(
 
 
 def _result(session: Session, attempt_id: UUID) -> ResearchResultRecord:
-    return record_research_result(
-        session,
-        PLAN_ID,
-        "step-1",
+    capture = ResearchResultCapture(
         attempt_id=attempt_id,
         result_type="evidence_reference",
         evidence_reference="evidence:public-resource:42",
@@ -295,6 +293,12 @@ def _result(session: Session, attempt_id: UUID) -> ResearchResultRecord:
         source_id="search-catalog",
         summary="Bounded analyst summary",
         recorded_by="researcher@example.test",
+    )
+    return record_research_result(
+        session,
+        PLAN_ID,
+        "step-1",
+        capture,
         now=NOW + timedelta(minutes=4),
     )
 
