@@ -75,15 +75,17 @@ def test_runtime_syncs_sources_and_schedules_idempotently(tmp_path: Path) -> Non
     get_metadata().create_all(create_database_engine(settings.database_url))
 
     runtime = build_collection_runtime(settings)
-    assert run_scheduler_once(runtime, now=NOW) == 7
+    assert run_scheduler_once(runtime, now=NOW) == 9
     assert run_scheduler_once(runtime, now=NOW) == 0
 
     expected_sources = (
         "boamp",
         "cisa-kev",
         "decp",
+        "github-global-advisories",
         "greenhouse-job-board",
         "lever-job-board",
+        "nvd-vulnerabilities",
         "smartrecruiters-job-board",
         "ted-search",
     )
@@ -101,8 +103,10 @@ def test_runtime_syncs_sources_and_schedules_idempotently(tmp_path: Path) -> Non
         ("boamp", "boamp-explore-api"),
         ("cisa-kev", "cisa-kev-feed"),
         ("decp", "decp-explore-api"),
+        ("github-global-advisories", "github-global-advisories"),
         ("greenhouse-job-board", "greenhouse-job-board-api"),
         ("lever-job-board", "lever-postings-api"),
+        ("nvd-vulnerabilities", "nvd-cve-api"),
         ("smartrecruiters-job-board", "smartrecruiters-posting-api"),
         ("ted-search", "ted-search-api"),
     }
