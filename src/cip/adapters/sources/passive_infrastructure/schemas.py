@@ -44,7 +44,7 @@ class CertSpotterCertificate(BaseModel):
     model_config = ConfigDict(extra="ignore")
 
     id: str = Field(min_length=1, max_length=500)
-    tbs_sha256: str = Field(min_length=1, max_length=512)
+    tbs_sha256: str = Field(pattern=r"^[0-9A-Fa-f]{64}$")
     dns_names: list[DnsName] = Field(default_factory=list, max_length=1_000)
     not_before: datetime | None = None
     not_after: datetime | None = None
