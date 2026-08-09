@@ -1,0 +1,78 @@
+version: 1
+reviewed_at: 2026-08-09
+
+sources:
+  - id: brave-search-api
+    name: Brave Search API
+    base_url: https://api.search.brave.com/res/v1/web/search
+    status: enabled
+    source_type: search_provider
+    owner: Brave Software
+    terms_url: https://brave.com/search/api/terms-of-service/
+    licence: Brave Search API subscription terms
+    allowed_data_categories: [public_result_metadata]
+    prohibited_data_categories: &prohibited
+      - credential
+      - victim_file
+      - private_communication
+      - private_personal_data
+      - restricted_content
+    rate_limit_per_minute: 10
+    retention_days: 90
+    attribution_required: true
+    raw_content_storage: false
+    human_review_required: false
+    authorization:
+      status: approved
+      document_reference: docs/source_activation/SA_02_PROVIDER_AUTHORIZATION.md#brave-search-api
+      reviewed_at: "2026-08-09T16:45:00+00:00"
+      expires_at: null
+      approved_hosts: [api.search.brave.com]
+      approved_path_prefixes: [/res/v1/web/search]
+      approved_purposes: [corporate-public-footprint]
+      automated_collection_allowed: true
+      raw_storage_allowed: false
+    economics:
+      commercial_value: high
+      monthly_cost: 0
+      implementation_cost: medium
+      maintenance_cost: medium
+      expected_stability: medium
+    notes: >-
+      Execution additionally requires connected Provider Onboarding with a reviewed subscription
+      whose storage/use rights permit the bounded normalized result metadata retained by CIP.
+
+  - id: internet-archive-cdx
+    name: Internet Archive CDX discovery
+    base_url: https://web.archive.org/cdx/search/cdx
+    status: enabled
+    source_type: api
+    owner: Internet Archive
+    terms_url: https://archive.org/about/terms.php
+    licence: Provider terms and source-specific archived-content rights
+    allowed_data_categories: [official_document_discovery]
+    prohibited_data_categories: *prohibited
+    rate_limit_per_minute: 6
+    retention_days: 365
+    attribution_required: true
+    raw_content_storage: false
+    human_review_required: false
+    authorization:
+      status: approved
+      document_reference: docs/source_activation/SA_02_PROVIDER_AUTHORIZATION.md#internet-archive-cdx
+      reviewed_at: "2026-08-09T16:45:00+00:00"
+      expires_at: null
+      approved_hosts: [web.archive.org]
+      approved_path_prefixes: [/cdx/search/cdx]
+      approved_purposes: [archive-discovery]
+      automated_collection_allowed: true
+      raw_storage_allowed: false
+    economics:
+      commercial_value: medium
+      monthly_cost: 0
+      implementation_cost: low
+      maintenance_cost: medium
+      expected_stability: medium
+    notes: >-
+      CDX index metadata only. Archived body retrieval is a separate acquisition path and archive
+      timestamps never imply current conditions.
