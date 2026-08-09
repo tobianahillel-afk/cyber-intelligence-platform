@@ -31,7 +31,10 @@ class ProfessionalServiceRelevance:
         object.__setattr__(self, "confidence", confidence(self.confidence))
         object.__setattr__(self, "created_at", aware_time(self.created_at, "created_at"))
         claim_keys = tuple(
-            dict.fromkeys(require_text(value, "source_claim_key", 500) for value in self.source_claim_keys)
+            dict.fromkeys(
+                require_text(value, "source_claim_key", 500)
+                for value in self.source_claim_keys
+            )
         )
         if not claim_keys:
             raise ValueError("service relevance requires source claim keys")
