@@ -12,7 +12,7 @@ class SecRecentFilings(BaseModel):
 
     accessionNumber: list[str] = Field(max_length=_MAX_RECENT_FILINGS)
     filingDate: list[date] = Field(max_length=_MAX_RECENT_FILINGS)
-    reportDate: list[date] = Field(max_length=_MAX_RECENT_FILINGS)
+    reportDate: list[str] = Field(max_length=_MAX_RECENT_FILINGS)
     acceptanceDateTime: list[datetime] = Field(max_length=_MAX_RECENT_FILINGS)
     form: list[str] = Field(max_length=_MAX_RECENT_FILINGS)
     items: list[str] = Field(max_length=_MAX_RECENT_FILINGS)
@@ -53,5 +53,4 @@ class SecCyberFilingRecord(BaseModel):
     form: str = Field(min_length=1, max_length=40)
     item: str = Field(min_length=1, max_length=100)
     filing_date: date
-    report_date: date
     accepted_at: datetime
