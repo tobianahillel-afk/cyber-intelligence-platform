@@ -20,9 +20,9 @@ from cip.modules.research_orchestration.infrastructure.models import (
     ResearchStepRecord,
 )
 from cip.modules.research_orchestration.infrastructure.payloads import (
+    runtime_payload,
     step_decision_key,
     step_definition_key,
-    runtime_payload,
     usage_payload,
 )
 from cip.shared.kernel.time import require_aware_utc
