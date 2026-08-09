@@ -17,12 +17,16 @@ from cip.modules.conditional_integrations.domain import (
 from cip.modules.conditional_integrations.infrastructure.control_persistence import (
     get_or_create_runtime_control,
 )
-from cip.modules.conditional_integrations.infrastructure.hydration import dossier_from_record
+from cip.modules.conditional_integrations.infrastructure.hydration import (
+    dossier_from_record,
+)
 from cip.modules.conditional_integrations.infrastructure.models import (
     ConditionalExecutionDecisionRecord,
     ConditionalProviderApprovalRecord,
 )
-from cip.modules.conditional_integrations.infrastructure.payloads import execution_decision_key
+from cip.modules.conditional_integrations.infrastructure.payloads import (
+    execution_decision_key,
+)
 from cip.shared.kernel.time import require_aware_utc
 
 
