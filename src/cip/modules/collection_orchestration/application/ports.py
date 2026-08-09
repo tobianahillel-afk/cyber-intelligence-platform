@@ -7,6 +7,7 @@ from typing import Protocol
 from uuid import UUID
 
 from cip.modules.evidence.domain.entities import Evidence
+from cip.modules.incident_intelligence.domain.models import IncidentClaimSnapshot
 from cip.modules.opportunities.domain.entities import CommercialSignal
 from cip.modules.organizations.application.identity import IdentityProjection
 from cip.modules.organizations.domain.entities import Organization
@@ -15,6 +16,7 @@ from cip.modules.procurement_history.domain.models import ProcurementHistoryProj
 from cip.modules.public_footprint.domain.models import PublicFootprintProjection
 from cip.modules.raw_observations.domain.entities import RawObservation
 from cip.modules.source_governance.domain.models import DataCategory
+from cip.modules.threat_telemetry.domain.models import IndicatorSnapshot
 from cip.modules.vulnerability_knowledge.domain.models import VulnerabilitySnapshot
 
 
@@ -50,6 +52,8 @@ class AdapterCollectionBatch:
     public_footprint_projections: tuple[PublicFootprintProjection, ...] = ()
     vulnerability_snapshots: tuple[VulnerabilitySnapshot, ...] = ()
     passive_exposure_projections: tuple[PassiveObservationSnapshot, ...] = ()
+    incident_claims: tuple[IncidentClaimSnapshot, ...] = ()
+    threat_indicator_snapshots: tuple[IndicatorSnapshot, ...] = ()
     quota_remaining: int | None = None
     request_cost: float = 0.0
 
