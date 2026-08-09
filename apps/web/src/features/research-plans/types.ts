@@ -91,6 +91,7 @@ export interface ResearchPlanDecision {
 }
 
 export interface ResearchStepDecision {
+  step_id: string;
   decision_key: string;
   allowed: boolean;
   next_state: string;
