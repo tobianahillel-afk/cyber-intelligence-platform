@@ -206,6 +206,12 @@ def test_certspotter_maps_scoped_wildcard_certificate_without_exposure_claim() -
     assert request.headers["Authorization"] == "Bearer test-api-token"
     assert len(batch.observations) == 1
     assert len(batch.passive_exposure_projections) == 1
+    assert batch.checkpoint_payload["after_by_target"] == {
+        "example-target": "out-of-scope"
+    }
+    raw = batch.observations[0]
+    assert raw.payload_reference is None
+    assert "test-api-token" not in raw.source_url
     snapshot = batch.passive_exposure_projections[0]
     assert snapshot.source_record_key == "issuance-1"
     assert snapshot.asset.kind is PassiveAssetKind.CERTIFICATE
@@ -215,7 +221,47 @@ def test_certspotter_maps_scoped_wildcard_certificate_without_exposure_claim() -
     assert snapshot.organization_link.status is OrganizationLinkStatus.REVIEW_REQUIRED
     assert snapshot.exposure_verified is False
     assert snapshot.can_support_exposure_conclusion is False
-    assert "test-api-token" not in batch.observations[0].payload_hash_sha256
+
+
+def test_certspotter_reuses_provider_after_cursor_on_next_collection() -> None:
+    requests: list[httpx.Request] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        requests.append(request)
+        if len(requests) == 1:
+            return _json_response(
+                [
+                    {
+                        "id": "cursor-1",
+                        "tbs_sha256": "d" * 64,
+                        "dns_names": ["example.com"],
+                        "not_before": "2026-08-01T00:00:00Z",
+                        "not_after": "2026-10-01T00:00:00Z",
+                    }
+                ]
+            )
+        return _json_response([])
+
+    adapter = CertSpotterAdapter(
+        _entry("certspotter-ct"),
+        (_target(),),
+        token_provider=lambda: "test-api-token",
+        transport=httpx.MockTransport(handler),
+    )
+    first = _collect(adapter)
+    second = adapter.collect(
+        collection_job_id=JOB_ID,
+        checkpoint_payload=first.checkpoint_payload,
+        collected_at=NOW + timedelta(minutes=5),
+        retention_until=RETENTION,
+    )
+
+    assert "after" not in requests[0].url.params
+    assert requests[1].url.params["after"] == "cursor-1"
+    assert second.not_modified is True
+    assert second.checkpoint_payload["after_by_target"] == {
+        "example-target": "cursor-1"
+    }
 
 
 def test_certspotter_marks_expired_issuance_inactive() -> None:
