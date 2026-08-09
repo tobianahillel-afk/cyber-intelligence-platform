@@ -18,7 +18,11 @@ _SOURCE_RECORD_PREFIX = "source-record:"
 def validate_research_result_capture(
     session: Session,
     capture: ResearchResultCapture,
+    *,
+    expected_source_id: str,
 ) -> EvidenceRecord:
+    if capture.source_id != expected_source_id:
+        raise ValueError("research capture source does not match step source")
     evidence = _evidence(session, capture.evidence_reference)
     if evidence.source_id != capture.source_id:
         raise ValueError("research evidence source does not match capture source")
