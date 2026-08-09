@@ -117,8 +117,6 @@ class ResearchUsage:
     def __post_init__(self) -> None:
         if self.completed_steps < 0 or self.automated_steps < 0:
             raise ValueError("step counters cannot be negative")
-        if self.automated_steps > self.completed_steps:
-            raise ValueError("automated_steps cannot exceed completed_steps")
         if self.cost_used < 0:
             raise ValueError("cost_used cannot be negative")
 
