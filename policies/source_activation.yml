@@ -1,0 +1,383 @@
+version: 1
+
+# Activation truth layer. This file never grants network authorization.
+# `active` does not mean fully integrated unless every mandatory stage is proven.
+sources:
+  # Existing executable runtime sources. Live-network validation remains a separate gate.
+  - source_id: cisa-kev
+    display_name: CISA Known Exploited Vulnerabilities
+    category: vulnerability_intelligence
+    disposition: active
+    activation_wave: legacy-live-validation
+    stages: [catalogued, reviewed, mapped, adapter_present, authorized, executable, scheduled]
+
+  - source_id: ted-search
+    display_name: TED Search API
+    category: procurement
+    disposition: active
+    activation_wave: legacy-live-validation
+    stages: [catalogued, reviewed, mapped, adapter_present, authorized, executable, scheduled]
+
+  - source_id: boamp
+    display_name: BOAMP Explore API
+    category: procurement
+    disposition: active
+    activation_wave: legacy-live-validation
+    stages: [catalogued, reviewed, mapped, adapter_present, authorized, executable, scheduled]
+
+  - source_id: decp
+    display_name: DECP Marchés valides
+    category: procurement
+    disposition: active
+    activation_wave: legacy-live-validation
+    stages: [catalogued, reviewed, mapped, adapter_present, authorized, executable, scheduled]
+
+  - source_id: greenhouse-job-board
+    display_name: Greenhouse Job Board API
+    category: public_hiring
+    disposition: active
+    activation_wave: legacy-live-validation
+    stages: [catalogued, reviewed, mapped, adapter_present, authorized, executable, scheduled]
+
+  - source_id: lever-job-board
+    display_name: Lever Postings API
+    category: public_hiring
+    disposition: active
+    activation_wave: legacy-live-validation
+    stages: [catalogued, reviewed, mapped, adapter_present, authorized, executable, scheduled]
+
+  - source_id: smartrecruiters-job-board
+    display_name: SmartRecruiters Posting API
+    category: public_hiring
+    disposition: active
+    activation_wave: legacy-live-validation
+    stages: [catalogued, reviewed, mapped, adapter_present, authorized, executable, scheduled]
+
+  - source_id: recherche-entreprises
+    display_name: API Recherche d'entreprises
+    category: organization_identity
+    disposition: planned
+    activation_wave: identity-target-activation
+    requires_schedule: false
+    stages: [catalogued, reviewed, mapped, adapter_present]
+
+  - source_id: gleif
+    display_name: GLEIF LEI API
+    category: organization_identity
+    disposition: planned
+    activation_wave: identity-target-activation
+    requires_schedule: false
+    stages: [catalogued, reviewed, mapped, adapter_present]
+
+  - source_id: bodacc-identity
+    display_name: BODACC identity claims
+    category: organization_identity
+    disposition: planned
+    activation_wave: identity-target-activation
+    requires_schedule: false
+    stages: [catalogued, reviewed, mapped, adapter_present]
+
+  - source_id: reference-synthetic
+    display_name: Synthetic reference adapter
+    category: test_reference
+    disposition: active
+    requires_schedule: false
+    stages: [catalogued, reviewed, mapped, adapter_present, authorized, executable, live_tested]
+
+  # Catalogue and Wave A.
+  - source_id: osint-framework-import
+    display_name: OSINT Framework imported candidates
+    category: catalog_candidate
+    disposition: planned
+    activation_wave: SA-00
+    requires_schedule: false
+    stages: [catalogued, reviewed]
+
+  - source_id: public-web-example-fr-organization
+    display_name: Example public website candidate
+    category: corporate_public_footprint
+    disposition: planned
+    activation_wave: SA-02
+    stages: [catalogued, reviewed, mapped, adapter_present]
+
+  - source_id: cve-org-services
+    display_name: CVE Services
+    category: vulnerability_knowledge
+    disposition: planned
+    activation_wave: SA-01
+    requires_schedule: false
+    stages: [catalogued, reviewed, mapped]
+
+  - source_id: nvd-vulnerabilities
+    display_name: NVD CVE API 2.0
+    category: vulnerability_knowledge
+    disposition: planned
+    activation_wave: SA-01
+    stages: [catalogued, reviewed, mapped]
+
+  - source_id: first-epss
+    display_name: FIRST EPSS API
+    category: vulnerability_knowledge
+    disposition: planned
+    activation_wave: SA-01
+    requires_schedule: false
+    stages: [catalogued, reviewed, mapped]
+
+  - source_id: osv-api
+    display_name: OSV API
+    category: vulnerability_knowledge
+    disposition: planned
+    activation_wave: SA-01
+    requires_schedule: false
+    stages: [catalogued, reviewed, mapped]
+
+  - source_id: github-global-advisories
+    display_name: GitHub Global Security Advisories
+    category: vulnerability_knowledge
+    disposition: planned
+    activation_wave: SA-01
+    stages: [catalogued, reviewed, mapped]
+
+  - source_id: circl-vulnerability-lookup
+    display_name: CIRCL Vulnerability-Lookup
+    category: vulnerability_knowledge
+    disposition: planned
+    activation_wave: SA-01
+    requires_schedule: false
+    stages: [catalogued, reviewed, mapped]
+
+  # Incident intelligence candidates delivered by Lot 14; activation remains future work.
+  - source_id: sec-cyber-disclosures
+    display_name: SEC Cybersecurity Disclosures
+    category: live_incidents
+    disposition: planned
+    activation_wave: SA-04
+    stages: [catalogued, reviewed, mapped]
+
+  - source_id: official-company-incident-disclosures
+    display_name: Public Company Incident Disclosures
+    category: live_incidents
+    disposition: planned
+    activation_wave: SA-04
+    stages: [catalogued, reviewed, mapped]
+
+  - source_id: regulator-cert-incident-notices
+    display_name: Regulator and CERT Incident Notices
+    category: live_incidents
+    disposition: planned
+    activation_wave: SA-04
+    stages: [catalogued, reviewed, mapped]
+
+  - source_id: licensed-incident-reporting
+    display_name: Licensed Incident Reporting
+    category: live_incidents
+    disposition: planned
+    activation_wave: SA-04
+    stages: [catalogued, reviewed, mapped]
+
+  - source_id: licensed-ransomware-metadata
+    display_name: Licensed Ransomware Claim Metadata
+    category: live_incidents
+    disposition: planned
+    activation_wave: SA-04
+    stages: [catalogued, reviewed, mapped]
+
+  # Defensive threat telemetry candidates delivered by Lot 15.
+  - source_id: licensed-stix-taxii
+    display_name: Licensed STIX/TAXII Threat Telemetry
+    category: threat_telemetry
+    disposition: planned
+    activation_wave: SA-04
+    stages: [catalogued, reviewed, mapped]
+
+  - source_id: licensed-phishing-metadata
+    display_name: Licensed Phishing Metadata
+    category: threat_telemetry
+    disposition: planned
+    activation_wave: SA-04
+    stages: [catalogued, reviewed, mapped]
+
+  - source_id: licensed-passive-dns
+    display_name: Licensed Passive DNS Metadata
+    category: threat_telemetry
+    disposition: planned
+    activation_wave: SA-03
+    stages: [catalogued, reviewed, mapped]
+
+  - source_id: licensed-certificate-telemetry
+    display_name: Licensed Certificate Telemetry
+    category: threat_telemetry
+    disposition: planned
+    activation_wave: SA-03
+    stages: [catalogued, reviewed, mapped]
+
+  - source_id: licensed-malware-metadata
+    display_name: Licensed Malware Metadata
+    category: threat_telemetry
+    disposition: planned
+    activation_wave: SA-04
+    stages: [catalogued, reviewed, mapped]
+
+  # Passive exposure candidates delivered by Lot 16.
+  - source_id: licensed-passive-exposure
+    display_name: Licensed Passive Exposure Metadata
+    category: passive_exposure
+    disposition: planned
+    activation_wave: SA-03
+    stages: [catalogued, reviewed, mapped]
+
+  - source_id: licensed-technographic-observations
+    display_name: Licensed Passive Technographic Observations
+    category: passive_exposure
+    disposition: planned
+    activation_wave: SA-03
+    stages: [catalogued, reviewed, mapped]
+
+  - source_id: licensed-cloud-asset-observations
+    display_name: Licensed Passive Cloud Asset Observations
+    category: passive_exposure
+    disposition: planned
+    activation_wave: SA-03
+    stages: [catalogued, reviewed, mapped]
+
+  # Advisory candidates delivered by Lot 17.
+  - source_id: official-vendor-psirt
+    display_name: Official Vendor PSIRT Advisories
+    category: vulnerability_advisory
+    disposition: planned
+    activation_wave: SA-04
+    stages: [catalogued, reviewed, mapped]
+
+  - source_id: official-linux-security-advisories
+    display_name: Official Linux Security Advisories
+    category: vulnerability_advisory
+    disposition: planned
+    activation_wave: SA-04
+    stages: [catalogued, reviewed, mapped]
+
+  - source_id: official-package-security-advisories
+    display_name: Official Package Security Advisories
+    category: vulnerability_advisory
+    disposition: planned
+    activation_wave: SA-04
+    stages: [catalogued, reviewed, mapped]
+
+  # Corporate-change candidates delivered by Lot 18.
+  - source_id: official-corporate-disclosures
+    display_name: Official Corporate Disclosures
+    category: corporate_change_intelligence
+    disposition: planned
+    activation_wave: SA-06
+    stages: [catalogued, reviewed, mapped]
+
+  - source_id: official-regulatory-change-notices
+    display_name: Official Regulatory Change Notices
+    category: corporate_change_intelligence
+    disposition: planned
+    activation_wave: SA-06
+    stages: [catalogued, reviewed, mapped]
+
+  - source_id: licensed-corporate-news-metadata
+    display_name: Licensed Corporate News Metadata
+    category: corporate_change_intelligence
+    disposition: planned
+    activation_wave: SA-06
+    stages: [catalogued, reviewed, mapped]
+
+  # Relationship candidates delivered by Lot 19.
+  - source_id: official-relationship-disclosures
+    display_name: Official Relationship Disclosures
+    category: relationship_intelligence
+    disposition: planned
+    activation_wave: SA-06
+    stages: [catalogued, reviewed, mapped]
+
+  - source_id: public-partner-directory-metadata
+    display_name: Public Partner Directory Metadata
+    category: relationship_intelligence
+    disposition: planned
+    activation_wave: SA-06
+    stages: [catalogued, reviewed, mapped]
+
+  - source_id: public-case-study-metadata
+    display_name: Public Case Study Metadata
+    category: relationship_intelligence
+    disposition: planned
+    activation_wave: SA-06
+    stages: [catalogued, reviewed, mapped]
+
+  - source_id: public-certificate-relationship-metadata
+    display_name: Public Certificate Relationship Metadata
+    category: relationship_intelligence
+    disposition: planned
+    activation_wave: SA-06
+    stages: [catalogued, reviewed, mapped]
+
+  # Conditional providers delivered by Lot 22.
+  - source_id: linkedin-official-api
+    display_name: LinkedIn Official API candidate
+    category: conditional_professional_context
+    disposition: blocked
+    activation_wave: SA-07
+    requires_schedule: false
+    reason: Runtime adapter and provider authorization are absent; only official or licensed access may reopen this entry.
+    stages: [catalogued, reviewed]
+
+  - source_id: discord-authorized-integration
+    display_name: Discord authorized integration candidate
+    category: conditional_community_context
+    disposition: blocked
+    activation_wave: SA-07
+    requires_schedule: false
+    reason: An administrator-installed connector or authorized export is required before a runtime adapter may execute.
+    stages: [catalogued, reviewed]
+
+  - source_id: premium-cti-licensed
+    display_name: Deployment-specific licensed premium CTI candidate
+    category: conditional_premium_cti
+    disposition: blocked
+    activation_wave: SA-07
+    requires_schedule: false
+    reason: A concrete licensed provider, contract-bound scopes and deployment authorization are required.
+    stages: [catalogued, reviewed]
+
+  - source_id: commercial-data-licensed
+    display_name: Deployment-specific licensed commercial dataset candidate
+    category: conditional_commercial_data
+    disposition: blocked
+    activation_wave: SA-07
+    requires_schedule: false
+    reason: A concrete licensed provider, approved fields, lawful purpose and deployment authorization are required.
+    stages: [catalogued, reviewed]
+
+  - source_id: brixhub
+    display_name: BrixHub candidate
+    category: conditional_candidate
+    disposition: blocked
+    activation_wave: SA-08
+    requires_schedule: false
+    reason: Provider access method, licence, permitted fields, retention and automation path require explicit review before an adapter can exist.
+    stages: [catalogued, reviewed]
+
+  # Additional source-activation candidates that are not yet Source Portfolio entries.
+  - source_id: brave-search-api
+    display_name: Brave Search API
+    category: public_search
+    disposition: planned
+    activation_wave: SA-02
+    stages: [catalogued, reviewed]
+
+  - source_id: internet-archive-cdx
+    display_name: Internet Archive CDX discovery
+    category: public_archive
+    disposition: planned
+    activation_wave: SA-02
+    stages: [catalogued, reviewed]
+
+  - source_id: sherlock-local
+    display_name: Sherlock username OSINT tool
+    category: local_osint_tool
+    disposition: planned
+    activation_wave: SA-05
+    requires_schedule: false
+    stages: [catalogued]
