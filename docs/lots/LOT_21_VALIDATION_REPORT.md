@@ -2,9 +2,9 @@
 
 ## Status
 
-`FUNCTIONAL_CANDIDATE_VALIDATED — FINAL RELEASE CI REQUIRED`
+`FINAL_RELEASE_EVIDENCE_RECORDED — EXACT REPORT SHA CI REQUIRED`
 
-The integrated functional candidate passed every standard backend and frontend gate. This release synchronization changes the commit SHA, so the functional result is supporting evidence only; the exact final release head must pass the same complete CI before merge.
+The integrated functional candidate and the synchronized `0.22.0` release head have both passed every standard backend and frontend gate. This report-only commit records that release-head evidence and therefore creates one new SHA. No code, version, roadmap, README, migration, API, or UI content changes in this commit. The exact report SHA must now pass the same standard CI once more before merge.
 
 ## Scope validated
 
@@ -40,7 +40,7 @@ Lot 21 introduces no active scanning, browser automation, authenticated social-p
 
 Migration: `20260809_0021_professional_context.py`.
 
-The persistence contract contains 12 Lot 21 tables spanning current projections, source lineage, service relevance and deletion audit. The functional CI validated PostgreSQL `upgrade head -> downgrade base -> upgrade head` through revision `0021`.
+The persistence contract contains 12 Lot 21 tables spanning current projections, source lineage, service relevance and deletion audit. CI validated PostgreSQL `upgrade head -> downgrade base -> upgrade head` through revision `0021`.
 
 A valid professional-person erasure may tombstone raw identifying values in current projections and retained source-history rows while preserving pseudonymous technical lineage and the HMAC suppression audit. Deleted current records reject ordinary provider replay so erased values cannot be accidentally resurrected.
 
@@ -64,16 +64,37 @@ GitHub Actions run: `31308364769` (CI #1182).
 
 Backend diagnostic artifact ID: `9036672075`.
 
-## Final release gate
+## Synchronized release-head evidence
 
-The release commit must now prove, on one exact SHA after all version and documentation changes:
+Exact synchronized release SHA: `3fb687a03a164304f6cdcc04abd0f807d93a718d`.
 
-1. package and API version `0.22.0` are consistent;
-2. README and the delivery roadmap identify lots `00–21` as implemented/validated and Lot 22 as next;
-3. every standard backend and frontend CI gate passes again;
-4. aggregate branch-aware coverage remains at or above 90%;
-5. zero unresolved review threads remain;
-6. PR #58 is marked ready only after the final exact-SHA CI is green;
-7. squash merge uses the exact validated head SHA.
+GitHub Actions run: `31309088139` (CI #1190).
 
-No later commit may be added after the final validation without rerunning the complete release gate.
+- package build/install identifies `cyber-intelligence-platform==0.22.0`;
+- `python -m pip check`: green;
+- `pip-audit --skip-editable`: green, no known vulnerabilities;
+- Ruff: green;
+- strict Mypy: `484` source files, no issues;
+- architecture/release contracts: `29 passed in 6.77s`;
+- PostgreSQL `upgrade head -> downgrade base -> upgrade head` through `0021`: green;
+- complete pytest suite: `917 passed, 1 warning in 88.88s`;
+- aggregate branch-aware coverage: `90.37%` (`22580` statements, `4680` branches);
+- `npm audit --audit-level=high`: green;
+- TypeScript typecheck: green;
+- Next.js production build: green.
+
+Backend diagnostic artifact ID: `9036864675`.
+
+README and `docs/PROJECT_DELIVERY_PLAN.md` on that release head identify version `0.22.0`, lots `00–21` as implemented/validated, and Lot 22 as the next locked lot.
+
+## Exact report-SHA gate
+
+This report-only evidence commit must now prove, on one final exact SHA:
+
+1. every standard backend and frontend CI gate passes again;
+2. aggregate branch-aware coverage remains at or above 90%;
+3. zero unresolved review threads and no blocking review remain;
+4. PR #58 is marked ready only after that exact-SHA CI is green;
+5. squash merge uses that exact validated head SHA.
+
+No later commit may be added after this validation without rerunning the complete release gate.
