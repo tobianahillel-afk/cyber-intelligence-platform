@@ -1,8 +1,14 @@
+from cip.modules.conditional_integrations.domain.control import (
+    ProviderControlDecision,
+    ProviderRuntimeControl,
+    apply_control_decision,
+)
 from cip.modules.conditional_integrations.domain.enums import (
     ApprovalState,
     ConditionalAccessMethod,
     ConditionalBlockReason,
     ConditionalProviderKind,
+    ProviderControlAction,
     TermsReviewState,
 )
 from cip.modules.conditional_integrations.domain.evaluation import (
@@ -25,7 +31,11 @@ __all__ = [
     "ConditionalProviderKind",
     "ConditionalRuntimeDependencies",
     "ProviderApprovalDossier",
+    "ProviderControlAction",
+    "ProviderControlDecision",
+    "ProviderRuntimeControl",
     "TermsReviewState",
+    "apply_control_decision",
     "evaluate_conditional_execution",
     "provider_method_is_permitted",
 ]
