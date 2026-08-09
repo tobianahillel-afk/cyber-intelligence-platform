@@ -95,6 +95,7 @@ class Settings(BaseSettings):
     passive_infrastructure_target_registry_path: Path = Path(
         "policies/passive_infrastructure_targets.yml"
     )
+    sec_incident_target_registry_path: Path = Path("policies/sec_incident_targets.yml")
     retention_policy_path: Path = Path("policies/retention.yml")
     collection_schedule_path: Path = Path("policies/collection_schedules.yml")
     decp_collection_schedule_path: Path = Path("policies/collection_schedules.decp.yml")
@@ -110,6 +111,14 @@ class Settings(BaseSettings):
     passive_infrastructure_collection_schedule_path: Path = Path(
         "policies/collection_schedules.passive_infrastructure.yml"
     )
+    incident_collection_schedule_path: Path = Path(
+        "policies/collection_schedules.incidents.yml"
+    )
+    threat_telemetry_collection_schedule_path: Path = Path(
+        "policies/collection_schedules.threat_telemetry.yml"
+    )
+    sec_edgar_user_agent: str | None = Field(default=None, max_length=300)
+    phishtank_user_agent: str | None = Field(default=None, max_length=300)
     control_plane_token: str = Field(
         default="development-control-token",
         min_length=16,
