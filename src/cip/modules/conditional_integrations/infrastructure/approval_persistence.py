@@ -21,9 +21,13 @@ def persist_provider_approval(
     session: Session,
     dossier: ProviderApprovalDossier,
     *,
+    actor: str,
+    change_reason: str,
     now: datetime,
 ) -> ConditionalProviderApprovalRecord:
     current = require_aware_utc(now, field_name="now")
+    normalized_actor = _required_text(actor, "actor", 200)
+    normalized_reason = _required_text(change_reason, "change_reason", 1000)
     revision_key = dossier_revision_key(dossier)
     record = session.scalar(
         select(ConditionalProviderApprovalRecord).where(
@@ -37,7 +41,16 @@ def persist_provider_approval(
     elif record.provider_kind != dossier.provider_kind.value:
         raise ValueError("provider_kind cannot change for an existing source_id")
     if not _revision_exists(session, revision_key):
-        session.add(_new_revision_record(record, dossier, revision_key, current))
+        session.add(
+            _new_revision_record(
+                record,
+                dossier,
+                revision_key,
+                actor=normalized_actor,
+                change_reason=normalized_reason,
+                now=current,
+            )
+        )
     if record.current_revision_key != revision_key:
         _apply_dossier(record, dossier, revision_key, current)
     session.flush()
@@ -73,12 +86,17 @@ def _new_revision_record(
     approval: ConditionalProviderApprovalRecord,
     dossier: ProviderApprovalDossier,
     revision_key: str,
+    *,
+    actor: str,
+    change_reason: str,
     now: datetime,
 ) -> ConditionalProviderApprovalRevisionRecord:
     return ConditionalProviderApprovalRevisionRecord(
         id=uuid4(),
         approval_id=approval.id,
         revision_key=revision_key,
+        actor=actor,
+        change_reason=change_reason,
         created_at=now,
         **_record_values(dossier),
     )
@@ -121,3 +139,12 @@ def _record_values(dossier: ProviderApprovalDossier) -> dict[str, object]:
         "revoked_at": dossier.revoked_at,
         "paused_reason": dossier.paused_reason,
     }
+
+
+def _required_text(value: str, field_name: str, maximum: int) -> str:
+    normalized = value.strip()
+    if not normalized:
+        raise ValueError(f"{field_name} is required")
+    if len(normalized) > maximum:
+        raise ValueError(f"{field_name} cannot exceed {maximum} characters")
+    return normalized
