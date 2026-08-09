@@ -3,6 +3,7 @@ from __future__ import annotations
 import hashlib
 import json
 from collections.abc import Mapping
+from datetime import datetime
 
 from cip.modules.conditional_integrations.domain import (
     ConditionalExecutionDecision,
@@ -83,6 +84,7 @@ def execution_decision_key(
             "onboarding_state": dependencies.onboarding_state.value,
             "source_policy_allowed": dependencies.source_policy_allowed,
             "adapter_capability_present": dependencies.adapter_capability_present,
+            "provider_paused": dependencies.provider_paused,
             "kill_switch_active": dependencies.kill_switch_active,
             "quota_remaining": dependencies.quota_remaining,
             "monthly_cost_used": dependencies.monthly_cost_used,
@@ -94,7 +96,7 @@ def execution_decision_key(
     )
 
 
-def _optional_time(value) -> str | None:
+def _optional_time(value: datetime | None) -> str | None:
     return value.isoformat() if value is not None else None
 
 
