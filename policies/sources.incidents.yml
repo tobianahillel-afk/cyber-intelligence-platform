@@ -1,15 +1,15 @@
 version: 1
-reviewed_at: 2026-08-06
+reviewed_at: 2026-08-09
 
 sources:
   - id: sec-cyber-disclosures
     name: SEC public cybersecurity incident disclosures
     base_url: https://data.sec.gov/submissions/
-    status: draft
+    status: enabled
     source_type: api
     owner: U.S. Securities and Exchange Commission
     terms_url: https://www.sec.gov/about/privacy-information
-    licence: SEC public data policy
+    licence: SEC public data and fair-access policy
     allowed_data_categories: &allowed [public_incident_metadata]
     prohibited_data_categories: &prohibited
       - credential
@@ -21,26 +21,27 @@ sources:
     retention_days: 3650
     attribution_required: true
     raw_content_storage: false
-    human_review_required: true
-    authorization: &missing_authorization
-      status: missing
-      document_reference: null
-      reviewed_at: null
+    human_review_required: false
+    authorization:
+      status: approved
+      document_reference: docs/source_activation/SA_04_PROVIDER_AUTHORIZATION.md#sec-edgar-cybersecurity-disclosures
+      reviewed_at: "2026-08-09T23:20:00+00:00"
       expires_at: null
-      approved_hosts: []
-      approved_path_prefixes: []
-      approved_purposes: []
-      automated_collection_allowed: false
+      approved_hosts: [data.sec.gov]
+      approved_path_prefixes: [/submissions/]
+      approved_purposes: [incident-intelligence]
+      automated_collection_allowed: true
       raw_storage_allowed: false
     economics: &public_economics
       commercial_value: high
       monthly_cost: 0
       implementation_cost: medium
       maintenance_cost: medium
-      expected_stability: medium
+      expected_stability: high
     notes: >-
-      Public filing mapping is planned, but no issuer scope, accession cursor,
-      user-agent policy, quota, or schedule is authorized by this catalog entry.
+      Targeted submissions metadata only for explicitly enabled CIKs. Runtime requires
+      a descriptive deployment User-Agent. SA-04 filters non-amended Item 1.05 forms
+      and does not download filing narratives or enumerate the global issuer corpus.
 
   - id: official-company-incident-disclosures
     name: Authorized public company incident disclosures
@@ -57,7 +58,16 @@ sources:
     attribution_required: true
     raw_content_storage: false
     human_review_required: true
-    authorization: *missing_authorization
+    authorization: &missing_authorization
+      status: missing
+      document_reference: null
+      reviewed_at: null
+      expires_at: null
+      approved_hosts: []
+      approved_path_prefixes: []
+      approved_purposes: []
+      automated_collection_allowed: false
+      raw_storage_allowed: false
     economics: *public_economics
     notes: >-
       Schema-only placeholder. A real company or filing source requires an exact
