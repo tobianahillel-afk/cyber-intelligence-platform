@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections.abc import Mapping
 from dataclasses import dataclass
 from datetime import datetime
 from hashlib import sha256
@@ -62,8 +63,8 @@ def get_json(
     client: httpx.Client,
     target_url: str,
     *,
-    params: dict[str, str | int],
-    headers: dict[str, str] | None = None,
+    params: Mapping[str, str | int],
+    headers: Mapping[str, str] | None = None,
 ) -> bytes:
     try:
         response = client.get(target_url, params=params, headers=headers)
