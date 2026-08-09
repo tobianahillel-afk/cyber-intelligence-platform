@@ -4,7 +4,9 @@
 
 Functional integrated candidate: **PASS**.
 
-Release candidate `0.23.0`: **final exact-SHA CI still required** after the authoritative release documentation is synchronized. This report does not claim merge completion until that final SHA passes the standard repository workflow and review gates.
+Synchronized release candidate `0.23.0`: **PASS** on exact SHA `a88468a4d2590763e2aae7d5b74ab875c57ade60`, standard CI #1276.
+
+This report update creates the final documentation-complete SHA. One final standard CI run on that exact new head is therefore still required before PR #60 can be marked ready and squash-merged.
 
 ## Release identity
 
@@ -15,25 +17,28 @@ Release candidate `0.23.0`: **final exact-SHA CI still required** after the auth
 - Checked: 2026-08-09
 - Functional integrated SHA: `2182aa3ffeffff706129ce82c42cbc4116eb6da1`
 - Functional CI: run #1270, run ID `31315615232`
+- Synchronized release SHA: `a88468a4d2590763e2aae7d5b74ab875c57ade60`
+- Release CI: run #1276, run ID `31316196327`
+- Release diagnostics artifact: `backend-test-diagnostics`, artifact ID `9038848302`
 
-## Functional CI evidence
+## Functional and release CI evidence
 
-The standard CI workflow is fully green on the integrated functional SHA.
+Both the integrated functional candidate and the synchronized release candidate pass the standard repository workflow. Release metadata, README and the authoritative roadmap are therefore covered by an executable release-contract run rather than inferred from the functional candidate.
 
-### Backend
+### Backend — release CI #1276
 
 - dependency consistency: PASS (`pip check`)
 - installed dependency audit: PASS (`pip-audit`, no known vulnerabilities)
 - Ruff: PASS
 - strict Mypy: PASS over **503 source files**
-- architecture/release contracts: **32 passed**
+- architecture/release contracts: **32 passed**, 0 failures/errors/skips
 - PostgreSQL 17 Alembic cycle: PASS (`upgrade head -> downgrade base -> upgrade head`), including `20260809_0022`
-- pytest: **961 passed**
+- pytest: **961 passed**, 0 failures/errors/skips
 - aggregate branch-aware coverage: **90.44%**
   - lines: 22,007 covered / 23,528 valid
   - branches: 3,664 covered / 4,858 valid
 
-### Frontend
+### Frontend — release CI #1276
 
 - npm dependency audit: PASS
 - TypeScript typecheck: PASS
@@ -134,20 +139,18 @@ Regression tests cover, among other cases:
 - observed source-value evidence vs portfolio-without-source baseline;
 - frontend typecheck and production build.
 
-## Release gate still required
+## Final exact-head gate still required
 
-The functional evidence above is necessary but not sufficient for merge because release metadata changes the repository SHA.
+The synchronized release SHA `a88468a4d2590763e2aae7d5b74ab875c57ade60` is fully green. Recording that evidence in this report necessarily creates one last documentation-only SHA and invalidates `a88468a...` as the final-head proof.
 
 Before PR #60 can be marked ready and squash-merged:
 
-1. package version, README, roadmap and this report must agree on `0.23.0` / Lots 00–22;
-2. Lot 22 must be `IMPLEMENTED_VALIDATED` in the authoritative roadmap and Lot 23 must become the next planned lot;
-3. the standard CI workflow must pass on the exact synchronized release SHA;
-4. this report may then be updated with that exact release proof;
-5. because that documentation update creates a new SHA, the standard CI must pass once more on the final exact head;
-6. review threads/reviews must contain no unresolved blocker;
-7. squash merge must use that exact final head SHA as the expected head.
+1. no repository file may change after this report commit;
+2. the standard CI workflow must pass on the exact documentation-complete head;
+3. review threads/reviews must contain no unresolved blocker;
+4. the PR body may be refreshed because that does not change the Git commit;
+5. squash merge must use the exact final head SHA as `expected_head_sha`.
 
 ## Release claim
 
-**Lot 22 is functionally implemented and validated, but is not yet merge-complete at the time of this report revision.** Final release completion requires green standard CI on the exact final documentation-complete SHA and successful squash merge of PR #60.
+**Lot 22 is functionally implemented and the synchronized `0.23.0` release candidate is validated. It is not yet merge-complete at this report revision because this final documentation commit itself must pass the standard CI on its exact SHA.**
