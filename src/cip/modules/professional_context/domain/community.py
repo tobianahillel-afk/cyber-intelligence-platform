@@ -6,6 +6,7 @@ from uuid import UUID
 
 from cip.modules.professional_context.domain.enums import (
     CommunityAcquisitionMode,
+    ProfessionalClaimType,
     ProfessionalReviewState,
 )
 from cip.modules.professional_context.domain.privacy import ProfessionalProcessingContext
@@ -34,11 +35,13 @@ class PublicCommunityContext:
     person_key: str | None = None
     organization_id: UUID | None = None
     source_url: str | None = None
+    claim_type: ProfessionalClaimType = ProfessionalClaimType.ASSERTION
     review_state: ProfessionalReviewState = ProfessionalReviewState.REVIEW_REQUIRED
     active: bool = True
     suppressed: bool = False
     deleted: bool = False
     metadata_only: bool = True
+    supersedes_record_key: str | None = None
 
     def __post_init__(self) -> None:
         for field_name, maximum in (
@@ -63,10 +66,25 @@ class PublicCommunityContext:
         object.__setattr__(self, "source_url", optional_url(self.source_url, "source_url"))
         object.__setattr__(self, "observed_at", aware_time(self.observed_at, "observed_at"))
         object.__setattr__(self, "confidence", confidence(self.confidence))
+        object.__setattr__(
+            self,
+            "supersedes_record_key",
+            optional_text(self.supersedes_record_key, "supersedes_record_key", 500),
+        )
         if self.person_key is None and self.organization_id is None:
             raise ValueError("community context requires professional person or organization context")
         if not self.metadata_only:
             raise ValueError("community context accepts metadata only")
+
+    @property
+    def current_evidence(self) -> bool:
+        return (
+            self.active
+            and not self.suppressed
+            and not self.deleted
+            and self.claim_type
+            not in {ProfessionalClaimType.DISPUTE, ProfessionalClaimType.RETRACTION}
+        )
 
     @property
     def authorizes_source_automation(self) -> bool:
