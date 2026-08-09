@@ -1,11 +1,11 @@
 from __future__ import annotations
 
+from typing import Annotated
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
-from cip.modules.professional_context.api.dependencies import require_control_plane_access
 from cip.modules.professional_context.api.schemas import (
     OrganizationProfessionalMapResponse,
     ProfessionalPersonDetailResponse,
@@ -23,27 +23,29 @@ from cip.modules.professional_context.infrastructure.detail_queries import (
     get_professional_person_detail,
 )
 from cip.modules.professional_context.infrastructure.queries import list_professional_people
+from cip.modules.source_portfolio.api.dependencies import require_control_plane
 from cip.shared.persistence.dependencies import get_database_session
 
 router = APIRouter(
     prefix="/v1/professional-context",
     tags=["professional-context"],
-    dependencies=[Depends(require_control_plane_access)],
+    dependencies=[Depends(require_control_plane)],
 )
+SessionDependency = Annotated[Session, Depends(get_database_session)]
 
 
 @router.get("/people", response_model=ProfessionalPersonPageResponse)
 def list_people(
+    session: SessionDependency,
     organization_id: UUID | None = None,
     employment_state: EmploymentState | None = None,
     review_state: ProfessionalReviewState | None = None,
     lawful_basis: LawfulBasis | None = None,
     include_suppressed: bool = False,
     include_deleted: bool = False,
-    q: str | None = Query(default=None, min_length=1, max_length=200),
-    limit: int = Query(default=100, ge=1, le=200),
-    offset: int = Query(default=0, ge=0),
-    session: Session = Depends(get_database_session),
+    q: Annotated[str | None, Query(min_length=1, max_length=200)] = None,
+    limit: Annotated[int, Query(ge=1, le=200)] = 100,
+    offset: Annotated[int, Query(ge=0)] = 0,
 ) -> ProfessionalPersonPageResponse:
     page = list_professional_people(
         session,
@@ -65,12 +67,15 @@ def list_people(
 @router.get("/people/{person_key}", response_model=ProfessionalPersonDetailResponse)
 def person_detail(
     person_key: str,
-    session: Session = Depends(get_database_session),
+    session: SessionDependency,
 ) -> ProfessionalPersonDetailResponse:
     try:
         detail = get_professional_person_detail(session, person_key)
     except ProfessionalPersonNotFoundError as exc:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="person not found") from exc
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="person not found",
+        ) from exc
     return ProfessionalPersonDetailResponse.from_domain(detail)
 
 
@@ -80,7 +85,7 @@ def person_detail(
 )
 def organization_map(
     organization_id: UUID,
-    session: Session = Depends(get_database_session),
+    session: SessionDependency,
 ) -> OrganizationProfessionalMapResponse:
     return OrganizationProfessionalMapResponse.from_domain(
         get_organization_professional_map(session, organization_id)
