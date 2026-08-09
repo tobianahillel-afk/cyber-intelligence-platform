@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import re
 from collections.abc import Mapping
-from datetime import UTC, date, datetime
+from datetime import datetime
 from uuid import UUID
 
 import httpx
@@ -30,6 +30,7 @@ from cip.modules.collection_orchestration.application.ports import (
     AdapterCollectionBatch,
     AdapterExecutionError,
 )
+from cip.modules.incident_intelligence.domain.models import IncidentClaimSnapshot
 from cip.modules.source_governance.domain.models import DataCategory
 from cip.modules.source_governance.infrastructure.registry import SourceRegistryEntry
 from cip.shared.kernel.time import require_aware_utc
@@ -204,7 +205,7 @@ def _map_filing(
     target: SecIncidentTarget,
     issuer_name: str,
     source_url: str,
-):
+) -> IncidentClaimSnapshot:
     record = OfficialIncidentDisclosure(
         record_id=filing.accession_number,
         incident_key=f"sec-item-1.05:{target.cik}:{filing.accession_number}",
