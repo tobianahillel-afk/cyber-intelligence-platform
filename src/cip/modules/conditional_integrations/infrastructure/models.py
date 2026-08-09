@@ -17,7 +17,9 @@ class ConditionalProviderApprovalRecord(Base):
     provider_kind: Mapped[str] = mapped_column(String(40), index=True)
     access_method: Mapped[str] = mapped_column(String(60), index=True)
     state: Mapped[str] = mapped_column(String(40), index=True)
-    authorization_document_reference: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    authorization_document_reference: Mapped[str | None] = mapped_column(
+        String(500), nullable=True
+    )
     licence_reference: Mapped[str | None] = mapped_column(String(500), nullable=True)
     terms_reference: Mapped[str | None] = mapped_column(String(500), nullable=True)
     terms_state: Mapped[str] = mapped_column(String(40), index=True)
@@ -28,10 +30,18 @@ class ConditionalProviderApprovalRecord(Base):
     retention_days: Mapped[int | None] = mapped_column(Integer, nullable=True)
     automated_collection_allowed: Mapped[bool] = mapped_column(Boolean, default=False)
     account_reference: Mapped[str | None] = mapped_column(String(500), nullable=True)
-    reviewed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
-    review_due_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
-    expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
-    revoked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    reviewed_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+    review_due_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+    expires_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+    revoked_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
     paused_reason: Mapped[str | None] = mapped_column(String(500), nullable=True)
     current_revision_key: Mapped[str] = mapped_column(String(64), index=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
@@ -50,7 +60,9 @@ class ConditionalProviderApprovalRevisionRecord(Base):
     provider_kind: Mapped[str] = mapped_column(String(40), index=True)
     access_method: Mapped[str] = mapped_column(String(60), index=True)
     state: Mapped[str] = mapped_column(String(40), index=True)
-    authorization_document_reference: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    authorization_document_reference: Mapped[str | None] = mapped_column(
+        String(500), nullable=True
+    )
     licence_reference: Mapped[str | None] = mapped_column(String(500), nullable=True)
     terms_reference: Mapped[str | None] = mapped_column(String(500), nullable=True)
     terms_state: Mapped[str] = mapped_column(String(40), index=True)
@@ -61,10 +73,18 @@ class ConditionalProviderApprovalRevisionRecord(Base):
     retention_days: Mapped[int | None] = mapped_column(Integer, nullable=True)
     automated_collection_allowed: Mapped[bool] = mapped_column(Boolean, default=False)
     account_reference: Mapped[str | None] = mapped_column(String(500), nullable=True)
-    reviewed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
-    review_due_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
-    expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
-    revoked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    reviewed_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+    review_due_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+    expires_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+    revoked_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
     paused_reason: Mapped[str | None] = mapped_column(String(500), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)
 
@@ -121,6 +141,7 @@ class ConditionalExecutionDecisionRecord(Base):
     onboarding_state: Mapped[str] = mapped_column(String(60), index=True)
     source_policy_allowed: Mapped[bool] = mapped_column(Boolean)
     adapter_capability_present: Mapped[bool] = mapped_column(Boolean)
+    provider_paused: Mapped[bool] = mapped_column(Boolean)
     kill_switch_active: Mapped[bool] = mapped_column(Boolean)
     quota_remaining: Mapped[int | None] = mapped_column(Integer, nullable=True)
     monthly_cost_used: Mapped[float] = mapped_column(Float)
