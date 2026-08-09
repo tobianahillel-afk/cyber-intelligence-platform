@@ -59,7 +59,7 @@ export default async function ResearchPage({ searchParams }: ResearchPageProps) 
       ).length,
     },
     {
-      label: "Needs manual action",
+      label: "Paused plans",
       value: plans.items.filter((plan) => plan.state === "paused").length,
     },
     { label: "Persisted evidence", value: evidence.total },
