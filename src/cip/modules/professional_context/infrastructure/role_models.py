@@ -19,7 +19,7 @@ class ProfessionalRoleRecord(Base):
         ForeignKey("organizations.id", ondelete="SET NULL"), nullable=True, index=True
     )
     claimed_organization_name: Mapped[str | None] = mapped_column(String(500), nullable=True)
-    role_title: Mapped[str] = mapped_column(String(300), index=True)
+    role_title: Mapped[str | None] = mapped_column(String(300), nullable=True, index=True)
     team_name: Mapped[str | None] = mapped_column(String(300), nullable=True, index=True)
     employment_state: Mapped[str] = mapped_column(String(32), index=True)
     confidence: Mapped[float] = mapped_column(Float)
@@ -48,9 +48,9 @@ class ProfessionalRoleSnapshotRecord(Base):
     claim_key: Mapped[str] = mapped_column(String(500), index=True)
     person_key: Mapped[str] = mapped_column(String(200), index=True)
     source_id: Mapped[str] = mapped_column(String(200), index=True)
-    source_record_key: Mapped[str] = mapped_column(String(500))
+    source_record_key: Mapped[str | None] = mapped_column(String(500), nullable=True)
     source_url: Mapped[str | None] = mapped_column(String(2_048), nullable=True)
-    role_title: Mapped[str] = mapped_column(String(300), index=True)
+    role_title: Mapped[str | None] = mapped_column(String(300), nullable=True, index=True)
     team_name: Mapped[str | None] = mapped_column(String(300), nullable=True, index=True)
     claimed_organization_name: Mapped[str | None] = mapped_column(String(500), nullable=True)
     organization_id: Mapped[UUID | None] = mapped_column(
@@ -117,7 +117,7 @@ class ProfessionalReportingSnapshotRecord(Base):
         ForeignKey("organizations.id", ondelete="SET NULL"), nullable=True, index=True
     )
     source_id: Mapped[str] = mapped_column(String(200), index=True)
-    source_record_key: Mapped[str] = mapped_column(String(500))
+    source_record_key: Mapped[str | None] = mapped_column(String(500), nullable=True)
     source_url: Mapped[str | None] = mapped_column(String(2_048), nullable=True)
     claim_type: Mapped[str] = mapped_column(String(32), index=True)
     review_state: Mapped[str] = mapped_column(String(32), index=True)
