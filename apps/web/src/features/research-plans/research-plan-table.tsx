@@ -24,7 +24,7 @@ export function ResearchPlanTable({ plans }: ResearchPlanTableProps) {
           {plans.map((plan) => (
             <tr key={plan.id}>
               <td>
-                <Link className="research-plan-link" href={`/research/${plan.id}`}>
+                <Link className="research-plan-link" href={`/research/plans/${plan.id}`}>
                   {plan.question}
                 </Link>
                 <small>{plan.data_category.replaceAll("_", " ")}</small>
