@@ -1,16 +1,52 @@
 version: 1
 
 sources:
+  - source_id: phishtank-verified-online
+    display_name: PhishTank Verified Online Phishing Database
+    canonical_url: https://data.phishtank.com/data/
+    category: threat_telemetry
+    status: executable
+    freshness_max_age_seconds: 7200
+    commercial_use_cases: &use_cases
+      - threat_context
+      - incident_response_context
+      - vulnerability_prioritization_context
+    candidate_origin: SA-04
+    monthly_cost_limit: 0
+    metadata:
+      executable: true
+      authorization_status: approved
+      provider_onboarding_required: true
+      descriptive_user_agent_required: true
+      phishing_url_visit: forbidden
+      direct_indicator_connection: forbidden
+      binary_collection: forbidden
+      target_brand_as_compromise: forbidden
+      organization_compromise_inference: forbidden
+      automatic_opportunity: forbidden
+      autonomous_outreach: forbidden
+    adapter:
+      adapter_id: phishtank-online-valid-json
+      adapter_version: "1"
+      provider_schema_version: phishtank-online-valid-json-v1
+      modes:
+        - priority_refresh
+      canonical_output_types:
+        - raw_observation
+        - threat_indicator_snapshot
+      supports_corrections: false
+      supports_tombstones: false
+      supports_retractions: false
+      max_page_size: 1000
+      cost_per_request: 0
+
   - source_id: licensed-stix-taxii
     display_name: Licensed STIX/TAXII Threat Telemetry
     canonical_url: https://example.invalid/stix-taxii/
     category: threat_telemetry
     status: candidate
     freshness_max_age_seconds: 1800
-    commercial_use_cases: &use_cases
-      - threat_context
-      - incident_response_context
-      - vulnerability_prioritization_context
+    commercial_use_cases: *use_cases
     candidate_origin: lot-15
     monthly_cost_limit: 0
     metadata: &disabled_metadata
