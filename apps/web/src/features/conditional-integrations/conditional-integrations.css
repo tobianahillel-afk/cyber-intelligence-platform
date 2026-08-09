@@ -1,0 +1,201 @@
+.conditional-page,
+.conditional-detail-stack {
+  display: grid;
+  gap: 1.25rem;
+}
+
+.conditional-catalog-grid,
+.conditional-value-grid,
+.conditional-audit-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1rem;
+}
+
+.conditional-provider-card,
+.conditional-value-card,
+.conditional-subpanel {
+  border: 1px solid var(--border-color, #d7dce3);
+  border-radius: 0.8rem;
+  padding: 1rem;
+  background: var(--panel-background, transparent);
+}
+
+.conditional-card-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.conditional-card-heading h3,
+.conditional-subpanel h3,
+.conditional-value-card h3,
+.conditional-audit-grid h3 {
+  margin-top: 0;
+}
+
+.conditional-state {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  padding: 0.25rem 0.55rem;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.state-approved {
+  font-weight: 700;
+}
+
+.state-revoked,
+.state-expired,
+.state-paused {
+  text-decoration: underline;
+}
+
+.conditional-compact-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.65rem;
+  margin: 1rem 0;
+}
+
+.conditional-compact-grid div {
+  min-width: 0;
+}
+
+.conditional-compact-grid dt {
+  font-size: 0.75rem;
+  opacity: 0.7;
+}
+
+.conditional-compact-grid dd {
+  margin: 0.2rem 0 0;
+  overflow-wrap: anywhere;
+  font-weight: 600;
+}
+
+.conditional-safety-banner,
+.conditional-boundary-note {
+  border-left: 3px solid currentColor;
+  padding: 0.75rem 0.9rem;
+  line-height: 1.5;
+}
+
+.conditional-boundary-note {
+  font-size: 0.9rem;
+  opacity: 0.86;
+}
+
+.conditional-link {
+  display: inline-flex;
+  margin-top: 0.5rem;
+  font-weight: 700;
+}
+
+.conditional-form {
+  display: grid;
+  gap: 1rem;
+}
+
+.conditional-form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 0.85rem;
+}
+
+.conditional-form-grid.compact {
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+}
+
+.conditional-form label {
+  display: grid;
+  gap: 0.35rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.conditional-form input,
+.conditional-form select {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid var(--border-color, #c7ced8);
+  border-radius: 0.45rem;
+  padding: 0.55rem 0.65rem;
+  background: inherit;
+  color: inherit;
+}
+
+.conditional-form button,
+.conditional-control-actions button {
+  width: fit-content;
+  border: 1px solid currentColor;
+  border-radius: 0.45rem;
+  padding: 0.55rem 0.8rem;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+
+.conditional-form button:hover,
+.conditional-control-actions button:hover {
+  text-decoration: underline;
+}
+
+.conditional-checkbox-row,
+.conditional-control-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.conditional-checkbox {
+  display: inline-flex !important;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  gap: 0.5rem !important;
+}
+
+.conditional-checkbox input {
+  width: auto;
+}
+
+.conditional-control-stack {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 1rem;
+}
+
+.conditional-audit-item {
+  display: grid;
+  gap: 0.2rem;
+  padding: 0.7rem 0;
+  border-bottom: 1px solid var(--border-color, #d7dce3);
+  overflow-wrap: anywhere;
+}
+
+.conditional-audit-item:last-child {
+  border-bottom: 0;
+}
+
+.conditional-audit-item time {
+  font-size: 0.8rem;
+  opacity: 0.7;
+}
+
+@media (max-width: 700px) {
+  .conditional-card-heading,
+  .panel-heading {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .conditional-compact-grid {
+    grid-template-columns: 1fr;
+  }
+}
