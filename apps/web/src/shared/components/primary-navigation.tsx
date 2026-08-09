@@ -22,6 +22,7 @@ const navigation = [
   { label: "Contacts", href: null },
   { label: "Offers", href: null },
   { label: "Sources", href: "/sources" },
+  { label: "Conditional Integrations", href: "/conditional-integrations" },
   { label: "Tasks", href: null },
   { label: "Settings", href: null },
 ] as const;
