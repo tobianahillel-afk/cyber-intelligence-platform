@@ -40,14 +40,20 @@ from cip.shared.persistence.metadata import get_metadata
 from cip.shared.persistence.session import create_database_engine, create_session_factory
 
 NOW = datetime(2026, 8, 9, 12, 0, tzinfo=UTC)
+ACTOR = "provider-admin@example.test"
 
 
 def test_dossier_replay_is_idempotent_and_changes_append_revision() -> None:
     session = _session()
     dossier = _approved_dossier()
 
-    first = persist_provider_approval(session, dossier, now=NOW)
-    persist_provider_approval(session, dossier, now=NOW + timedelta(minutes=1))
+    first = _persist(session, dossier, now=NOW, reason="initial approval")
+    _persist(
+        session,
+        dossier,
+        now=NOW + timedelta(minutes=1),
+        reason="idempotent replay",
+    )
 
     assert _count(session, ConditionalProviderApprovalRecord) == 1
     assert _count(session, ConditionalProviderApprovalRevisionRecord) == 1
@@ -57,64 +63,82 @@ def test_dossier_replay_is_idempotent_and_changes_append_revision() -> None:
         approved_fields=dossier.approved_fields | {"public_team"},
         reviewed_at=NOW + timedelta(minutes=2),
     )
-    current = persist_provider_approval(
+    current = _persist(
         session,
         changed,
         now=NOW + timedelta(minutes=2),
+        reason="approve public team field",
     )
 
+    revisions = tuple(
+        session.scalars(
+            select(ConditionalProviderApprovalRevisionRecord).order_by(
+                ConditionalProviderApprovalRevisionRecord.created_at
+            )
+        )
+    )
     assert current.id == first.id
     assert set(current.approved_fields) == {
         "organization",
         "public_professional_role",
         "public_team",
     }
-    assert _count(session, ConditionalProviderApprovalRevisionRecord) == 2
+    assert len(revisions) == 2
+    assert revisions[0].actor == ACTOR
+    assert revisions[0].change_reason == "initial approval"
+    assert revisions[1].actor == ACTOR
+    assert revisions[1].change_reason == "approve public team field"
 
 
 def test_revocation_preserves_approved_revision_history() -> None:
     session = _session()
     dossier = _approved_dossier()
-    persist_provider_approval(session, dossier, now=NOW)
+    _persist(session, dossier, now=NOW, reason="initial approval")
     revoked = replace(
         dossier,
         state=ApprovalState.REVOKED,
         revoked_at=NOW + timedelta(hours=1),
     )
 
-    current = persist_provider_approval(
+    current = _persist(
         session,
         revoked,
         now=NOW + timedelta(hours=1),
+        reason="authorization withdrawn",
     )
-    states = tuple(
+    revisions = tuple(
         session.scalars(
-            select(ConditionalProviderApprovalRevisionRecord.state).order_by(
+            select(ConditionalProviderApprovalRevisionRecord).order_by(
                 ConditionalProviderApprovalRevisionRecord.created_at
             )
         )
     )
 
     assert current.state == ApprovalState.REVOKED.value
-    assert states == (ApprovalState.APPROVED.value, ApprovalState.REVOKED.value)
+    assert tuple(record.state for record in revisions) == (
+        ApprovalState.APPROVED.value,
+        ApprovalState.REVOKED.value,
+    )
+    assert revisions[-1].change_reason == "authorization withdrawn"
 
 
 def test_provider_kind_cannot_mutate_for_existing_source() -> None:
     session = _session()
     dossier = _approved_dossier()
-    persist_provider_approval(session, dossier, now=NOW)
+    _persist(session, dossier, now=NOW, reason="initial approval")
 
     with pytest.raises(ValueError, match="provider_kind"):
-        persist_provider_approval(
+        _persist(
             session,
             replace(dossier, provider_kind=ConditionalProviderKind.DISCORD),
             now=NOW + timedelta(minutes=1),
+            reason="invalid provider mutation",
         )
 
 
 def test_control_history_is_append_only_and_old_replay_is_idempotent() -> None:
     session = _session()
-    persist_provider_approval(session, _approved_dossier(), now=NOW)
+    _persist(session, _approved_dossier(), now=NOW, reason="initial approval")
     pause = _control_decision(
         ProviderControlAction.PAUSE,
         at=NOW + timedelta(minutes=1),
@@ -153,7 +177,7 @@ def test_control_history_is_append_only_and_old_replay_is_idempotent() -> None:
 
 def test_new_backdated_control_decision_is_rejected() -> None:
     session = _session()
-    persist_provider_approval(session, _approved_dossier(), now=NOW)
+    _persist(session, _approved_dossier(), now=NOW, reason="initial approval")
     apply_persisted_control_decision(
         session,
         _control_decision(
@@ -178,7 +202,7 @@ def test_new_backdated_control_decision_is_rejected() -> None:
 
 def test_pause_and_kill_switch_block_and_are_audited_idempotently() -> None:
     session = _session()
-    persist_provider_approval(session, _approved_dossier(), now=NOW)
+    _persist(session, _approved_dossier(), now=NOW, reason="initial approval")
     request = _request()
     dependencies = _ready_dependencies()
 
@@ -265,6 +289,22 @@ def _count(session: Session, model: type[object]) -> int:
     return int(session.scalar(select(func.count()).select_from(model)) or 0)
 
 
+def _persist(
+    session: Session,
+    dossier: ProviderApprovalDossier,
+    *,
+    now: datetime,
+    reason: str,
+) -> ConditionalProviderApprovalRecord:
+    return persist_provider_approval(
+        session,
+        dossier,
+        actor=ACTOR,
+        change_reason=reason,
+        now=now,
+    )
+
+
 def _approved_dossier() -> ProviderApprovalDossier:
     return ProviderApprovalDossier(
         source_id="linkedin-approved-api",
@@ -322,7 +362,7 @@ def _control_decision(
     return ProviderControlDecision(
         source_id="linkedin-approved-api",
         action=action,
-        actor="provider-admin@example.test",
+        actor=ACTOR,
         reason=reason,
         decided_at=at,
     )
