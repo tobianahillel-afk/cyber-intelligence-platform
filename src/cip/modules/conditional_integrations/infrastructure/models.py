@@ -94,6 +94,8 @@ class ConditionalProviderApprovalRevisionRecord(Base):
         DateTime(timezone=True), nullable=True
     )
     paused_reason: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    actor: Mapped[str] = mapped_column(String(200))
+    change_reason: Mapped[str] = mapped_column(String(1000))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)
 
 
