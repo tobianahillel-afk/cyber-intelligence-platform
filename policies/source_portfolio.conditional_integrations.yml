@@ -55,33 +55,6 @@ sources:
       automatic_opportunity: forbidden
       autonomous_outreach: forbidden
 
-  - source_id: brixhub
-    display_name: BrixHub quarantined candidate
-    canonical_url: https://brixhub.cc/
-    category: conditional_quarantined_source
-    status: candidate
-    freshness_max_age_seconds: 86400
-    commercial_use_cases:
-      - governed_provider_review
-    candidate_origin: lot-22
-    monthly_cost_limit: 0
-    metadata:
-      executable: false
-      conditional_approval_required: true
-      authorization_status: missing
-      quarantined: true
-      runtime_adapter_present: false
-      schedule_enabled: false
-      allowed_access_methods: []
-      account_creation: forbidden
-      authentication: forbidden
-      browser_automation: forbidden
-      downloads: forbidden
-      imports: forbidden
-      credential_handling: forbidden
-      automatic_opportunity: forbidden
-      autonomous_outreach: forbidden
-
   - source_id: premium-cti-licensed
     display_name: Deployment-specific licensed premium CTI candidate
     canonical_url: https://premium-cti.example.invalid/
