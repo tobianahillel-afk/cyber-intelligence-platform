@@ -41,6 +41,9 @@ def persist_reporting_lines(
                 ProfessionalReportingLineRecord.claim_key == claim_key
             )
         )
+        if record is not None and record.deleted:
+            records.append(record)
+            continue
         if record is None:
             record = _new_record(reconcile_reporting_claims(incoming, now=current), current)
             session.add(record)
@@ -51,7 +54,10 @@ def persist_reporting_lines(
             reporting_snapshot(item)
             for item in session.scalars(
                 select(ProfessionalReportingSnapshotRecord)
-                .where(ProfessionalReportingSnapshotRecord.reporting_line_id == record.id)
+                .where(
+                    ProfessionalReportingSnapshotRecord.reporting_line_id == record.id,
+                    ProfessionalReportingSnapshotRecord.deleted.is_(False),
+                )
                 .order_by(ProfessionalReportingSnapshotRecord.observed_at)
             )
         )
