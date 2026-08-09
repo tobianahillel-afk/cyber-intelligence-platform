@@ -8,7 +8,10 @@ from sqlalchemy.orm import Session
 
 from cip.modules.research_orchestration.domain import ResearchStep, ResearchStepState
 from cip.modules.research_orchestration.infrastructure.models import ResearchStepRecord
-from cip.modules.research_orchestration.infrastructure.payloads import step_definition_key, step_payload
+from cip.modules.research_orchestration.infrastructure.payloads import (
+    step_definition_key,
+    step_payload,
+)
 from cip.shared.kernel.time import require_aware_utc
 
 
