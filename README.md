@@ -23,7 +23,7 @@ Source breadth is useful only when it improves reliable client discovery. Source
 
 ## Current validated baseline
 
-The current validated release is version `0.23.0`, covering lots `00` through `22`.
+The current validated release is version `0.24.0`, covering lots `00` through `23`.
 
 Implemented and validated capabilities include:
 
@@ -47,7 +47,8 @@ Implemented and validated capabilities include:
 - temporal provider, customer, partner, supplier, reseller, integrator, auditor, insurer, MSSP/MDR, cloud-provider, technology-vendor, and subcontractor relationship intelligence with immutable evidence history, explicit evidence classes, reversible chronology, protected APIs, and the Relationships workspace;
 - temporal entity-resolution and corporate-graph intelligence with immutable node/edge history, exact alias/identifier/domain references, review-only probabilistic candidates, historical queries, reversible analyst decisions, versioned blast-radius previews, protected APIs, and the Graph workspace;
 - governed professional-context intelligence with source-qualified people references, temporal roles and direct reporting lines, public business contact channels, consented community metadata, lawful-basis and retention controls, HMAC-backed erasure, protected APIs, and the Professional Context workspace;
-- conditional-provider governance with immutable approval revisions, provider-method restrictions, persisted-state eligibility resolution, append-only pause/kill-switch controls, safe-default non-executable provider catalogues, source-value evidence, protected APIs, and the Conditional Integrations workspace.
+- conditional-provider governance with immutable approval revisions, provider-method restrictions, persisted-state eligibility resolution, append-only pause/kill-switch controls, safe-default non-executable provider catalogues, source-value evidence, protected APIs, and the Conditional Integrations workspace;
+- governed analyst research orchestration with persisted plans/revisions/decisions/steps/attempts/results, deterministic source ranking, exact runtime authorization/capability/quota/cost controls, explicit manual-link states, evidence-reference provenance validation, protected APIs, and the analyst Research workspace.
 
 Lot `12` remains under an explicit activation boundary: merging the software does not authorize collection against a real organization. The checked-in public-web example is disabled, unauthorized, unscheduled, and non-executable. Search and archive providers remain disconnected until separately approved.
 
@@ -71,7 +72,9 @@ Lot `21` provides source-aware professional organization context without buildin
 
 Lot `22` provides a fail-closed approval and control layer for conditional, premium, LinkedIn, Discord, BrixHub, licensed CTI, and licensed commercial-data providers. It preserves immutable dossier revisions with actor/reason, resolves onboarding, Source Governance, Source Portfolio, capability, quota, cost, pause, and kill-switch state from PostgreSQL, and records immutable eligibility decisions. Candidate visibility, an account reference, a licence, or a positive dossier is not by itself execution authorization. LinkedIn is limited to official or licensed API methods; Discord requires an administrator-installed connector or authorized export; BrixHub remains quarantined with no permitted execution method. Default Lot 22 catalogues contain no executable adapter or schedule, and the workspace never performs provider login or collection from a page view.
 
-The next planned implementation lot is `23`: Analyst research and governed OSINT catalog orchestration.
+Lot `23` provides policy-aware analyst research orchestration over existing governed capabilities. A research question is never treated as authorization. Plans bind exact purposes, categories, source/tool IDs, approved step keys, host/path scope, budgets and risk ceilings; automated steps resolve persisted governance/onboarding/portfolio/capability/quota/cost/conditional controls before execution; manual links stay explicit analyst actions; retries use persisted idempotent attempts; and captured results must reference existing evidence with valid provenance. The research workspace and protected APIs never create a general-purpose browser, arbitrary HTTP tool, automatic opportunity, or outreach path.
+
+The next planned implementation lot is `24`: Signal fusion, need hypotheses, and commercial taxonomy.
 
 ## Implemented and modeled source portfolio
 
@@ -372,8 +375,7 @@ Domain modules cannot depend on FastAPI, SQLAlchemy models, adapters, API packag
 
 [`docs/PROJECT_DELIVERY_PLAN.md`](docs/PROJECT_DELIVERY_PLAN.md) is authoritative.
 
-- lots `00–22`: implemented and validated foundations, procurement, hiring, identity, onboarding, source runtime, contracts, public footprint, vulnerability knowledge, public incident intelligence, defensive telemetry, passive technographic evidence, vendor advisories, vulnerability applicability, corporate/regulatory change intelligence, temporal relationship intelligence, entity resolution, the temporal corporate knowledge graph, governed professional context, and conditional provider governance;
-- lot `23`: analyst research and governed OSINT catalog orchestration;
+- lots `00–23`: implemented and validated foundations, procurement, hiring, identity, onboarding, source runtime, contracts, public footprint, vulnerability knowledge, public incident intelligence, defensive telemetry, passive technographic evidence, vendor advisories, vulnerability applicability, corporate/regulatory change intelligence, temporal relationship intelligence, entity resolution, the temporal corporate knowledge graph, governed professional context, conditional provider governance, and governed analyst research orchestration;
 - lots `24–27`: signal fusion, need hypotheses, calibrated scoring, native commercial operations, and Company 360;
 - lots `28–32`: data quality, release security, resilience, optional isolated browser runtime, and controlled production pilot.
 
@@ -437,7 +439,8 @@ The platform does not:
 - treat graph membership or a resolution candidate as an upgrade in evidence strength;
 - treat a public professional profile as authorization to automate that platform;
 - turn professional role or contact relevance directly into a need, opportunity, or outreach authorization;
-- treat a conditional-provider catalogue entry, account, licence, approval dossier, eligibility preview, or observed source-value contribution as authorization to collect, proof of a service need, a commercial opportunity, or authorization to contact.
+- treat a conditional-provider catalogue entry, account, licence, approval dossier, eligibility preview, or observed source-value contribution as authorization to collect, proof of a service need, a commercial opportunity, or authorization to contact;
+- treat a research question, plan, ranked source, eligible step, manual link, attempt, or captured result as permission to bypass source controls, proof of a commercial need, an opportunity, or outreach authorization.
 
 LinkedIn collection remains disabled unless official API scopes, a licensed product, or reviewed written authorization covers the exact method and purpose and all shared runtime gates are positive. Discord collection requires an administrator-installed connector, authorized export, or equivalent consented integration plus positive shared gates. BrixHub remains quarantined and has no permitted execution method in Lot 22. Premium provider placeholders are non-executable until a deployment selects a real provider and separately approves its exact contract, fields, scopes, hosts, retention, onboarding, runtime adapter, quota, cost, and security controls.
 
@@ -532,4 +535,6 @@ npm run build
 - [`docs/lots/LOT_21_VALIDATION_REPORT.md`](docs/lots/LOT_21_VALIDATION_REPORT.md)
 - [`docs/lots/LOT_22_CONDITIONAL_INTEGRATIONS.md`](docs/lots/LOT_22_CONDITIONAL_INTEGRATIONS.md)
 - [`docs/lots/LOT_22_VALIDATION_REPORT.md`](docs/lots/LOT_22_VALIDATION_REPORT.md)
+- [`docs/lots/LOT_23_GOVERNED_OSINT_RESEARCH.md`](docs/lots/LOT_23_GOVERNED_OSINT_RESEARCH.md)
+- [`docs/lots/LOT_23_VALIDATION_REPORT.md`](docs/lots/LOT_23_VALIDATION_REPORT.md)
 - [`SECURITY.md`](SECURITY.md)
