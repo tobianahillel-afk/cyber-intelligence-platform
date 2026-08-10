@@ -73,3 +73,43 @@ sources:
       supports_retractions: false
       max_page_size: 100
       cost_per_request: 0
+
+  - source_id: iana-rdap-public
+    display_name: IANA-bootstrapped public RDAP
+    canonical_url: https://data.iana.org/rdap/
+    category: passive_exposure
+    status: executable
+    freshness_max_age_seconds: 86400
+    commercial_use_cases:
+      - passive_registration_context
+      - organization_research
+    candidate_origin: Priority-B
+    monthly_cost_limit: 0
+    metadata:
+      executable: true
+      authorization_status: approved
+      target_registry_required: true
+      public_fields_only: true
+      contact_materialization: forbidden
+      authoritative_endpoint_must_match_iana_bootstrap: true
+      active_probe: forbidden
+      direct_asset_connection: forbidden
+      authenticated_enumeration: forbidden
+      vulnerability_applicability: not_assessed
+      exposure_verification: forbidden
+      organization_compromise_inference: forbidden
+      automatic_opportunity: forbidden
+    adapter:
+      adapter_id: iana-bootstrap-rdap
+      adapter_version: "1"
+      provider_schema_version: rdap-public-minimal-v1
+      modes: [incremental_cursor, priority_refresh]
+      canonical_output_types:
+        - raw_observation
+        - passive_asset
+        - passive_observation_snapshot
+      supports_corrections: false
+      supports_tombstones: false
+      supports_retractions: false
+      max_page_size: 1
+      cost_per_request: 0

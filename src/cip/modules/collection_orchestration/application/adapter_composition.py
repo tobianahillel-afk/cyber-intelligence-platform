@@ -7,6 +7,7 @@ from cip.adapters.sources.greenhouse.registry import GreenhouseBoard
 from cip.adapters.sources.incident_catalogs.sec_registry import SecIncidentTarget
 from cip.adapters.sources.lever.registry import LeverSite
 from cip.adapters.sources.organization_identity.registry import OrganizationIdentityTarget
+from cip.adapters.sources.passive_infrastructure.rdap_registry import RdapTarget
 from cip.adapters.sources.passive_infrastructure.registry import PassiveInfrastructureTarget
 from cip.adapters.sources.public_web.registry import PublicWebTarget
 from cip.adapters.sources.smartrecruiters.registry import SmartRecruitersCompany
@@ -55,6 +56,7 @@ class AdapterCompositionInputs:
     search_templates: tuple[SearchQueryTemplate, ...]
     vulnerability_targets: tuple[VulnerabilityQueryTarget, ...]
     passive_infrastructure_targets: tuple[PassiveInfrastructureTarget, ...]
+    rdap_targets: tuple[RdapTarget, ...]
     sec_incident_targets: tuple[SecIncidentTarget, ...]
 
 
@@ -102,6 +104,7 @@ def build_runtime_adapters(
         adapters,
         entries_by_id,
         inputs.passive_infrastructure_targets,
+        inputs.rdap_targets,
         certspotter_token_provider=certspotter_token_provider,
         timeout_seconds=timeout_seconds,
     )

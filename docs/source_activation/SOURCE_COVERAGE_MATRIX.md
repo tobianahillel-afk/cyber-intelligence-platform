@@ -40,6 +40,7 @@ Symbols:
 | Internet Archive CDX | SA-02 | Y | Y | Y | Y | Y | - | bounded weekly historical metadata discovery; live proof outstanding |
 | Cloudflare DNS-over-HTTPS | SA-03 | Y | Y | Y | Y | N/A | - | target-driven A/AAAA passive lookup; checked-in target registry empty; live proof outstanding |
 | Cert Spotter CT Search API | SA-03 | Y | Y | Y | Y | N/A | - | target-driven CT lookup; production API key/onboarding and deployment target required; live proof outstanding |
+| IANA-bootstrapped public RDAP | Priority B-1 | Y | Y | Y | Y | N/A | - | target-driven public registration/allocation metadata; checked-in target registry empty; live proof outstanding |
 | SEC EDGAR cybersecurity disclosures | SA-04 | Y | Y | Y | Y | N/A | - | targeted Item 1.05 metadata capability; CIK target registry empty and deployment User-Agent required |
 | PhishTank verified online phishing data | SA-04 | Y | Y | Y | Y | N/A | - | global URL telemetry capability; application key/onboarding and deployment User-Agent required |
 | Licensed incident reporting | SA-07 | Y | - | - | - | - | - | concrete licensed provider/contract not selected |
@@ -63,13 +64,31 @@ Symbols:
 
 The repository already models additional candidate families delivered in Lots 13–22: incident reporting, ransomware metadata, threat telemetry, passive exposure, advisory providers, corporate-change intelligence, relationship intelligence, professional context and conditional premium integrations. Candidate families remain non-executable until a concrete provider, method and authorization are selected.
 
-SA-00 established the lifecycle and truth model. SA-01 through SA-04 promote only provider-specific paths whose implementation, authorization and runtime boundaries are explicit. Later waves must continue at provider level rather than hiding candidates behind family-level completion claims.
+SA-00 established the lifecycle and truth model. SA-01 through SA-04 promote only provider-specific paths whose implementation, authorization and runtime boundaries are explicit. Priority B completion continues the same provider-level discipline for passive organization and technology evidence. Later waves must continue at provider level rather than hiding candidates behind family-level completion claims.
 
 ## Reconciliation invariant
 
-Every `source_id` contained in every checked-in `source_portfolio*.yml` bundle must have an activation record. Repository tests enforce this invariant across the activation bundles added by each SA.
+Every `source_id` contained in every checked-in `source_portfolio*.yml` bundle must have an activation record. Repository tests enforce this invariant across the activation bundles added by each SA/Priority-B increment.
 
 OSINT Framework synchronization remains candidate discovery only. An upstream entry can stay non-executable, but relevant candidates must eventually receive an explicit `active`, `planned`, `manual`, `blocked`, `replaced`, `duplicate`, or `not_relevant` disposition before SA-10 closes.
+
+## Priority B-1 RDAP completion boundary
+
+Priority B-1 is complete only when:
+
+- `iana-rdap-public` is registered in the shared collection runtime and maps to immutable sanitized RawObservations plus Lot 16 passive snapshots;
+- the checked-in RDAP target registry is empty and the checked-in schedule is disabled;
+- only explicit organization-bound domain, globally routable IPv4/IPv6 and ASN targets are accepted;
+- the first hop is restricted by Source Governance to IANA RFC 9224 bootstrap data under `data.iana.org/rdap/`;
+- the second hop is an HTTPS authoritative base URL selected from the matching IANA bootstrap service and cannot be supplied by a user or redirect;
+- domain suffix, IP longest-prefix and ASN narrowest-range matching are deterministic;
+- authoritative RDAP responses are revalidated to cover the exact requested domain/IP/ASN before persistence;
+- RDAP entities, vCards, emails, telephone numbers and other contact/person fields are not materialized into the provider schema or RawObservation;
+- nonpublic RDAP/RDRS access and authenticated enumeration remain outside scope;
+- registration/allocation evidence is `review_required` passive correlation and never proves current operational ownership, deployment, exposure or compromise;
+- incremental and historical backfill reuse the existing Lot 16 transactional persistence path;
+- deterministic registry/adapter/runtime/reconciliation tests and full repository CI pass on one exact final SHA;
+- `live_tested` remains false until separately authorized controlled provider validation is evidenced.
 
 ## SA-03 completion boundary
 

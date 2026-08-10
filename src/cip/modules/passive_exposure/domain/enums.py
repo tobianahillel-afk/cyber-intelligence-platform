@@ -17,6 +17,7 @@ class PassiveObservationKind(StrEnum):
     PASSIVE_DNS = "passive_dns"
     CERTIFICATE = "certificate"
     ASN = "asn"
+    REGISTRATION = "registration"
     CLOUD = "cloud"
     SERVICE = "service"
     PORT = "port"

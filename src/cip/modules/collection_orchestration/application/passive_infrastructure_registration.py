@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from collections.abc import Callable
 
+from cip.adapters.sources.passive_infrastructure.rdap_registry import RdapTarget
 from cip.adapters.sources.passive_infrastructure.registry import PassiveInfrastructureTarget
 from cip.modules.collection_orchestration.application.certspotter_adapter import (
     CertSpotterAdapter,
@@ -10,6 +11,7 @@ from cip.modules.collection_orchestration.application.cloudflare_dns_adapter imp
     CloudflareDnsAdapter,
 )
 from cip.modules.collection_orchestration.application.ports import CollectionAdapter
+from cip.modules.collection_orchestration.application.rdap_adapter import IanaRdapAdapter
 from cip.modules.source_governance.infrastructure.registry import SourceRegistryEntry
 
 
@@ -17,6 +19,7 @@ def register_passive_infrastructure_adapters(
     adapters: dict[tuple[str, str], CollectionAdapter],
     entries_by_id: dict[str, SourceRegistryEntry],
     targets: tuple[PassiveInfrastructureTarget, ...],
+    rdap_targets: tuple[RdapTarget, ...],
     *,
     certspotter_token_provider: Callable[[], str | None],
     timeout_seconds: float,
@@ -40,6 +43,17 @@ def register_passive_infrastructure_adapters(
                 certspotter_entry,
                 targets,
                 token_provider=certspotter_token_provider,
+                timeout_seconds=timeout_seconds,
+            ),
+        )
+
+    rdap_entry = entries_by_id.get(IanaRdapAdapter.source_id)
+    if rdap_entry is not None:
+        _register(
+            adapters,
+            IanaRdapAdapter(
+                rdap_entry,
+                rdap_targets,
                 timeout_seconds=timeout_seconds,
             ),
         )

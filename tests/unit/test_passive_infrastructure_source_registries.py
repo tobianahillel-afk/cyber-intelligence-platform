@@ -16,7 +16,7 @@ from cip.modules.source_portfolio.infrastructure.registry import load_source_por
 SOURCE_PATH = Path("policies/sources.passive_infrastructure.yml")
 PORTFOLIO_PATH = Path("policies/source_portfolio.passive_infrastructure.yml")
 SCHEDULE_PATH = Path("policies/collection_schedules.passive_infrastructure.yml")
-EXPECTED_IDS = {"cloudflare-doh", "certspotter-ct"}
+EXPECTED_IDS = {"cloudflare-doh", "certspotter-ct", "iana-rdap-public"}
 
 
 def test_passive_sources_are_governed_without_active_validation_authority() -> None:
@@ -63,5 +63,6 @@ def test_passive_schedules_are_checked_in_but_disabled_until_deployment_activati
     assert {(item.source_id, item.adapter_id) for item in schedules} == {
         ("cloudflare-doh", "cloudflare-dns-json"),
         ("certspotter-ct", "certspotter-issuances-api"),
+        ("iana-rdap-public", "iana-bootstrap-rdap"),
     }
     assert all(schedule.enabled is False for schedule in schedules)
