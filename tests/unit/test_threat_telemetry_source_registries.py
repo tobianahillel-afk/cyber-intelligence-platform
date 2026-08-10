@@ -9,13 +9,15 @@ from cip.modules.source_portfolio.infrastructure.registry import load_source_por
 
 SOURCE_PATH = Path("policies/sources.threat_telemetry.yml")
 PORTFOLIO_PATH = Path("policies/source_portfolio.threat_telemetry.yml")
-EXPECTED_IDS = {
+PHISHTANK_SOURCE_ID = "phishtank-verified-online"
+CANDIDATE_IDS = {
     "licensed-stix-taxii",
     "licensed-phishing-metadata",
     "licensed-passive-dns",
     "licensed-certificate-telemetry",
     "licensed-malware-metadata",
 }
+EXPECTED_IDS = CANDIDATE_IDS | {PHISHTANK_SOURCE_ID}
 PROHIBITED = {
     DataCategory.CREDENTIAL,
     DataCategory.VICTIM_FILE,
@@ -25,13 +27,22 @@ PROHIBITED = {
 }
 
 
-def test_threat_sources_are_governed_but_not_authorized() -> None:
+def test_threat_sources_preserve_governance_across_activation_states() -> None:
     entries = load_source_registry(SOURCE_PATH)
+    by_id = {entry.policy.id: entry for entry in entries}
 
-    assert {entry.policy.id for entry in entries} == EXPECTED_IDS
-    assert all(entry.policy.status is SourceStatus.DRAFT for entry in entries)
-    assert all(not entry.authorization.automated_collection_allowed for entry in entries)
-    assert all(not entry.authorization.approved_hosts for entry in entries)
+    assert set(by_id) == EXPECTED_IDS
+    phishtank = by_id[PHISHTANK_SOURCE_ID]
+    assert phishtank.policy.status is SourceStatus.ENABLED
+    assert phishtank.authorization.automated_collection_allowed is True
+    assert phishtank.authorization.approved_hosts == frozenset({"data.phishtank.com"})
+
+    for source_id in CANDIDATE_IDS:
+        entry = by_id[source_id]
+        assert entry.policy.status is SourceStatus.DRAFT
+        assert entry.authorization.automated_collection_allowed is False
+        assert not entry.authorization.approved_hosts
+
     assert all(
         entry.policy.prohibited_data_categories >= PROHIBITED
         for entry in entries
@@ -39,13 +50,22 @@ def test_threat_sources_are_governed_but_not_authorized() -> None:
     assert all(not entry.policy.raw_content_storage for entry in entries)
 
 
-def test_threat_portfolio_entries_are_non_executable_candidates() -> None:
+def test_threat_portfolio_distinguishes_phishtank_from_candidates() -> None:
     entries = load_source_portfolio(PORTFOLIO_PATH)
+    by_id = {entry.source_id: entry for entry in entries}
 
-    assert {entry.source_id for entry in entries} == EXPECTED_IDS
-    assert all(entry.status is CatalogStatus.CANDIDATE for entry in entries)
-    assert all(not entry.executable for entry in entries)
-    assert all(entry.adapter is not None for entry in entries)
+    assert set(by_id) == EXPECTED_IDS
+    phishtank = by_id[PHISHTANK_SOURCE_ID]
+    assert phishtank.status is CatalogStatus.EXECUTABLE
+    assert phishtank.executable is True
+    assert phishtank.adapter is not None
+
+    for source_id in CANDIDATE_IDS:
+        entry = by_id[source_id]
+        assert entry.status is CatalogStatus.CANDIDATE
+        assert entry.executable is False
+        assert entry.adapter is not None
+
     assert all(
         entry.metadata.get("direct_indicator_connection") == "forbidden"
         for entry in entries
