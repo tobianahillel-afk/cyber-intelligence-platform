@@ -67,12 +67,18 @@ class SherlockTargetFile(BaseModel):
 
 
 def load_sherlock_targets(path: Path) -> tuple[SherlockTarget, ...]:
-    parsed = SherlockTargetFile.model_validate(yaml.safe_load(path.read_text(encoding="utf-8")))
+    parsed = SherlockTargetFile.model_validate(
+        yaml.safe_load(path.read_text(encoding="utf-8"))
+    )
     targets = tuple(parsed.targets)
     ids = [target.target_id for target in targets]
     identities = [
         (
-            str(target.organization_id) if target.organization_id is not None else target.person_key,
+            (
+                str(target.organization_id)
+                if target.organization_id is not None
+                else target.person_key
+            ),
             target.username.casefold(),
         )
         for target in targets
