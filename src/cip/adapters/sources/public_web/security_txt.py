@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from datetime import UTC, datetime
 from urllib.parse import urlsplit
 
+from cip.adapters.sources.public_web.parsing import PublicWebParseError
 from cip.adapters.sources.public_web.registry import PublicWebTarget
 from cip.modules.public_footprint.domain.url_identity import CanonicalUrl
 
@@ -12,7 +13,7 @@ _MAX_FIELDS = 200
 _SUPPORTED_CONTACT_SCHEMES = frozenset({"https", "mailto"})
 
 
-class SecurityTxtParseError(RuntimeError):
+class SecurityTxtParseError(PublicWebParseError):
     """A configured RFC 9116 security.txt file failed bounded validation."""
 
 
