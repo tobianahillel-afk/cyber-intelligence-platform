@@ -505,7 +505,53 @@ sources:
   - source_id: sherlock-local
     display_name: Sherlock username OSINT tool
     category: local_osint_tool
-    disposition: planned
+    disposition: manual
     activation_wave: SA-05
     requires_schedule: false
-    stages: [catalogued]
+    reason: A governed local adapter exists, but execution requires an analyst-reviewed professional target, approved sites, lawful-basis/retention metadata, and a deployment-provided approved Sherlock executable/version.
+    stages: [catalogued, reviewed, mapped, adapter_present]
+
+  - source_id: amass-local
+    display_name: OWASP Amass local framework
+    category: local_osint_tool
+    disposition: blocked
+    activation_wave: SA-05
+    requires_schedule: false
+    reason: Blanket framework execution is not authorized; active enumeration and probing are prohibited for prospects and passive upstream modules must be decomposed into provider-specific governed sources.
+    stages: [catalogued, reviewed, mapped]
+
+  - source_id: theharvester-local
+    display_name: theHarvester local framework
+    category: local_osint_tool
+    disposition: blocked
+    activation_wave: SA-05
+    requires_schedule: false
+    reason: Blanket framework execution is not authorized because its search/API upstreams have separate authorization, quota, licence and evidence requirements.
+    stages: [catalogued, reviewed, mapped]
+
+  - source_id: spiderfoot-local
+    display_name: SpiderFoot local framework
+    category: local_osint_tool
+    disposition: blocked
+    activation_wave: SA-05
+    requires_schedule: false
+    reason: Blanket module execution is not authorized; modules range from passive sources to active network interactions and must be decomposed provider by provider.
+    stages: [catalogued, reviewed, mapped]
+
+  - source_id: recon-ng-local
+    display_name: Recon-ng local framework
+    category: local_osint_tool
+    disposition: blocked
+    activation_wave: SA-05
+    requires_schedule: false
+    reason: Marketplace modules are independent acquisition paths and cannot inherit authorization from the framework; provider-specific review is required before execution.
+    stages: [catalogued, reviewed, mapped]
+
+  - source_id: maltego-local
+    display_name: Maltego analyst client
+    category: local_osint_tool
+    disposition: manual
+    activation_wave: SA-05
+    requires_schedule: false
+    reason: Analyst-only visualization/investigation over already authorized evidence is allowed; transforms and connectors require separate provider-specific review before automated acquisition.
+    stages: [catalogued, reviewed, mapped]

@@ -67,7 +67,12 @@ Symbols:
 | Generic company incident source family | SA-10 | Y | - | - | - | - | - | provider-specific decomposition required after SEC path |
 | Generic regulator/CERT incident family | SA-10 | Y | - | - | - | - | - | concrete official endpoints and authorizations required |
 | Generic vendor/Linux/package advisory families | SA-10 | Y | - | - | - | - | - | provider/ecosystem-specific decomposition required |
-| Sherlock | SA-05 | - | - | - | - | N/A | - | explicit local OSINT capability planned |
+| Sherlock `sherlock-local` | SA-05 | Y | Y | - | - | N/A | - | MANUAL governed local adapter; empty target registry; deployment binary/version + analyst-reviewed sites/target required |
+| OWASP Amass `amass-local` | SA-05 | Y | - | - | - | N/A | - | BLOCKED as blanket executor; passive modules require provider-specific governance and active enumeration/probing is prohibited |
+| theHarvester `theharvester-local` | SA-05 | Y | - | - | - | N/A | - | BLOCKED as blanket executor; each search/API upstream requires separate authorization |
+| SpiderFoot `spiderfoot-local` | SA-05 | Y | - | - | - | N/A | - | BLOCKED as blanket executor; mixed passive/active modules require provider-level decomposition |
+| Recon-ng `recon-ng-local` | SA-05 | Y | - | - | - | N/A | - | BLOCKED as blanket executor; marketplace modules are independent acquisition paths |
+| Maltego `maltego-local` | SA-05 | Y | - | - | - | N/A | - | MANUAL analyst visualization/investigation over already authorized evidence; transforms require separate review |
 | LinkedIn official API | SA-07 | - | - | - | - | N/A | - | BLOCKED pending approved official/licensed access and adapter |
 | BrixHub | SA-08 | - | - | - | - | N/A | - | BLOCKED pending access/licence/data review |
 
@@ -82,6 +87,23 @@ SA-00 established the lifecycle and truth model. SA-01 through SA-04 promote onl
 Every `source_id` contained in every checked-in `source_portfolio*.yml` bundle must have an activation record. Repository tests enforce this invariant across the activation bundles added by each SA/Priority-B increment.
 
 OSINT Framework synchronization remains candidate discovery only. An upstream entry can stay non-executable, but relevant candidates must eventually receive an explicit `active`, `planned`, `manual`, `blocked`, `replaced`, `duplicate`, or `not_relevant` disposition before SA-10 closes.
+
+## SA-05 governed local OSINT completion boundary
+
+SA-05 is complete only when:
+
+- `sherlock-local` has a concrete local adapter, bounded subprocess runner, strict native-CSV parser, Lot 21 `PublicCommunityContext` mapping and an empty checked-in target registry;
+- Sherlock execution is always analyst-target-bound, site-allowlisted, lawful-basis/retention-bound, version-pinned by deployment and `REVIEW_REQUIRED` at the evidence layer;
+- the checked-in activation record stays `manual`, not `authorized` or `executable`, because repository defaults contain neither an approved deployment binary/version nor an approved target/site set;
+- username presence never creates or merges a person identity and never authorizes outreach or commercial inference;
+- `amass-local`, `theharvester-local`, `spiderfoot-local` and `recon-ng-local` remain terminal `blocked` as blanket executors because their modules/upstreams have independent authorization and active/passive semantics;
+- `maltego-local` remains `manual` analyst visualization/investigation over already authorized evidence and does not grant server-side transform authority;
+- none of the local frameworks gains Tor/proxy/quota-bypass, private-data, de-anonymization, active prospect probing or arbitrary-module authority;
+- activation truth, this matrix and deterministic reconciliation/privacy/runtime tests agree on all six tool records;
+- one exact final SHA passes the complete backend and frontend CI;
+- `live_tested` remains false unless a separately authorized controlled live proof is recorded.
+
+Any future automation of a Sherlock target or a framework module requires a separate reviewed deployment/source activation change. Tool availability alone never grants network authorization.
 
 ## Priority B-4 passive-provider completion boundary
 

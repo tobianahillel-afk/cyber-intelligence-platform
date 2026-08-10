@@ -53,6 +53,7 @@ class CommunityAcquisitionMode(StrEnum):
     ADMIN_INSTALLED_INTEGRATION = "admin_installed_integration"
     AUTHORIZED_EXPORT = "authorized_export"
     MANUAL_REVIEWED_IMPORT = "manual_reviewed_import"
+    GOVERNED_LOCAL_TOOL = "governed_local_tool"
 
 
 class EmploymentState(StrEnum):
