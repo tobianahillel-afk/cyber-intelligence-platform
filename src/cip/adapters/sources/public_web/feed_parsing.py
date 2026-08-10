@@ -2,8 +2,10 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import UTC, datetime
+from email.utils import parsedate_to_datetime
 from xml.etree import ElementTree
 
+from cip.adapters.sources.public_web.parsing import PublicWebParseError
 from cip.adapters.sources.public_web.registry import PublicWebTarget
 from cip.modules.public_footprint.domain.scope import CrawlUsage
 from cip.modules.public_footprint.domain.url_identity import CanonicalUrl
@@ -12,7 +14,7 @@ _MAX_FEED_BYTES = 1_000_000
 _FORBIDDEN_XML_MARKERS = (b"<!DOCTYPE", b"<!ENTITY")
 
 
-class PublicFeedParseError(RuntimeError):
+class PublicFeedParseError(PublicWebParseError):
     """A configured public RSS/Atom feed could not be parsed safely."""
 
 
@@ -169,8 +171,6 @@ def _parse_time(value: str | None) -> datetime | None:
 
 
 def _parse_rfc822(value: str) -> datetime | None:
-    from email.utils import parsedate_to_datetime
-
     try:
         parsed = parsedate_to_datetime(value)
     except (TypeError, ValueError):
