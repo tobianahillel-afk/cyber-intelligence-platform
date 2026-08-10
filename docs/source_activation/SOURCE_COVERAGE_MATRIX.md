@@ -46,6 +46,12 @@ Symbols:
 | PyPI public package metadata | Priority B-2 | Y | Y | Y | Y | N/A | - | exact configured project metadata only; no distributions downloaded; live proof outstanding |
 | npm public package metadata | Priority B-2 | Y | Y | Y | Y | N/A | - | exact configured package metadata only; no tarballs downloaded; live proof outstanding |
 | Maven Central public artifact metadata | Priority B-2 | Y | Y | Y | Y | N/A | - | exact configured group/artifact metadata only; no JAR/POM downloads; live proof outstanding |
+| Censys Platform passive data `censys-platform-passive` | Priority B-4 / SA-07 | Y | - | - | - | N/A | - | BLOCKED pending compatible Enterprise/written product-integration entitlement |
+| Shodan passive indexed data `shodan-passive-data` | Priority B-4 / SA-07 | Y | - | - | - | N/A | - | BLOCKED pending separate customer-facing commercial agreement; scan APIs prohibited |
+| SecurityTrails passive data `securitytrails-passive-data` | Priority B-4 / SA-07 | Y | - | - | - | N/A | - | BLOCKED pending contract/licence evidence for customer-facing incorporation |
+| urlscan passive existing-scan search `urlscan-passive-search` | Priority B-4 / SA-07 | Y | - | - | - | N/A | - | BLOCKED pending commercial product-integration permission; scan submission prohibited |
+| Wappalyzer technographics `wappalyzer-technographics` | Priority B-4 / SA-07 | Y | - | - | - | N/A | - | BLOCKED pending explicit written Enterprise/custom embedding rights |
+| BuiltWith technographics `builtwith-technographics` | Priority B-4 / SA-07 | Y | - | - | - | N/A | - | BLOCKED pending written clarification of customer-facing/product-use rights |
 | SEC EDGAR cybersecurity disclosures | SA-04 | Y | Y | Y | Y | N/A | - | targeted Item 1.05 metadata capability; CIK target registry empty and deployment User-Agent required |
 | PhishTank verified online phishing data | SA-04 | Y | Y | Y | Y | N/A | - | global URL telemetry capability; application key/onboarding and deployment User-Agent required |
 | Licensed incident reporting | SA-07 | Y | - | - | - | - | - | concrete licensed provider/contract not selected |
@@ -76,6 +82,23 @@ SA-00 established the lifecycle and truth model. SA-01 through SA-04 promote onl
 Every `source_id` contained in every checked-in `source_portfolio*.yml` bundle must have an activation record. Repository tests enforce this invariant across the activation bundles added by each SA/Priority-B increment.
 
 OSINT Framework synchronization remains candidate discovery only. An upstream entry can stay non-executable, but relevant candidates must eventually receive an explicit `active`, `planned`, `manual`, `blocked`, `replaced`, `duplicate`, or `not_relevant` disposition before SA-10 closes.
+
+## Priority B-4 passive-provider completion boundary
+
+Priority B-4 is complete only when:
+
+- `censys-platform-passive`, `shodan-passive-data`, `securitytrails-passive-data`, `urlscan-passive-search`, `wappalyzer-technographics` and `builtwith-technographics` each have an explicit provider-level activation record;
+- each record identifies its concrete provider/product path, current commercial-entitlement dependency, onboarding/secret model, prohibited methods, unique evidence value and canonical mapping in `PRIORITY_B_04_PASSIVE_PROVIDER_DECISIONS.md`;
+- none is made executable from a free, research, community, trial or ordinary subscription whose rights do not prove customer-facing incorporation into this standalone commercial product;
+- all six remain terminal `blocked` SA-07 licensed dependencies until a compatible written entitlement is reviewed and deployment onboarding exists;
+- no B-4 record has `adapter_present`, `authorized`, `executable`, `scheduled` or `live_tested` while blocked;
+- no provider-specific adapter, credential, schedule, active scan/probe or prospect scan-submission path is created by B-4;
+- Censys/Shodan/SecurityTrails/urlscan are mapped only as potential future passive provider observations, and Wappalyzer/BuiltWith only as potential future passive technographic observations;
+- provider evidence never by itself proves organization ownership, production deployment, vulnerability applicability, verified exposure, compromise or commercial need;
+- activation truth, this matrix and deterministic reconciliation tests agree on all six terminal records;
+- the complete repository backend and frontend CI pass on one exact final SHA.
+
+Any later SA-07 provider activation must separately implement Source Governance, Provider Onboarding, secrets, quotas/cost, portfolio registration, shared runtime integration, canonical projections and controlled live validation before changing the terminal state.
 
 ## Priority B-3 public web/feed/document completion boundary
 
