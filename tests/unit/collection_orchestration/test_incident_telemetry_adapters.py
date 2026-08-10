@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+from collections.abc import Mapping
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from uuid import UUID
@@ -120,6 +121,33 @@ def test_sec_maps_only_non_amended_item_105_as_official_confirmation() -> None:
     assert claim.is_official_confirmation is True
 
 
+def test_sec_capped_batches_converge_without_skipping_filings() -> None:
+    accessions = [f"0000320193-26-{number:06d}" for number in range(101, 0, -1)]
+    payload = _sec_recent_payload(accessions)
+    adapter = SecCyberDisclosureAdapter(
+        _entry(INCIDENT_REGISTRY, "sec-cyber-disclosures"),
+        (_sec_target(),),
+        user_agent="CIP security-research contact@example.com",
+        transport=httpx.MockTransport(lambda _request: _json_response(payload)),
+    )
+
+    first = _collect(adapter)
+    second = _collect(adapter, checkpoint_payload=first.checkpoint_payload)
+
+    first_keys = {observation.source_record_key for observation in first.observations}
+    second_keys = {observation.source_record_key for observation in second.observations}
+    assert len(first_keys) == 100
+    assert len(second_keys) == 1
+    assert first_keys.isdisjoint(second_keys)
+    assert first_keys | second_keys == set(accessions)
+    assert first.checkpoint_payload["last_accession_by_target"] == {
+        "issuer-example": accessions[1]
+    }
+    assert second.checkpoint_payload["last_accession_by_target"] == {
+        "issuer-example": accessions[0]
+    }
+
+
 def test_sec_rejects_mismatched_response_cik() -> None:
     adapter = SecCyberDisclosureAdapter(
         _entry(INCIDENT_REGISTRY, "sec-cyber-disclosures"),
@@ -200,10 +228,14 @@ def test_phishtank_projects_global_url_telemetry_without_brand_compromise() -> N
     assert snapshot.expires_at == NOW + timedelta(hours=2)
 
 
-def _collect(adapter: SecCyberDisclosureAdapter | PhishTankAdapter):
+def _collect(
+    adapter: SecCyberDisclosureAdapter | PhishTankAdapter,
+    *,
+    checkpoint_payload: Mapping[str, object] | None = None,
+):
     return adapter.collect(
         collection_job_id=JOB_ID,
-        checkpoint_payload=None,
+        checkpoint_payload=checkpoint_payload,
         collected_at=NOW,
         retention_until=RETENTION,
     )
@@ -220,6 +252,19 @@ def _sec_target() -> SecIncidentTarget:
         cik="0000320193",
         enabled=True,
     )
+
+
+def _sec_recent_payload(accessions: list[str]) -> dict[str, object]:
+    count = len(accessions)
+    recent: dict[str, list[object]] = {
+        "accessionNumber": accessions,
+        "filingDate": ["2026-08-09"] * count,
+        "reportDate": [""] * count,
+        "acceptanceDateTime": ["2026-08-09T20:00:00Z"] * count,
+        "form": ["8-K"] * count,
+        "items": ["1.05"] * count,
+    }
+    return {"cik": 320193, "name": "Example Issuer", "filings": {"recent": recent}}
 
 
 def _empty_recent() -> dict[str, list[object]]:
