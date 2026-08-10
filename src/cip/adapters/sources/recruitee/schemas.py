@@ -5,6 +5,29 @@ from datetime import datetime
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 
+class RecruiteeDepartment(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+
+    id: int | str | None = None
+    name: str = Field(min_length=1, max_length=500)
+
+
+class RecruiteeLocation(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+
+    id: int | str | None = None
+    city: str | None = Field(default=None, max_length=300)
+    country_code: str | None = Field(default=None, max_length=3)
+    full_address: str | None = Field(default=None, max_length=1000)
+
+    def display_name(self) -> str | None:
+        if self.full_address and self.full_address.strip():
+            return self.full_address.strip()
+        if self.city and self.city.strip():
+            return self.city.strip()
+        return None
+
+
 class RecruiteeOffer(BaseModel):
     model_config = ConfigDict(extra="ignore")
 
@@ -12,7 +35,8 @@ class RecruiteeOffer(BaseModel):
     slug: str = Field(min_length=1, max_length=500)
     title: str = Field(min_length=1, max_length=500)
     status: str | None = Field(default=None, max_length=50)
-    department: str | None = Field(default=None, max_length=500)
+    department: RecruiteeDepartment | str | None = None
+    locations: list[RecruiteeLocation] = Field(default_factory=list, max_length=100)
     location: str | None = Field(default=None, max_length=1000)
     remote: bool | None = None
     description: str = Field(default="", max_length=500_000)
@@ -53,13 +77,27 @@ class RecruiteeOffer(BaseModel):
             raise ValueError("publication timestamp missing")
         return value
 
+    def department_name(self) -> str | None:
+        if isinstance(self.department, RecruiteeDepartment):
+            return self.department.name
+        if isinstance(self.department, str) and self.department.strip():
+            return self.department.strip()
+        return None
+
     def display_location(self) -> str:
-        location = self.location.strip() if self.location else ""
-        if self.remote is True and location:
-            return f"Remote — {location}"
+        structured = tuple(
+            value
+            for location in self.locations
+            if (value := location.display_name()) is not None
+        )
+        fallback = self.location.strip() if self.location else ""
+        locations = list(dict.fromkeys(structured or ((fallback,) if fallback else ())))
+        rendered = "; ".join(locations)
+        if self.remote is True and rendered:
+            return f"Remote — {rendered}"
         if self.remote is True:
             return "Remote"
-        return location or "Unspecified"
+        return rendered or "Unspecified"
 
 
 class RecruiteeOffersResponse(BaseModel):
