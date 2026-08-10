@@ -68,7 +68,10 @@ def _domain(value: str) -> str:
     raise ValueError("RDAP domain target cannot be an IP literal")
 
 
-def _ip(value: str, expected: type[IPv4Address] | type[IPv6Address]):
+def _ip(
+    value: str,
+    expected: type[IPv4Address] | type[IPv6Address],
+) -> IPv4Address | IPv6Address:
     parsed = ip_address(value)
     if not isinstance(parsed, expected):
         raise ValueError(f"RDAP target must be {expected.__name__}")
