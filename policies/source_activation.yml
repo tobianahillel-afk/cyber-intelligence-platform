@@ -315,6 +315,60 @@ sources:
     requires_schedule: false
     stages: [catalogued, reviewed, mapped, adapter_present, authorized, executable]
 
+  - source_id: censys-platform-passive
+    display_name: Censys Platform passive data candidate
+    category: passive_exposure
+    disposition: blocked
+    activation_wave: SA-07
+    requires_schedule: false
+    reason: Customer-facing incorporation requires a compatible Enterprise or written product-integration entitlement that is not present in the repository.
+    stages: [catalogued, reviewed, mapped]
+
+  - source_id: shodan-passive-data
+    display_name: Shodan passive indexed-data candidate
+    category: passive_exposure
+    disposition: blocked
+    activation_wave: SA-07
+    requires_schedule: false
+    reason: A separate written commercial agreement permitting this customer-facing product use is not present; active scan/submission capabilities remain prohibited.
+    stages: [catalogued, reviewed, mapped]
+
+  - source_id: securitytrails-passive-data
+    display_name: SecurityTrails passive data candidate
+    category: passive_exposure
+    disposition: blocked
+    activation_wave: SA-07
+    requires_schedule: false
+    reason: Public API documentation proves technical access but repository review has no contract or licence evidence permitting customer-facing incorporation/redistribution.
+    stages: [catalogued, reviewed, mapped]
+
+  - source_id: urlscan-passive-search
+    display_name: urlscan existing-scan passive search candidate
+    category: passive_exposure
+    disposition: blocked
+    activation_wave: SA-07
+    requires_schedule: false
+    reason: Integration of urlscan data into a commercial offering requires provider approval or a commercial agreement that is not present; prospect scan submission is prohibited.
+    stages: [catalogued, reviewed, mapped]
+
+  - source_id: wappalyzer-technographics
+    display_name: Wappalyzer technographic data candidate
+    category: passive_exposure
+    disposition: blocked
+    activation_wave: SA-07
+    requires_schedule: false
+    reason: Customer-facing embedding requires explicit written broader rights; no Enterprise/custom embedding entitlement is present in the repository.
+    stages: [catalogued, reviewed, mapped]
+
+  - source_id: builtwith-technographics
+    display_name: BuiltWith technographic data candidate
+    category: passive_exposure
+    disposition: blocked
+    activation_wave: SA-07
+    requires_schedule: false
+    reason: Public standard terms and API product-use guidance are materially ambiguous for this customer-facing platform; written entitlement confirmation is required before execution.
+    stages: [catalogued, reviewed, mapped]
+
   - source_id: official-vendor-psirt
     display_name: Official Vendor PSIRT Advisories
     category: vulnerability_advisory
