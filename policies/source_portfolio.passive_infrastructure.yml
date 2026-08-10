@@ -93,6 +93,7 @@ sources:
       contact_materialization: forbidden
       authoritative_endpoint_must_match_iana_bootstrap: true
       active_probe: forbidden
+      direct_asset_connection: forbidden
       authenticated_enumeration: forbidden
       vulnerability_applicability: not_assessed
       exposure_verification: forbidden
