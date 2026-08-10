@@ -97,17 +97,17 @@ def test_ipv4_rdap_chooses_longest_prefix_bootstrap_match() -> None:
             return _json(
                 _bootstrap_services(
                     [
-                        [["203.0.0.0/8"], ["https://broad.example.test/"]],
-                        [["203.0.113.0/24"], ["https://specific.example.test/rdap/"]],
+                        [["8.0.0.0/8"], ["https://broad.example.test/"]],
+                        [["8.8.8.0/24"], ["https://specific.example.test/rdap/"]],
                     ]
                 )
             )
         return _json(
             {
                 "objectClassName": "ip network",
-                "handle": "NET-203-0-113-0-1",
-                "startAddress": "203.0.113.0",
-                "endAddress": "203.0.113.255",
+                "handle": "NET-8-8-8-0-1",
+                "startAddress": "8.8.8.0",
+                "endAddress": "8.8.8.255",
                 "ipVersion": "v4",
             },
             content_type="application/rdap+json",
@@ -115,13 +115,13 @@ def test_ipv4_rdap_chooses_longest_prefix_bootstrap_match() -> None:
 
     adapter = IanaRdapAdapter(
         _entry(),
-        (_target(RdapTargetKind.IPV4, "203.0.113.8"),),
+        (_target(RdapTargetKind.IPV4, "8.8.8.8"),),
         transport=httpx.MockTransport(handler),
     )
     batch = _collect(adapter)
 
     assert requests[1].url.host == "specific.example.test"
-    assert requests[1].url.path == "/rdap/ip/203.0.113.8"
+    assert requests[1].url.path == "/rdap/ip/8.8.8.8"
     snapshot = batch.passive_exposure_projections[0]
     assert snapshot.asset.kind is PassiveAssetKind.IPV4
     assert snapshot.organization_link.attribution_risks == (
