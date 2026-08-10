@@ -185,13 +185,21 @@ def test_collector_rejects_governance_schema_duplicates_and_bounds() -> None:
 
     with pytest.raises(AshbySourceWindowError, match="job limit"):
         collect_ashby_jobs(
-            StubAshbyClient({"apiVersion": "1", "jobs": [_job()]}),  # type: ignore[arg-type]
+            StubAshbyClient(
+                {
+                    "apiVersion": "1",
+                    "jobs": [
+                        _job(),
+                        _job(jobUrl="https://jobs.ashbyhq.com/ExampleSecurity/job-2"),
+                    ],
+                }
+            ),  # type: ignore[arg-type]
             _entry(),
             (BOARD,),
             collection_job_id=uuid4(),
             collected_at=NOW,
             retention_until=NOW + timedelta(days=365),
-            max_jobs_per_board=0,
+            max_jobs_per_board=1,
         )
 
     with pytest.raises(ValueError, match="at least one"):
@@ -202,6 +210,17 @@ def test_collector_rejects_governance_schema_duplicates_and_bounds() -> None:
             collection_job_id=uuid4(),
             collected_at=NOW,
             retention_until=NOW + timedelta(days=365),
+        )
+
+    with pytest.raises(ValueError, match="max_jobs_per_board"):
+        collect_ashby_jobs(
+            StubAshbyClient({"apiVersion": "1", "jobs": []}),  # type: ignore[arg-type]
+            _entry(),
+            (BOARD,),
+            collection_job_id=uuid4(),
+            collected_at=NOW,
+            retention_until=NOW + timedelta(days=365),
+            max_jobs_per_board=0,
         )
 
 
@@ -231,12 +250,12 @@ def test_registry_rejects_bad_shape_duplicate_and_board_name(tmp_path: Path) -> 
     with pytest.raises(ValueError, match="duplicate Ashby board id"):
         load_ashby_boards(duplicate)
 
-    invalid_name = AshbyBoard(
-        id="example",
-        board_name="bad/name",
-        canonical_name="Example",
-    )
-    assert invalid_name  # pragma: no cover
+    with pytest.raises(ValueError, match="board_name"):
+        AshbyBoard(
+            id="example",
+            board_name="bad/name",
+            canonical_name="Example",
+        )
 
 
 def _collect(
