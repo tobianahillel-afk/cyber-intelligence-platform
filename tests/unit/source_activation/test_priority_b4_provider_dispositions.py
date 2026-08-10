@@ -33,7 +33,7 @@ FORBIDDEN_STAGES = {
 def test_priority_b4_named_providers_are_terminal_fail_closed_sa07_dependencies() -> None:
     records = {record.source_id: record for record in load_activation_inventory(ACTIVATION_PATH)}
 
-    assert PROVIDER_IDS <= records.keys()
+    assert records.keys() >= PROVIDER_IDS
     for source_id in PROVIDER_IDS:
         record = records[source_id]
         assert record.disposition is ActivationDisposition.BLOCKED
