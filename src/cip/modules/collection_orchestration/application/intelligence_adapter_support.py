@@ -67,12 +67,13 @@ def get_json(
     target_url: str,
     *,
     headers: Mapping[str, str],
+    params: Mapping[str, str | int] | None = None,
     max_bytes: int = DEFAULT_MAX_JSON_BYTES,
 ) -> bytes:
     if not 1 <= max_bytes <= HARD_MAX_JSON_BYTES:
         raise ValueError("max_bytes is outside the intelligence response bound")
     try:
-        response = client.get(target_url, headers=headers)
+        response = client.get(target_url, headers=headers, params=params)
         response.raise_for_status()
     except httpx.HTTPStatusError as exc:
         status = exc.response.status_code

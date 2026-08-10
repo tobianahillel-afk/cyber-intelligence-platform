@@ -1,5 +1,5 @@
 version: 1
-reviewed_at: 2026-08-06
+reviewed_at: 2026-08-10
 
 sources:
   - id: public-web-example-fr-organization
@@ -10,10 +10,8 @@ sources:
     owner: Example France Organization
     terms_url: https://example.com/terms
     licence: null
-    allowed_data_categories:
-      - official_document_discovery
-      - technology_observation
-    prohibited_data_categories:
+    allowed_data_categories: [official_document_discovery, technology_observation]
+    prohibited_data_categories: &prohibited
       - credential
       - victim_file
       - private_communication
@@ -34,13 +32,145 @@ sources:
       approved_purposes: []
       automated_collection_allowed: false
       raw_storage_allowed: false
-    economics:
-      commercial_value: unknown
-      monthly_cost: 0
-      implementation_cost: medium
-      maintenance_cost: medium
-      expected_stability: unknown
-    notes: >-
-      Schema-only candidate. Collection is impossible until a real organization,
-      reviewed authorization, approved host/path scope and explicit automation
-      permission replace this example configuration.
+    economics: {commercial_value: unknown, monthly_cost: 0, implementation_cost: medium, maintenance_cost: medium, expected_stability: unknown}
+    notes: Schema-only candidate; disabled until a real target and authorization exist.
+
+  - id: github-public-org-repositories
+    name: GitHub public organization repository metadata
+    base_url: https://api.github.com/
+    status: enabled
+    source_type: api
+    owner: GitHub
+    terms_url: https://docs.github.com/en/site-policy/github-terms/github-terms-of-service
+    licence: GitHub public REST API under GitHub Terms; bounded configured organizations only
+    allowed_data_categories: [technology_observation]
+    prohibited_data_categories: *prohibited
+    rate_limit_per_minute: 10
+    retention_days: 365
+    attribution_required: true
+    raw_content_storage: false
+    human_review_required: false
+    authorization:
+      status: approved
+      document_reference: docs/source_activation/PRIORITY_B_DEVELOPER_ECOSYSTEM_AUTHORIZATION.md#github
+      reviewed_at: "2026-08-10T11:00:00+00:00"
+      expires_at: null
+      approved_hosts: [api.github.com]
+      approved_path_prefixes: [/orgs/]
+      approved_purposes: [developer-ecosystem-intelligence]
+      automated_collection_allowed: true
+      raw_storage_allowed: false
+    economics: {commercial_value: medium, monthly_cost: 0, implementation_cost: low, maintenance_cost: low, expected_stability: high}
+    notes: Public organization repository metadata only; no users, contributors, emails, source-code or binary collection.
+
+  - id: gitlab-public-group-projects
+    name: GitLab public group project metadata
+    base_url: https://gitlab.com/api/v4/
+    status: enabled
+    source_type: api
+    owner: GitLab
+    terms_url: https://about.gitlab.com/terms/
+    licence: GitLab public API under GitLab Terms; bounded configured groups only
+    allowed_data_categories: [technology_observation]
+    prohibited_data_categories: *prohibited
+    rate_limit_per_minute: 10
+    retention_days: 365
+    attribution_required: true
+    raw_content_storage: false
+    human_review_required: false
+    authorization:
+      status: approved
+      document_reference: docs/source_activation/PRIORITY_B_DEVELOPER_ECOSYSTEM_AUTHORIZATION.md#gitlab
+      reviewed_at: "2026-08-10T11:00:00+00:00"
+      expires_at: null
+      approved_hosts: [gitlab.com]
+      approved_path_prefixes: [/api/v4/groups/]
+      approved_purposes: [developer-ecosystem-intelligence]
+      automated_collection_allowed: true
+      raw_storage_allowed: false
+    economics: {commercial_value: medium, monthly_cost: 0, implementation_cost: low, maintenance_cost: low, expected_stability: high}
+    notes: Public configured-group metadata only; no members/users/contributors or systematic bulk export.
+
+  - id: pypi-public-package-metadata
+    name: PyPI public project metadata
+    base_url: https://pypi.org/
+    status: enabled
+    source_type: api
+    owner: Python Packaging Authority / Python Software Foundation
+    terms_url: https://policies.python.org/pypi.org/Terms-of-Service/
+    licence: Public PyPI project JSON metadata; exact configured packages only
+    allowed_data_categories: [technology_observation]
+    prohibited_data_categories: *prohibited
+    rate_limit_per_minute: 10
+    retention_days: 365
+    attribution_required: true
+    raw_content_storage: false
+    human_review_required: false
+    authorization:
+      status: approved
+      document_reference: docs/source_activation/PRIORITY_B_DEVELOPER_ECOSYSTEM_AUTHORIZATION.md#pypi
+      reviewed_at: "2026-08-10T11:00:00+00:00"
+      expires_at: null
+      approved_hosts: [pypi.org]
+      approved_path_prefixes: [/pypi/]
+      approved_purposes: [developer-ecosystem-intelligence]
+      automated_collection_allowed: true
+      raw_storage_allowed: false
+    economics: {commercial_value: medium, monthly_cost: 0, implementation_cost: low, maintenance_cost: low, expected_stability: high}
+    notes: Sanitized name/version/summary only; author/author_email/maintainer fields and distributions are not materialized or downloaded.
+
+  - id: npm-public-package-metadata
+    name: npm public package metadata
+    base_url: https://registry.npmjs.org/
+    status: enabled
+    source_type: api
+    owner: npm / GitHub
+    terms_url: https://docs.npmjs.com/policies/terms
+    licence: Public npm registry metadata; exact configured packages only
+    allowed_data_categories: [technology_observation]
+    prohibited_data_categories: *prohibited
+    rate_limit_per_minute: 10
+    retention_days: 365
+    attribution_required: true
+    raw_content_storage: false
+    human_review_required: false
+    authorization:
+      status: approved
+      document_reference: docs/source_activation/PRIORITY_B_DEVELOPER_ECOSYSTEM_AUTHORIZATION.md#npm
+      reviewed_at: "2026-08-10T11:00:00+00:00"
+      expires_at: null
+      approved_hosts: [registry.npmjs.org]
+      approved_path_prefixes: [/]
+      approved_purposes: [developer-ecosystem-intelligence]
+      automated_collection_allowed: true
+      raw_storage_allowed: false
+    economics: {commercial_value: medium, monthly_cost: 0, implementation_cost: low, maintenance_cost: low, expected_stability: high}
+    notes: Sanitized package/version/description only; maintainers/authors and tarballs are excluded.
+
+  - id: maven-central-public-metadata
+    name: Maven Central public artifact metadata
+    base_url: https://search.maven.org/solrsearch/select
+    status: enabled
+    source_type: api
+    owner: Sonatype / Maven Central
+    terms_url: https://central.sonatype.org/faq/
+    licence: Maven Central public Search REST metadata; exact configured coordinates only
+    allowed_data_categories: [technology_observation]
+    prohibited_data_categories: *prohibited
+    rate_limit_per_minute: 10
+    retention_days: 365
+    attribution_required: true
+    raw_content_storage: false
+    human_review_required: false
+    authorization:
+      status: approved
+      document_reference: docs/source_activation/PRIORITY_B_DEVELOPER_ECOSYSTEM_AUTHORIZATION.md#maven-central
+      reviewed_at: "2026-08-10T11:00:00+00:00"
+      expires_at: null
+      approved_hosts: [search.maven.org]
+      approved_path_prefixes: [/solrsearch/select]
+      approved_purposes: [developer-ecosystem-intelligence]
+      automated_collection_allowed: true
+      raw_storage_allowed: false
+    economics: {commercial_value: medium, monthly_cost: 0, implementation_cost: low, maintenance_cost: low, expected_stability: high}
+    notes: Exact group/artifact public metadata only; JAR/POM/source artifacts are never downloaded.

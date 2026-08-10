@@ -41,6 +41,11 @@ Symbols:
 | Cloudflare DNS-over-HTTPS | SA-03 | Y | Y | Y | Y | N/A | - | target-driven A/AAAA passive lookup; checked-in target registry empty; live proof outstanding |
 | Cert Spotter CT Search API | SA-03 | Y | Y | Y | Y | N/A | - | target-driven CT lookup; production API key/onboarding and deployment target required; live proof outstanding |
 | IANA-bootstrapped public RDAP | Priority B-1 | Y | Y | Y | Y | N/A | - | target-driven public registration/allocation metadata; checked-in target registry empty; live proof outstanding |
+| GitHub public organization repositories | Priority B-2 | Y | Y | Y | Y | N/A | - | exact configured organization metadata only; target registry empty; live proof outstanding |
+| GitLab public group projects | Priority B-2 | Y | Y | Y | Y | N/A | - | exact configured public group metadata only; target registry empty; live proof outstanding |
+| PyPI public package metadata | Priority B-2 | Y | Y | Y | Y | N/A | - | exact configured project metadata only; no distributions downloaded; live proof outstanding |
+| npm public package metadata | Priority B-2 | Y | Y | Y | Y | N/A | - | exact configured package metadata only; no tarballs downloaded; live proof outstanding |
+| Maven Central public artifact metadata | Priority B-2 | Y | Y | Y | Y | N/A | - | exact configured group/artifact metadata only; no JAR/POM downloads; live proof outstanding |
 | SEC EDGAR cybersecurity disclosures | SA-04 | Y | Y | Y | Y | N/A | - | targeted Item 1.05 metadata capability; CIK target registry empty and deployment User-Agent required |
 | PhishTank verified online phishing data | SA-04 | Y | Y | Y | Y | N/A | - | global URL telemetry capability; application key/onboarding and deployment User-Agent required |
 | Licensed incident reporting | SA-07 | Y | - | - | - | - | - | concrete licensed provider/contract not selected |
@@ -71,6 +76,24 @@ SA-00 established the lifecycle and truth model. SA-01 through SA-04 promote onl
 Every `source_id` contained in every checked-in `source_portfolio*.yml` bundle must have an activation record. Repository tests enforce this invariant across the activation bundles added by each SA/Priority-B increment.
 
 OSINT Framework synchronization remains candidate discovery only. An upstream entry can stay non-executable, but relevant candidates must eventually receive an explicit `active`, `planned`, `manual`, `blocked`, `replaced`, `duplicate`, or `not_relevant` disposition before SA-10 closes.
+
+## Priority B-2 developer ecosystem completion boundary
+
+Priority B-2 is complete only when:
+
+- GitHub organization repositories, GitLab group projects, PyPI projects, npm packages and Maven Central coordinates are registered in the shared collection runtime;
+- every lookup is bound to an explicit canonical organization UUID plus an exact provider identity from the checked-in target registry;
+- the checked-in target registry is empty and all five checked-in schedules remain disabled;
+- no provider performs global organization, repository, project, package or person discovery;
+- provider schemas exclude users, owners, members, contributors, commit authors, maintainers, author emails and other person-oriented metadata before RawObservation hashing;
+- repository source code, archives, releases, package distributions, tarballs, JARs, POMs, source artifacts and signatures are never downloaded by this capability;
+- provider-returned exact identities are revalidated before persistence where the provider exposes them;
+- projections reuse Lot 12 `PublicResource` / `PublicResourceVersion` with `REPOSITORY` or `PACKAGE` rather than creating a developer-intelligence persistence silo;
+- repository or package presence remains public engineering context and never proves production deployment, exposure, vulnerability applicability, compromise or a commercial need;
+- no automatic `PublicClaim`, `CommercialSignal`, `NeedHypothesis`, score, opportunity, contact target or outreach action is produced;
+- deterministic provider, target-registry, no-target/no-network, runtime and Source Activation reconciliation tests pass;
+- the complete repository backend and frontend CI pass on one exact final SHA;
+- `live_tested` remains false until separately authorized controlled provider validation is evidenced.
 
 ## Priority B-1 RDAP completion boundary
 

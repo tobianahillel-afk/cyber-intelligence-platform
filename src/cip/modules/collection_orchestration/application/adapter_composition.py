@@ -3,19 +3,33 @@ from __future__ import annotations
 from collections.abc import Callable
 from dataclasses import dataclass
 
+from cip.adapters.sources.developer_ecosystem.registry import (
+    DeveloperEcosystemTarget,
+)
 from cip.adapters.sources.greenhouse.registry import GreenhouseBoard
 from cip.adapters.sources.incident_catalogs.sec_registry import SecIncidentTarget
 from cip.adapters.sources.lever.registry import LeverSite
-from cip.adapters.sources.organization_identity.registry import OrganizationIdentityTarget
+from cip.adapters.sources.organization_identity.registry import (
+    OrganizationIdentityTarget,
+)
 from cip.adapters.sources.passive_infrastructure.rdap_registry import RdapTarget
-from cip.adapters.sources.passive_infrastructure.registry import PassiveInfrastructureTarget
+from cip.adapters.sources.passive_infrastructure.registry import (
+    PassiveInfrastructureTarget,
+)
 from cip.adapters.sources.public_web.registry import PublicWebTarget
 from cip.adapters.sources.smartrecruiters.registry import SmartRecruitersCompany
-from cip.adapters.sources.vulnerability_catalogs.registry import VulnerabilityQueryTarget
+from cip.adapters.sources.vulnerability_catalogs.registry import (
+    VulnerabilityQueryTarget,
+)
 from cip.modules.collection_orchestration.application.adapters import CisaKevAdapter
 from cip.modules.collection_orchestration.application.boamp_adapter import BoampAdapter
 from cip.modules.collection_orchestration.application.decp_adapter import DecpAdapter
-from cip.modules.collection_orchestration.application.greenhouse_adapter import GreenhouseAdapter
+from cip.modules.collection_orchestration.application.developer_ecosystem_registration import (
+    register_developer_ecosystem_adapters,
+)
+from cip.modules.collection_orchestration.application.greenhouse_adapter import (
+    GreenhouseAdapter,
+)
 from cip.modules.collection_orchestration.application.identity_adapters import (
     register_identity_adapters,
 )
@@ -27,7 +41,9 @@ from cip.modules.collection_orchestration.application.passive_infrastructure_reg
     register_passive_infrastructure_adapters,
 )
 from cip.modules.collection_orchestration.application.ports import CollectionAdapter
-from cip.modules.collection_orchestration.application.public_web_adapter import PublicWebAdapter
+from cip.modules.collection_orchestration.application.public_web_adapter import (
+    PublicWebAdapter,
+)
 from cip.modules.collection_orchestration.application.reference_adapter import (
     ReferencePortfolioAdapter,
 )
@@ -53,6 +69,7 @@ class AdapterCompositionInputs:
     smartrecruiters_companies: tuple[SmartRecruitersCompany, ...]
     identity_targets: tuple[OrganizationIdentityTarget, ...]
     public_web_targets: tuple[PublicWebTarget, ...]
+    developer_ecosystem_targets: tuple[DeveloperEcosystemTarget, ...]
     search_templates: tuple[SearchQueryTemplate, ...]
     vulnerability_targets: tuple[VulnerabilityQueryTarget, ...]
     passive_infrastructure_targets: tuple[PassiveInfrastructureTarget, ...]
@@ -84,6 +101,12 @@ def build_runtime_adapters(
         adapters,
         entries_by_id,
         inputs.public_web_targets,
+        timeout_seconds=timeout_seconds,
+    )
+    register_developer_ecosystem_adapters(
+        adapters,
+        entries_by_id,
+        inputs.developer_ecosystem_targets,
         timeout_seconds=timeout_seconds,
     )
     register_search_archive_adapters(
@@ -130,7 +153,6 @@ def _register_core_adapters(
     _register_if_present(adapters, entries_by_id, TedSearchAdapter, timeout_seconds)
     _register_if_present(adapters, entries_by_id, BoampAdapter, timeout_seconds)
     _register_if_present(adapters, entries_by_id, DecpAdapter, timeout_seconds)
-
     greenhouse_entry = entries_by_id.get(GreenhouseAdapter.source_id)
     if greenhouse_entry is not None and any(
         board.enabled for board in inputs.greenhouse_boards
@@ -143,9 +165,10 @@ def _register_core_adapters(
                 timeout_seconds=timeout_seconds,
             ),
         )
-
     lever_entry = entries_by_id.get(LeverAdapter.source_id)
-    if lever_entry is not None and any(site.enabled for site in inputs.lever_sites):
+    if lever_entry is not None and any(
+        site.enabled for site in inputs.lever_sites
+    ):
         _register(
             adapters,
             LeverAdapter(
@@ -154,7 +177,6 @@ def _register_core_adapters(
                 timeout_seconds=timeout_seconds,
             ),
         )
-
     smartrecruiters_entry = entries_by_id.get(SmartRecruitersAdapter.source_id)
     if smartrecruiters_entry is not None and any(
         company.enabled for company in inputs.smartrecruiters_companies
@@ -179,9 +201,11 @@ def _register_if_present(
     timeout_seconds: float,
 ) -> None:
     entry = entries_by_id.get(adapter_type.source_id)
-    if entry is None:
-        return
-    _register(adapters, adapter_type(entry, timeout_seconds=timeout_seconds))
+    if entry is not None:
+        _register(
+            adapters,
+            adapter_type(entry, timeout_seconds=timeout_seconds),
+        )
 
 
 def _register_public_web_adapters(
@@ -196,7 +220,9 @@ def _register_public_web_adapters(
             continue
         entry = entries_by_id.get(target.id)
         if entry is None:
-            raise ValueError(f"enabled public web target has no source policy: {target.id}")
+            raise ValueError(
+                f"enabled public web target has no source policy: {target.id}"
+            )
         _register(
             adapters,
             PublicWebAdapter(

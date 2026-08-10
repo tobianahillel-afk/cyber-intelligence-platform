@@ -275,6 +275,46 @@ sources:
     requires_schedule: false
     stages: [catalogued, reviewed, mapped, adapter_present, authorized, executable]
 
+  - source_id: github-public-org-repositories
+    display_name: GitHub public organization repository metadata
+    category: corporate_public_footprint
+    disposition: active
+    activation_wave: Priority-B
+    requires_schedule: false
+    stages: [catalogued, reviewed, mapped, adapter_present, authorized, executable]
+
+  - source_id: gitlab-public-group-projects
+    display_name: GitLab public group project metadata
+    category: corporate_public_footprint
+    disposition: active
+    activation_wave: Priority-B
+    requires_schedule: false
+    stages: [catalogued, reviewed, mapped, adapter_present, authorized, executable]
+
+  - source_id: pypi-public-package-metadata
+    display_name: PyPI public project metadata
+    category: corporate_public_footprint
+    disposition: active
+    activation_wave: Priority-B
+    requires_schedule: false
+    stages: [catalogued, reviewed, mapped, adapter_present, authorized, executable]
+
+  - source_id: npm-public-package-metadata
+    display_name: npm public package metadata
+    category: corporate_public_footprint
+    disposition: active
+    activation_wave: Priority-B
+    requires_schedule: false
+    stages: [catalogued, reviewed, mapped, adapter_present, authorized, executable]
+
+  - source_id: maven-central-public-metadata
+    display_name: Maven Central public artifact metadata
+    category: corporate_public_footprint
+    disposition: active
+    activation_wave: Priority-B
+    requires_schedule: false
+    stages: [catalogued, reviewed, mapped, adapter_present, authorized, executable]
+
   - source_id: official-vendor-psirt
     display_name: Official Vendor PSIRT Advisories
     category: vulnerability_advisory

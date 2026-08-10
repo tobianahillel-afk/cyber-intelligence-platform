@@ -10,6 +10,9 @@ from time import sleep
 
 from sqlalchemy.orm import Session, sessionmaker
 
+from cip.adapters.sources.developer_ecosystem.registry import (
+    load_developer_ecosystem_targets,
+)
 from cip.adapters.sources.greenhouse.registry import load_greenhouse_boards
 from cip.adapters.sources.incident_catalogs.sec_registry import load_sec_incident_targets
 from cip.adapters.sources.lever.registry import load_lever_sites
@@ -52,7 +55,9 @@ from cip.modules.public_footprint.infrastructure.search_registry import (
 )
 from cip.modules.source_governance.infrastructure.persistence import sync_source_registry
 from cip.modules.source_governance.infrastructure.registry import SourceRegistryEntry
-from cip.modules.source_governance.infrastructure.registry_bundle import load_source_registry_bundle
+from cip.modules.source_governance.infrastructure.registry_bundle import (
+    load_source_registry_bundle,
+)
 from cip.modules.source_portfolio.application.backfill_worker import (
     BackfillWorkerOutcome,
     BackfillWorkerStatus,
@@ -64,7 +69,9 @@ from cip.modules.source_portfolio.application.service import (
     sync_source_portfolio,
 )
 from cip.modules.source_portfolio.domain.models import CatalogStatus, SourceCatalogEntry
-from cip.modules.source_portfolio.infrastructure.registry_bundle import load_source_portfolio_bundle
+from cip.modules.source_portfolio.infrastructure.registry_bundle import (
+    load_source_portfolio_bundle,
+)
 from cip.shared.config.settings import Settings
 from cip.shared.kernel.time import utc_now
 from cip.shared.persistence.session import (
@@ -175,7 +182,9 @@ def _load_adapter_inputs(
 ) -> AdapterCompositionInputs:
     return AdapterCompositionInputs(
         entries=entries,
-        greenhouse_boards=load_greenhouse_boards(settings.greenhouse_board_registry_path),
+        greenhouse_boards=load_greenhouse_boards(
+            settings.greenhouse_board_registry_path
+        ),
         lever_sites=load_lever_sites(settings.lever_site_registry_path),
         smartrecruiters_companies=load_smartrecruiters_companies(
             settings.smartrecruiters_company_registry_path
@@ -183,7 +192,12 @@ def _load_adapter_inputs(
         identity_targets=load_organization_identity_targets(
             settings.organization_identity_target_registry_path
         ),
-        public_web_targets=load_public_web_targets(settings.public_web_target_registry_path),
+        public_web_targets=load_public_web_targets(
+            settings.public_web_target_registry_path
+        ),
+        developer_ecosystem_targets=load_developer_ecosystem_targets(
+            settings.developer_ecosystem_target_registry_path
+        ),
         search_templates=load_search_query_templates(
             settings.search_query_template_registry_path
         ),
@@ -213,7 +227,11 @@ def _load_schedules(settings: Settings) -> tuple[SourceSchedule, ...]:
     )
 
 
-def run_scheduler_once(runtime: CollectionRuntime, *, now: datetime | None = None) -> int:
+def run_scheduler_once(
+    runtime: CollectionRuntime,
+    *,
+    now: datetime | None = None,
+) -> int:
     current = now or utc_now()
     with session_scope(runtime.factory) as session:
         eligible = tuple(
@@ -296,7 +314,9 @@ def _validate_registered_schedules(
         if not conditional:
             missing.append(f"{schedule.source_id}/{schedule.adapter_id}")
     if missing:
-        raise ValueError(f"enabled schedules have no registered adapter: {', '.join(missing)}")
+        raise ValueError(
+            "enabled schedules have no registered adapter: " + ", ".join(missing)
+        )
 
 
 def _validate_portfolio_adapters(
