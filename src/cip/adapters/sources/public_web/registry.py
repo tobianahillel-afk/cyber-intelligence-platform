@@ -20,6 +20,7 @@ _NON_PUBLIC_HOST_SUFFIXES = (
     ".local",
     ".localhost",
 )
+_SECURITY_TXT_PATH = "/.well-known/security.txt"
 
 
 @dataclass(frozen=True, slots=True)
@@ -35,6 +36,8 @@ class PublicWebTarget:
     authorization_reviewed_at: datetime | None
     authorization_expires_at: datetime | None = None
     terms_url: str | None = None
+    feed_urls: tuple[str, ...] = ()
+    discover_security_txt: bool = False
     max_pages: int = 100
     max_total_bytes: int = 10_000_000
     max_resource_bytes: int = 1_000_000
@@ -47,11 +50,10 @@ class PublicWebTarget:
             raise ValueError("public web target id and canonical_name are required")
         base = CanonicalUrl(self.base_url)
         _validate_public_hostname(base.host)
-        sitemaps = tuple(CanonicalUrl(value).value for value in self.sitemap_urls)
-        if not sitemaps:
-            raise ValueError("public web target requires at least one sitemap URL")
-        if any(not same_origin(base, sitemap) for sitemap in sitemaps):
-            raise ValueError("public web sitemap URLs must share the target origin")
+        sitemaps = _same_origin_urls(base, self.sitemap_urls, label="sitemap")
+        feeds = _same_origin_urls(base, self.feed_urls, label="feed")
+        if not sitemaps and not feeds and not self.discover_security_txt:
+            raise ValueError("public web target requires an explicit discovery path")
         reviewed_at = _optional_time(
             self.authorization_reviewed_at,
             field_name="authorization_reviewed_at",
@@ -66,9 +68,12 @@ class PublicWebTarget:
         if self.enabled and (reference is None or reviewed_at is None):
             raise ValueError("enabled public web target requires reviewed authorization")
         terms_url = CanonicalUrl(self.terms_url).value if self.terms_url else None
+        prefixes = self.allowed_path_prefixes
+        if self.discover_security_txt and _SECURITY_TXT_PATH not in prefixes:
+            prefixes = (*prefixes, _SECURITY_TXT_PATH)
         scope = CrawlScope(
             allowed_hosts=frozenset({base.host}),
-            allowed_path_prefixes=self.allowed_path_prefixes,
+            allowed_path_prefixes=prefixes,
             max_depth=1,
             max_pages=self.max_pages,
             max_total_bytes=self.max_total_bytes,
@@ -79,6 +84,7 @@ class PublicWebTarget:
         object.__setattr__(self, "canonical_name", name)
         object.__setattr__(self, "base_url", base.value)
         object.__setattr__(self, "sitemap_urls", sitemaps)
+        object.__setattr__(self, "feed_urls", feeds)
         object.__setattr__(self, "allowed_path_prefixes", scope.allowed_path_prefixes)
         object.__setattr__(self, "authorization_reference", reference)
         object.__setattr__(self, "authorization_reviewed_at", reviewed_at)
@@ -92,6 +98,10 @@ class PublicWebTarget:
     @property
     def robots_url(self) -> str:
         return f"{CanonicalUrl(self.base_url).origin}/robots.txt"
+
+    @property
+    def security_txt_url(self) -> str:
+        return f"{CanonicalUrl(self.base_url).origin}{_SECURITY_TXT_PATH}"
 
     @property
     def crawl_scope(self) -> CrawlScope:
@@ -151,7 +161,9 @@ def _parse_target(payload: dict[str, Any]) -> PublicWebTarget:
         organization_id=UUID(_required_string(payload, "organization_id")),
         canonical_name=_required_string(payload, "canonical_name"),
         base_url=_required_string(payload, "base_url"),
-        sitemap_urls=_string_tuple(payload, "sitemap_urls", minimum=1),
+        sitemap_urls=_string_tuple(payload, "sitemap_urls", minimum=0),
+        feed_urls=_string_tuple(payload, "feed_urls", minimum=0),
+        discover_security_txt=_optional_bool(payload, "discover_security_txt", default=False),
         allowed_path_prefixes=_string_tuple(
             payload,
             "allowed_path_prefixes",
@@ -186,6 +198,20 @@ def _parse_target(payload: dict[str, Any]) -> PublicWebTarget:
         ),
         max_redirects=_bounded_int(limits, "max_redirects", minimum=0, maximum=10),
     )
+
+
+def _same_origin_urls(
+    base: CanonicalUrl,
+    values: tuple[str, ...],
+    *,
+    label: str,
+) -> tuple[str, ...]:
+    urls = tuple(CanonicalUrl(value).value for value in values)
+    if any(not same_origin(base, url) for url in urls):
+        raise ValueError(f"public web {label} URLs must share the target origin")
+    if len(set(urls)) != len(urls):
+        raise ValueError(f"public web {label} URLs must be unique")
+    return urls
 
 
 def _validate_public_hostname(host: str) -> None:
@@ -241,13 +267,20 @@ def _required_bool(payload: dict[str, Any], key: str) -> bool:
     return value
 
 
+def _optional_bool(payload: dict[str, Any], key: str, *, default: bool) -> bool:
+    value = payload.get(key, default)
+    if not isinstance(value, bool):
+        raise ValueError(f"{key} must be a boolean")
+    return value
+
+
 def _string_tuple(
     payload: dict[str, Any],
     key: str,
     *,
     minimum: int,
 ) -> tuple[str, ...]:
-    value = payload.get(key)
+    value = payload.get(key, [])
     if not isinstance(value, list) or len(value) < minimum:
         raise ValueError(f"{key} must contain at least {minimum} item(s)")
     result: list[str] = []
