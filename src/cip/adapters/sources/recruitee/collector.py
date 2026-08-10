@@ -8,6 +8,7 @@ from uuid import UUID
 
 from pydantic import ValidationError
 
+from cip.adapters.sources.canonical_jobs import canonical_public_job_observation
 from cip.adapters.sources.recruitee.client import RecruiteeClient
 from cip.adapters.sources.recruitee.mapper import (
     map_recruitee_offer,
@@ -129,10 +130,16 @@ def _collect_site(
             collected_at=collected_at,
             retention_until=retention_until,
         )
-        if mapped is None:
-            continue
-        observation, projection = mapped
-        projections.append(projection)
+        if mapped is not None:
+            observation, projection = mapped
+            projections.append(projection)
+        else:
+            observation = canonical_public_job_observation(
+                canonical,
+                collection_job_id=collection_job_id,
+                collected_at=collected_at,
+                retention_until=retention_until,
+            )
         if previous.get(key) != fingerprint:
             observations.append(observation)
     return fingerprints
