@@ -16,35 +16,69 @@ from cip.adapters.sources.developer_ecosystem.registry import (
 from cip.adapters.sources.greenhouse.registry import load_greenhouse_boards
 from cip.adapters.sources.incident_catalogs.sec_registry import load_sec_incident_targets
 from cip.adapters.sources.lever.registry import load_lever_sites
-from cip.adapters.sources.organization_identity.registry import load_organization_identity_targets
+from cip.adapters.sources.organization_identity.registry import (
+    load_organization_identity_targets,
+)
 from cip.adapters.sources.passive_infrastructure.rdap_registry import load_rdap_targets
-from cip.adapters.sources.passive_infrastructure.registry import load_passive_infrastructure_targets
+from cip.adapters.sources.passive_infrastructure.registry import (
+    load_passive_infrastructure_targets,
+)
 from cip.adapters.sources.public_web.registry import load_public_web_targets
 from cip.adapters.sources.smartrecruiters.registry import load_smartrecruiters_companies
-from cip.adapters.sources.vulnerability_catalogs.registry import load_vulnerability_query_targets
-from cip.modules.collection_orchestration.application.adapter_composition import AdapterCompositionInputs, build_runtime_adapters
+from cip.adapters.sources.vulnerability_catalogs.registry import (
+    load_vulnerability_query_targets,
+)
+from cip.modules.collection_orchestration.application.adapter_composition import (
+    AdapterCompositionInputs,
+    build_runtime_adapters,
+)
 from cip.modules.collection_orchestration.application.ports import CollectionAdapter
-from cip.modules.collection_orchestration.application.provider_secret_supplier import connected_secret_supplier
+from cip.modules.collection_orchestration.application.provider_secret_supplier import (
+    connected_secret_supplier,
+)
 from cip.modules.collection_orchestration.application.scheduler import schedule_due_jobs
-from cip.modules.collection_orchestration.application.worker import WorkerOutcome, WorkerStatus, run_worker_once
+from cip.modules.collection_orchestration.application.worker import (
+    WorkerOutcome,
+    WorkerStatus,
+    run_worker_once,
+)
 from cip.modules.collection_orchestration.domain.models import SourceSchedule
-from cip.modules.collection_orchestration.infrastructure.schedule_bundle import load_collection_schedule_bundle
+from cip.modules.collection_orchestration.infrastructure.schedule_bundle import (
+    load_collection_schedule_bundle,
+)
 from cip.modules.data_governance.domain.retention import RetentionPolicy
 from cip.modules.data_governance.infrastructure.retention_loader import load_retention_policy
 from cip.modules.provider_onboarding.application.service import sync_provider_profiles
 from cip.modules.provider_onboarding.infrastructure.registry import load_provider_profiles
-from cip.modules.public_footprint.infrastructure.search_registry import load_search_query_templates
+from cip.modules.public_footprint.infrastructure.search_registry import (
+    load_search_query_templates,
+)
 from cip.modules.source_governance.infrastructure.persistence import sync_source_registry
 from cip.modules.source_governance.infrastructure.registry import SourceRegistryEntry
-from cip.modules.source_governance.infrastructure.registry_bundle import load_source_registry_bundle
-from cip.modules.source_portfolio.application.backfill_worker import BackfillWorkerOutcome, BackfillWorkerStatus, run_backfill_once
+from cip.modules.source_governance.infrastructure.registry_bundle import (
+    load_source_registry_bundle,
+)
+from cip.modules.source_portfolio.application.backfill_worker import (
+    BackfillWorkerOutcome,
+    BackfillWorkerStatus,
+    run_backfill_once,
+)
 from cip.modules.source_portfolio.application.execution import source_execution_allowed
-from cip.modules.source_portfolio.application.service import reconcile_runtime_adapters, sync_source_portfolio
+from cip.modules.source_portfolio.application.service import (
+    reconcile_runtime_adapters,
+    sync_source_portfolio,
+)
 from cip.modules.source_portfolio.domain.models import CatalogStatus, SourceCatalogEntry
-from cip.modules.source_portfolio.infrastructure.registry_bundle import load_source_portfolio_bundle
+from cip.modules.source_portfolio.infrastructure.registry_bundle import (
+    load_source_portfolio_bundle,
+)
 from cip.shared.config.settings import Settings
 from cip.shared.kernel.time import utc_now
-from cip.shared.persistence.session import create_database_engine, create_session_factory, session_scope
+from cip.shared.persistence.session import (
+    create_database_engine,
+    create_session_factory,
+    session_scope,
+)
 
 LOGGER = logging.getLogger(__name__)
 
@@ -72,9 +106,21 @@ def build_collection_runtime(settings: Settings) -> CollectionRuntime:
         sync_source_portfolio(session, portfolio, now=synchronized_at)
     adapters = build_runtime_adapters(
         adapter_inputs,
-        brave_token_provider=connected_secret_supplier(factory, source_id="brave-search-api", secret_name="api_token"),
-        certspotter_token_provider=connected_secret_supplier(factory, source_id="certspotter-ct", secret_name="api_token"),
-        phishtank_token_provider=connected_secret_supplier(factory, source_id="phishtank-verified-online", secret_name="api_token"),
+        brave_token_provider=connected_secret_supplier(
+            factory,
+            source_id="brave-search-api",
+            secret_name="api_token",
+        ),
+        certspotter_token_provider=connected_secret_supplier(
+            factory,
+            source_id="certspotter-ct",
+            secret_name="api_token",
+        ),
+        phishtank_token_provider=connected_secret_supplier(
+            factory,
+            source_id="phishtank-verified-online",
+            secret_name="api_token",
+        ),
         sec_user_agent=settings.sec_edgar_user_agent,
         phishtank_user_agent=settings.phishtank_user_agent,
         timeout_seconds=settings.source_http_timeout_seconds,
@@ -130,20 +176,41 @@ def _load_portfolio(settings: Settings) -> tuple[SourceCatalogEntry, ...]:
     )
 
 
-def _load_adapter_inputs(settings: Settings, entries: tuple[SourceRegistryEntry, ...]) -> AdapterCompositionInputs:
+def _load_adapter_inputs(
+    settings: Settings,
+    entries: tuple[SourceRegistryEntry, ...],
+) -> AdapterCompositionInputs:
     return AdapterCompositionInputs(
         entries=entries,
-        greenhouse_boards=load_greenhouse_boards(settings.greenhouse_board_registry_path),
+        greenhouse_boards=load_greenhouse_boards(
+            settings.greenhouse_board_registry_path
+        ),
         lever_sites=load_lever_sites(settings.lever_site_registry_path),
-        smartrecruiters_companies=load_smartrecruiters_companies(settings.smartrecruiters_company_registry_path),
-        identity_targets=load_organization_identity_targets(settings.organization_identity_target_registry_path),
-        public_web_targets=load_public_web_targets(settings.public_web_target_registry_path),
-        developer_ecosystem_targets=load_developer_ecosystem_targets(settings.developer_ecosystem_target_registry_path),
-        search_templates=load_search_query_templates(settings.search_query_template_registry_path),
-        vulnerability_targets=load_vulnerability_query_targets(settings.vulnerability_query_target_registry_path),
-        passive_infrastructure_targets=load_passive_infrastructure_targets(settings.passive_infrastructure_target_registry_path),
+        smartrecruiters_companies=load_smartrecruiters_companies(
+            settings.smartrecruiters_company_registry_path
+        ),
+        identity_targets=load_organization_identity_targets(
+            settings.organization_identity_target_registry_path
+        ),
+        public_web_targets=load_public_web_targets(
+            settings.public_web_target_registry_path
+        ),
+        developer_ecosystem_targets=load_developer_ecosystem_targets(
+            settings.developer_ecosystem_target_registry_path
+        ),
+        search_templates=load_search_query_templates(
+            settings.search_query_template_registry_path
+        ),
+        vulnerability_targets=load_vulnerability_query_targets(
+            settings.vulnerability_query_target_registry_path
+        ),
+        passive_infrastructure_targets=load_passive_infrastructure_targets(
+            settings.passive_infrastructure_target_registry_path
+        ),
         rdap_targets=load_rdap_targets(settings.rdap_target_registry_path),
-        sec_incident_targets=load_sec_incident_targets(settings.sec_incident_target_registry_path),
+        sec_incident_targets=load_sec_incident_targets(
+            settings.sec_incident_target_registry_path
+        ),
     )
 
 
@@ -160,14 +227,27 @@ def _load_schedules(settings: Settings) -> tuple[SourceSchedule, ...]:
     )
 
 
-def run_scheduler_once(runtime: CollectionRuntime, *, now: datetime | None = None) -> int:
+def run_scheduler_once(
+    runtime: CollectionRuntime,
+    *,
+    now: datetime | None = None,
+) -> int:
     current = now or utc_now()
     with session_scope(runtime.factory) as session:
-        eligible = tuple(schedule for schedule in runtime.schedules if source_execution_allowed(session, schedule.source_id, now=current))
+        eligible = tuple(
+            schedule
+            for schedule in runtime.schedules
+            if source_execution_allowed(session, schedule.source_id, now=current)
+        )
         return schedule_due_jobs(session, eligible, now=current)
 
 
-def run_scheduler_forever(settings: Settings, *, sleep_fn: Callable[[float], None] = sleep, max_iterations: int | None = None) -> None:
+def run_scheduler_forever(
+    settings: Settings,
+    *,
+    sleep_fn: Callable[[float], None] = sleep,
+    max_iterations: int | None = None,
+) -> None:
     runtime = build_collection_runtime(settings)
     iterations = 0
     while max_iterations is None or iterations < max_iterations:
@@ -178,23 +258,47 @@ def run_scheduler_forever(settings: Settings, *, sleep_fn: Callable[[float], Non
             sleep_fn(settings.scheduler_poll_seconds)
 
 
-def run_worker_forever(settings: Settings, *, worker_id: str | None = None, sleep_fn: Callable[[float], None] = sleep, max_iterations: int | None = None) -> None:
+def run_worker_forever(
+    settings: Settings,
+    *,
+    worker_id: str | None = None,
+    sleep_fn: Callable[[float], None] = sleep,
+    max_iterations: int | None = None,
+) -> None:
     runtime = build_collection_runtime(settings)
     identity = worker_id or f"{gethostname()}:{getpid()}"
     iterations = 0
     while max_iterations is None or iterations < max_iterations:
-        outcome = run_worker_once(runtime.factory, worker_id=identity, adapters=runtime.adapters, retention_policy=runtime.retention_policy)
+        outcome = run_worker_once(
+            runtime.factory,
+            worker_id=identity,
+            adapters=runtime.adapters,
+            retention_policy=runtime.retention_policy,
+        )
         _log_worker_outcome(outcome)
         backfill_outcome = BackfillWorkerOutcome(BackfillWorkerStatus.IDLE)
         if outcome.status is WorkerStatus.IDLE:
-            backfill_outcome = run_backfill_once(runtime.factory, worker_id=identity, adapters=runtime.adapters, retention_policy=runtime.retention_policy)
+            backfill_outcome = run_backfill_once(
+                runtime.factory,
+                worker_id=identity,
+                adapters=runtime.adapters,
+                retention_policy=runtime.retention_policy,
+            )
             _log_backfill_outcome(backfill_outcome)
         iterations += 1
-        if outcome.status is WorkerStatus.IDLE and backfill_outcome.status is BackfillWorkerStatus.IDLE and (max_iterations is None or iterations < max_iterations):
+        if (
+            outcome.status is WorkerStatus.IDLE
+            and backfill_outcome.status is BackfillWorkerStatus.IDLE
+            and (max_iterations is None or iterations < max_iterations)
+        ):
             sleep_fn(settings.worker_poll_seconds)
 
 
-def _validate_registered_schedules(schedules: tuple[SourceSchedule, ...], adapters: dict[tuple[str, str], CollectionAdapter], portfolio: tuple[SourceCatalogEntry, ...]) -> None:
+def _validate_registered_schedules(
+    schedules: tuple[SourceSchedule, ...],
+    adapters: dict[tuple[str, str], CollectionAdapter],
+    portfolio: tuple[SourceCatalogEntry, ...],
+) -> None:
     portfolio_by_id = {entry.source_id: entry for entry in portfolio}
     missing: list[str] = []
     for schedule in schedules:
@@ -202,26 +306,52 @@ def _validate_registered_schedules(schedules: tuple[SourceSchedule, ...], adapte
         if not schedule.enabled or identity in adapters:
             continue
         entry = portfolio_by_id.get(schedule.source_id)
-        conditional = entry is not None and entry.status is CatalogStatus.PAUSED and "activation_requires" in entry.metadata
+        conditional = (
+            entry is not None
+            and entry.status is CatalogStatus.PAUSED
+            and "activation_requires" in entry.metadata
+        )
         if not conditional:
             missing.append(f"{schedule.source_id}/{schedule.adapter_id}")
     if missing:
-        raise ValueError(f"enabled schedules have no registered adapter: {', '.join(missing)}")
+        raise ValueError(
+            "enabled schedules have no registered adapter: " + ", ".join(missing)
+        )
 
 
-def _validate_portfolio_adapters(portfolio: tuple[SourceCatalogEntry, ...], adapters: dict[tuple[str, str], CollectionAdapter]) -> None:
+def _validate_portfolio_adapters(
+    portfolio: tuple[SourceCatalogEntry, ...],
+    adapters: dict[tuple[str, str], CollectionAdapter],
+) -> None:
     missing = [
         f"{entry.source_id}/{entry.adapter.adapter_id}"
         for entry in portfolio
-        if entry.executable and entry.adapter is not None and (entry.source_id, entry.adapter.adapter_id) not in adapters
+        if entry.executable
+        and entry.adapter is not None
+        and (entry.source_id, entry.adapter.adapter_id) not in adapters
     ]
     if missing:
-        raise ValueError("executable source portfolio entries have no registered adapter: " + ", ".join(missing))
+        raise ValueError(
+            "executable source portfolio entries have no registered adapter: "
+            + ", ".join(missing)
+        )
 
 
 def _log_worker_outcome(outcome: WorkerOutcome) -> None:
-    LOGGER.info("collection worker status=%s job_id=%s observations=%s error=%s", outcome.status.value, outcome.job_id, outcome.observations_written, outcome.error_code)
+    LOGGER.info(
+        "collection worker status=%s job_id=%s observations=%s error=%s",
+        outcome.status.value,
+        outcome.job_id,
+        outcome.observations_written,
+        outcome.error_code,
+    )
 
 
 def _log_backfill_outcome(outcome: BackfillWorkerOutcome) -> None:
-    LOGGER.info("backfill worker status=%s partition_id=%s observations=%s error=%s", outcome.status.value, outcome.partition_id, outcome.observations_written, outcome.error_code)
+    LOGGER.info(
+        "backfill worker status=%s partition_id=%s observations=%s error=%s",
+        outcome.status.value,
+        outcome.partition_id,
+        outcome.observations_written,
+        outcome.error_code,
+    )
