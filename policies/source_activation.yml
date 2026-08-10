@@ -396,50 +396,64 @@ sources:
   - source_id: official-corporate-disclosures
     display_name: Official Corporate Disclosures
     category: corporate_change_intelligence
-    disposition: planned
+    disposition: manual
     activation_wave: SA-06
+    requires_schedule: false
+    reason: Generic company disclosure structures cannot be safely auto-interpreted; analysts may approve bounded first-party material through the existing public-web/search/archive path and Lot 18 mapper.
     stages: [catalogued, reviewed, mapped]
 
   - source_id: official-regulatory-change-notices
     display_name: Official Regulatory Change Notices
     category: corporate_change_intelligence
-    disposition: planned
+    disposition: manual
     activation_wave: SA-06
+    requires_schedule: false
+    reason: Regulator notices require concrete source review and evidence-class handling before Lot 18 mapping; the generic family does not grant network authorization.
     stages: [catalogued, reviewed, mapped]
 
   - source_id: licensed-corporate-news-metadata
     display_name: Licensed Corporate News Metadata
     category: corporate_change_intelligence
-    disposition: planned
-    activation_wave: SA-06
+    disposition: blocked
+    activation_wave: SA-07
+    requires_schedule: false
+    reason: A concrete licensed provider, customer-facing commercial rights, fields, attribution/retention conditions, credentials, quotas and runtime adapter are required before execution.
     stages: [catalogued, reviewed, mapped]
 
   - source_id: official-relationship-disclosures
     display_name: Official Relationship Disclosures
     category: relationship_intelligence
-    disposition: planned
+    disposition: manual
     activation_wave: SA-06
+    requires_schedule: false
+    reason: First-party relationship statements require analyst review and Lot 19 evidence classification; marketing claims must not become contracted or active-incumbency evidence automatically.
     stages: [catalogued, reviewed, mapped]
 
   - source_id: public-partner-directory-metadata
     display_name: Public Partner Directory Metadata
     category: relationship_intelligence
-    disposition: planned
+    disposition: manual
     activation_wave: SA-06
+    requires_schedule: false
+    reason: Public directory presence is review-required relationship metadata and does not prove a current contract; acquisition must use an approved bounded public-web source.
     stages: [catalogued, reviewed, mapped]
 
   - source_id: public-case-study-metadata
     display_name: Public Case Study Metadata
     category: relationship_intelligence
-    disposition: planned
+    disposition: manual
     activation_wave: SA-06
+    requires_schedule: false
+    reason: Case studies may be historical and require analyst review before Lot 19 mapping; they do not prove current incumbency, renewal timing or production deployment.
     stages: [catalogued, reviewed, mapped]
 
   - source_id: public-certificate-relationship-metadata
     display_name: Public Certificate Relationship Metadata
     category: relationship_intelligence
-    disposition: planned
+    disposition: manual
     activation_wave: SA-06
+    requires_schedule: false
+    reason: Relationship semantics must be explicit and analyst-reviewed; certificate issuance alone is not provider/customer evidence and SA-03 certificate telemetry remains separate.
     stages: [catalogued, reviewed, mapped]
 
   - source_id: linkedin-official-api
