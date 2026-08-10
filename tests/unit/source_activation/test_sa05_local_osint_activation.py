@@ -2,7 +2,11 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from cip.modules.source_activation.domain.models import ActivationDisposition, ActivationStage
+from cip.modules.source_activation.domain.models import (
+    ActivationDisposition,
+    ActivationRecord,
+    ActivationStage,
+)
 from cip.modules.source_activation.infrastructure.inventory import load_activation_inventory
 
 ACTIVATION_PATH = Path("policies/source_activation.yml")
@@ -68,9 +72,17 @@ def test_sa05_manual_tools_are_explicit_and_documented() -> None:
     assert records["maltego-local"].disposition is ActivationDisposition.MANUAL
     for source_id in MANUAL_TOOLS | BLOCKED_FRAMEWORKS:
         assert source_id in records
-    for tool_name in ("Sherlock", "Amass", "theHarvester", "SpiderFoot", "Recon-ng", "Maltego"):
+    tool_names = (
+        "Sherlock",
+        "Amass",
+        "theHarvester",
+        "SpiderFoot",
+        "Recon-ng",
+        "Maltego",
+    )
+    for tool_name in tool_names:
         assert tool_name in document
 
 
-def _records() -> dict[str, object]:
+def _records() -> dict[str, ActivationRecord]:
     return {record.source_id: record for record in load_activation_inventory(ACTIVATION_PATH)}
