@@ -1,12 +1,14 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Any
 
 import yaml
 
 from cip.modules.source_activation.domain.audit import audit_inventory
 from cip.modules.source_activation.domain.models import (
     ActivationDisposition,
+    ActivationRecord,
     ActivationStage,
 )
 from cip.modules.source_activation.infrastructure.inventory import load_activation_inventory
@@ -59,6 +61,25 @@ FUTURE_LICENSED_PASSIVE = {
     "licensed-passive-exposure",
     "licensed-technographic-observations",
     "licensed-cloud-asset-observations",
+}
+MATRIX_LABELS = {
+    "iana-rdap-public": "IANA-bootstrapped public RDAP",
+    "github-public-org-repositories": "GitHub public organization repositories",
+    "gitlab-public-group-projects": "GitLab public group projects",
+    "pypi-public-package-metadata": "PyPI public package metadata",
+    "npm-public-package-metadata": "npm public package metadata",
+    "maven-central-public-metadata": "Maven Central public artifact metadata",
+    "censys-platform-passive": "`censys-platform-passive`",
+    "shodan-passive-data": "`shodan-passive-data`",
+    "securitytrails-passive-data": "`securitytrails-passive-data`",
+    "urlscan-passive-search": "`urlscan-passive-search`",
+    "wappalyzer-technographics": "`wappalyzer-technographics`",
+    "builtwith-technographics": "`builtwith-technographics`",
+    "licensed-passive-dns": "Licensed passive DNS",
+    "licensed-certificate-telemetry": "Licensed certificate telemetry",
+    "licensed-passive-exposure": "Licensed passive exposure",
+    "licensed-technographic-observations": "Licensed technography",
+    "licensed-cloud-asset-observations": "Licensed cloud-asset observations",
 }
 
 
@@ -151,30 +172,29 @@ def test_future_licensed_passive_families_are_owned_not_unknown_plans() -> None:
         assert ActivationStage.EXECUTABLE not in record.stages
 
 
-def test_activation_truth_and_matrix_cover_every_exact_priority_b_record() -> None:
+def test_activation_truth_and_matrix_agree_for_priority_b_scope() -> None:
     records = _records()
     matrix = MATRIX_PATH.read_text(encoding="utf-8")
     exact_ids = B1_B2_EXECUTABLE | B4_TERMINAL | FUTURE_LICENSED_PASSIVE
 
     assert records.keys() >= exact_ids
-    for source_id in exact_ids:
-        assert source_id in matrix
+    assert MATRIX_LABELS.keys() == exact_ids
+    for source_id, label in MATRIX_LABELS.items():
+        assert source_id in records
+        assert label in matrix
 
 
-def _assert_executable(record: object, *, wave: str) -> None:
-    from cip.modules.source_activation.domain.models import ActivationRecord
-
-    assert isinstance(record, ActivationRecord)
+def _assert_executable(record: ActivationRecord, *, wave: str) -> None:
     assert record.disposition is ActivationDisposition.ACTIVE
     assert record.activation_wave == wave
     assert EXECUTABLE_STAGES <= record.stages
 
 
-def _records() -> dict[str, object]:
+def _records() -> dict[str, ActivationRecord]:
     return {record.source_id: record for record in load_activation_inventory(ACTIVATION_PATH)}
 
 
-def _yaml(path: Path) -> dict[str, object]:
+def _yaml(path: Path) -> dict[str, Any]:
     payload = yaml.safe_load(path.read_text(encoding="utf-8"))
     assert isinstance(payload, dict)
     return payload
