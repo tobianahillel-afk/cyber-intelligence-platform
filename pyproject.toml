@@ -54,75 +54,35 @@ markers = [
 branch = true
 source = ["cip"]
 omit = [
-  "src/cip/apps/*",
-  "src/cip/cli.py",
-  "src/cip/shared/persistence/*",
-  "src/cip/shared/telemetry/*",
+  "*/__init__.py",
 ]
 
 [tool.coverage.report]
 fail_under = 90
 show_missing = true
 skip_covered = false
+precision = 2
+exclude_also = [
+  "if TYPE_CHECKING:",
+  "if __name__ == .__main__.:",
+  "raise NotImplementedError",
+  "@overload",
+]
 
 [tool.ruff]
 target-version = "py312"
 line-length = 100
-src = ["src"]
-exclude = ["alembic/versions"]
+src = ["src", "tests"]
 
 [tool.ruff.lint]
-select = [
-  "A",
-  "ARG",
-  "ASYNC",
-  "B",
-  "BLE",
-  "C4",
-  "DTZ",
-  "E",
-  "F",
-  "FAST",
-  "FLY",
-  "FURB",
-  "I",
-  "LOG",
-  "N",
-  "PERF",
-  "PIE",
-  "PL",
-  "PTH",
-  "PYI",
-  "RET",
-  "RUF",
-  "S",
-  "SIM",
-  "SLF",
-  "T20",
-  "TRY",
-  "UP",
-  "W",
-]
-ignore = [
-  "S101",
-  "TRY003",
-]
+select = ["E", "F", "I", "B", "UP", "SIM", "RUF"]
 
 [tool.ruff.lint.per-file-ignores]
-"tests/**/*.py" = ["ARG001", "ARG002", "S105", "S106", "S311", "SLF001"]
+"infra/migrations/versions/*.py" = ["I001"]
+"tests/unit/source_governance/test_policy.py" = ["E501"]
 
 [tool.mypy]
 python_version = "3.12"
 strict = true
+packages = ["cip"]
 mypy_path = "src"
-files = ["src", "tests"]
-exclude = ["^alembic/versions/"]
-plugins = ["pydantic.mypy"]
-
-[[tool.mypy.overrides]]
-module = "pypdf.*"
-ignore_missing_imports = true
-
-[[tool.mypy.overrides]]
-module = "yaml"
-ignore_missing_imports = true
