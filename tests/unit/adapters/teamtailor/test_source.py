@@ -17,7 +17,6 @@ from cip.adapters.sources.teamtailor.client import (
     TeamtailorSourceResponseError,
 )
 from cip.adapters.sources.teamtailor.collector import (
-    TeamtailorCheckpoint,
     TeamtailorCollectionDeniedError,
     TeamtailorSourceSchemaError,
     TeamtailorSourceWindowError,
@@ -149,13 +148,15 @@ def test_client_rejects_non_json_api_response() -> None:
     transport = httpx.MockTransport(
         lambda _: httpx.Response(200, headers={"content-type": "text/html"})
     )
-    with httpx.Client(transport=transport) as http_client:
-        with pytest.raises(TeamtailorSourceResponseError, match="content type"):
-            TeamtailorClient(http_client).fetch_jobs_page(
-                ACCOUNT.jobs_url,
-                api_token="token",
-                api_version=ACCOUNT.api_version,
-            )
+    with (
+        httpx.Client(transport=transport) as http_client,
+        pytest.raises(TeamtailorSourceResponseError, match="content type"),
+    ):
+        TeamtailorClient(http_client).fetch_jobs_page(
+            ACCOUNT.jobs_url,
+            api_token="token",
+            api_version=ACCOUNT.api_version,
+        )
 
 
 def test_collector_follows_only_same_provider_jobs_pagination() -> None:
