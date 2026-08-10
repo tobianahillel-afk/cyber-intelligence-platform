@@ -43,7 +43,7 @@ def recruitee_offer_to_canonical(
         published_at=offer.effective_published_at,
         description_text=description,
         location=offer.display_location(),
-        department=offer.department,
+        department=offer.department_name(),
         employment_type=offer.employment_type_code,
         seniority=None,
         language=None,
