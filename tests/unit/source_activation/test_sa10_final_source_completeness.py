@@ -66,29 +66,34 @@ def test_every_terminal_non_executable_record_is_resolved_with_reason() -> None:
 def test_sa10_preserves_real_live_validation_as_open_gate() -> None:
     records = _records()
     audit = audit_inventory(records)
-    active_without_live = tuple(
+    active_incomplete = tuple(
         sorted(
             record.source_id
             for record in records
             if record.disposition is ActivationDisposition.ACTIVE
-            and ActivationStage.LIVE_TESTED not in record.stages
+            and not record.is_fully_integrated
         )
     )
 
-    assert active_without_live
-    assert audit.unresolved == active_without_live
+    assert active_incomplete
+    assert audit.unresolved == active_incomplete
     assert audit.complete is False
     for record in records:
-        if record.source_id in active_without_live:
-            assert record.missing_integration_stages == (ActivationStage.LIVE_TESTED,)
+        if record.source_id in active_incomplete:
+            assert record.missing_integration_stages
 
 
-def test_reference_synthetic_is_only_fully_integrated_checked_in_source() -> None:
+def test_real_live_proofs_extend_fully_integrated_source_set() -> None:
     integrated = {
         record.source_id for record in _records() if record.is_fully_integrated
     }
 
-    assert integrated == {"reference-synthetic"}
+    assert integrated >= {
+        "reference-synthetic",
+        "ashby-job-board",
+        "recruitee-careers-site",
+    }
+    assert "teamtailor-public-jobs" not in integrated
 
 
 def test_public_web_sample_remains_disabled_after_terminalization() -> None:
