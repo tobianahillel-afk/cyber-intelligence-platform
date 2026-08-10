@@ -1,5 +1,5 @@
 version: 1
-reviewed_at: 2026-08-09
+reviewed_at: 2026-08-11
 
 providers:
   - source_id: cisa-kev
@@ -66,6 +66,45 @@ providers:
     required_secret_names: []
     human_actions: []
     automatic_onboarding: true
+    blocked_reason: null
+
+  - source_id: ashby-job-board
+    display_name: Ashby Public Job Postings API
+    auth_mode: none
+    documentation_url: https://developers.ashbyhq.com/docs/public-job-posting-api
+    signup_url: null
+    console_url: null
+    required_secret_names: []
+    human_actions: []
+    automatic_onboarding: true
+    blocked_reason: null
+
+  - source_id: recruitee-careers-site
+    display_name: Recruitee Careers Site API
+    auth_mode: none
+    documentation_url: https://docs.recruitee.com/reference/intro-to-careers-site-api
+    signup_url: null
+    console_url: null
+    required_secret_names: []
+    human_actions: []
+    automatic_onboarding: true
+    blocked_reason: null
+
+  - source_id: teamtailor-public-jobs
+    display_name: Teamtailor Public Read Jobs API
+    auth_mode: api_key
+    documentation_url: https://docs.teamtailor.com/
+    signup_url: null
+    console_url: null
+    required_secret_names:
+      - api_token
+    human_actions:
+      - sign_in
+      - accept_provider_terms
+      - retrieve_technical_credentials
+      - register_secret_reference
+      - enable_source_policy
+    automatic_onboarding: false
     blocked_reason: null
 
   - source_id: recherche-entreprises
