@@ -21,10 +21,13 @@ def test_public_web_example_is_consistent_and_non_executable() -> None:
     sources = load_source_registry(Path("policies/sources.public_web.yml"))
     portfolio = load_source_portfolio(Path("policies/source_portfolio.public_web.yml"))
 
-    assert len(targets) == len(sources) == len(portfolio) == 1
+    assert len(targets) == 1
+    sources_by_id = {entry.policy.id: entry for entry in sources}
+    portfolio_by_id = {entry.source_id: entry for entry in portfolio}
     target = targets[0]
-    source = sources[0]
-    catalog = portfolio[0]
+    source = sources_by_id[SOURCE_ID]
+    catalog = portfolio_by_id[SOURCE_ID]
+
     assert target.id == source.policy.id == catalog.source_id == SOURCE_ID
     assert not target.enabled
     assert not target.executable_at(NOW)
