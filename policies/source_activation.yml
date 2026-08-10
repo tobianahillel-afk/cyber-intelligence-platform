@@ -179,76 +179,91 @@ sources:
   - source_id: licensed-incident-reporting
     display_name: Licensed Incident Reporting
     category: live_incidents
-    disposition: planned
+    disposition: blocked
     activation_wave: SA-07
-    reason: Concrete licensed provider, contract, fields, credentials and retention must be selected.
+    requires_schedule: false
+    reason: No concrete licensed provider, customer-facing redistribution/incorporation rights, approved fields, credentials, retention terms or runtime adapter are present.
     stages: [catalogued, reviewed, mapped]
 
   - source_id: licensed-ransomware-metadata
     display_name: Licensed Ransomware Claim Metadata
     category: live_incidents
-    disposition: planned
+    disposition: blocked
     activation_wave: SA-07
-    reason: Licensed provider review is required; threat-actor portals and victim content remain prohibited.
+    requires_schedule: false
+    reason: No concrete licensed metadata provider and commercial-use contract are present; threat-actor portals, victim files and private/leaked content remain prohibited.
     stages: [catalogued, reviewed, mapped]
 
   - source_id: licensed-stix-taxii
     display_name: Licensed STIX/TAXII Threat Telemetry
     category: threat_telemetry
-    disposition: planned
+    disposition: blocked
     activation_wave: SA-07
-    reason: A concrete licensed CTI provider and collection markings/tenant scope are required.
+    requires_schedule: false
+    reason: No concrete licensed CTI provider, tenant scope, TAXII collections, sharing markings, customer-facing rights, credentials or runtime capability are approved.
     stages: [catalogued, reviewed, mapped]
 
   - source_id: licensed-phishing-metadata
     display_name: Licensed Phishing Metadata
     category: threat_telemetry
-    disposition: planned
+    disposition: blocked
     activation_wave: SA-07
-    reason: PhishTank covers the current public path; additional licensed metadata requires a concrete contract.
+    requires_schedule: false
+    reason: PhishTank covers the current public path; no additional commercial phishing provider, permitted fields, redistribution rights or runtime onboarding are approved.
     stages: [catalogued, reviewed, mapped]
 
   - source_id: licensed-passive-dns
     display_name: Licensed Passive DNS Metadata
     category: threat_telemetry
-    disposition: planned
+    disposition: blocked
     activation_wave: SA-07
+    requires_schedule: false
+    reason: No provider-specific passive-DNS contract, customer-facing data rights, retention terms, credentials, quotas or runtime adapter are approved.
     stages: [catalogued, reviewed, mapped]
 
   - source_id: licensed-certificate-telemetry
     display_name: Licensed Certificate Telemetry
     category: threat_telemetry
-    disposition: planned
+    disposition: blocked
     activation_wave: SA-07
+    requires_schedule: false
+    reason: No provider-specific commercial certificate-telemetry entitlement or deployment onboarding exists beyond the governed public Cert Spotter path.
     stages: [catalogued, reviewed, mapped]
 
   - source_id: licensed-malware-metadata
     display_name: Licensed Malware Metadata
     category: threat_telemetry
-    disposition: planned
+    disposition: blocked
     activation_wave: SA-07
-    reason: Concrete licensed provider required; malware binaries and download paths remain prohibited.
+    requires_schedule: false
+    reason: No concrete licensed metadata provider and customer-facing contract are approved; malware binaries, samples and download paths remain prohibited.
     stages: [catalogued, reviewed, mapped]
 
   - source_id: licensed-passive-exposure
     display_name: Licensed Passive Exposure Metadata
     category: passive_exposure
-    disposition: planned
+    disposition: blocked
     activation_wave: SA-07
+    requires_schedule: false
+    reason: No concrete passive-exposure provider has an approved customer-facing commercial entitlement, permitted field set, credentials, quotas or runtime adapter.
     stages: [catalogued, reviewed, mapped]
 
   - source_id: licensed-technographic-observations
     display_name: Licensed Passive Technographic Observations
     category: passive_exposure
-    disposition: planned
+    disposition: blocked
     activation_wave: SA-07
+    requires_schedule: false
+    reason: No technographic provider has approved customer-facing embedding/redistribution rights and deployment onboarding; B-4 provider candidates remain separately blocked.
     stages: [catalogued, reviewed, mapped]
 
   - source_id: licensed-cloud-asset-observations
     display_name: Licensed Passive Cloud Asset Observations
     category: passive_exposure
-    disposition: planned
+    disposition: blocked
     activation_wave: SA-07
+    requires_schedule: false
+    reason: No concrete licensed cloud-asset observation provider, customer-facing contract, field scope, credentials, quotas or runtime adapter are approved.
     stages: [catalogued, reviewed, mapped]
 
   - source_id: cloudflare-doh
