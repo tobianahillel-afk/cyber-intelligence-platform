@@ -53,6 +53,13 @@ class RecruiteeOffer(BaseModel):
             raise ValueError("required Recruitee text cannot be empty")
         return normalized
 
+    @field_validator("created_at", "published_at", mode="before")
+    @classmethod
+    def normalize_provider_timestamp(cls, value: object) -> object:
+        if isinstance(value, str) and value.endswith(" UTC"):
+            return value.removesuffix(" UTC") + "+00:00"
+        return value
+
     @field_validator("created_at", "published_at")
     @classmethod
     def require_aware_timestamp(cls, value: datetime | None) -> datetime | None:
