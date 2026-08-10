@@ -1,0 +1,9 @@
+version: 1
+reviewed_at: 2026-08-11
+
+sites:
+  - id: people-for-people
+    subdomain: peopleforpeople
+    canonical_name: People for People
+    country_code: NL
+    enabled: true
