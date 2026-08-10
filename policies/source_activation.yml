@@ -55,25 +55,28 @@ sources:
   - source_id: recherche-entreprises
     display_name: API Recherche d'entreprises
     category: organization_identity
-    disposition: planned
+    disposition: manual
     activation_wave: identity-target-activation
     requires_schedule: false
+    reason: A governed adapter exists, but execution requires a deployment-specific canonical organization target and explicit authorization; checked-in defaults do not contain a production target.
     stages: [catalogued, reviewed, mapped, adapter_present]
 
   - source_id: gleif
     display_name: GLEIF LEI API
     category: organization_identity
-    disposition: planned
+    disposition: manual
     activation_wave: identity-target-activation
     requires_schedule: false
+    reason: A governed adapter exists, but execution requires an analyst/deployment-selected LEI bound to a canonical organization; checked-in defaults do not authorize a production target.
     stages: [catalogued, reviewed, mapped, adapter_present]
 
   - source_id: bodacc-identity
     display_name: BODACC identity claims
     category: organization_identity
-    disposition: planned
+    disposition: manual
     activation_wave: identity-target-activation
     requires_schedule: false
+    reason: A governed adapter exists, but execution requires an explicit French organization/SIREN target and reviewed deployment authorization; checked-in defaults remain fail-closed.
     stages: [catalogued, reviewed, mapped, adapter_present]
 
   - source_id: reference-synthetic
@@ -86,16 +89,19 @@ sources:
   - source_id: osint-framework-import
     display_name: OSINT Framework imported candidates
     category: catalog_candidate
-    disposition: planned
+    disposition: manual
     activation_wave: SA-00
     requires_schedule: false
+    reason: The import is a governed analyst catalogue-discovery input only; an OSINT Framework listing never grants source authorization or runtime execution and candidates require provider-specific review.
     stages: [catalogued, reviewed]
 
   - source_id: public-web-example-fr-organization
     display_name: Example public website candidate
     category: corporate_public_footprint
-    disposition: planned
+    disposition: not_relevant
     activation_wave: SA-02
+    requires_schedule: false
+    reason: This checked-in disabled sample target exists only to exercise bounded public-web configuration and is not a production source; real organization targets are deployment-specific governed records.
     stages: [catalogued, reviewed, mapped, adapter_present]
 
   - source_id: cve-org-services
@@ -163,17 +169,19 @@ sources:
   - source_id: official-company-incident-disclosures
     display_name: Public Company Incident Disclosures
     category: live_incidents
-    disposition: planned
+    disposition: not_relevant
     activation_wave: SA-10
-    reason: Generic source-family placeholder requires provider-specific decomposition after SEC activation.
+    requires_schedule: false
+    reason: This generic family placeholder is not an executable provider; SEC is already modeled provider-specifically and any additional company disclosure source must be added as its own governed concrete source.
     stages: [catalogued, reviewed, mapped]
 
   - source_id: regulator-cert-incident-notices
     display_name: Regulator and CERT Incident Notices
     category: live_incidents
-    disposition: planned
+    disposition: not_relevant
     activation_wave: SA-10
-    reason: Generic regulator/CERT family requires concrete provider endpoints and source-specific authorization.
+    requires_schedule: false
+    reason: This generic regulator/CERT family is not itself a provider endpoint; each useful official source requires a concrete provider record, exact endpoints and source-specific authorization.
     stages: [catalogued, reviewed, mapped]
 
   - source_id: licensed-incident-reporting
@@ -387,25 +395,28 @@ sources:
   - source_id: official-vendor-psirt
     display_name: Official Vendor PSIRT Advisories
     category: vulnerability_advisory
-    disposition: planned
+    disposition: not_relevant
     activation_wave: SA-10
-    reason: Generic family must be decomposed into concrete vendor feeds before adapter authorization.
+    requires_schedule: false
+    reason: The generic vendor-PSIRT family is not an executable source; each useful vendor feed/API must be represented by a concrete provider-specific source with its own governance and mapping.
     stages: [catalogued, reviewed, mapped]
 
   - source_id: official-linux-security-advisories
     display_name: Official Linux Security Advisories
     category: vulnerability_advisory
-    disposition: planned
+    disposition: not_relevant
     activation_wave: SA-10
-    reason: Generic Linux advisory family requires provider-specific decomposition and value review.
+    requires_schedule: false
+    reason: The generic Linux advisory family is not an executable provider; distro-specific feeds/APIs require separate concrete source records and value/governance review.
     stages: [catalogued, reviewed, mapped]
 
   - source_id: official-package-security-advisories
     display_name: Official Package Security Advisories
     category: vulnerability_advisory
-    disposition: planned
+    disposition: not_relevant
     activation_wave: SA-10
-    reason: Generic package advisory family requires ecosystem-specific provider selection.
+    requires_schedule: false
+    reason: The generic package-advisory family is not an executable provider; ecosystem-specific feeds/APIs must be introduced as concrete governed source records.
     stages: [catalogued, reviewed, mapped]
 
   - source_id: official-corporate-disclosures

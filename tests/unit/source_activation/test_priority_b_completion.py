@@ -95,8 +95,10 @@ def test_sa00_through_sa04_regression_state_is_explicit() -> None:
     records = _records()
     osint_import = records["osint-framework-import"]
 
-    assert osint_import.disposition is ActivationDisposition.PLANNED
+    assert osint_import.disposition is ActivationDisposition.MANUAL
     assert osint_import.activation_wave == "SA-00"
+    assert osint_import.reason
+    assert osint_import.is_resolved
     assert {
         ActivationStage.CATALOGUED,
         ActivationStage.REVIEWED,
@@ -129,8 +131,10 @@ def test_b3_capability_does_not_fake_authorize_example_target() -> None:
     target = _yaml(PUBLIC_WEB_TARGETS_PATH)["targets"][0]
     matrix = MATRIX_PATH.read_text(encoding="utf-8")
 
-    assert record.disposition is ActivationDisposition.PLANNED
+    assert record.disposition is ActivationDisposition.NOT_RELEVANT
     assert record.activation_wave == "SA-02"
+    assert record.reason
+    assert record.is_resolved
     assert ActivationStage.ADAPTER_PRESENT in record.stages
     assert ActivationStage.AUTHORIZED not in record.stages
     assert ActivationStage.EXECUTABLE not in record.stages

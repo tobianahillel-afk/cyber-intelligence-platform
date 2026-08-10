@@ -24,12 +24,12 @@ Symbols:
 | Greenhouse | legacy validation | Y | Y | Y | Y | Y | - | executable, controlled live proof outstanding |
 | Lever | legacy validation | Y | Y | Y | Y | Y | - | executable, controlled live proof outstanding |
 | SmartRecruiters | legacy validation | Y | Y | Y | Y | Y | - | executable, controlled live proof outstanding |
-| Recherche d'entreprises | target activation | Y | Y | - | - | N/A | - | paused until explicit identity target |
-| GLEIF | target activation | Y | Y | - | - | N/A | - | paused until explicit LEI target |
-| BODACC identity | target activation | Y | Y | - | - | N/A | - | paused until explicit French SIREN target |
+| Recherche d'entreprises `recherche-entreprises` | target activation | Y | Y | - | - | N/A | - | MANUAL until an explicit canonical organization target and deployment authorization exist |
+| GLEIF `gleif` | target activation | Y | Y | - | - | N/A | - | MANUAL until an analyst/deployment-selected LEI target exists |
+| BODACC identity `bodacc-identity` | target activation | Y | Y | - | - | N/A | - | MANUAL until an explicit organization/SIREN target and reviewed deployment authorization exist |
 | Synthetic reference | test reference | Y | Y | Y | Y | N/A | Y | fully integrated test capability |
-| OSINT Framework import | SA-00 | - | - | - | - | N/A | - | catalogue normalization implemented; no execution authority |
-| public-web target path | SA-02 / Priority B-3 | Y | Y | - | - | - | - | bounded sitemap + RSS/Atom + security.txt + public-document capability; checked-in example remains disabled/unauthorized |
+| OSINT Framework import `osint-framework-import` | SA-00 | - | - | - | - | N/A | - | MANUAL analyst catalogue-discovery input only; listings never grant execution authority |
+| public-web sample `public-web-example-fr-organization` | SA-02 / Priority B-3 | Y | Y | - | - | N/A | - | NOT_RELEVANT as a production source; checked-in sample remains disabled/unauthorized |
 | NVD | SA-01 | Y | Y | Y | Y | Y | - | governed paginated adapter; live proof outstanding |
 | FIRST EPSS | SA-01 | Y | Y | Y | Y | N/A | - | bounded explicit-CVE lookup; live proof outstanding |
 | GitHub Global Advisories | SA-01 | Y | Y | Y | Y | Y | - | governed paginated adapter; live proof outstanding |
@@ -64,9 +64,11 @@ Symbols:
 | Licensed passive exposure `licensed-passive-exposure` | SA-07 | Y | - | - | - | N/A | - | BLOCKED pending provider-specific customer-facing data rights and onboarding |
 | Licensed technography `licensed-technographic-observations` | SA-07 | Y | - | - | - | N/A | - | BLOCKED pending explicit embedding/redistribution rights and onboarding |
 | Licensed cloud-asset observations `licensed-cloud-asset-observations` | SA-07 | Y | - | - | - | N/A | - | BLOCKED pending concrete provider, field scope, commercial rights and adapter |
-| Generic company incident source family | SA-10 | Y | - | - | - | - | - | provider-specific decomposition required after SEC path |
-| Generic regulator/CERT incident family | SA-10 | Y | - | - | - | - | - | concrete official endpoints and authorizations required |
-| Generic vendor/Linux/package advisory families | SA-10 | Y | - | - | - | - | - | provider/ecosystem-specific decomposition required |
+| Generic company incident family `official-company-incident-disclosures` | SA-10 | Y | - | - | - | N/A | - | NOT_RELEVANT as an executable source; provider-specific decomposition required beyond SEC |
+| Generic regulator/CERT incident family `regulator-cert-incident-notices` | SA-10 | Y | - | - | - | N/A | - | NOT_RELEVANT as an endpoint; concrete official provider records are required |
+| Generic vendor PSIRT family `official-vendor-psirt` | SA-10 | Y | - | - | - | N/A | - | NOT_RELEVANT as an executable source; concrete vendor feeds/APIs are required |
+| Generic Linux advisory family `official-linux-security-advisories` | SA-10 | Y | - | - | - | N/A | - | NOT_RELEVANT as an executable source; distro-specific provider records are required |
+| Generic package advisory family `official-package-security-advisories` | SA-10 | Y | - | - | - | N/A | - | NOT_RELEVANT as an executable source; ecosystem-specific provider records are required |
 | Official corporate disclosures `official-corporate-disclosures` | SA-06 | Y | - | - | - | N/A | - | MANUAL bounded first-party acquisition + Lot 18 analyst-reviewed mapping |
 | Official regulatory change notices `official-regulatory-change-notices` | SA-06 | Y | - | - | - | N/A | - | MANUAL source-specific regulator review + Lot 18 evidence classification |
 | Licensed corporate news `licensed-corporate-news-metadata` | SA-07 | Y | - | - | - | N/A | - | BLOCKED pending concrete licensed provider, customer-facing rights and runtime onboarding |
@@ -88,15 +90,32 @@ Symbols:
 
 ## Known broader source families
 
-The repository already models additional candidate families delivered in Lots 13–22: incident reporting, ransomware metadata, threat telemetry, passive exposure, advisory providers, corporate-change intelligence, relationship intelligence, professional context and conditional premium integrations. Candidate families remain non-executable until a concrete provider, method and authorization are selected.
+The repository already models candidate families delivered in Lots 13–22: incident reporting, ransomware metadata, threat telemetry, passive exposure, advisory providers, corporate-change intelligence, relationship intelligence, professional context and conditional premium integrations. SA-10 resolves family placeholders as non-executable terminal records; a future useful source must be introduced provider-specifically rather than reopening a generic family as an adapter.
 
-SA-00 established the lifecycle and truth model. SA-01 through SA-04 promote only provider-specific paths whose implementation, authorization and runtime boundaries are explicit. Priority B completion continues the same provider-level discipline for passive organization and technology evidence. Later waves must continue at provider level rather than hiding candidates behind family-level completion claims.
+SA-00 established the lifecycle and truth model. SA-01 through SA-04 promote only provider-specific paths whose implementation, authorization and runtime boundaries are explicit. Priority B and SA-05 through SA-09 preserve the same provider-level discipline.
 
 ## Reconciliation invariant
 
 Every `source_id` contained in every checked-in `source_portfolio*.yml` bundle must have an activation record. Repository tests enforce this invariant across the activation bundles added by each SA/Priority-B increment.
 
-OSINT Framework synchronization remains candidate discovery only. An upstream entry can stay non-executable, but relevant candidates must eventually receive an explicit `active`, `planned`, `manual`, `blocked`, `replaced`, `duplicate`, or `not_relevant` disposition before SA-10 closes.
+OSINT Framework synchronization remains candidate discovery only. Its import record is terminal `manual`; every discovered candidate still requires its own provider-specific `active`, `manual`, `blocked`, `replaced`, `duplicate`, or `not_relevant` decision before execution can exist.
+
+## SA-10 final source completeness and live-validation gate
+
+SA-10 separates classification completeness from controlled live validation:
+
+- no activation record may remain `planned`;
+- `recherche-entreprises`, `gleif` and `bodacc-identity` are terminal `manual` because their adapters require deployment-specific organization/identifier targets and authorization;
+- `osint-framework-import` is terminal `manual` as analyst catalogue-discovery input only;
+- `public-web-example-fr-organization` is terminal `not_relevant` as a production source while the checked-in sample remains disabled and unauthorized;
+- `official-company-incident-disclosures`, `regulator-cert-incident-notices`, `official-vendor-psirt`, `official-linux-security-advisories` and `official-package-security-advisories` are terminal `not_relevant` as generic executable sources; any useful future provider must receive a concrete source record;
+- terminal non-executable records require reasons and never gain authorization/execution/live stages for completeness metrics;
+- active real sources without `live_tested` remain unresolved by `audit_inventory` even when unit/integration CI is green;
+- `reference-synthetic` remains the only fully integrated checked-in source until separately authorized controlled provider live evidence is recorded;
+- CI must not be reinterpreted as provider live validation;
+- activation truth, this matrix and `SA_10_FINAL_SOURCE_COMPLETENESS_AUDIT.md` must agree on the classification-complete but live-validation-open state;
+- one exact final SHA must pass the complete backend and frontend CI before the SA-10 repository classification increment is merged;
+- issue SA-10 remains open until the outstanding active-source controlled live-validation set is empty.
 
 ## SA-05 governed local OSINT completion boundary
 
@@ -228,7 +247,7 @@ SA-03 is complete only when:
 - DNS answers remain review-required organization links with shared-infrastructure risk;
 - certificate issuance remains review-required passive context and never proves endpoint deployment or exposure;
 - no adapter assesses vulnerability applicability, verifies exposure, infers compromise, creates a need/opportunity, or performs outreach;
-- the licensed passive providers remain planned for SA-07 instead of being falsely activated under `.example.invalid` placeholders;
+- licensed passive providers are terminalized under SA-07 as blocked dependencies rather than falsely activated under `.example.invalid` placeholders;
 - deterministic adapter/runtime/registry tests and the complete repository CI pass on one exact final SHA;
 - `live_tested` remains false until separately authorized controlled provider validation is evidenced.
 
