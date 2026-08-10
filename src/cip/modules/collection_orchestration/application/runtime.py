@@ -16,6 +16,7 @@ from cip.adapters.sources.lever.registry import load_lever_sites
 from cip.adapters.sources.organization_identity.registry import (
     load_organization_identity_targets,
 )
+from cip.adapters.sources.passive_infrastructure.rdap_registry import load_rdap_targets
 from cip.adapters.sources.passive_infrastructure.registry import (
     load_passive_infrastructure_targets,
 )
@@ -192,6 +193,7 @@ def _load_adapter_inputs(
         passive_infrastructure_targets=load_passive_infrastructure_targets(
             settings.passive_infrastructure_target_registry_path
         ),
+        rdap_targets=load_rdap_targets(settings.rdap_target_registry_path),
         sec_incident_targets=load_sec_incident_targets(
             settings.sec_incident_target_registry_path
         ),
