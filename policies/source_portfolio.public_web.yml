@@ -7,31 +7,138 @@ sources:
     category: corporate_public_footprint
     status: candidate
     freshness_max_age_seconds: 604800
-    commercial_use_cases:
-      - public_evidence_map
-      - technology_observation
-      - change_history
+    commercial_use_cases: [public_evidence_map, technology_observation, change_history]
     candidate_origin: lot-12-schema-example
     monthly_cost_limit: 0
-    metadata:
-      executable: false
-      authorization_status: missing
-      target_enabled: false
+    metadata: {executable: false, authorization_status: missing, target_enabled: false}
     adapter:
       adapter_id: public-web-sitemap
       adapter_version: "1"
       provider_schema_version: public-web-page-v1
-      modes:
-        - incremental_cursor
-        - priority_refresh
-      canonical_output_types:
-        - raw_observation
-        - public_resource
-        - public_resource_version
-        - public_claim
+      modes: [incremental_cursor, priority_refresh]
+      canonical_output_types: [raw_observation, public_resource, public_resource_version, public_claim]
       supports_corrections: true
       supports_tombstones: true
       supports_retractions: false
       max_page_size: 25
       max_window_days: 1
+      cost_per_request: 0
+
+  - source_id: github-public-org-repositories
+    display_name: GitHub public organization repository metadata
+    canonical_url: https://api.github.com/
+    category: corporate_public_footprint
+    status: executable
+    freshness_max_age_seconds: 86400
+    commercial_use_cases: [public_engineering_context, organization_research]
+    candidate_origin: Priority-B
+    monthly_cost_limit: 0
+    metadata: &safe
+      executable: true
+      authorization_status: approved
+      target_registry_required: true
+      global_search: forbidden
+      person_metadata_materialization: forbidden
+      code_or_binary_download: forbidden
+      deployment_inference: forbidden
+      exposure_verification: forbidden
+      automatic_opportunity: forbidden
+    adapter:
+      adapter_id: github-org-repositories
+      adapter_version: "1"
+      provider_schema_version: github-repository-public-v1
+      modes: [incremental_cursor, priority_refresh]
+      canonical_output_types: [raw_observation, public_resource, public_resource_version]
+      supports_corrections: true
+      supports_tombstones: false
+      supports_retractions: false
+      max_page_size: 100
+      cost_per_request: 0
+
+  - source_id: gitlab-public-group-projects
+    display_name: GitLab public group project metadata
+    canonical_url: https://gitlab.com/api/v4/
+    category: corporate_public_footprint
+    status: executable
+    freshness_max_age_seconds: 86400
+    commercial_use_cases: [public_engineering_context, organization_research]
+    candidate_origin: Priority-B
+    monthly_cost_limit: 0
+    metadata: *safe
+    adapter:
+      adapter_id: gitlab-group-projects
+      adapter_version: "1"
+      provider_schema_version: gitlab-project-public-v1
+      modes: [incremental_cursor, priority_refresh]
+      canonical_output_types: [raw_observation, public_resource, public_resource_version]
+      supports_corrections: true
+      supports_tombstones: false
+      supports_retractions: false
+      max_page_size: 100
+      cost_per_request: 0
+
+  - source_id: pypi-public-package-metadata
+    display_name: PyPI public project metadata
+    canonical_url: https://pypi.org/
+    category: corporate_public_footprint
+    status: executable
+    freshness_max_age_seconds: 86400
+    commercial_use_cases: [public_engineering_context, organization_research]
+    candidate_origin: Priority-B
+    monthly_cost_limit: 0
+    metadata: *safe
+    adapter:
+      adapter_id: pypi-project-json
+      adapter_version: "1"
+      provider_schema_version: pypi-project-minimal-v1
+      modes: [incremental_cursor, priority_refresh]
+      canonical_output_types: [raw_observation, public_resource, public_resource_version]
+      supports_corrections: true
+      supports_tombstones: false
+      supports_retractions: false
+      max_page_size: 1
+      cost_per_request: 0
+
+  - source_id: npm-public-package-metadata
+    display_name: npm public package metadata
+    canonical_url: https://registry.npmjs.org/
+    category: corporate_public_footprint
+    status: executable
+    freshness_max_age_seconds: 86400
+    commercial_use_cases: [public_engineering_context, organization_research]
+    candidate_origin: Priority-B
+    monthly_cost_limit: 0
+    metadata: *safe
+    adapter:
+      adapter_id: npm-package-metadata
+      adapter_version: "1"
+      provider_schema_version: npm-package-minimal-v1
+      modes: [incremental_cursor, priority_refresh]
+      canonical_output_types: [raw_observation, public_resource, public_resource_version]
+      supports_corrections: true
+      supports_tombstones: false
+      supports_retractions: false
+      max_page_size: 1
+      cost_per_request: 0
+
+  - source_id: maven-central-public-metadata
+    display_name: Maven Central public artifact metadata
+    canonical_url: https://search.maven.org/solrsearch/select
+    category: corporate_public_footprint
+    status: executable
+    freshness_max_age_seconds: 86400
+    commercial_use_cases: [public_engineering_context, organization_research]
+    candidate_origin: Priority-B
+    monthly_cost_limit: 0
+    metadata: *safe
+    adapter:
+      adapter_id: maven-central-search
+      adapter_version: "1"
+      provider_schema_version: maven-central-search-v1
+      modes: [incremental_cursor, priority_refresh]
+      canonical_output_types: [raw_observation, public_resource, public_resource_version]
+      supports_corrections: true
+      supports_tombstones: false
+      supports_retractions: false
+      max_page_size: 1
       cost_per_request: 0
