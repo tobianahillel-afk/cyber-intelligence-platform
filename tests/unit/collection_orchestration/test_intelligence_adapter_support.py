@@ -12,11 +12,13 @@ TARGET_URL = "https://provider.example.test/data"
 
 
 def test_get_json_marks_rate_limit_as_retryable() -> None:
-    with httpx.Client(
-        transport=httpx.MockTransport(lambda _request: httpx.Response(429))
-    ) as client:
-        with pytest.raises(AdapterExecutionError) as error:
-            get_json(client, TARGET_URL, headers={})
+    with (
+        httpx.Client(
+            transport=httpx.MockTransport(lambda _request: httpx.Response(429))
+        ) as client,
+        pytest.raises(AdapterExecutionError) as error,
+    ):
+        get_json(client, TARGET_URL, headers={})
 
     assert error.value.error_code == "http_429"
     assert error.value.retryable is True
@@ -24,17 +26,19 @@ def test_get_json_marks_rate_limit_as_retryable() -> None:
 
 
 def test_get_json_rejects_non_json_response() -> None:
-    with httpx.Client(
-        transport=httpx.MockTransport(
-            lambda _request: httpx.Response(
-                200,
-                headers={"content-type": "text/html"},
-                content=b"<html></html>",
+    with (
+        httpx.Client(
+            transport=httpx.MockTransport(
+                lambda _request: httpx.Response(
+                    200,
+                    headers={"content-type": "text/html"},
+                    content=b"<html></html>",
+                )
             )
-        )
-    ) as client:
-        with pytest.raises(AdapterExecutionError) as error:
-            get_json(client, TARGET_URL, headers={})
+        ) as client,
+        pytest.raises(AdapterExecutionError) as error,
+    ):
+        get_json(client, TARGET_URL, headers={})
 
     assert error.value.error_code == "unsafe_source_response"
     assert error.value.retryable is False
@@ -42,17 +46,19 @@ def test_get_json_rejects_non_json_response() -> None:
 
 
 def test_get_json_rejects_response_over_explicit_bound() -> None:
-    with httpx.Client(
-        transport=httpx.MockTransport(
-            lambda _request: httpx.Response(
-                200,
-                headers={"content-type": "application/json"},
-                content=b"12345",
+    with (
+        httpx.Client(
+            transport=httpx.MockTransport(
+                lambda _request: httpx.Response(
+                    200,
+                    headers={"content-type": "application/json"},
+                    content=b"12345",
+                )
             )
-        )
-    ) as client:
-        with pytest.raises(AdapterExecutionError) as error:
-            get_json(client, TARGET_URL, headers={}, max_bytes=4)
+        ) as client,
+        pytest.raises(AdapterExecutionError) as error,
+    ):
+        get_json(client, TARGET_URL, headers={}, max_bytes=4)
 
     assert error.value.error_code == "unsafe_source_response"
     assert str(error.value) == "intelligence provider response exceeds size limit"
@@ -60,9 +66,11 @@ def test_get_json_rejects_response_over_explicit_bound() -> None:
 
 @pytest.mark.parametrize("max_bytes", [0, -1, 64 * 1024 * 1024 + 1])
 def test_get_json_rejects_invalid_response_bound(max_bytes: int) -> None:
-    with httpx.Client(transport=httpx.MockTransport(_fail_network)) as client:
-        with pytest.raises(ValueError, match="outside the intelligence response bound"):
-            get_json(client, TARGET_URL, headers={}, max_bytes=max_bytes)
+    with (
+        httpx.Client(transport=httpx.MockTransport(_fail_network)) as client,
+        pytest.raises(ValueError, match="outside the intelligence response bound"),
+    ):
+        get_json(client, TARGET_URL, headers={}, max_bytes=max_bytes)
 
 
 def _fail_network(_request: httpx.Request) -> httpx.Response:
