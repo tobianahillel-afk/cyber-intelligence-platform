@@ -6,13 +6,15 @@ from io import BytesIO
 from pypdf import PdfReader
 from pypdf.errors import PdfReadError
 
+from cip.adapters.sources.public_web.parsing import PublicWebParseError
+
 _MAX_PDF_BYTES = 5_000_000
 _MAX_PDF_PAGES = 50
 _MAX_EXTRACTED_CHARS = 100_000
 _MAX_PLAIN_TEXT_BYTES = 1_000_000
 
 
-class PublicDocumentParseError(RuntimeError):
+class PublicDocumentParseError(PublicWebParseError):
     """A bounded public document could not be parsed safely."""
 
 
