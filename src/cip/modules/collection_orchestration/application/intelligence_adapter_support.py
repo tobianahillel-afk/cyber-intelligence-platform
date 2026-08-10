@@ -83,7 +83,7 @@ def get_json(
         ) from exc
     except (httpx.TimeoutException, httpx.TransportError) as exc:
         raise AdapterExecutionError(
-            str(exc) or type(exc).__name__,
+            "intelligence provider transport failure",
             error_code="source_transport_error",
             retryable=True,
         ) from exc
