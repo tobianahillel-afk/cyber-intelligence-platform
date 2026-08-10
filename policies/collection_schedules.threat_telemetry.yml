@@ -1,0 +1,14 @@
+version: 1
+
+schedules:
+  - source_id: phishtank-verified-online
+    adapter_id: phishtank-online-valid-json
+    enabled: false
+    interval_seconds: 3600
+    lease_seconds: 300
+    retry:
+      max_attempts: 3
+      base_delay_seconds: 300
+      max_delay_seconds: 3600
+      circuit_failure_threshold: 3
+      circuit_reset_seconds: 3600

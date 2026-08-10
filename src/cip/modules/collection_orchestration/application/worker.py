@@ -23,6 +23,7 @@ from cip.modules.collection_orchestration.infrastructure.repository import (
     fail_job,
 )
 from cip.modules.data_governance.domain.retention import RetentionPolicy
+from cip.modules.incident_intelligence.infrastructure.projections import persist_incident_claims
 from cip.modules.opportunities.infrastructure.projections import (
     persist_commercial_projections,
 )
@@ -54,6 +55,7 @@ from cip.modules.source_portfolio.application.service import (
     record_source_value_event,
 )
 from cip.modules.source_portfolio.domain.models import SchemaState
+from cip.modules.threat_telemetry.infrastructure.projections import persist_indicator_snapshots
 from cip.modules.vulnerability_knowledge.infrastructure.projections import (
     persist_vulnerability_snapshots,
 )
@@ -197,6 +199,12 @@ def _complete_success(
         persist_passive_snapshots(
             session,
             batch.passive_exposure_projections,
+            now=now,
+        )
+        persist_incident_claims(session, batch.incident_claims, now=now)
+        persist_indicator_snapshots(
+            session,
+            batch.threat_indicator_snapshots,
             now=now,
         )
         _record_success_health(

@@ -11,6 +11,7 @@ from time import sleep
 from sqlalchemy.orm import Session, sessionmaker
 
 from cip.adapters.sources.greenhouse.registry import load_greenhouse_boards
+from cip.adapters.sources.incident_catalogs.sec_registry import load_sec_incident_targets
 from cip.adapters.sources.lever.registry import load_lever_sites
 from cip.adapters.sources.organization_identity.registry import (
     load_organization_identity_targets,
@@ -107,6 +108,13 @@ def build_collection_runtime(settings: Settings) -> CollectionRuntime:
             source_id="certspotter-ct",
             secret_name="api_token",
         ),
+        phishtank_token_provider=connected_secret_supplier(
+            factory,
+            source_id="phishtank-verified-online",
+            secret_name="api_token",
+        ),
+        sec_user_agent=settings.sec_edgar_user_agent,
+        phishtank_user_agent=settings.phishtank_user_agent,
         timeout_seconds=settings.source_http_timeout_seconds,
     )
     with session_scope(factory) as session:
@@ -184,6 +192,9 @@ def _load_adapter_inputs(
         passive_infrastructure_targets=load_passive_infrastructure_targets(
             settings.passive_infrastructure_target_registry_path
         ),
+        sec_incident_targets=load_sec_incident_targets(
+            settings.sec_incident_target_registry_path
+        ),
     )
 
 
@@ -195,6 +206,8 @@ def _load_schedules(settings: Settings) -> tuple[SourceSchedule, ...]:
         settings.vulnerability_collection_schedule_path,
         settings.search_archive_collection_schedule_path,
         settings.passive_infrastructure_collection_schedule_path,
+        settings.incident_collection_schedule_path,
+        settings.threat_telemetry_collection_schedule_path,
     )
 
 

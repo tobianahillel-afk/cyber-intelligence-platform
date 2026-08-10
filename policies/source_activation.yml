@@ -147,50 +147,65 @@ sources:
   - source_id: sec-cyber-disclosures
     display_name: SEC Cybersecurity Disclosures
     category: live_incidents
-    disposition: planned
+    disposition: active
     activation_wave: SA-04
-    stages: [catalogued, reviewed, mapped]
+    requires_schedule: false
+    stages: [catalogued, reviewed, mapped, adapter_present, authorized, executable]
+
+  - source_id: phishtank-verified-online
+    display_name: PhishTank Verified Online Phishing Database
+    category: threat_telemetry
+    disposition: active
+    activation_wave: SA-04
+    requires_schedule: false
+    stages: [catalogued, reviewed, mapped, adapter_present, authorized, executable]
 
   - source_id: official-company-incident-disclosures
     display_name: Public Company Incident Disclosures
     category: live_incidents
     disposition: planned
-    activation_wave: SA-04
+    activation_wave: SA-10
+    reason: Generic source-family placeholder requires provider-specific decomposition after SEC activation.
     stages: [catalogued, reviewed, mapped]
 
   - source_id: regulator-cert-incident-notices
     display_name: Regulator and CERT Incident Notices
     category: live_incidents
     disposition: planned
-    activation_wave: SA-04
+    activation_wave: SA-10
+    reason: Generic regulator/CERT family requires concrete provider endpoints and source-specific authorization.
     stages: [catalogued, reviewed, mapped]
 
   - source_id: licensed-incident-reporting
     display_name: Licensed Incident Reporting
     category: live_incidents
     disposition: planned
-    activation_wave: SA-04
+    activation_wave: SA-07
+    reason: Concrete licensed provider, contract, fields, credentials and retention must be selected.
     stages: [catalogued, reviewed, mapped]
 
   - source_id: licensed-ransomware-metadata
     display_name: Licensed Ransomware Claim Metadata
     category: live_incidents
     disposition: planned
-    activation_wave: SA-04
+    activation_wave: SA-07
+    reason: Licensed provider review is required; threat-actor portals and victim content remain prohibited.
     stages: [catalogued, reviewed, mapped]
 
   - source_id: licensed-stix-taxii
     display_name: Licensed STIX/TAXII Threat Telemetry
     category: threat_telemetry
     disposition: planned
-    activation_wave: SA-04
+    activation_wave: SA-07
+    reason: A concrete licensed CTI provider and collection markings/tenant scope are required.
     stages: [catalogued, reviewed, mapped]
 
   - source_id: licensed-phishing-metadata
     display_name: Licensed Phishing Metadata
     category: threat_telemetry
     disposition: planned
-    activation_wave: SA-04
+    activation_wave: SA-07
+    reason: PhishTank covers the current public path; additional licensed metadata requires a concrete contract.
     stages: [catalogued, reviewed, mapped]
 
   - source_id: licensed-passive-dns
@@ -211,7 +226,8 @@ sources:
     display_name: Licensed Malware Metadata
     category: threat_telemetry
     disposition: planned
-    activation_wave: SA-04
+    activation_wave: SA-07
+    reason: Concrete licensed provider required; malware binaries and download paths remain prohibited.
     stages: [catalogued, reviewed, mapped]
 
   - source_id: licensed-passive-exposure
@@ -255,21 +271,24 @@ sources:
     display_name: Official Vendor PSIRT Advisories
     category: vulnerability_advisory
     disposition: planned
-    activation_wave: SA-04
+    activation_wave: SA-10
+    reason: Generic family must be decomposed into concrete vendor feeds before adapter authorization.
     stages: [catalogued, reviewed, mapped]
 
   - source_id: official-linux-security-advisories
     display_name: Official Linux Security Advisories
     category: vulnerability_advisory
     disposition: planned
-    activation_wave: SA-04
+    activation_wave: SA-10
+    reason: Generic Linux advisory family requires provider-specific decomposition and value review.
     stages: [catalogued, reviewed, mapped]
 
   - source_id: official-package-security-advisories
     display_name: Official Package Security Advisories
     category: vulnerability_advisory
     disposition: planned
-    activation_wave: SA-04
+    activation_wave: SA-10
+    reason: Generic package advisory family requires ecosystem-specific provider selection.
     stages: [catalogued, reviewed, mapped]
 
   - source_id: official-corporate-disclosures

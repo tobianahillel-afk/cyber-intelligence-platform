@@ -9,6 +9,7 @@ from uuid import UUID
 from sqlalchemy.orm import Session, sessionmaker
 
 from cip.modules.collection_orchestration.application.ports import (
+    AdapterCollectionBatch,
     AdapterExecutionError,
     CollectionAdapter,
 )
@@ -16,6 +17,7 @@ from cip.modules.collection_orchestration.infrastructure.repository_completion i
     insert_observations,
 )
 from cip.modules.data_governance.domain.retention import RetentionPolicy
+from cip.modules.incident_intelligence.infrastructure.projections import persist_incident_claims
 from cip.modules.organizations.infrastructure.persistence import upsert_organizations
 from cip.modules.passive_exposure.infrastructure.projections import (
     persist_passive_snapshots,
@@ -42,6 +44,7 @@ from cip.modules.source_portfolio.application.service import (
 )
 from cip.modules.source_portfolio.domain.models import SchemaState
 from cip.modules.source_portfolio.infrastructure.models import BackfillPartitionRecord
+from cip.modules.threat_telemetry.infrastructure.projections import persist_indicator_snapshots
 from cip.modules.vulnerability_knowledge.infrastructure.projections import (
     persist_vulnerability_snapshots,
 )
@@ -115,7 +118,33 @@ def run_backfill_once(
             now=_read_clock(clock),
         )
 
-    completed_at = _read_clock(clock)
+    written = _complete_backfill_success(
+        factory,
+        partition=partition,
+        worker_id=worker_id,
+        batch=batch,
+        completed_at=_read_clock(clock),
+    )
+    status = (
+        BackfillWorkerStatus.NOT_MODIFIED
+        if batch.not_modified
+        else BackfillWorkerStatus.SUCCEEDED
+    )
+    return BackfillWorkerOutcome(
+        status,
+        partition_id=partition.id,
+        observations_written=written,
+    )
+
+
+def _complete_backfill_success(
+    factory: sessionmaker[Session],
+    *,
+    partition: BackfillPartitionRecord,
+    worker_id: str,
+    batch: AdapterCollectionBatch,
+    completed_at: datetime,
+) -> int:
     with session_scope(factory) as session:
         written = insert_observations(session, batch.observations)
         upsert_organizations(session, batch.procurement_organizations)
@@ -137,6 +166,12 @@ def run_backfill_once(
         persist_passive_snapshots(
             session,
             batch.passive_exposure_projections,
+            now=completed_at,
+        )
+        persist_incident_claims(session, batch.incident_claims, now=completed_at)
+        persist_indicator_snapshots(
+            session,
+            batch.threat_indicator_snapshots,
             now=completed_at,
         )
         record_collection_success(
@@ -174,16 +209,7 @@ def run_backfill_once(
                 occurred_at=completed_at,
             ),
         )
-    status = (
-        BackfillWorkerStatus.NOT_MODIFIED
-        if batch.not_modified
-        else BackfillWorkerStatus.SUCCEEDED
-    )
-    return BackfillWorkerOutcome(
-        status,
-        partition_id=partition.id,
-        observations_written=written,
-    )
+    return written
 
 
 def _claim_partition(

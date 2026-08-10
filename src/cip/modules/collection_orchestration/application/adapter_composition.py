@@ -4,6 +4,7 @@ from collections.abc import Callable
 from dataclasses import dataclass
 
 from cip.adapters.sources.greenhouse.registry import GreenhouseBoard
+from cip.adapters.sources.incident_catalogs.sec_registry import SecIncidentTarget
 from cip.adapters.sources.lever.registry import LeverSite
 from cip.adapters.sources.organization_identity.registry import OrganizationIdentityTarget
 from cip.adapters.sources.passive_infrastructure.registry import PassiveInfrastructureTarget
@@ -16,6 +17,9 @@ from cip.modules.collection_orchestration.application.decp_adapter import DecpAd
 from cip.modules.collection_orchestration.application.greenhouse_adapter import GreenhouseAdapter
 from cip.modules.collection_orchestration.application.identity_adapters import (
     register_identity_adapters,
+)
+from cip.modules.collection_orchestration.application.intelligence_registration import (
+    register_intelligence_adapters,
 )
 from cip.modules.collection_orchestration.application.lever_adapter import LeverAdapter
 from cip.modules.collection_orchestration.application.passive_infrastructure_registration import (
@@ -51,6 +55,7 @@ class AdapterCompositionInputs:
     search_templates: tuple[SearchQueryTemplate, ...]
     vulnerability_targets: tuple[VulnerabilityQueryTarget, ...]
     passive_infrastructure_targets: tuple[PassiveInfrastructureTarget, ...]
+    sec_incident_targets: tuple[SecIncidentTarget, ...]
 
 
 def build_runtime_adapters(
@@ -58,6 +63,9 @@ def build_runtime_adapters(
     *,
     brave_token_provider: Callable[[], str | None],
     certspotter_token_provider: Callable[[], str | None],
+    phishtank_token_provider: Callable[[], str | None],
+    sec_user_agent: str | None,
+    phishtank_user_agent: str | None,
     timeout_seconds: float,
 ) -> dict[tuple[str, str], CollectionAdapter]:
     entries_by_id = {entry.policy.id: entry for entry in inputs.entries}
@@ -95,6 +103,15 @@ def build_runtime_adapters(
         entries_by_id,
         inputs.passive_infrastructure_targets,
         certspotter_token_provider=certspotter_token_provider,
+        timeout_seconds=timeout_seconds,
+    )
+    register_intelligence_adapters(
+        adapters,
+        entries_by_id,
+        inputs.sec_incident_targets,
+        phishtank_token_provider=phishtank_token_provider,
+        sec_user_agent=sec_user_agent,
+        phishtank_user_agent=phishtank_user_agent,
         timeout_seconds=timeout_seconds,
     )
     return adapters
