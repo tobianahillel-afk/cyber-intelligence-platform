@@ -29,102 +29,51 @@ class Settings(BaseSettings):
     vulnerability_source_registry_path: Path = Path("policies/sources.vulnerability.yml")
     search_archive_source_registry_path: Path = Path("policies/sources.search_archives.yml")
     incident_source_registry_path: Path = Path("policies/sources.incidents.yml")
-    threat_telemetry_source_registry_path: Path = Path(
-        "policies/sources.threat_telemetry.yml"
-    )
-    passive_exposure_source_registry_path: Path = Path(
-        "policies/sources.passive_exposure.yml"
-    )
-    passive_infrastructure_source_registry_path: Path = Path(
-        "policies/sources.passive_infrastructure.yml"
-    )
+    threat_telemetry_source_registry_path: Path = Path("policies/sources.threat_telemetry.yml")
+    passive_exposure_source_registry_path: Path = Path("policies/sources.passive_exposure.yml")
+    passive_infrastructure_source_registry_path: Path = Path("policies/sources.passive_infrastructure.yml")
     advisory_source_registry_path: Path = Path("policies/sources.advisories.yml")
-    corporate_change_source_registry_path: Path = Path(
-        "policies/sources.corporate_changes.yml"
-    )
+    corporate_change_source_registry_path: Path = Path("policies/sources.corporate_changes.yml")
     relationship_source_registry_path: Path = Path("policies/sources.relationships.yml")
-    conditional_integration_source_registry_path: Path = Path(
-        "policies/sources.conditional_integrations.yml"
-    )
+    conditional_integration_source_registry_path: Path = Path("policies/sources.conditional_integrations.yml")
     provider_onboarding_registry_path: Path = Path("policies/provider_onboarding.yml")
     source_portfolio_path: Path = Path("policies/source_portfolio.yml")
     decp_source_portfolio_path: Path = Path("policies/source_portfolio.decp.yml")
-    public_web_source_portfolio_path: Path = Path(
-        "policies/source_portfolio.public_web.yml"
-    )
-    vulnerability_source_portfolio_path: Path = Path(
-        "policies/source_portfolio.vulnerability.yml"
-    )
-    search_archive_source_portfolio_path: Path = Path(
-        "policies/source_portfolio.search_archives.yml"
-    )
+    public_web_source_portfolio_path: Path = Path("policies/source_portfolio.public_web.yml")
+    vulnerability_source_portfolio_path: Path = Path("policies/source_portfolio.vulnerability.yml")
+    search_archive_source_portfolio_path: Path = Path("policies/source_portfolio.search_archives.yml")
     incident_source_portfolio_path: Path = Path("policies/source_portfolio.incidents.yml")
-    threat_telemetry_source_portfolio_path: Path = Path(
-        "policies/source_portfolio.threat_telemetry.yml"
-    )
-    passive_exposure_source_portfolio_path: Path = Path(
-        "policies/source_portfolio.passive_exposure.yml"
-    )
-    passive_infrastructure_source_portfolio_path: Path = Path(
-        "policies/source_portfolio.passive_infrastructure.yml"
-    )
+    threat_telemetry_source_portfolio_path: Path = Path("policies/source_portfolio.threat_telemetry.yml")
+    passive_exposure_source_portfolio_path: Path = Path("policies/source_portfolio.passive_exposure.yml")
+    passive_infrastructure_source_portfolio_path: Path = Path("policies/source_portfolio.passive_infrastructure.yml")
     advisory_source_portfolio_path: Path = Path("policies/source_portfolio.advisories.yml")
-    corporate_change_source_portfolio_path: Path = Path(
-        "policies/source_portfolio.corporate_changes.yml"
-    )
-    relationship_source_portfolio_path: Path = Path(
-        "policies/source_portfolio.relationships.yml"
-    )
-    conditional_integration_source_portfolio_path: Path = Path(
-        "policies/source_portfolio.conditional_integrations.yml"
-    )
+    corporate_change_source_portfolio_path: Path = Path("policies/source_portfolio.corporate_changes.yml")
+    relationship_source_portfolio_path: Path = Path("policies/source_portfolio.relationships.yml")
+    conditional_integration_source_portfolio_path: Path = Path("policies/source_portfolio.conditional_integrations.yml")
     source_activation_path: Path = Path("policies/source_activation.yml")
     greenhouse_board_registry_path: Path = Path("policies/greenhouse_boards.yml")
     lever_site_registry_path: Path = Path("policies/lever_sites.yml")
-    smartrecruiters_company_registry_path: Path = Path(
-        "policies/smartrecruiters_companies.yml"
-    )
-    organization_identity_target_registry_path: Path = Path(
-        "policies/organization_identity_targets.yml"
-    )
+    smartrecruiters_company_registry_path: Path = Path("policies/smartrecruiters_companies.yml")
+    organization_identity_target_registry_path: Path = Path("policies/organization_identity_targets.yml")
     public_web_target_registry_path: Path = Path("policies/public_web_targets.yml")
+    developer_ecosystem_target_registry_path: Path = Path("policies/developer_ecosystem_targets.yml")
     search_query_template_registry_path: Path = Path("policies/search_query_templates.yml")
-    vulnerability_query_target_registry_path: Path = Path(
-        "policies/vulnerability_query_targets.yml"
-    )
-    passive_infrastructure_target_registry_path: Path = Path(
-        "policies/passive_infrastructure_targets.yml"
-    )
+    vulnerability_query_target_registry_path: Path = Path("policies/vulnerability_query_targets.yml")
+    passive_infrastructure_target_registry_path: Path = Path("policies/passive_infrastructure_targets.yml")
     rdap_target_registry_path: Path = Path("policies/rdap_targets.yml")
     sec_incident_target_registry_path: Path = Path("policies/sec_incident_targets.yml")
     retention_policy_path: Path = Path("policies/retention.yml")
     collection_schedule_path: Path = Path("policies/collection_schedules.yml")
     decp_collection_schedule_path: Path = Path("policies/collection_schedules.decp.yml")
-    public_web_collection_schedule_path: Path = Path(
-        "policies/collection_schedules.public_web.yml"
-    )
-    vulnerability_collection_schedule_path: Path = Path(
-        "policies/collection_schedules.vulnerability.yml"
-    )
-    search_archive_collection_schedule_path: Path = Path(
-        "policies/collection_schedules.search_archives.yml"
-    )
-    passive_infrastructure_collection_schedule_path: Path = Path(
-        "policies/collection_schedules.passive_infrastructure.yml"
-    )
-    incident_collection_schedule_path: Path = Path(
-        "policies/collection_schedules.incidents.yml"
-    )
-    threat_telemetry_collection_schedule_path: Path = Path(
-        "policies/collection_schedules.threat_telemetry.yml"
-    )
+    public_web_collection_schedule_path: Path = Path("policies/collection_schedules.public_web.yml")
+    vulnerability_collection_schedule_path: Path = Path("policies/collection_schedules.vulnerability.yml")
+    search_archive_collection_schedule_path: Path = Path("policies/collection_schedules.search_archives.yml")
+    passive_infrastructure_collection_schedule_path: Path = Path("policies/collection_schedules.passive_infrastructure.yml")
+    incident_collection_schedule_path: Path = Path("policies/collection_schedules.incidents.yml")
+    threat_telemetry_collection_schedule_path: Path = Path("policies/collection_schedules.threat_telemetry.yml")
     sec_edgar_user_agent: str | None = Field(default=None, max_length=300)
     phishtank_user_agent: str | None = Field(default=None, max_length=300)
-    control_plane_token: str = Field(
-        default="development-control-token",
-        min_length=16,
-        max_length=500,
-    )
+    control_plane_token: str = Field(default="development-control-token", min_length=16, max_length=500)
     scheduler_poll_seconds: float = Field(default=5.0, gt=0, le=300)
     worker_poll_seconds: float = Field(default=2.0, gt=0, le=300)
     source_http_timeout_seconds: float = Field(default=30.0, gt=0, le=120)
