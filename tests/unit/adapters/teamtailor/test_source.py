@@ -174,6 +174,7 @@ def test_collector_follows_only_same_provider_jobs_pagination() -> None:
                         attributes=_attributes(
                             title="Finance Manager",
                             body="Accounting and forecasting.",
+                            pitch="",
                         ),
                     )
                 ],
