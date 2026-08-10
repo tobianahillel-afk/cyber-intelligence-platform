@@ -54,6 +54,14 @@ def test_feed_rejects_dtd_and_entities() -> None:
         parse_public_feed(body, target, max_entries=10)
 
 
+def test_feed_rejects_oversized_xml_before_parsing() -> None:
+    target = _target(feed_urls=("https://example.com/public/feed.xml",))
+    body = b"<rss>" + (b"x" * 1_000_000) + b"</rss>"
+
+    with pytest.raises(PublicFeedParseError, match="byte limit"):
+        parse_public_feed(body, target, max_entries=10)
+
+
 def test_security_txt_requires_valid_contact_and_exact_canonical() -> None:
     target = _target(discover_security_txt=True)
     body = b"\n".join(
@@ -86,6 +94,14 @@ def test_security_txt_rejects_wrong_canonical_and_missing_contact() -> None:
         parse_security_txt(b"Expires: 2027-01-01T00:00:00Z", target)
 
 
+def test_security_txt_rejects_oversized_body() -> None:
+    target = _target(discover_security_txt=True)
+    body = b"Contact: mailto:security@example.com\n" + (b"#" * 64_000)
+
+    with pytest.raises(SecurityTxtParseError, match="byte limit"):
+        parse_security_txt(body, target)
+
+
 def test_pdf_parser_accepts_bounded_plain_pdf_and_rejects_encrypted_pdf() -> None:
     writer = PdfWriter()
     writer.add_blank_page(width=100, height=100)
@@ -105,6 +121,20 @@ def test_pdf_parser_accepts_bounded_plain_pdf_and_rejects_encrypted_pdf() -> Non
     encrypted_writer.write(encrypted_buffer)
     with pytest.raises(PublicDocumentParseError, match="encrypted"):
         extract_pdf_text(encrypted_buffer.getvalue())
+
+
+def test_pdf_parser_rejects_byte_and_page_limit_overflow() -> None:
+    oversized_body = b"%PDF-1.7\n" + (b"x" * 5_000_000)
+    with pytest.raises(PublicDocumentParseError, match="byte limit"):
+        extract_pdf_text(oversized_body)
+
+    writer = PdfWriter()
+    for _ in range(51):
+        writer.add_blank_page(width=100, height=100)
+    buffer = BytesIO()
+    writer.write(buffer)
+    with pytest.raises(PublicDocumentParseError, match="page limit"):
+        extract_pdf_text(buffer.getvalue())
 
 
 def test_document_parser_rejects_malformed_pdf_and_invalid_utf8() -> None:
