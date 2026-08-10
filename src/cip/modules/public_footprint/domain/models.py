@@ -17,6 +17,7 @@ class PublicResourceKind(StrEnum):
     WEB_PAGE = "web_page"
     DOCUMENT = "document"
     REPOSITORY = "repository"
+    PACKAGE = "package"
     ARCHIVE_SNAPSHOT = "archive_snapshot"
     SEARCH_RESULT = "search_result"
 
@@ -31,6 +32,7 @@ class DiscoveryMethod(StrEnum):
     ANALYST_LINK = "analyst_link"
     ARCHIVE_INDEX = "archive_index"
     REPOSITORY_API = "repository_api"
+    PACKAGE_REGISTRY_API = "package_registry_api"
 
 
 class ResourceAccessState(StrEnum):
@@ -63,6 +65,7 @@ class ClaimEvidenceBasis(StrEnum):
     STRUCTURED_DATA = "structured_data"
     ARCHIVE_CONTENT = "archive_content"
     REPOSITORY_METADATA = "repository_metadata"
+    PACKAGE_METADATA = "package_metadata"
     FEED_ENTRY = "feed_entry"
 
 
