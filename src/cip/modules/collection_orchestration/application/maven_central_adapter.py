@@ -65,7 +65,7 @@ class MavenCentralArtifactAdapter:
         group_id = target.namespace or ""
         artifact_id = target.name or ""
         query = f'g:"{group_id}" AND a:"{artifact_id}"'
-        params = {"q": query, "rows": 1, "wt": "json"}
+        params: dict[str, str | int] = {"q": query, "rows": 1, "wt": "json"}
         body = fetch_json(
             self._entry,
             self._entry.policy.base_url,
