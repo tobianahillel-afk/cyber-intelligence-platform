@@ -1,3 +1,42 @@
 version: 1
 
-schedules: []
+schedules:
+  - source_id: github-public-org-repositories
+    adapter_id: github-org-repositories
+    enabled: false
+    interval_seconds: 86400
+    lease_seconds: 180
+    retry: &retry
+      max_attempts: 3
+      base_delay_seconds: 300
+      max_delay_seconds: 3600
+      circuit_failure_threshold: 3
+      circuit_reset_seconds: 3600
+
+  - source_id: gitlab-public-group-projects
+    adapter_id: gitlab-group-projects
+    enabled: false
+    interval_seconds: 86400
+    lease_seconds: 180
+    retry: *retry
+
+  - source_id: pypi-public-package-metadata
+    adapter_id: pypi-project-json
+    enabled: false
+    interval_seconds: 86400
+    lease_seconds: 180
+    retry: *retry
+
+  - source_id: npm-public-package-metadata
+    adapter_id: npm-package-metadata
+    enabled: false
+    interval_seconds: 86400
+    lease_seconds: 180
+    retry: *retry
+
+  - source_id: maven-central-public-metadata
+    adapter_id: maven-central-search
+    enabled: false
+    interval_seconds: 86400
+    lease_seconds: 180
+    retry: *retry
