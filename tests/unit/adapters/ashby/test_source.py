@@ -158,7 +158,8 @@ def test_collector_emits_changed_relevant_jobs_and_refreshes_projection() -> Non
         ),
     )
     assert batch.not_modified is False
-    assert batch.observations == ()
+    assert len(batch.observations) == 1
+    assert batch.observations[0].source_record_key == "ExampleSecurity:job-finance"
     assert {projection.signal.title for projection in batch.projections} == {
         "Senior SOC Analyst"
     }
