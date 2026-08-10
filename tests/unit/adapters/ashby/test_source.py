@@ -118,11 +118,13 @@ def test_client_uses_public_endpoint_and_rejects_unsafe_responses() -> None:
     unsafe = httpx.MockTransport(
         lambda _: httpx.Response(200, headers={"content-type": "text/html"})
     )
-    with httpx.Client(transport=unsafe) as http_client:
-        with pytest.raises(AshbySourceResponseError, match="content type"):
-            AshbyClient(http_client, postings_base_url="https://example.test").fetch_jobs(
-                "Example"
-            )
+    with (
+        httpx.Client(transport=unsafe) as http_client,
+        pytest.raises(AshbySourceResponseError, match="content type"),
+    ):
+        AshbyClient(http_client, postings_base_url="https://example.test").fetch_jobs(
+            "Example"
+        )
 
 
 def test_collector_emits_changed_relevant_jobs_and_refreshes_projection() -> None:
