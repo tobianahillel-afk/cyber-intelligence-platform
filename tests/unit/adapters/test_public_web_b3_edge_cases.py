@@ -244,16 +244,20 @@ def test_fetch_feed_fails_closed_on_configuration_robots_redirect_and_mime() -> 
     def redirect(_: httpx.Request) -> httpx.Response:
         return httpx.Response(302, headers={"location": FEED_URL})
 
-    with httpx.Client(transport=httpx.MockTransport(redirect)) as http_client:
-        with pytest.raises(PublicWebResponseError, match="redirects"):
-            PublicWebClient(http_client).fetch_feed(target, FEED_URL, allowed)
+    with (
+        httpx.Client(transport=httpx.MockTransport(redirect)) as http_client,
+        pytest.raises(PublicWebResponseError, match="redirects"),
+    ):
+        PublicWebClient(http_client).fetch_feed(target, FEED_URL, allowed)
 
     def wrong_mime(_: httpx.Request) -> httpx.Response:
         return httpx.Response(200, headers={"content-type": "text/html"}, content=b"<html/>")
 
-    with httpx.Client(transport=httpx.MockTransport(wrong_mime)) as http_client:
-        with pytest.raises(PublicWebResponseError, match="content type"):
-            PublicWebClient(http_client).fetch_feed(target, FEED_URL, allowed)
+    with (
+        httpx.Client(transport=httpx.MockTransport(wrong_mime)) as http_client,
+        pytest.raises(PublicWebResponseError, match="content type"),
+    ):
+        PublicWebClient(http_client).fetch_feed(target, FEED_URL, allowed)
 
 
 def test_fetch_feed_rejects_invalid_or_oversized_content_length() -> None:
@@ -267,9 +271,11 @@ def test_fetch_feed_rejects_invalid_or_oversized_content_length() -> None:
             content=b"<rss/>",
         )
 
-    with httpx.Client(transport=httpx.MockTransport(invalid_length)) as http_client:
-        with pytest.raises(PublicWebResponseError, match="invalid Content-Length"):
-            PublicWebClient(http_client).fetch_feed(target, FEED_URL, robots)
+    with (
+        httpx.Client(transport=httpx.MockTransport(invalid_length)) as http_client,
+        pytest.raises(PublicWebResponseError, match="invalid Content-Length"),
+    ):
+        PublicWebClient(http_client).fetch_feed(target, FEED_URL, robots)
 
     def oversized_length(_: httpx.Request) -> httpx.Response:
         return httpx.Response(
@@ -278,9 +284,11 @@ def test_fetch_feed_rejects_invalid_or_oversized_content_length() -> None:
             content=b"<rss/>",
         )
 
-    with httpx.Client(transport=httpx.MockTransport(oversized_length)) as http_client:
-        with pytest.raises(PublicWebResponseError, match="size limit"):
-            PublicWebClient(http_client).fetch_feed(target, FEED_URL, robots)
+    with (
+        httpx.Client(transport=httpx.MockTransport(oversized_length)) as http_client,
+        pytest.raises(PublicWebResponseError, match="size limit"),
+    ):
+        PublicWebClient(http_client).fetch_feed(target, FEED_URL, robots)
 
 
 def test_target_rejects_missing_discovery_off_origin_feed_and_unreviewed_enablement() -> None:
