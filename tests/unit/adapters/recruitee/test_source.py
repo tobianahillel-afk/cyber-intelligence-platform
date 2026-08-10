@@ -43,10 +43,10 @@ from cip.modules.source_governance.infrastructure.registry import (
 
 NOW = datetime(2026, 8, 11, 0, 25, tzinfo=UTC)
 SITE = RecruiteeCareerSite(
-    id="example-security",
-    subdomain="example-security",
-    canonical_name="Example Security",
-    country_code="FR",
+    id="people-for-people",
+    subdomain="peopleforpeople",
+    canonical_name="People for People",
+    country_code="NL",
 )
 
 
@@ -153,16 +153,17 @@ def test_collector_refreshes_relevant_projection_without_duplicate_observation()
         collected_at=NOW,
         retention_until=NOW + timedelta(days=365),
         checkpoint=RecruiteeCheckpoint(
-            {"example-security": {"123": fingerprint}}
+            {"people-for-people": {"123": fingerprint}}
         ),
     )
     assert batch.not_modified is False
-    assert batch.observations == ()
+    assert len(batch.observations) == 1
+    assert batch.observations[0].source_record_key == "peopleforpeople:456"
     assert {projection.signal.title for projection in batch.projections} == {
         "Senior SOC Analyst"
     }
-    assert set(batch.checkpoint.fingerprints["example-security"]) == {"123", "456"}
-    assert batch.checkpoint.fingerprints["example-security"]["123"] == fingerprint
+    assert set(batch.checkpoint.fingerprints["people-for-people"]) == {"123", "456"}
+    assert batch.checkpoint.fingerprints["people-for-people"]["123"] == fingerprint
 
 
 def test_collector_rejects_governance_schema_duplicates_and_window() -> None:
