@@ -10,12 +10,22 @@ from uuid import UUID
 from pydantic import ValidationError
 
 from cip.adapters.sources.teamtailor.client import TeamtailorClient
-from cip.adapters.sources.teamtailor.mapper import map_teamtailor_job, teamtailor_job_to_canonical
+from cip.adapters.sources.teamtailor.mapper import (
+    map_teamtailor_job,
+    teamtailor_job_to_canonical,
+)
 from cip.adapters.sources.teamtailor.registry import TeamtailorAccount
-from cip.adapters.sources.teamtailor.schemas import TeamtailorJobResource, TeamtailorJobsResponse
+from cip.adapters.sources.teamtailor.schemas import (
+    TeamtailorJobResource,
+    TeamtailorJobsResponse,
+)
 from cip.modules.collection_orchestration.application.ports import CommercialProjection
 from cip.modules.raw_observations.domain.entities import RawObservation
-from cip.modules.source_governance.domain.models import CollectionRequest, DataCategory, SourceRuntimeState
+from cip.modules.source_governance.domain.models import (
+    CollectionRequest,
+    DataCategory,
+    SourceRuntimeState,
+)
 from cip.modules.source_governance.infrastructure.registry import SourceRegistryEntry
 from cip.shared.kernel.time import require_aware_utc
 
