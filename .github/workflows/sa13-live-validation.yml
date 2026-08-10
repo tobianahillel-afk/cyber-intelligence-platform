@@ -1,0 +1,39 @@
+name: SA-13 Live Validation
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "src/cip/adapters/sources/ashby/**"
+      - "src/cip/adapters/sources/recruitee/**"
+      - "src/cip/modules/collection_orchestration/application/ashby_adapter.py"
+      - "src/cip/modules/collection_orchestration/application/recruitee_adapter.py"
+      - "policies/ashby_boards.yml"
+      - "policies/recruitee_sites.yml"
+      - "policies/sources.ats_expansion.yml"
+      - "scripts/live_validate_sa13.py"
+      - ".github/workflows/sa13-live-validation.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  live-public-ats:
+    if: github.event.pull_request.head.ref == 'agent/sa13-ats-expansion'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install project
+        run: python -m pip install --upgrade pip && pip install .
+
+      - name: Controlled Ashby and Recruitee live validation
+        run: python scripts/live_validate_sa13.py
