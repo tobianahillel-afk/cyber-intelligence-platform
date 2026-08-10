@@ -3,33 +3,29 @@ from __future__ import annotations
 from collections.abc import Callable
 from dataclasses import dataclass
 
-from cip.adapters.sources.developer_ecosystem.registry import (
-    DeveloperEcosystemTarget,
-)
+from cip.adapters.sources.ashby.registry import AshbyBoard
+from cip.adapters.sources.developer_ecosystem.registry import DeveloperEcosystemTarget
 from cip.adapters.sources.greenhouse.registry import GreenhouseBoard
 from cip.adapters.sources.incident_catalogs.sec_registry import SecIncidentTarget
 from cip.adapters.sources.lever.registry import LeverSite
-from cip.adapters.sources.organization_identity.registry import (
-    OrganizationIdentityTarget,
-)
+from cip.adapters.sources.organization_identity.registry import OrganizationIdentityTarget
 from cip.adapters.sources.passive_infrastructure.rdap_registry import RdapTarget
-from cip.adapters.sources.passive_infrastructure.registry import (
-    PassiveInfrastructureTarget,
-)
+from cip.adapters.sources.passive_infrastructure.registry import PassiveInfrastructureTarget
 from cip.adapters.sources.public_web.registry import PublicWebTarget
+from cip.adapters.sources.recruitee.registry import RecruiteeCareerSite
 from cip.adapters.sources.smartrecruiters.registry import SmartRecruitersCompany
-from cip.adapters.sources.vulnerability_catalogs.registry import (
-    VulnerabilityQueryTarget,
-)
+from cip.adapters.sources.teamtailor.registry import TeamtailorAccount
+from cip.adapters.sources.vulnerability_catalogs.registry import VulnerabilityQueryTarget
 from cip.modules.collection_orchestration.application.adapters import CisaKevAdapter
+from cip.modules.collection_orchestration.application.ats_registration import (
+    register_extended_ats_adapters,
+)
 from cip.modules.collection_orchestration.application.boamp_adapter import BoampAdapter
 from cip.modules.collection_orchestration.application.decp_adapter import DecpAdapter
 from cip.modules.collection_orchestration.application.developer_ecosystem_registration import (
     register_developer_ecosystem_adapters,
 )
-from cip.modules.collection_orchestration.application.greenhouse_adapter import (
-    GreenhouseAdapter,
-)
+from cip.modules.collection_orchestration.application.greenhouse_adapter import GreenhouseAdapter
 from cip.modules.collection_orchestration.application.identity_adapters import (
     register_identity_adapters,
 )
@@ -41,9 +37,7 @@ from cip.modules.collection_orchestration.application.passive_infrastructure_reg
     register_passive_infrastructure_adapters,
 )
 from cip.modules.collection_orchestration.application.ports import CollectionAdapter
-from cip.modules.collection_orchestration.application.public_web_adapter import (
-    PublicWebAdapter,
-)
+from cip.modules.collection_orchestration.application.public_web_adapter import PublicWebAdapter
 from cip.modules.collection_orchestration.application.reference_adapter import (
     ReferencePortfolioAdapter,
 )
@@ -67,6 +61,9 @@ class AdapterCompositionInputs:
     greenhouse_boards: tuple[GreenhouseBoard, ...]
     lever_sites: tuple[LeverSite, ...]
     smartrecruiters_companies: tuple[SmartRecruitersCompany, ...]
+    ashby_boards: tuple[AshbyBoard, ...]
+    recruitee_sites: tuple[RecruiteeCareerSite, ...]
+    teamtailor_accounts: tuple[TeamtailorAccount, ...]
     identity_targets: tuple[OrganizationIdentityTarget, ...]
     public_web_targets: tuple[PublicWebTarget, ...]
     developer_ecosystem_targets: tuple[DeveloperEcosystemTarget, ...]
@@ -83,6 +80,7 @@ def build_runtime_adapters(
     brave_token_provider: Callable[[], str | None],
     certspotter_token_provider: Callable[[], str | None],
     phishtank_token_provider: Callable[[], str | None],
+    teamtailor_token_provider: Callable[[], str | None],
     sec_user_agent: str | None,
     phishtank_user_agent: str | None,
     timeout_seconds: float,
@@ -91,6 +89,15 @@ def build_runtime_adapters(
     adapters: dict[tuple[str, str], CollectionAdapter] = {}
     _register(adapters, ReferencePortfolioAdapter())
     _register_core_adapters(adapters, entries_by_id, inputs, timeout_seconds)
+    register_extended_ats_adapters(
+        adapters,
+        entries_by_id,
+        inputs.ashby_boards,
+        inputs.recruitee_sites,
+        inputs.teamtailor_accounts,
+        teamtailor_token_provider=teamtailor_token_provider,
+        timeout_seconds=timeout_seconds,
+    )
     register_identity_adapters(
         adapters,
         entries_by_id,
@@ -166,9 +173,7 @@ def _register_core_adapters(
             ),
         )
     lever_entry = entries_by_id.get(LeverAdapter.source_id)
-    if lever_entry is not None and any(
-        site.enabled for site in inputs.lever_sites
-    ):
+    if lever_entry is not None and any(site.enabled for site in inputs.lever_sites):
         _register(
             adapters,
             LeverAdapter(
@@ -202,10 +207,7 @@ def _register_if_present(
 ) -> None:
     entry = entries_by_id.get(adapter_type.source_id)
     if entry is not None:
-        _register(
-            adapters,
-            adapter_type(entry, timeout_seconds=timeout_seconds),
-        )
+        _register(adapters, adapter_type(entry, timeout_seconds=timeout_seconds))
 
 
 def _register_public_web_adapters(
@@ -225,11 +227,7 @@ def _register_public_web_adapters(
             )
         _register(
             adapters,
-            PublicWebAdapter(
-                entry,
-                target,
-                timeout_seconds=timeout_seconds,
-            ),
+            PublicWebAdapter(entry, target, timeout_seconds=timeout_seconds),
         )
 
 
