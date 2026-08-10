@@ -95,6 +95,7 @@ class Settings(BaseSettings):
     passive_infrastructure_target_registry_path: Path = Path(
         "policies/passive_infrastructure_targets.yml"
     )
+    rdap_target_registry_path: Path = Path("policies/rdap_targets.yml")
     sec_incident_target_registry_path: Path = Path("policies/sec_incident_targets.yml")
     retention_policy_path: Path = Path("policies/retention.yml")
     collection_schedule_path: Path = Path("policies/collection_schedules.yml")
