@@ -60,6 +60,7 @@ _EXPECTED_OBJECT_CLASSES = {
     RdapTargetKind.IPV6: "ip network",
     RdapTargetKind.ASN: "autnum",
 }
+_ASN_SPACE = 4_294_967_296
 
 
 class IanaRdapAdapter:
@@ -227,14 +228,15 @@ def _ip_specificity(keys: list[str], value: str) -> int:
 
 def _asn_specificity(keys: list[str], value: str) -> int:
     number = int(value.removeprefix("AS"))
+    best = -1
     for key in keys:
         start_text, separator, end_text = key.partition("-")
         if not separator or not start_text.isdigit() or not end_text.isdigit():
             continue
         start, end = int(start_text), int(end_text)
         if start <= number <= end:
-            return end - start + 1
-    return -1
+            best = max(best, _ASN_SPACE - (end - start))
+    return best
 
 
 def _rdap_url(base_url: str, target: RdapTarget) -> str:
