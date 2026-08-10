@@ -1,5 +1,5 @@
 version: 1
-reviewed_at: 2026-08-09
+reviewed_at: 2026-08-10
 
 sources:
   - id: cloudflare-doh
@@ -76,3 +76,41 @@ sources:
     notes: >-
       Production execution requires connected Provider Onboarding with secret reference api_token.
       Certificate issuance is passive CT metadata and never verifies endpoint deployment or exposure.
+
+  - id: iana-rdap-public
+    name: IANA-bootstrapped public RDAP
+    base_url: https://data.iana.org/rdap/
+    status: enabled
+    source_type: api
+    owner: IANA bootstrap / authoritative RDAP operators
+    terms_url: https://www.icann.org/en/contracted-parties/registry-operators/resources/registration-data-access-protocol
+    licence: Public query-based RDAP; public fields only; RFC 9224 bootstrap discovery
+    allowed_data_categories: [technology_observation]
+    prohibited_data_categories: *prohibited
+    rate_limit_per_minute: 6
+    retention_days: 365
+    attribution_required: true
+    raw_content_storage: false
+    human_review_required: false
+    authorization:
+      status: approved
+      document_reference: docs/source_activation/PRIORITY_B_RDAP_AUTHORIZATION.md
+      reviewed_at: "2026-08-10T10:40:00+00:00"
+      expires_at: null
+      approved_hosts: [data.iana.org]
+      approved_path_prefixes: [/rdap/]
+      approved_purposes: [passive-infrastructure-intelligence]
+      automated_collection_allowed: true
+      raw_storage_allowed: false
+    economics:
+      commercial_value: medium
+      monthly_cost: 0
+      implementation_cost: medium
+      maintenance_cost: medium
+      expected_stability: high
+    notes: >-
+      Explicit domain/IP/ASN targets only. The policy-authorized first hop is IANA bootstrap.
+      A second HTTPS request is permitted only to an exact authoritative base URL selected from
+      that matching bootstrap response. The materialized schema excludes RDAP entities, vCards,
+      email addresses, telephone numbers and nonpublic-data access. Registration/allocation
+      metadata never proves current operational ownership, deployment, exposure or compromise.
