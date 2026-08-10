@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import re
 from collections.abc import Mapping
+from dataclasses import dataclass
 from datetime import datetime
 from uuid import UUID
 
@@ -40,6 +41,12 @@ _ITEM_105 = re.compile(r"(?:^|[,;\s])1\.05(?:$|[,;\s])")
 _MAX_CYBER_FILINGS_PER_RUN = 100
 _MAX_CURSOR_TARGETS = 500
 PURPOSE = "incident-intelligence"
+
+
+@dataclass(frozen=True, slots=True)
+class _FilingSelection:
+    filings: tuple[SecCyberFilingRecord, ...]
+    next_cursor: str | None
 
 
 class SecCyberDisclosureAdapter:
@@ -95,17 +102,12 @@ class SecCyberDisclosureAdapter:
         response = self._fetch(target_url)
         _validate_response_cik(response.cik, target.cik)
         cursors = _cursor_map(checkpoint_payload, self._targets)
-        newest_accession = (
-            response.filings.recent.accessionNumber[0]
-            if response.filings.recent.accessionNumber
-            else None
-        )
-        filings = _new_cyber_filings(
+        selection = _select_cyber_filings(
             response,
             stop_at=cursors.get(target.target_id),
         )
-        if newest_accession is not None:
-            cursors[target.target_id] = newest_accession
+        if selection.next_cursor is not None:
+            cursors[target.target_id] = selection.next_cursor
         context = IntelligenceObservationContext(
             source_id=self.source_id,
             adapter_id=self.adapter_id,
@@ -125,7 +127,7 @@ class SecCyberDisclosureAdapter:
                 published_at=filing.accepted_at,
                 source_updated_at=filing.accepted_at,
             )
-            for filing in filings
+            for filing in selection.filings
         )
         claims = tuple(
             _map_filing(
@@ -134,7 +136,7 @@ class SecCyberDisclosureAdapter:
                 issuer_name=response.name,
                 source_url=target_url,
             )
-            for filing in filings
+            for filing in selection.filings
         )
         return AdapterCollectionBatch(
             observations=observations,
@@ -167,35 +169,46 @@ class SecCyberDisclosureAdapter:
             ) from exc
 
 
-def _new_cyber_filings(
+def _select_cyber_filings(
     response: SecSubmissionResponse,
     *,
     stop_at: str | None,
-) -> tuple[SecCyberFilingRecord, ...]:
+) -> _FilingSelection:
     recent = response.filings.recent
     records: list[SecCyberFilingRecord] = []
     for index, accession in enumerate(recent.accessionNumber):
         if accession == stop_at:
             break
-        form = recent.form[index].strip().upper()
-        items = recent.items[index]
-        if form not in _ALLOWED_FORMS or _ITEM_105.search(items) is None:
-            continue
-        records.append(
-            SecCyberFilingRecord(
-                accession_number=accession,
-                form=form,
-                item="1.05",
-                filing_date=recent.filingDate[index],
-                accepted_at=require_aware_utc(
-                    recent.acceptanceDateTime[index],
-                    field_name="acceptanceDateTime",
-                ),
-            )
-        )
-        if len(records) >= _MAX_CYBER_FILINGS_PER_RUN:
-            break
-    return tuple(records)
+        record = _cyber_filing_at(response, index=index, accession=accession)
+        if record is not None:
+            records.append(record)
+    if len(records) > _MAX_CYBER_FILINGS_PER_RUN:
+        selected = tuple(records[-_MAX_CYBER_FILINGS_PER_RUN:])
+        return _FilingSelection(selected, selected[0].accession_number)
+    newest_accession = recent.accessionNumber[0] if recent.accessionNumber else stop_at
+    return _FilingSelection(tuple(records), newest_accession)
+
+
+def _cyber_filing_at(
+    response: SecSubmissionResponse,
+    *,
+    index: int,
+    accession: str,
+) -> SecCyberFilingRecord | None:
+    recent = response.filings.recent
+    form = recent.form[index].strip().upper()
+    if form not in _ALLOWED_FORMS or _ITEM_105.search(recent.items[index]) is None:
+        return None
+    return SecCyberFilingRecord(
+        accession_number=accession,
+        form=form,
+        item="1.05",
+        filing_date=recent.filingDate[index],
+        accepted_at=require_aware_utc(
+            recent.acceptanceDateTime[index],
+            field_name="acceptanceDateTime",
+        ),
+    )
 
 
 def _map_filing(
