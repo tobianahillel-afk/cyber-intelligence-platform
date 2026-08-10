@@ -9,6 +9,7 @@ from uuid import UUID
 
 from pydantic import ValidationError
 
+from cip.adapters.sources.canonical_jobs import canonical_public_job_observation
 from cip.adapters.sources.teamtailor.client import TeamtailorClient
 from cip.adapters.sources.teamtailor.mapper import (
     map_teamtailor_job,
@@ -169,8 +170,15 @@ def _map_jobs(
         if mapped is not None:
             observation, projection = mapped
             projections.append(projection)
-            if previous.get(job.id) != fingerprint:
-                observations.append(observation)
+        else:
+            observation = canonical_public_job_observation(
+                canonical,
+                collection_job_id=collection_job_id,
+                collected_at=collected_at,
+                retention_until=retention_until,
+            )
+        if previous.get(job.id) != fingerprint:
+            observations.append(observation)
     return fingerprints
 
 
