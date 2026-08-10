@@ -1,0 +1,38 @@
+version: 1
+
+schedules:
+  - source_id: ashby-job-board
+    adapter_id: ashby-public-job-postings-api
+    enabled: true
+    interval_seconds: 3600
+    lease_seconds: 180
+    retry:
+      max_attempts: 4
+      base_delay_seconds: 60
+      max_delay_seconds: 1800
+      circuit_failure_threshold: 3
+      circuit_reset_seconds: 1800
+
+  - source_id: recruitee-careers-site
+    adapter_id: recruitee-careers-site-api
+    enabled: true
+    interval_seconds: 3600
+    lease_seconds: 180
+    retry:
+      max_attempts: 4
+      base_delay_seconds: 60
+      max_delay_seconds: 1800
+      circuit_failure_threshold: 3
+      circuit_reset_seconds: 1800
+
+  - source_id: teamtailor-public-jobs
+    adapter_id: teamtailor-public-read-jobs-api
+    enabled: false
+    interval_seconds: 3600
+    lease_seconds: 180
+    retry:
+      max_attempts: 4
+      base_delay_seconds: 60
+      max_delay_seconds: 1800
+      circuit_failure_threshold: 3
+      circuit_reset_seconds: 1800
