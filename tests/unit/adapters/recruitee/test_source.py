@@ -122,9 +122,11 @@ def test_client_reads_only_public_offers_endpoint_and_rejects_bad_mime() -> None
     unsafe = httpx.MockTransport(
         lambda _: httpx.Response(200, headers={"content-type": "text/html"})
     )
-    with httpx.Client(transport=unsafe) as http_client:
-        with pytest.raises(RecruiteeSourceResponseError, match="content type"):
-            RecruiteeClient(http_client).fetch_offers(SITE.offers_url)
+    with (
+        httpx.Client(transport=unsafe) as http_client,
+        pytest.raises(RecruiteeSourceResponseError, match="content type"),
+    ):
+        RecruiteeClient(http_client).fetch_offers(SITE.offers_url)
 
 
 def test_collector_refreshes_relevant_projection_without_duplicate_observation() -> None:
