@@ -8,7 +8,10 @@ from uuid import UUID
 import httpx
 from pydantic import BaseModel
 
-from cip.adapters.sources.developer_ecosystem.mapper import map_public_metadata_resource
+from cip.adapters.sources.developer_ecosystem.mapper import (
+    PublicMetadataResourceInput,
+    map_public_metadata_resource,
+)
 from cip.adapters.sources.developer_ecosystem.registry import (
     DeveloperEcosystemTarget,
     DeveloperTargetKind,
@@ -92,17 +95,19 @@ def package_batch(
     target = projection_input.target
     projection = map_public_metadata_resource(
         record,
-        organization_id=target.organization_id,
-        source_id=identity.source_id,
-        source_record_key=target.resource_identity,
-        canonical_url=projection_input.canonical_url,
-        source_url=projection_input.source_url,
-        kind=PublicResourceKind.PACKAGE,
-        discovery_method=DiscoveryMethod.PACKAGE_REGISTRY_API,
-        collected_at=collected_at,
-        title=projection_input.title,
-        excerpt=projection_input.excerpt,
-        source_updated_at=projection_input.source_updated_at,
+        PublicMetadataResourceInput(
+            organization_id=target.organization_id,
+            source_id=identity.source_id,
+            source_record_key=target.resource_identity,
+            canonical_url=projection_input.canonical_url,
+            source_url=projection_input.source_url,
+            kind=PublicResourceKind.PACKAGE,
+            discovery_method=DiscoveryMethod.PACKAGE_REGISTRY_API,
+            collected_at=collected_at,
+            title=projection_input.title,
+            excerpt=projection_input.excerpt,
+            source_updated_at=projection_input.source_updated_at,
+        ),
     )
     context = IntelligenceObservationContext(
         source_id=identity.source_id,
