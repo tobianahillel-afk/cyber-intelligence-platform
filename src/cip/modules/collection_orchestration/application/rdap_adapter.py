@@ -264,12 +264,22 @@ def _validate_record_identity(record: PublicRdapObject, target: RdapTarget) -> N
     if record.objectClassName.casefold() != _EXPECTED_OBJECT_CLASSES[target.kind]:
         raise _identity_error()
     if target.kind is RdapTargetKind.DOMAIN:
-        if record.ldhName is None or normalize_domain(record.ldhName) != target.value:
-            raise _identity_error()
+        _validate_domain_record(record, target.value)
     elif target.kind in {RdapTargetKind.IPV4, RdapTargetKind.IPV6}:
         _validate_ip_record(record, target.value)
     else:
         _validate_asn_record(record, target.value)
+
+
+def _validate_domain_record(record: PublicRdapObject, value: str) -> None:
+    if record.ldhName is None:
+        raise _identity_error()
+    try:
+        normalized = normalize_domain(record.ldhName)
+    except ValueError as exc:
+        raise _identity_error() from exc
+    if normalized != value:
+        raise _identity_error()
 
 
 def _validate_ip_record(record: PublicRdapObject, value: str) -> None:
