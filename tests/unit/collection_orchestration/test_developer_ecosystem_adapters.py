@@ -36,12 +36,23 @@ POLICY_PATH = Path("policies/sources.public_web.yml")
 
 
 def test_all_developer_adapters_are_network_idle_without_targets() -> None:
+    transport = httpx.MockTransport(_fail_network)
     adapters = (
-        GitHubOrganizationRepositoriesAdapter(_entry("github-public-org-repositories"), (), transport=httpx.MockTransport(_fail_network)),
-        GitLabGroupProjectsAdapter(_entry("gitlab-public-group-projects"), (), transport=httpx.MockTransport(_fail_network)),
-        PyPiPackageAdapter(_entry("pypi-public-package-metadata"), (), transport=httpx.MockTransport(_fail_network)),
-        NpmPackageAdapter(_entry("npm-public-package-metadata"), (), transport=httpx.MockTransport(_fail_network)),
-        MavenCentralArtifactAdapter(_entry("maven-central-public-metadata"), (), transport=httpx.MockTransport(_fail_network)),
+        GitHubOrganizationRepositoriesAdapter(
+            _entry("github-public-org-repositories"), (), transport=transport
+        ),
+        GitLabGroupProjectsAdapter(
+            _entry("gitlab-public-group-projects"), (), transport=transport
+        ),
+        PyPiPackageAdapter(
+            _entry("pypi-public-package-metadata"), (), transport=transport
+        ),
+        NpmPackageAdapter(
+            _entry("npm-public-package-metadata"), (), transport=transport
+        ),
+        MavenCentralArtifactAdapter(
+            _entry("maven-central-public-metadata"), (), transport=transport
+        ),
     )
     for adapter in adapters:
         batch = _collect(adapter)
@@ -165,9 +176,14 @@ def test_maven_requires_one_exact_coordinate() -> None:
             }
         })
 
+    target = _target(
+        DeveloperTargetKind.MAVEN_ARTIFACT,
+        namespace="com.example",
+        name="example-core",
+    )
     adapter = MavenCentralArtifactAdapter(
         _entry("maven-central-public-metadata"),
-        (_target(DeveloperTargetKind.MAVEN_ARTIFACT, namespace="com.example", name="example-core"),),
+        (target,),
         transport=httpx.MockTransport(handler),
     )
     batch = _collect(adapter)
