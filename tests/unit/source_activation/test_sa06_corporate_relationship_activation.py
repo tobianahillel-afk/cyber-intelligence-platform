@@ -5,6 +5,7 @@ from cip.modules.source_activation.infrastructure.inventory import load_activati
 
 ACTIVATION_PATH = Path("policies/source_activation.yml")
 DOC_PATH = Path("docs/source_activation/SA_06_CORPORATE_RELATIONSHIP_ACTIVATION.md")
+MATRIX_PATH = Path("docs/source_activation/SOURCE_COVERAGE_MATRIX.md")
 
 MANUAL = {
     "official-corporate-disclosures",
@@ -41,6 +42,16 @@ def test_sa06_decision_record_covers_every_family() -> None:
     text = DOC_PATH.read_text(encoding="utf-8")
     for source_id in MANUAL | {LICENSED}:
         assert f"`{source_id}`" in text
+
+
+def test_sa06_coverage_matrix_covers_every_family_and_terminal_state() -> None:
+    text = MATRIX_PATH.read_text(encoding="utf-8")
+    for source_id in MANUAL:
+        assert f"`{source_id}`" in text
+    assert f"`{LICENSED}`" in text
+    assert "## SA-06 corporate-change and relationship completion boundary" in text
+    assert "MANUAL" in text
+    assert "BLOCKED" in text
 
 
 def _records() -> dict[str, ActivationRecord]:
