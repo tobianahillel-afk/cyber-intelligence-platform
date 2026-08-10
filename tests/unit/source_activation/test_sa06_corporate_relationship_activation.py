@@ -1,6 +1,10 @@
 from pathlib import Path
 
-from cip.modules.source_activation.domain.models import ActivationDisposition, ActivationRecord
+from cip.modules.source_activation.domain.models import (
+    ActivationDisposition,
+    ActivationRecord,
+    ActivationStage,
+)
 from cip.modules.source_activation.infrastructure.inventory import load_activation_inventory
 
 ACTIVATION_PATH = Path("policies/source_activation.yml")
@@ -26,7 +30,7 @@ def test_sa06_public_official_families_are_terminal_manual_review_paths() -> Non
         assert record.activation_wave == "SA-06"
         assert record.reason
         assert record.is_resolved
-        assert not record.is_executable
+        assert ActivationStage.EXECUTABLE not in record.stages
 
 
 def test_sa06_licensed_news_is_owned_fail_closed_by_sa07() -> None:
@@ -35,7 +39,7 @@ def test_sa06_licensed_news_is_owned_fail_closed_by_sa07() -> None:
     assert record.activation_wave == "SA-07"
     assert record.reason
     assert record.is_resolved
-    assert not record.is_executable
+    assert ActivationStage.EXECUTABLE not in record.stages
 
 
 def test_sa06_decision_record_covers_every_family() -> None:
