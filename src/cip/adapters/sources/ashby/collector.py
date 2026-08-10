@@ -12,6 +12,7 @@ from cip.adapters.sources.ashby.client import AshbyClient
 from cip.adapters.sources.ashby.mapper import ashby_job_to_canonical, map_ashby_job
 from cip.adapters.sources.ashby.registry import AshbyBoard
 from cip.adapters.sources.ashby.schemas import AshbyJobBoardResponse, AshbyJobPosting
+from cip.adapters.sources.canonical_jobs import canonical_public_job_observation
 from cip.modules.collection_orchestration.application.ports import CommercialProjection
 from cip.modules.raw_observations.domain.entities import RawObservation
 from cip.modules.source_governance.domain.models import (
@@ -126,10 +127,16 @@ def _collect_board(
             collected_at=collected_at,
             retention_until=retention_until,
         )
-        if mapped is None:
-            continue
-        observation, projection = mapped
-        projections.append(projection)
+        if mapped is not None:
+            observation, projection = mapped
+            projections.append(projection)
+        else:
+            observation = canonical_public_job_observation(
+                canonical,
+                collection_job_id=collection_job_id,
+                collected_at=collected_at,
+                retention_until=retention_until,
+            )
         if previous.get(key) != fingerprint:
             observations.append(observation)
     return fingerprints
