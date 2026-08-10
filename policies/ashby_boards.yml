@@ -1,0 +1,9 @@
+version: 1
+reviewed_at: 2026-08-11
+
+boards:
+  - id: ashby
+    board_name: Ashby
+    canonical_name: Ashby
+    country_code: US
+    enabled: true
