@@ -29,7 +29,7 @@ Symbols:
 | BODACC identity | target activation | Y | Y | - | - | N/A | - | paused until explicit French SIREN target |
 | Synthetic reference | test reference | Y | Y | Y | Y | N/A | Y | fully integrated test capability |
 | OSINT Framework import | SA-00 | - | - | - | - | N/A | - | catalogue normalization implemented; no execution authority |
-| public-web target path | SA-02 | Y | Y | - | - | - | - | adapter exists; checked-in example target remains disabled/unauthorized |
+| public-web target path | SA-02 / Priority B-3 | Y | Y | - | - | - | - | bounded sitemap + RSS/Atom + security.txt + public-document capability; checked-in example remains disabled/unauthorized |
 | NVD | SA-01 | Y | Y | Y | Y | Y | - | governed paginated adapter; live proof outstanding |
 | FIRST EPSS | SA-01 | Y | Y | Y | Y | N/A | - | bounded explicit-CVE lookup; live proof outstanding |
 | GitHub Global Advisories | SA-01 | Y | Y | Y | Y | Y | - | governed paginated adapter; live proof outstanding |
@@ -76,6 +76,26 @@ SA-00 established the lifecycle and truth model. SA-01 through SA-04 promote onl
 Every `source_id` contained in every checked-in `source_portfolio*.yml` bundle must have an activation record. Repository tests enforce this invariant across the activation bundles added by each SA/Priority-B increment.
 
 OSINT Framework synchronization remains candidate discovery only. An upstream entry can stay non-executable, but relevant candidates must eventually receive an explicit `active`, `planned`, `manual`, `blocked`, `replaced`, `duplicate`, or `not_relevant` disposition before SA-10 closes.
+
+## Priority B-3 public web/feed/document completion boundary
+
+Priority B-3 is complete only when:
+
+- the existing Lot 12 bounded public-web collector remains the single implementation and gains RSS 2.0, Atom, `/.well-known/security.txt`, public PDF and bounded plain-text support without a parallel crawler;
+- every feed URL is explicitly configured on an organization-bound target, same-origin, path-scoped and subject to the existing robots, page, byte and redirect budgets;
+- feed XML is byte-bounded before parsing, rejects DTD/entities, accepts only RSS 2.0 or Atom and emits only canonical in-scope links;
+- feed entries are discovery lineage only and are never counted as independent corroboration for their linked pages;
+- `security.txt` is fetched only from the canonical well-known path, requires at least one supported `Contact`, validates any `Canonical` field against that exact target path and remains a disclosure/contact resource rather than vulnerability or commercial-need evidence;
+- public PDF extraction is byte- and page-bounded, rejects malformed and encrypted documents, never executes document content and only emits bounded text/title metadata into the existing Public Footprint mapping;
+- plain-text extraction is byte-bounded, UTF-8 only and rejects NUL content;
+- sitemap-, feed-, direct- and document-discovered resources reuse the existing Lot 12 `PublicResource` / `PublicResourceVersion` / provenance path and the existing collection runtime, worker and persistence path;
+- the checked-in public-web example remains disabled and unauthorized; B-3 extends the adapter capability but does not manufacture authorization or `live_tested` status;
+- no crawl-on-page-view, authentication bypass, CAPTCHA/MFA handling, private portal access, arbitrary user URL fetch, active probing or raw-body retention is introduced;
+- `security.txt`, feed metadata and document presence do not directly create commercial signals, need hypotheses, scores, opportunities, contact targets or outreach;
+- deterministic XML entity/size, malformed/oversize PDF, target-registry, client-policy, runtime/provenance and Source Activation reconciliation tests pass;
+- Source Activation truth and this matrix continue to agree that the checked-in public-web example is mapped/adapter-present but not authorized/executable;
+- the complete repository backend and frontend CI pass on one exact final SHA;
+- `live_tested` remains false until separately authorized controlled provider validation is evidenced.
 
 ## Priority B-2 developer ecosystem completion boundary
 

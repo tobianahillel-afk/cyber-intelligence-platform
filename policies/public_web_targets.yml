@@ -9,6 +9,8 @@ targets:
     base_url: https://example.com
     sitemap_urls:
       - https://example.com/sitemap.xml
+    feed_urls: []
+    discover_security_txt: false
     allowed_path_prefixes:
       - /public
     enabled: false

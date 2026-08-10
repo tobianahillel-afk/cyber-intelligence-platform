@@ -20,6 +20,12 @@ _REDIRECT_STATUSES = {
     httpx.codes.PERMANENT_REDIRECT,
 }
 _TOMBSTONE_STATUSES = {httpx.codes.NOT_FOUND, httpx.codes.GONE}
+_FEED_MIME_TYPES = {
+    "application/atom+xml",
+    "application/rss+xml",
+    "application/xml",
+    "text/xml",
+}
 
 
 class PublicWebResponseError(RuntimeError):
@@ -56,6 +62,7 @@ class RobotsRules:
 class PublicWebClient:
     ROBOTS_MAX_BYTES = 256_000
     SITEMAP_MAX_BYTES = 1_000_000
+    FEED_MAX_BYTES = 1_000_000
 
     def __init__(self, client: httpx.Client) -> None:
         self._client = client
@@ -126,6 +133,45 @@ class PublicWebClient:
             requested_url=canonical,
             fetched_url=canonical,
             body=_bounded_body(response, max_bytes=self.SITEMAP_MAX_BYTES),
+            mime_type=mime_type,
+            etag=_header(response, "etag"),
+            last_modified=_header(response, "last-modified"),
+            redirects=0,
+            status_code=response.status_code,
+        )
+
+    def fetch_feed(
+        self,
+        target: PublicWebTarget,
+        feed_url: str,
+        robots: RobotsRules,
+    ) -> PublicWebFetchResult:
+        canonical = CanonicalUrl(feed_url).value
+        if canonical not in target.feed_urls:
+            raise PublicWebPolicyDeniedError("feed URL is not explicitly configured")
+        if not robots.allows(canonical):
+            raise PublicWebPolicyDeniedError("robots.txt denied feed collection")
+        response = self._client.get(
+            canonical,
+            headers={
+                "Accept": (
+                    "application/rss+xml,application/atom+xml,"
+                    "application/xml;q=0.9,text/xml;q=0.9"
+                ),
+                "User-Agent": _USER_AGENT,
+            },
+            follow_redirects=False,
+        )
+        if response.status_code in _REDIRECT_STATUSES:
+            raise PublicWebResponseError("feed redirects are not followed")
+        response.raise_for_status()
+        mime_type = _content_type(response)
+        if mime_type not in _FEED_MIME_TYPES:
+            raise PublicWebResponseError("feed returned an unexpected content type")
+        return PublicWebFetchResult(
+            requested_url=canonical,
+            fetched_url=canonical,
+            body=_bounded_body(response, max_bytes=self.FEED_MAX_BYTES),
             mime_type=mime_type,
             etag=_header(response, "etag"),
             last_modified=_header(response, "last-modified"),

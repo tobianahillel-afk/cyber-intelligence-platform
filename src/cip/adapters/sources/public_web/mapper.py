@@ -6,11 +6,11 @@ from hashlib import sha256
 from uuid import UUID
 
 from cip.adapters.sources.public_web.client import PublicWebFetchResult
-from cip.adapters.sources.public_web.parsing import (
-    ExtractedHtml,
-    contains_credential_marker,
-    extract_html,
+from cip.adapters.sources.public_web.content_extraction import (
+    ExtractedPublicContent,
+    extract_public_content,
 )
+from cip.adapters.sources.public_web.parsing import contains_credential_marker
 from cip.adapters.sources.public_web.registry import PublicWebTarget
 from cip.modules.public_footprint.domain import (
     ClaimEvidenceBasis,
@@ -75,12 +75,19 @@ def map_public_page(
     collected_at: datetime,
     retention_until: datetime,
     previous: PreviousPageState | None,
+    discovery_method: DiscoveryMethod = DiscoveryMethod.SITEMAP,
+    discovery_source_url: str | None = None,
+    allow_claims: bool = True,
 ) -> MappedPublicPage:
     tombstoned = _is_tombstone(result)
     content_hash = _content_hash(result)
     quarantined = not tombstoned and contains_credential_marker(result.body)
     unchanged = _is_unchanged(previous, result, content_hash)
-    extracted = _extracted_html(result, quarantined=quarantined, tombstoned=tombstoned)
+    extracted = extract_public_content(
+        result,
+        quarantined=quarantined,
+        tombstoned=tombstoned,
+    )
     indexable_text = _indexable_text(extracted)
     resource = _resource(
         target,
@@ -91,6 +98,8 @@ def map_public_page(
         tombstoned=tombstoned,
         unchanged=unchanged,
         extracted=extracted,
+        discovery_method=discovery_method,
+        discovery_source_url=discovery_source_url,
     )
     version = _version(
         resource,
@@ -103,7 +112,11 @@ def map_public_page(
         extracted=extracted,
         tombstoned=tombstoned,
     )
-    claims = () if tombstoned else _claims(target, resource, version, indexable_text)
+    claims = (
+        ()
+        if tombstoned or not allow_claims
+        else _claims(target, resource, version, indexable_text)
+    )
     projection = PublicFootprintProjection(resource=resource, version=version, claims=claims)
     observation = (
         None
@@ -117,6 +130,7 @@ def map_public_page(
             content_hash=content_hash,
             extracted=extracted,
             tombstoned=tombstoned,
+            include_technology_category=allow_claims,
         )
     )
     return MappedPublicPage(
@@ -135,7 +149,9 @@ def _resource(
     quarantined: bool,
     tombstoned: bool,
     unchanged: bool,
-    extracted: ExtractedHtml | None,
+    extracted: ExtractedPublicContent | None,
+    discovery_method: DiscoveryMethod,
+    discovery_source_url: str | None,
 ) -> PublicResource:
     kind = _resource_kind(result, previous)
     return PublicResource(
@@ -143,9 +159,9 @@ def _resource(
         source_id=target.id,
         source_record_key=result.requested_url,
         canonical_url=result.fetched_url,
-        source_url=result.requested_url,
+        source_url=discovery_source_url or result.requested_url,
         kind=kind,
-        discovery_method=DiscoveryMethod.SITEMAP,
+        discovery_method=discovery_method,
         first_discovered_at=collected_at,
         last_seen_at=collected_at,
         access_state=(
@@ -172,7 +188,7 @@ def _version(
     unchanged: bool,
     content_hash: str,
     indexable_text: str,
-    extracted: ExtractedHtml | None,
+    extracted: ExtractedPublicContent | None,
     tombstoned: bool,
 ) -> PublicResourceVersion:
     excerpt = (
@@ -212,11 +228,12 @@ def _observation(
     collected_at: datetime,
     retention_until: datetime,
     content_hash: str,
-    extracted: ExtractedHtml | None,
+    extracted: ExtractedPublicContent | None,
     tombstoned: bool,
+    include_technology_category: bool,
 ) -> RawObservation:
     categories = {DataCategory.OFFICIAL_DOCUMENT_DISCOVERY}
-    if not tombstoned:
+    if not tombstoned and include_technology_category:
         categories.add(DataCategory.TECHNOLOGY_OBSERVATION)
     return RawObservation(
         source_id=target.id,
@@ -263,18 +280,7 @@ def _is_unchanged(
     )
 
 
-def _extracted_html(
-    result: PublicWebFetchResult,
-    *,
-    quarantined: bool,
-    tombstoned: bool,
-) -> ExtractedHtml | None:
-    if result.mime_type != "text/html" or quarantined or tombstoned:
-        return None
-    return extract_html(result.body)
-
-
-def _indexable_text(extracted: ExtractedHtml | None) -> str:
+def _indexable_text(extracted: ExtractedPublicContent | None) -> str:
     if extracted is None or extracted.noindex:
         return ""
     return extracted.text
@@ -286,7 +292,7 @@ def _resource_kind(
 ) -> PublicResourceKind:
     if _is_tombstone(result) and previous is not None:
         return previous.resource_kind
-    if result.mime_type == "application/pdf":
+    if result.mime_type in {"application/pdf", "text/plain"}:
         return PublicResourceKind.DOCUMENT
     return PublicResourceKind.WEB_PAGE
 
