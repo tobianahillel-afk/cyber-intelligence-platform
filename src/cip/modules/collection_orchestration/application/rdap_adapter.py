@@ -317,7 +317,8 @@ def _map_record(
             confidence=0.65,
             organization_id=target.organization_id,
             reasons=(
-                "RDAP registration or allocation metadata does not prove current operational ownership",
+                "RDAP registration or allocation metadata does not prove current "
+                "operational ownership",
             ),
             attribution_risks=risks,
         ),
