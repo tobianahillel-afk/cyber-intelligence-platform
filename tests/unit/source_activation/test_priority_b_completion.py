@@ -187,7 +187,7 @@ def test_activation_truth_and_matrix_agree_for_priority_b_scope() -> None:
 def _assert_executable(record: ActivationRecord, *, wave: str) -> None:
     assert record.disposition is ActivationDisposition.ACTIVE
     assert record.activation_wave == wave
-    assert EXECUTABLE_STAGES <= record.stages
+    assert record.stages >= EXECUTABLE_STAGES
 
 
 def _records() -> dict[str, ActivationRecord]:
