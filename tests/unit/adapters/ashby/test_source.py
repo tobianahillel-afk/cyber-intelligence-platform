@@ -138,6 +138,7 @@ def test_collector_emits_changed_relevant_jobs_and_refreshes_projection() -> Non
                 jobUrl="https://jobs.ashbyhq.com/ExampleSecurity/job-finance",
                 title="Finance Manager",
                 department="Finance",
+                team="",
                 descriptionPlain="Accounting and forecasting.",
             ),
             _job(
