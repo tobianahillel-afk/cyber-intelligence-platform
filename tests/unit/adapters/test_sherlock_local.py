@@ -83,8 +83,20 @@ def test_csv_parser_keeps_only_claimed_approved_https_profiles(tmp_path: Path) -
     _write_csv(
         path,
         [
-            ["securityalice", "GitHub", "https://github.com", "https://github.com/securityalice", "Claimed", "200", "0.2"],
-            ["securityalice", "GitLab", "https://gitlab.com", "https://gitlab.com/securityalice", "Available", "404", "0.1"],
+            _row(
+                site="GitHub",
+                main_url="https://github.com",
+                profile_url="https://github.com/securityalice",
+                status="Claimed",
+                http_status="200",
+            ),
+            _row(
+                site="GitLab",
+                main_url="https://gitlab.com",
+                profile_url="https://gitlab.com/securityalice",
+                status="Available",
+                http_status="404",
+            ),
         ],
     )
 
@@ -99,14 +111,26 @@ def test_csv_parser_fails_closed_on_scope_escape_or_unsafe_url(tmp_path: Path) -
     path = tmp_path / "securityalice.csv"
     _write_csv(
         path,
-        [["securityalice", "Reddit", "https://reddit.com", "https://reddit.com/u/securityalice", "Claimed", "200", "0.2"]],
+        [
+            _row(
+                site="Reddit",
+                main_url="https://reddit.com",
+                profile_url="https://reddit.com/u/securityalice",
+            )
+        ],
     )
     with pytest.raises(SherlockExecutionError, match="escaped"):
         parse_sherlock_csv(path, _target())
 
     _write_csv(
         path,
-        [["securityalice", "GitHub", "https://github.com", "http://github.com/securityalice", "Claimed", "200", "0.2"]],
+        [
+            _row(
+                site="GitHub",
+                main_url="https://github.com",
+                profile_url="http://github.com/securityalice",
+            )
+        ],
     )
     with pytest.raises(SherlockExecutionError, match="unsafe profile URL"):
         parse_sherlock_csv(path, _target())
@@ -146,6 +170,25 @@ def _target(**overrides: object) -> SherlockTarget:
     }
     values.update(overrides)
     return SherlockTarget.model_validate(values)
+
+
+def _row(
+    *,
+    site: str,
+    main_url: str,
+    profile_url: str,
+    status: str = "Claimed",
+    http_status: str = "200",
+) -> list[str]:
+    return [
+        "securityalice",
+        site,
+        main_url,
+        profile_url,
+        status,
+        http_status,
+        "0.2",
+    ]
 
 
 def _write_csv(path: Path, rows: list[list[str]]) -> None:
