@@ -67,12 +67,13 @@ def get_json(
     target_url: str,
     *,
     headers: Mapping[str, str],
+    params: Mapping[str, str | int] | None = None,
     max_bytes: int = DEFAULT_MAX_JSON_BYTES,
 ) -> bytes:
     if not 1 <= max_bytes <= HARD_MAX_JSON_BYTES:
         raise ValueError("max_bytes is outside the intelligence response bound")
     try:
-        response = client.get(target_url, headers=headers)
+        response = client.get(target_url, headers=headers, params=params)
         response.raise_for_status()
     except httpx.HTTPStatusError as exc:
         status = exc.response.status_code
@@ -109,25 +110,23 @@ def raw_intelligence_observation(
     source_url: str,
     source_record_key: str,
     source_record_type: str,
-    observed_at: datetime | None = None,
-    published_at: datetime | None = None,
-    source_updated_at: datetime | None = None,
+    source_updated_at: datetime | None,
 ) -> RawObservation:
-    encoded = model.model_dump_json(by_alias=True, exclude_none=True).encode("utf-8")
+    payload = model.model_dump_json(exclude_none=True, by_alias=True).encode("utf-8")
     return RawObservation(
         source_id=context.source_id,
         adapter_id=context.adapter_id,
         adapter_version=context.adapter_version,
+        provider_schema_version=getattr(model, "schema_version", "1"),
         collection_job_id=context.collection_job_id,
+        source_record_key=source_record_key,
         source_record_type=source_record_type,
         source_url=source_url,
-        payload_hash_sha256=sha256(encoded).hexdigest(),
-        data_categories=frozenset({context.data_category}),
-        source_record_key=source_record_key,
-        collected_at=context.collected_at,
-        observed_at=observed_at,
-        published_at=published_at,
+        data_category=context.data_category.value,
+        observed_at=context.collected_at,
         source_updated_at=source_updated_at,
+        collected_at=context.collected_at,
         retention_until=context.retention_until,
-        schema_fingerprint=f"{source_record_type}:v1",
+        payload_hash_sha256=sha256(payload).hexdigest(),
+        payload_size_bytes=len(payload),
     )
