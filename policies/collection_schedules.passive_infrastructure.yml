@@ -24,3 +24,15 @@ schedules:
       max_delay_seconds: 3600
       circuit_failure_threshold: 3
       circuit_reset_seconds: 3600
+
+  - source_id: iana-rdap-public
+    adapter_id: iana-bootstrap-rdap
+    enabled: false
+    interval_seconds: 86400
+    lease_seconds: 180
+    retry:
+      max_attempts: 3
+      base_delay_seconds: 300
+      max_delay_seconds: 3600
+      circuit_failure_threshold: 3
+      circuit_reset_seconds: 3600
