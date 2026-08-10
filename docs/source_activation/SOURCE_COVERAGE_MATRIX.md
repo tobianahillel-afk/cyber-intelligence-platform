@@ -67,6 +67,13 @@ Symbols:
 | Generic company incident source family | SA-10 | Y | - | - | - | - | - | provider-specific decomposition required after SEC path |
 | Generic regulator/CERT incident family | SA-10 | Y | - | - | - | - | - | concrete official endpoints and authorizations required |
 | Generic vendor/Linux/package advisory families | SA-10 | Y | - | - | - | - | - | provider/ecosystem-specific decomposition required |
+| Official corporate disclosures `official-corporate-disclosures` | SA-06 | Y | - | - | - | N/A | - | MANUAL bounded first-party acquisition + Lot 18 analyst-reviewed mapping |
+| Official regulatory change notices `official-regulatory-change-notices` | SA-06 | Y | - | - | - | N/A | - | MANUAL source-specific regulator review + Lot 18 evidence classification |
+| Licensed corporate news `licensed-corporate-news-metadata` | SA-07 | Y | - | - | - | N/A | - | BLOCKED pending concrete licensed provider, customer-facing rights and runtime onboarding |
+| Official relationship disclosures `official-relationship-disclosures` | SA-06 | Y | - | - | - | N/A | - | MANUAL Lot 19 review; marketing claim is not contracted/current incumbency evidence |
+| Public partner directories `public-partner-directory-metadata` | SA-06 | Y | - | - | - | N/A | - | MANUAL review-required relationship metadata; no current-contract inference |
+| Public case studies `public-case-study-metadata` | SA-06 | Y | - | - | - | N/A | - | MANUAL bounded historical-capable evidence; no current-incumbency inference |
+| Public certificate relationship metadata `public-certificate-relationship-metadata` | SA-06 | Y | - | - | - | N/A | - | MANUAL only where relationship semantics are explicit; issuance alone proves nothing |
 | Sherlock `sherlock-local` | SA-05 | Y | Y | - | - | N/A | - | MANUAL governed local adapter; empty target registry; deployment binary/version + analyst-reviewed sites/target required |
 | OWASP Amass `amass-local` | SA-05 | Y | - | - | - | N/A | - | BLOCKED as blanket executor; passive modules require provider-specific governance and active enumeration/probing is prohibited |
 | theHarvester `theharvester-local` | SA-05 | Y | - | - | - | N/A | - | BLOCKED as blanket executor; each search/API upstream requires separate authorization |
@@ -104,6 +111,19 @@ SA-05 is complete only when:
 - `live_tested` remains false unless a separately authorized controlled live proof is recorded.
 
 Any future automation of a Sherlock target or a framework module requires a separate reviewed deployment/source activation change. Tool availability alone never grants network authorization.
+
+## SA-06 corporate-change and relationship completion boundary
+
+SA-06 is complete only when:
+
+- `official-corporate-disclosures` and `official-regulatory-change-notices` are terminal `manual` paths through the existing bounded public-web/search/archive acquisition plus Lot 18 review/mapping;
+- `official-relationship-disclosures`, `public-partner-directory-metadata`, `public-case-study-metadata` and `public-certificate-relationship-metadata` are terminal `manual` paths through existing bounded acquisition plus Lot 19 review/mapping;
+- `licensed-corporate-news-metadata` is terminal `blocked` and explicitly owned by SA-07 until a concrete provider and customer-facing commercial entitlement are approved;
+- no generic family gains `adapter_present`, `authorized`, `executable`, `scheduled` or `live_tested` merely because reusable public-web or canonical mapper capabilities exist;
+- a page, feed item, certificate, partner directory entry or case study remains source material and never automatically becomes a confirmed material change, contracted relationship, active incumbent, service need, opportunity or outreach target;
+- first-party marketing statements remain claimed evidence unless stronger evidence exists, historical case studies remain historical-capable, and certificate issuance remains separate from relationship proof;
+- source activation truth, this matrix and deterministic SA-06 reconciliation tests agree on all seven families;
+- the complete repository backend and frontend CI pass on one exact SHA before SA-07 begins.
 
 ## Priority B-4 passive-provider completion boundary
 
