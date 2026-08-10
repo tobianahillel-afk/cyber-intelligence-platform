@@ -161,15 +161,25 @@ def test_b4_exact_providers_are_terminal_owned_fail_closed_records() -> None:
         assert record.stages.isdisjoint(forbidden)
 
 
-def test_future_licensed_passive_families_are_owned_not_unknown_plans() -> None:
+def test_future_licensed_passive_families_are_terminal_sa07_dependencies() -> None:
     records = _records()
+    forbidden = {
+        ActivationStage.ADAPTER_PRESENT,
+        ActivationStage.AUTHORIZED,
+        ActivationStage.EXECUTABLE,
+        ActivationStage.SCHEDULED,
+        ActivationStage.LIVE_TESTED,
+    }
 
     for source_id in FUTURE_LICENSED_PASSIVE:
         record = records[source_id]
-        assert record.disposition is ActivationDisposition.PLANNED
+        assert record.disposition is ActivationDisposition.BLOCKED
         assert record.activation_wave == "SA-07"
         assert ActivationStage.MAPPED in record.stages
-        assert ActivationStage.EXECUTABLE not in record.stages
+        assert record.reason is not None
+        assert record.reason.strip()
+        assert record.is_resolved is True
+        assert record.stages.isdisjoint(forbidden)
 
 
 def test_activation_truth_and_matrix_agree_for_priority_b_scope() -> None:

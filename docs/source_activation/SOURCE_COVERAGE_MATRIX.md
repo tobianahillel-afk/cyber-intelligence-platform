@@ -54,16 +54,16 @@ Symbols:
 | BuiltWith technographics `builtwith-technographics` | Priority B-4 / SA-07 | Y | - | - | - | N/A | - | BLOCKED pending written clarification of customer-facing/product-use rights |
 | SEC EDGAR cybersecurity disclosures | SA-04 | Y | Y | Y | Y | N/A | - | targeted Item 1.05 metadata capability; CIK target registry empty and deployment User-Agent required |
 | PhishTank verified online phishing data | SA-04 | Y | Y | Y | Y | N/A | - | global URL telemetry capability; application key/onboarding and deployment User-Agent required |
-| Licensed incident reporting | SA-07 | Y | - | - | - | - | - | concrete licensed provider/contract not selected |
-| Licensed ransomware metadata | SA-07 | Y | - | - | - | - | - | provider licence/commercial-use path not selected; actor/victim content remains prohibited |
-| Licensed STIX/TAXII | SA-07 | Y | - | - | - | - | - | concrete licensed CTI provider/tenant/marking scope not selected |
-| Licensed phishing metadata | SA-07 | Y | - | - | - | - | - | PhishTank covers current public path; commercial augmentation deferred |
-| Licensed malware metadata | SA-07 | Y | - | - | - | - | - | concrete licensed provider not selected; malware binaries remain prohibited |
-| Licensed passive DNS | SA-07 | Y | - | - | - | - | - | concrete licensed provider/contract not selected |
-| Licensed certificate telemetry | SA-07 | Y | - | - | - | - | - | concrete licensed provider/contract not selected |
-| Licensed passive exposure | SA-07 | Y | - | - | - | - | - | concrete licensed provider/contract not selected |
-| Licensed technography | SA-07 | Y | - | - | - | - | - | concrete licensed provider/contract not selected |
-| Licensed cloud-asset observations | SA-07 | Y | - | - | - | - | - | concrete licensed provider/contract not selected |
+| Licensed incident reporting `licensed-incident-reporting` | SA-07 | Y | - | - | - | N/A | - | BLOCKED pending concrete provider, customer-facing rights, approved fields and runtime onboarding |
+| Licensed ransomware metadata `licensed-ransomware-metadata` | SA-07 | Y | - | - | - | N/A | - | BLOCKED pending licensed metadata provider; actor/victim/private content remains prohibited |
+| Licensed STIX/TAXII `licensed-stix-taxii` | SA-07 | Y | - | - | - | N/A | - | BLOCKED pending provider, tenant/collection scope, markings, commercial rights and adapter |
+| Licensed phishing metadata `licensed-phishing-metadata` | SA-07 | Y | - | - | - | N/A | - | BLOCKED; PhishTank remains the current governed public path |
+| Licensed malware metadata `licensed-malware-metadata` | SA-07 | Y | - | - | - | N/A | - | BLOCKED pending licensed metadata provider; binaries/download paths prohibited |
+| Licensed passive DNS `licensed-passive-dns` | SA-07 | Y | - | - | - | N/A | - | BLOCKED pending provider contract, permitted fields, retention, quotas and adapter |
+| Licensed certificate telemetry `licensed-certificate-telemetry` | SA-07 | Y | - | - | - | N/A | - | BLOCKED pending commercial entitlement beyond the governed public CT path |
+| Licensed passive exposure `licensed-passive-exposure` | SA-07 | Y | - | - | - | N/A | - | BLOCKED pending provider-specific customer-facing data rights and onboarding |
+| Licensed technography `licensed-technographic-observations` | SA-07 | Y | - | - | - | N/A | - | BLOCKED pending explicit embedding/redistribution rights and onboarding |
+| Licensed cloud-asset observations `licensed-cloud-asset-observations` | SA-07 | Y | - | - | - | N/A | - | BLOCKED pending concrete provider, field scope, commercial rights and adapter |
 | Generic company incident source family | SA-10 | Y | - | - | - | - | - | provider-specific decomposition required after SEC path |
 | Generic regulator/CERT incident family | SA-10 | Y | - | - | - | - | - | concrete official endpoints and authorizations required |
 | Generic vendor/Linux/package advisory families | SA-10 | Y | - | - | - | - | - | provider/ecosystem-specific decomposition required |
@@ -80,8 +80,11 @@ Symbols:
 | SpiderFoot `spiderfoot-local` | SA-05 | Y | - | - | - | N/A | - | BLOCKED as blanket executor; mixed passive/active modules require provider-level decomposition |
 | Recon-ng `recon-ng-local` | SA-05 | Y | - | - | - | N/A | - | BLOCKED as blanket executor; marketplace modules are independent acquisition paths |
 | Maltego `maltego-local` | SA-05 | Y | - | - | - | N/A | - | MANUAL analyst visualization/investigation over already authorized evidence; transforms require separate review |
-| LinkedIn official API | SA-07 | - | - | - | - | N/A | - | BLOCKED pending approved official/licensed access and adapter |
-| BrixHub | SA-08 | - | - | - | - | N/A | - | BLOCKED pending access/licence/data review |
+| LinkedIn official API `linkedin-official-api` | SA-07 | Y | - | - | - | N/A | - | BLOCKED pending approved official/licensed access and adapter |
+| Discord authorized integration `discord-authorized-integration` | SA-07 | Y | - | - | - | N/A | - | BLOCKED pending administrator-installed connector or authorized export and exact scope |
+| Premium CTI `premium-cti-licensed` | SA-07 | Y | - | - | - | N/A | - | BLOCKED pending concrete licensed provider, contract-bound scopes and deployment approval |
+| Commercial dataset `commercial-data-licensed` | SA-07 | Y | - | - | - | N/A | - | BLOCKED pending concrete dataset, approved fields, lawful purpose and customer-facing rights |
+| BrixHub `brixhub` | SA-08 | Y | - | - | - | N/A | - | BLOCKED pending access/licence/data review |
 
 ## Known broader source families
 
@@ -124,6 +127,21 @@ SA-06 is complete only when:
 - first-party marketing statements remain claimed evidence unless stronger evidence exists, historical case studies remain historical-capable, and certificate issuance remains separate from relationship proof;
 - source activation truth, this matrix and deterministic SA-06 reconciliation tests agree on all seven families;
 - the complete repository backend and frontend CI pass on one exact SHA before SA-07 begins.
+
+## SA-07 licensed and premium provider completion boundary
+
+SA-07 is complete only when:
+
+- every record with `activation_wave: SA-07` is terminal `blocked`, has a non-empty provider/deployment reason and is listed explicitly in this matrix;
+- no SA-07 record remains `planned`;
+- no blocked SA-07 record has `adapter_present`, `authorized`, `executable`, `scheduled` or `live_tested` merely because an API, account, trial, free tier or sales page exists;
+- the eleven generic licensed families, the six Priority B-4 providers, LinkedIn, Discord, premium CTI and commercial data all remain fail-closed until provider-specific commercial rights and deployment onboarding are proven;
+- LinkedIn is limited to official/licensed access and Discord to administrator-installed connectors or authorized exports; scraping, copied browser sessions, self-bots, member scraping and private-message collection are not activation methods;
+- licensed ransomware/malware families do not authorize actor portals, victim/private/leaked content, malware binaries or sample downloads;
+- Lot 22 conditional-provider controls remain the required future execution gate: approval dossier, Provider Onboarding, Source Governance, executable Source Portfolio state, adapter capability, quotas/cost and pause/kill-switch controls;
+- provider evidence never by itself proves organization ownership, deployment, applicability, exposure, compromise, commercial need, opportunity or outreach authorization;
+- activation truth, this matrix, `SA_07_LICENSED_PREMIUM_PROVIDER_DECISIONS.md` and deterministic reconciliation tests agree on the complete SA-07 inventory;
+- the complete repository backend and frontend CI pass on one exact final SHA before SA-08 begins.
 
 ## Priority B-4 passive-provider completion boundary
 
