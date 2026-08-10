@@ -30,4 +30,4 @@ def test_all_priority_b2_adapters_are_registered_in_shared_runtime() -> None:
         timeout_seconds=20.0,
     )
 
-    assert EXPECTED_ADAPTERS <= set(adapters)
+    assert set(adapters) >= EXPECTED_ADAPTERS
