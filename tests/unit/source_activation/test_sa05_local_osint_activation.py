@@ -12,6 +12,7 @@ from cip.modules.source_activation.infrastructure.inventory import load_activati
 ACTIVATION_PATH = Path("policies/source_activation.yml")
 TARGETS_PATH = Path("policies/sherlock_targets.yml")
 DOC_PATH = Path("docs/source_activation/SA_05_GOVERNED_LOCAL_OSINT.md")
+MATRIX_PATH = Path("docs/source_activation/SOURCE_COVERAGE_MATRIX.md")
 
 SHERLOCK = "sherlock-local"
 BLOCKED_FRAMEWORKS = {
@@ -68,10 +69,12 @@ def test_sa05_multisource_frameworks_never_gain_blanket_authority() -> None:
 def test_sa05_manual_tools_are_explicit_and_documented() -> None:
     records = _records()
     document = DOC_PATH.read_text(encoding="utf-8")
+    matrix = MATRIX_PATH.read_text(encoding="utf-8")
 
     assert records["maltego-local"].disposition is ActivationDisposition.MANUAL
     for source_id in MANUAL_TOOLS | BLOCKED_FRAMEWORKS:
         assert source_id in records
+        assert source_id in matrix
     tool_names = (
         "Sherlock",
         "Amass",
@@ -82,6 +85,7 @@ def test_sa05_manual_tools_are_explicit_and_documented() -> None:
     )
     for tool_name in tool_names:
         assert tool_name in document
+    assert "SA-05 governed local OSINT completion boundary" in matrix
 
 
 def _records() -> dict[str, ActivationRecord]:
