@@ -12,6 +12,9 @@ from sqlalchemy.orm import Session, sessionmaker
 
 from cip.adapters.sources.ashby.registry import load_ashby_boards
 from cip.adapters.sources.developer_ecosystem.registry import load_developer_ecosystem_targets
+from cip.adapters.sources.github_code_search.registry import (
+    load_github_code_search_templates,
+)
 from cip.adapters.sources.greenhouse.registry import load_greenhouse_boards
 from cip.adapters.sources.incident_catalogs.sec_registry import load_sec_incident_targets
 from cip.adapters.sources.lever.registry import load_lever_sites
@@ -98,6 +101,11 @@ def build_collection_runtime(settings: Settings) -> CollectionRuntime:
         brave_token_provider=connected_secret_supplier(
             factory,
             source_id="brave-search-api",
+            secret_name="api_token",
+        ),
+        github_code_search_token_provider=connected_secret_supplier(
+            factory,
+            source_id="github-code-search-metadata",
             secret_name="api_token",
         ),
         certspotter_token_provider=connected_secret_supplier(
@@ -201,6 +209,9 @@ def _load_adapter_inputs(
         ),
         search_templates=load_search_query_templates(
             settings.search_query_template_registry_path
+        ),
+        github_code_search_templates=load_github_code_search_templates(
+            settings.github_code_search_template_registry_path
         ),
         vulnerability_targets=load_vulnerability_query_targets(
             settings.vulnerability_query_target_registry_path
