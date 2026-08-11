@@ -7,13 +7,10 @@ from uuid import UUID, uuid4
 from sqlalchemy import delete, select
 from sqlalchemy.orm import Session
 
-from cip.modules.opportunities.domain.entities import (
-    NeedHypothesis,
-    Opportunity,
-    OpportunityState,
-)
+from cip.modules.opportunities.domain.entities import Opportunity, OpportunityState
 from cip.modules.opportunities.domain.rules import evaluate_siem_soc_buying_intent
 from cip.modules.opportunities.domain.scoring import OpportunityComponent, OpportunityScore
+from cip.modules.opportunities.infrastructure.hypotheses import store_need_hypothesis
 from cip.modules.opportunities.infrastructure.mappers import (
     component_domain,
     database_utc,
@@ -21,8 +18,6 @@ from cip.modules.opportunities.infrastructure.mappers import (
 )
 from cip.modules.opportunities.infrastructure.models import (
     CommercialSignalRecord,
-    NeedHypothesisRecord,
-    NeedHypothesisSignalRecord,
     OpportunityEvidenceRecord,
     OpportunityRecord,
     OpportunityScoreComponentRecord,
@@ -53,7 +48,7 @@ def generate_siem_soc_opportunity(
     )
     if evaluation is None:
         return None
-    hypothesis = _upsert_hypothesis(session, evaluation.hypothesis)
+    hypothesis = store_need_hypothesis(session, evaluation.hypothesis)
     opportunity = _upsert_opportunity(
         session,
         hypothesis_id=hypothesis.id,
@@ -69,47 +64,6 @@ def generate_siem_soc_opportunity(
     _replace_evidence_links(session, opportunity.id, evaluation.hypothesis.evidence_ids)
     session.flush()
     return opportunity.id
-
-
-def _upsert_hypothesis(
-    session: Session,
-    hypothesis: NeedHypothesis,
-) -> NeedHypothesisRecord:
-    record = session.scalar(
-        select(NeedHypothesisRecord).where(
-            NeedHypothesisRecord.idempotency_key == hypothesis.idempotency_key
-        )
-    )
-    if record is None:
-        record = NeedHypothesisRecord(
-            id=hypothesis.id,
-            organization_id=hypothesis.organization_id,
-            family=hypothesis.family.value,
-            status="active",
-            rule_id=hypothesis.rule_id,
-            rule_version=hypothesis.rule_version,
-            rationale=hypothesis.rationale,
-            generated_at=hypothesis.generated_at,
-            expires_at=hypothesis.expires_at,
-            idempotency_key=hypothesis.idempotency_key,
-        )
-        session.add(record)
-        session.flush()
-    else:
-        record.status = "active"
-        record.rationale = hypothesis.rationale
-        record.generated_at = hypothesis.generated_at
-        record.expires_at = hypothesis.expires_at
-    session.execute(
-        delete(NeedHypothesisSignalRecord).where(
-            NeedHypothesisSignalRecord.hypothesis_id == record.id
-        )
-    )
-    session.add_all(
-        NeedHypothesisSignalRecord(hypothesis_id=record.id, signal_id=signal_id)
-        for signal_id in hypothesis.signal_ids
-    )
-    return record
 
 
 def _upsert_opportunity(
