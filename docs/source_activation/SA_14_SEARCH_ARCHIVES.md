@@ -169,21 +169,91 @@ The same live proof passed again after the Ruff-only formatting correction on he
 
 This proves the authenticated provider path, organization filtering, metadata mapping and quarantine boundary. It does not turn the returned search hits into factual claims about the target organization.
 
-Because adding this documentation and the `live_tested` Source Activation stage changes the branch head, both the complete repository CI and the dedicated GitHub code-search live workflow must pass again on the exact final merge candidate before the PR may leave draft.
+The GitHub Code Search tranche was later exact-SHA validated and squash-merged on `main` at `2050cb19b4edf7ae7b9aaeaf8e58753d1cd7e5cf`.
+
+## Crossref publication metadata
+
+Source id: `crossref-publication-metadata`.
+
+The third SA-14 tranche adds public scholarly-publication discovery through Crossref REST `/works`. It is target-bound by a canonical CIP organization UUID plus an explicit ROR identifier from `policies/crossref_publication_targets.yml`.
+
+The checked-in target registry is empty and the checked-in schedule is `enabled: false`; merely registering the adapter cannot start organization-wide publication collection.
+
+### ROR targeting semantics
+
+The adapter calls Crossref with `filter=ror-id:<configured-ror>` rather than performing a fuzzy organization-name search. This gives a stable external identifier boundary, but the provider's ROR filter may represent contributor affiliation or funding metadata. Consequently, a returned work is only **ROR-associated publication metadata**. It is not automatically asserted to be authored, owned, endorsed or operationally used by the target organization.
+
+The controlled live target uses Goethe University Frankfurt ROR `04cvxnb49` only to exercise the provider path. It is a research-organization validation target, not a prospect or commercial conclusion.
+
+### Provider and response bounds
+
+The production client uses:
+
+- `GET https://api.crossref.org/works`;
+- `filter=ror-id:<configured-ror>`;
+- `rows=20`;
+- `select=DOI,title,type,URL`;
+- `Accept: application/json`;
+- an identifiable CIP User-Agent;
+- a maximum response body of 2 MiB;
+- redirects disabled.
+
+Crossref public REST access requires no provider credential in this capability. HTTP 429 and server failures are typed for retry; transport failures are retryable, while content-type, response-size and schema violations fail closed.
+
+### Data-minimization boundary
+
+The provider response may contain authors, ORCID identifiers, abstracts, references, funding structures or full-text links. Those structures are not part of the Pydantic materialized schema and therefore do not enter the normalized observation material.
+
+CIP persists only:
+
+- configured ROR identifier;
+- DOI;
+- first non-empty title;
+- Crossref work type;
+- canonical HTTPS `doi.org` URL.
+
+A result with an empty first title, whitespace in the DOI or a result URL outside HTTPS `doi.org` is discarded.
+
+Each retained item creates one immutable `RawObservation` and one quarantined Lot 12 `SEARCH_RESULT` projection. The excerpt states `Authors, abstract and full text not retrieved.` No candidate `PublicClaim`, commercial signal, need hypothesis, opportunity or outreach action is created.
+
+### Controlled live validation
+
+The dedicated SA-14 workflow runs `scripts/live_validate_sa14_crossref.py` against the production adapter itself. On source head `f0c4158ad033aae3aa8d25ab56b86fd91f7b4265`, the real Crossref API accepted the bounded ROR query and returned the configured full page:
+
+- observations: `20`;
+- quarantined projections: `20`;
+- claims: `0`;
+- full-text fetches: `0`.
+
+The one-for-one observation/projection result proves that the current provider contract, ROR filter and minimal selected schema work through the production adapter. It does not establish authorship, ownership, endorsement, technology deployment or commercial need for the target organization.
+
+That real provider proof justified adding `live_tested` to Crossref Source Activation. Because the documentation and activation promotion change the branch head, the complete normal repository CI and Crossref live workflow must pass again on the exact final candidate before merge.
 
 ## GDELT migration boundary
 
 GDELT remains a high-value SA-14 event/news-discovery candidate. In 2026 the provider announced migration of the API ecosystem toward GDELT 5 / Spanner. SA-14 will not create a new production adapter against a legacy contract merely to mark the candidate complete. GDELT will be revisited against the current documented public interface once the migration provides a stable provider-specific execution contract.
 
-## Completion gate for the GitHub code-search tranche
+## Remaining SA-14 work after Crossref
 
-GitHub Code Search may be squash-merged only when:
+Crossref completes the first publication-metadata provider, but issue #108 remains open. Remaining work includes:
 
-1. Source Governance, Provider Onboarding, portfolio, runtime registration and the disabled-by-default schedule agree on `github-code-search-metadata` / `github-rest-code-search`;
-2. target and template registries remain fail-closed by default;
-3. deterministic tests cover query scope, secret-hunting rejection, token absence, no-target/no-network behavior, exact-organization filtering, private/non-GitHub rejection, checkpoint validation, provider schema drift, incomplete results and rate-limit classification;
-4. the production adapter obtains non-empty metadata through the real GitHub Code Search endpoint using a controlled non-prospect organization;
-5. every retained live hit maps one-for-one to a raw observation and quarantined projection with zero claims and zero source-code retrieval;
-6. `live_tested` is recorded only after the controlled provider proof;
-7. complete backend/frontend CI and the dedicated live workflow pass on the exact final PR head;
-8. reviews and review threads are clear before squash merge.
+- a patent-discovery provider with a current provider-specific contract and real live proof;
+- a standards/public-specification discovery provider with bounded metadata semantics;
+- a second general web-search provider. Mojeek is the current candidate, but it requires a real API entitlement/key before CIP can legitimately mark it `live_tested`;
+- GDELT once its current GDELT 5 execution contract is stable enough for a new production adapter.
+
+No provider is considered complete merely because it is catalogued or because a synthetic test passes.
+
+## Completion gate for the Crossref tranche
+
+Crossref may be squash-merged only when:
+
+1. Source Governance, portfolio, runtime registration, target registry and disabled-by-default schedule agree on `crossref-publication-metadata` / `crossref-ror-works`;
+2. the checked-in ROR target registry remains empty by default;
+3. provider selection is limited to `DOI,title,type,URL`, and authors/abstracts/references/full-text links cannot enter normalized observation material;
+4. deterministic tests cover ROR normalization, no-target/no-network behavior, safe DOI mapping, invalid checkpoint, schema drift and rate limiting;
+5. the production adapter obtains non-empty metadata from the real Crossref endpoint using a controlled ROR target;
+6. every retained live result maps one-for-one to an observation and quarantined projection with zero claims and zero full-text retrieval;
+7. `live_tested` is recorded only after the controlled provider proof;
+8. complete backend/frontend CI and the dedicated live workflow pass on the exact final PR head;
+9. reviews and review threads are clear before squash merge.
