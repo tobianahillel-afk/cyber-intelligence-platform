@@ -4,6 +4,7 @@ from collections.abc import Callable
 
 from cip.adapters.sources.crossref_publications.registry import CrossrefPublicationTarget
 from cip.adapters.sources.developer_ecosystem.registry import DeveloperEcosystemTarget
+from cip.adapters.sources.patentsview_patents.registry import PatentsViewPatentTarget
 from cip.adapters.sources.public_web.registry import PublicWebTarget
 from cip.modules.collection_orchestration.application.archive_cdx_adapter import (
     InternetArchiveCdxAdapter,
@@ -20,6 +21,9 @@ from cip.modules.collection_orchestration.application.crossref_publication_adapt
 from cip.modules.collection_orchestration.application.github_code_search_adapter import (
     GitHubCodeSearchAdapter,
 )
+from cip.modules.collection_orchestration.application.patentsview_patent_adapter import (
+    PatentsViewPatentAdapter,
+)
 from cip.modules.collection_orchestration.application.ports import CollectionAdapter
 from cip.modules.public_footprint.domain.search import SearchQueryTemplate
 from cip.modules.source_governance.infrastructure.registry import SourceRegistryEntry
@@ -33,9 +37,11 @@ def register_search_archive_adapters(
     developer_targets: tuple[DeveloperEcosystemTarget, ...],
     github_code_search_templates: tuple[SearchQueryTemplate, ...],
     crossref_publication_targets: tuple[CrossrefPublicationTarget, ...],
+    patentsview_patent_targets: tuple[PatentsViewPatentTarget, ...],
     *,
     brave_token_provider: Callable[[], str | None],
     github_code_search_token_provider: Callable[[], str | None],
+    patentsview_api_key_provider: Callable[[], str | None],
     timeout_seconds: float,
 ) -> None:
     brave_entry = entries_by_id.get(BraveSearchAdapter.source_id)
@@ -93,6 +99,18 @@ def register_search_archive_adapters(
             CrossrefPublicationAdapter(
                 crossref_entry,
                 crossref_publication_targets,
+                timeout_seconds=timeout_seconds,
+            ),
+        )
+
+    patentsview_entry = entries_by_id.get(PatentsViewPatentAdapter.source_id)
+    if patentsview_entry is not None:
+        _register(
+            adapters,
+            PatentsViewPatentAdapter(
+                patentsview_entry,
+                patentsview_patent_targets,
+                token_provider=patentsview_api_key_provider,
                 timeout_seconds=timeout_seconds,
             ),
         )
