@@ -128,13 +128,13 @@ class W3cClient:
         return W3cQueryResult(affiliation=affiliation, records=tuple(records))
 
 
-def _get_model[_MODEL: BaseModel](
+def _get_model[MODEL: BaseModel](
     client: httpx.Client,
     url: str,
-    model: type[_MODEL],
+    model: type[MODEL],
     *,
     params: dict[str, object] | None = None,
-) -> tuple[_MODEL, str]:
+) -> tuple[MODEL, str]:
     try:
         response = client.get(
             url,
