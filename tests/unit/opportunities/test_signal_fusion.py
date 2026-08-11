@@ -120,8 +120,8 @@ def test_contradiction_and_negative_evidence_reduce_confidence() -> None:
     baseline = fuse_need_hypotheses(ORG_ID, support, now=NOW)[0]
     contested = fuse_need_hypotheses(
         ORG_ID,
-        support
-        + (
+        (
+            *support,
             _signal(
                 CyberServiceFamily.IAM_PAM_ZERO_TRUST,
                 source="three",
