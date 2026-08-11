@@ -93,3 +93,12 @@ jobs:
 
       - name: Temporary controlled W3C schema probe
         run: python scripts/probe_sa14_w3c.py
+
+      - name: Publish W3C probe diagnostics
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: sa14-w3c-probe
+          path: w3c-probe.json
+          if-no-files-found: warn
+          retention-days: 1
