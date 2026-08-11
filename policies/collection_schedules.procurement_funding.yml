@@ -1,0 +1,26 @@
+version: 1
+
+schedules:
+  - source_id: place-awards
+    adapter_id: place-open-data-awards-api
+    interval_seconds: 86400
+    lease_seconds: 300
+    enabled: true
+    retry:
+      max_attempts: 4
+      base_delay_seconds: 60
+      max_delay_seconds: 3600
+      circuit_failure_threshold: 3
+      circuit_reset_seconds: 7200
+
+  - source_id: ademe-financial-aid
+    adapter_id: ademe-data-fair-financial-aid-api
+    interval_seconds: 900
+    lease_seconds: 300
+    enabled: true
+    retry:
+      max_attempts: 4
+      base_delay_seconds: 60
+      max_delay_seconds: 1800
+      circuit_failure_threshold: 3
+      circuit_reset_seconds: 3600
