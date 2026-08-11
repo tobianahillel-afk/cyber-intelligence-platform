@@ -18,6 +18,7 @@ from cip.adapters.sources.recruitee.registry import RecruiteeCareerSite
 from cip.adapters.sources.smartrecruiters.registry import SmartRecruitersCompany
 from cip.adapters.sources.teamtailor.registry import TeamtailorAccount
 from cip.adapters.sources.vulnerability_catalogs.registry import VulnerabilityQueryTarget
+from cip.adapters.sources.w3c_standards.registry import W3cAffiliationTarget
 from cip.modules.collection_orchestration.application.adapters import CisaKevAdapter
 from cip.modules.collection_orchestration.application.ats_registration import (
     register_extended_ats_adapters,
@@ -77,6 +78,7 @@ class AdapterCompositionInputs:
     github_code_search_templates: tuple[SearchQueryTemplate, ...]
     crossref_publication_targets: tuple[CrossrefPublicationTarget, ...]
     patentsview_patent_targets: tuple[PatentsViewPatentTarget, ...]
+    w3c_affiliation_targets: tuple[W3cAffiliationTarget, ...]
     vulnerability_targets: tuple[VulnerabilityQueryTarget, ...]
     passive_infrastructure_targets: tuple[PassiveInfrastructureTarget, ...]
     rdap_targets: tuple[RdapTarget, ...]
@@ -142,6 +144,7 @@ def build_runtime_adapters(
             github_code_search_templates=inputs.github_code_search_templates,
             crossref_publication_targets=inputs.crossref_publication_targets,
             patentsview_patent_targets=inputs.patentsview_patent_targets,
+            w3c_affiliation_targets=inputs.w3c_affiliation_targets,
         ),
         brave_token_provider=brave_token_provider,
         github_code_search_token_provider=github_code_search_token_provider,

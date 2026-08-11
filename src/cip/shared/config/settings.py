@@ -126,6 +126,9 @@ class Settings(BaseSettings):
     patentsview_patent_target_registry_path: Path = Path(
         "policies/patentsview_patent_targets.yml"
     )
+    w3c_affiliation_target_registry_path: Path = Path(
+        "policies/w3c_affiliation_targets.yml"
+    )
     vulnerability_query_target_registry_path: Path = Path(
         "policies/vulnerability_query_targets.yml"
     )
