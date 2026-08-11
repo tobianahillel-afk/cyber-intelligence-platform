@@ -2,6 +2,7 @@ from cip.modules.service_taxonomy.domain.classifier import classify_service_fami
 from cip.modules.service_taxonomy.domain.models import (
     CyberServiceFamily,
     parse_service_family,
+    service_family_identifiers,
 )
 
 EXPECTED_IDS = {
@@ -73,6 +74,14 @@ def test_legacy_persisted_ids_parse_to_canonical_values() -> None:
     for legacy, canonical in LEGACY_IDS.items():
         assert parse_service_family(legacy).value == canonical
         assert parse_service_family(canonical).value == canonical
+
+
+def test_read_identifiers_include_canonical_and_legacy_persisted_values() -> None:
+    identifiers = service_family_identifiers("iam_iga_pam_zero_trust")
+
+    assert identifiers[0] == "iam_pam_zero_trust"
+    assert "iam_iga_pam_zero_trust" in identifiers
+    assert len(identifiers) == len(set(identifiers))
 
 
 def test_classifier_has_a_positive_fixture_for_every_service_family() -> None:
