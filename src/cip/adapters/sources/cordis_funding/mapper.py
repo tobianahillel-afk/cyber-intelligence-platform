@@ -34,7 +34,7 @@ def map_cordis_funding_record(
     collected = require_aware_utc(collected_at, field_name="collected_at")
     participation_end = _date_timestamp(record.endOfParticipation)
     source_key = f"{record.projectID}:{record.organisationID}"
-    source_updated = _date_timestamp(record.contentUpdateDate)
+    source_updated = _bounded_source_time(record.contentUpdateDate, collected)
     observation = RawObservation(
         source_id=SOURCE_ID,
         adapter_id=ADAPTER_ID,
@@ -67,9 +67,9 @@ def map_cordis_funding_record(
         claimed_organization_name=record.name,
         organization_id=None,
         organization_link_status=OrganizationLinkStatus.UNRESOLVED,
-        published_at=collected,
-        modified_at=source_updated or collected,
-        event_at=participation_end,
+        published_at=source_updated,
+        modified_at=source_updated,
+        event_at=None,
         independence_key=SOURCE_ID,
         confidence=0.95,
         historical_only=_historical(record, participation_end, collected),
@@ -99,6 +99,13 @@ def _contribution_text(value: str) -> str:
     if amount < 0:
         return ""
     return f" CORDIS organisation ecContribution field: {format(amount, 'f')}."
+
+
+def _bounded_source_time(value: str, collected: datetime) -> datetime:
+    parsed = _date_timestamp(value)
+    if parsed is None or parsed > collected:
+        return collected
+    return parsed
 
 
 def _date_timestamp(value: str) -> datetime | None:
