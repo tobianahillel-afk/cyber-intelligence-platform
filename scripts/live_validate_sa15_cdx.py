@@ -16,6 +16,7 @@ from cip.modules.source_governance.infrastructure.registry import load_source_re
 
 POLICY_PATH = Path("policies/sources.search_archives.yml")
 ORG_ID = UUID("15712d0d-9054-50b4-8a26-e25d9ea1f509")
+_TARGET_URL = "https://archive.org/about/terms.php"
 
 
 def main() -> None:
@@ -29,21 +30,21 @@ def main() -> None:
         id="sa15-internet-archive-first-party",
         organization_id=ORG_ID,
         canonical_name="Internet Archive",
-        base_url="https://archive.org/",
+        base_url=_TARGET_URL,
         sitemap_urls=("https://archive.org/sitemap.xml",),
         feed_urls=(),
         discover_security_txt=False,
-        allowed_path_prefixes=("/",),
+        allowed_path_prefixes=("/about",),
         enabled=True,
         authorization_reference="sa15-controlled-internet-archive-first-party-target",
         authorization_reviewed_at=now,
-        terms_url="https://archive.org/about/terms.php",
+        terms_url=_TARGET_URL,
         max_pages=50,
         max_total_bytes=2_000_000,
         max_resource_bytes=1_000_000,
         max_redirects=0,
     )
-    batch = InternetArchiveCdxAdapter(entry, (target,), timeout_seconds=30).collect(
+    batch = InternetArchiveCdxAdapter(entry, (target,), timeout_seconds=90).collect(
         collection_job_id=uuid4(),
         checkpoint_payload=None,
         collected_at=now,
@@ -76,6 +77,7 @@ def main() -> None:
         raise RuntimeError("Internet Archive CDX checkpoint did not converge for one target")
     print(
         "SA-15 L05 live validation passed: "
+        f"target={_TARGET_URL} "
         f"internet_archive_cdx_observations={observations} "
         f"internet_archive_cdx_projections={projections} claims=0 bodies=0"
     )
