@@ -71,6 +71,7 @@ class AdapterCompositionInputs:
     public_web_targets: tuple[PublicWebTarget, ...]
     developer_ecosystem_targets: tuple[DeveloperEcosystemTarget, ...]
     search_templates: tuple[SearchQueryTemplate, ...]
+    github_code_search_templates: tuple[SearchQueryTemplate, ...]
     vulnerability_targets: tuple[VulnerabilityQueryTarget, ...]
     passive_infrastructure_targets: tuple[PassiveInfrastructureTarget, ...]
     rdap_targets: tuple[RdapTarget, ...]
@@ -81,6 +82,7 @@ def build_runtime_adapters(
     inputs: AdapterCompositionInputs,
     *,
     brave_token_provider: Callable[[], str | None],
+    github_code_search_token_provider: Callable[[], str | None],
     certspotter_token_provider: Callable[[], str | None],
     phishtank_token_provider: Callable[[], str | None],
     teamtailor_token_provider: Callable[[], str | None],
@@ -129,7 +131,10 @@ def build_runtime_adapters(
         entries_by_id,
         inputs.public_web_targets,
         inputs.search_templates,
+        inputs.developer_ecosystem_targets,
+        inputs.github_code_search_templates,
         brave_token_provider=brave_token_provider,
+        github_code_search_token_provider=github_code_search_token_provider,
         timeout_seconds=timeout_seconds,
     )
     register_vulnerability_adapters(
