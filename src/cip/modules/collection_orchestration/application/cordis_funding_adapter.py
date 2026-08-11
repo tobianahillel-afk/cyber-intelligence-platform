@@ -79,7 +79,7 @@ class CordisFundingAdapter:
             ) from exc
         except (httpx.TimeoutException, httpx.TransportError) as exc:
             raise _error(exc, "source_transport_error", retryable=True) from exc
-        checkpoint_payload_out = (
+        checkpoint_payload_out: Mapping[str, object] | None = (
             {"offset": batch.checkpoint.offset} if batch.checkpoint else None
         )
         return AdapterCollectionBatch(
