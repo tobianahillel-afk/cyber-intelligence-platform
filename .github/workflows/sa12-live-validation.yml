@@ -13,7 +13,9 @@ concurrency:
 
 jobs:
   live-public-procurement-funding:
-    if: github.event.pull_request.head.ref == 'agent/sa12-procurement-funding-expansion'
+    if: >-
+      github.event.pull_request.head.ref == 'agent/sa12-procurement-funding-expansion' ||
+      github.event.pull_request.head.ref == 'agent/sa12-eu-funding-completion'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -29,5 +31,5 @@ jobs:
       - name: Install project
         run: python -m pip install .
 
-      - name: Controlled PLACE and ADEME live validation
+      - name: Controlled PLACE, ADEME and CORDIS live validation
         run: python scripts/live_validate_sa12.py

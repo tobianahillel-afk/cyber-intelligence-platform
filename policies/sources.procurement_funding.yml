@@ -90,3 +90,48 @@ sources:
     notes: >-
       Official public funding results. Beneficiary names remain unresolved claims;
       collection never turns a name-only match into a canonical organization merge.
+
+  - id: cordis-eu-funded-projects
+    name: CORDIS — Horizon Europe projects and organisations
+    base_url: https://cordis.europa.eu/data/cordis-HORIZONprojects-csv.zip
+    status: enabled
+    source_type: feed
+    owner: Publications Office of the European Union
+    terms_url: https://cordis.europa.eu/about/services
+    licence: Public CORDIS open-data reuse, subject to source-specific copyright conditions
+    allowed_data_categories:
+      - public_result_metadata
+    prohibited_data_categories:
+      - credential
+      - victim_file
+      - private_communication
+      - private_personal_data
+      - restricted_content
+    rate_limit_per_minute: 2
+    retention_days: 3650
+    attribution_required: true
+    raw_content_storage: false
+    human_review_required: false
+    authorization:
+      status: approved
+      document_reference: cordis-horizon-open-bulk-reuse-2026-08-11
+      reviewed_at: 2026-08-11T10:17:00Z
+      expires_at: null
+      approved_hosts:
+        - cordis.europa.eu
+      approved_path_prefixes:
+        - /data/cordis-HORIZONprojects-csv.zip
+      approved_purposes:
+        - public-funding-intelligence
+      automated_collection_allowed: true
+      raw_storage_allowed: false
+    economics:
+      commercial_value: high
+      monthly_cost: 0
+      implementation_cost: medium
+      maintenance_cost: low
+      expected_stability: high
+    notes: >-
+      Official monthly CORDIS Horizon bulk data. Only bounded rows from organization.csv
+      are parsed. Project and organisation identifiers remain source evidence; name-only
+      matching never creates a canonical merge, need, opportunity, or outreach action.

@@ -56,3 +56,31 @@ sources:
       max_page_size: 100
       max_window_days: 3650
       cost_per_request: 0
+
+  - source_id: cordis-eu-funded-projects
+    display_name: CORDIS Horizon projects and organisations
+    canonical_url: https://cordis.europa.eu/projects
+    category: corporate_change
+    status: executable
+    freshness_max_age_seconds: 2678400
+    commercial_use_cases:
+      - funding_event_context
+      - transformation_program_context
+      - consortium_context
+    monthly_cost_limit: 0
+    adapter:
+      adapter_id: cordis-horizon-bulk-csv
+      adapter_version: "1"
+      provider_schema_version: cordis-horizon-organization-csv-2026-06
+      modes:
+        - historical_backfill
+        - incremental_cursor
+      canonical_output_types:
+        - raw_observation
+        - corporate_change_claim
+      supports_corrections: true
+      supports_tombstones: false
+      supports_retractions: false
+      max_page_size: 500
+      max_window_days: 3650
+      cost_per_request: 0
