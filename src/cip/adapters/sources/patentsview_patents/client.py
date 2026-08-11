@@ -56,7 +56,7 @@ class PatentsViewClient:
         assignee_organization: str,
     ) -> PatentsViewQueryResult:
         query = dumps(
-            {"assignees.assignee_organization": assignee_organization},
+            {"_eq": {"assignees.assignee_organization": assignee_organization}},
             separators=(",", ":"),
         )
         fields = dumps(_FIELDS, separators=(",", ":"))
