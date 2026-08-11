@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Callable
+from dataclasses import dataclass
 
 from cip.adapters.sources.crossref_publications.registry import CrossrefPublicationTarget
 from cip.adapters.sources.developer_ecosystem.registry import DeveloperEcosystemTarget
@@ -29,15 +30,20 @@ from cip.modules.public_footprint.domain.search import SearchQueryTemplate
 from cip.modules.source_governance.infrastructure.registry import SourceRegistryEntry
 
 
+@dataclass(frozen=True, slots=True)
+class SearchArchiveRegistrationInputs:
+    public_web_targets: tuple[PublicWebTarget, ...]
+    search_templates: tuple[SearchQueryTemplate, ...]
+    developer_targets: tuple[DeveloperEcosystemTarget, ...]
+    github_code_search_templates: tuple[SearchQueryTemplate, ...]
+    crossref_publication_targets: tuple[CrossrefPublicationTarget, ...]
+    patentsview_patent_targets: tuple[PatentsViewPatentTarget, ...]
+
+
 def register_search_archive_adapters(
     adapters: dict[tuple[str, str], CollectionAdapter],
     entries_by_id: dict[str, SourceRegistryEntry],
-    targets: tuple[PublicWebTarget, ...],
-    templates: tuple[SearchQueryTemplate, ...],
-    developer_targets: tuple[DeveloperEcosystemTarget, ...],
-    github_code_search_templates: tuple[SearchQueryTemplate, ...],
-    crossref_publication_targets: tuple[CrossrefPublicationTarget, ...],
-    patentsview_patent_targets: tuple[PatentsViewPatentTarget, ...],
+    inputs: SearchArchiveRegistrationInputs,
     *,
     brave_token_provider: Callable[[], str | None],
     github_code_search_token_provider: Callable[[], str | None],
@@ -50,8 +56,8 @@ def register_search_archive_adapters(
             adapters,
             BraveSearchAdapter(
                 brave_entry,
-                targets,
-                templates,
+                inputs.public_web_targets,
+                inputs.search_templates,
                 token_provider=brave_token_provider,
                 timeout_seconds=timeout_seconds,
             ),
@@ -63,7 +69,7 @@ def register_search_archive_adapters(
             adapters,
             InternetArchiveCdxAdapter(
                 archive_entry,
-                targets,
+                inputs.public_web_targets,
                 timeout_seconds=timeout_seconds,
             ),
         )
@@ -74,7 +80,7 @@ def register_search_archive_adapters(
             adapters,
             CommonCrawlIndexAdapter(
                 common_crawl_entry,
-                targets,
+                inputs.public_web_targets,
                 timeout_seconds=timeout_seconds,
             ),
         )
@@ -85,8 +91,8 @@ def register_search_archive_adapters(
             adapters,
             GitHubCodeSearchAdapter(
                 github_code_entry,
-                developer_targets,
-                github_code_search_templates,
+                inputs.developer_targets,
+                inputs.github_code_search_templates,
                 token_provider=github_code_search_token_provider,
                 timeout_seconds=timeout_seconds,
             ),
@@ -98,7 +104,7 @@ def register_search_archive_adapters(
             adapters,
             CrossrefPublicationAdapter(
                 crossref_entry,
-                crossref_publication_targets,
+                inputs.crossref_publication_targets,
                 timeout_seconds=timeout_seconds,
             ),
         )
@@ -109,7 +115,7 @@ def register_search_archive_adapters(
             adapters,
             PatentsViewPatentAdapter(
                 patentsview_entry,
-                patentsview_patent_targets,
+                inputs.patentsview_patent_targets,
                 token_provider=patentsview_api_key_provider,
                 timeout_seconds=timeout_seconds,
             ),
