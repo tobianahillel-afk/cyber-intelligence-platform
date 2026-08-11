@@ -117,6 +117,9 @@ class Settings(BaseSettings):
     search_query_template_registry_path: Path = Path(
         "policies/search_query_templates.yml"
     )
+    github_code_search_template_registry_path: Path = Path(
+        "policies/github_code_search_templates.yml"
+    )
     vulnerability_query_target_registry_path: Path = Path(
         "policies/vulnerability_query_targets.yml"
     )
