@@ -1,11 +1,11 @@
 from __future__ import annotations
 
 import re
-from datetime import datetime
+from datetime import UTC, datetime
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
-_CRAWL_ID = re.compile(r"^CC-MAIN-(\d{4})-(\d{2})$")
+_CRAWL_ID = re.compile(r"^CC-MAIN-\d{4}(?:-\d{2})?$")
 
 
 class CommonCrawlCollection(BaseModel):
@@ -24,6 +24,13 @@ class CommonCrawlCollection(BaseModel):
         if _CRAWL_ID.fullmatch(value) is None:
             raise ValueError("Common Crawl collection id is invalid")
         return value
+
+    @field_validator("from_at", "to_at")
+    @classmethod
+    def _normalize_provider_time(cls, value: datetime) -> datetime:
+        if value.tzinfo is None:
+            return value.replace(tzinfo=UTC)
+        return value.astimezone(UTC)
 
 
 class CommonCrawlCapture(BaseModel):
@@ -44,10 +51,3 @@ class CommonCrawlCapture(BaseModel):
         if not value:
             raise ValueError("Common Crawl capture field cannot be blank")
         return value
-
-
-def crawl_sort_key(crawl_id: str) -> tuple[int, int]:
-    match = _CRAWL_ID.fullmatch(crawl_id)
-    if match is None:
-        raise ValueError("Common Crawl collection id is invalid")
-    return int(match.group(1)), int(match.group(2))
