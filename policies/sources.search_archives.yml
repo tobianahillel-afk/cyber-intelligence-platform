@@ -271,3 +271,42 @@ sources:
       specification versions and specification bodies are never retrieved by this adapter. Group
       participation is quarantined discovery metadata, not proof of authorship, ownership,
       deployment, cyber need, commercial opportunity or outreach authorization.
+
+  - id: mojeek-web-search-metadata
+    name: Mojeek Web Search API metadata
+    base_url: https://api.mojeek.com/search
+    status: enabled
+    source_type: search_provider
+    owner: Mojeek Limited
+    terms_url: https://www.mojeek.com/services/search/web-search-api/
+    licence: Mojeek Web Search API customer agreement and plan-specific storage rights
+    allowed_data_categories: [public_result_metadata]
+    prohibited_data_categories: *prohibited
+    rate_limit_per_minute: 5
+    retention_days: 90
+    attribution_required: true
+    raw_content_storage: false
+    human_review_required: false
+    authorization:
+      status: approved
+      document_reference: docs/source_activation/SA_14_MOJEEK_SEARCH.md
+      reviewed_at: "2026-08-11T15:25:00+00:00"
+      expires_at: null
+      approved_hosts: [api.mojeek.com]
+      approved_path_prefixes: [/search]
+      approved_purposes: [corporate-public-footprint]
+      automated_collection_allowed: true
+      raw_storage_allowed: false
+    economics:
+      commercial_value: high
+      monthly_cost: 0
+      implementation_cost: medium
+      maintenance_cost: medium
+      expected_stability: medium
+    notes: >-
+      Provider execution is fail-closed until both a connected API key and explicit durable-storage
+      entitlement evidence are configured. CIP retains only bounded URL/title/query-dependent
+      snippet/rank metadata and never fetches third-party page bodies through this adapter. Trial or
+      plan credentials without durable storage rights must not be used for persistent collection.
+      Search hits remain quarantined discovery leads and never directly prove deployment, exposure,
+      vulnerability, compromise, need, opportunity, or outreach authorization.

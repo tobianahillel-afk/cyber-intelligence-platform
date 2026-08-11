@@ -129,6 +129,9 @@ class Settings(BaseSettings):
     w3c_affiliation_target_registry_path: Path = Path(
         "policies/w3c_affiliation_targets.yml"
     )
+    mojeek_search_entitlement_registry_path: Path = Path(
+        "policies/mojeek_search_entitlement.yml"
+    )
     vulnerability_query_target_registry_path: Path = Path(
         "policies/vulnerability_query_targets.yml"
     )

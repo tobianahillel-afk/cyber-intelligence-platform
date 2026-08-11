@@ -24,10 +24,7 @@ sources:
       adapter_version: "1"
       provider_schema_version: brave-search-web-v1
       modes: [conditional_refresh, priority_refresh]
-      canonical_output_types:
-        - raw_observation
-        - public_resource
-        - public_resource_version
+      canonical_output_types: [raw_observation, public_resource, public_resource_version]
       supports_corrections: true
       supports_tombstones: false
       supports_retractions: false
@@ -40,9 +37,7 @@ sources:
     category: corporate_public_footprint
     status: executable
     freshness_max_age_seconds: 604800
-    commercial_use_cases:
-      - public_evidence_map
-      - change_history
+    commercial_use_cases: [public_evidence_map, change_history]
     candidate_origin: SA-02
     monthly_cost_limit: 0
     metadata:
@@ -56,10 +51,7 @@ sources:
       adapter_version: "1"
       provider_schema_version: cdx-json-v1
       modes: [incremental_cursor, priority_refresh]
-      canonical_output_types:
-        - raw_observation
-        - public_resource
-        - public_resource_version
+      canonical_output_types: [raw_observation, public_resource, public_resource_version]
       supports_corrections: true
       supports_tombstones: false
       supports_retractions: false
@@ -72,10 +64,7 @@ sources:
     category: corporate_public_footprint
     status: executable
     freshness_max_age_seconds: 604800
-    commercial_use_cases:
-      - public_evidence_map
-      - change_history
-      - historical_public_discovery
+    commercial_use_cases: [public_evidence_map, change_history, historical_public_discovery]
     candidate_origin: SA-14
     monthly_cost_limit: 0
     metadata:
@@ -90,10 +79,7 @@ sources:
       adapter_version: "1"
       provider_schema_version: common-crawl-cdxj-v1
       modes: [incremental_cursor, priority_refresh]
-      canonical_output_types:
-        - raw_observation
-        - public_resource
-        - public_resource_version
+      canonical_output_types: [raw_observation, public_resource, public_resource_version]
       supports_corrections: true
       supports_tombstones: false
       supports_retractions: false
@@ -106,10 +92,7 @@ sources:
     category: corporate_public_footprint
     status: executable
     freshness_max_age_seconds: 86400
-    commercial_use_cases:
-      - public_evidence_map
-      - organization_research
-      - public_engineering_context
+    commercial_use_cases: [public_evidence_map, organization_research, public_engineering_context]
     candidate_origin: SA-14
     monthly_cost_limit: 0
     metadata:
@@ -127,10 +110,7 @@ sources:
       adapter_version: "1"
       provider_schema_version: github-code-search-v1
       modes: [conditional_refresh, priority_refresh]
-      canonical_output_types:
-        - raw_observation
-        - public_resource
-        - public_resource_version
+      canonical_output_types: [raw_observation, public_resource, public_resource_version]
       supports_corrections: true
       supports_tombstones: false
       supports_retractions: false
@@ -143,10 +123,7 @@ sources:
     category: corporate_public_footprint
     status: executable
     freshness_max_age_seconds: 604800
-    commercial_use_cases:
-      - organization_research
-      - publication_discovery
-      - public_evidence_map
+    commercial_use_cases: [organization_research, publication_discovery, public_evidence_map]
     candidate_origin: SA-14
     monthly_cost_limit: 0
     metadata:
@@ -163,10 +140,7 @@ sources:
       adapter_version: "1"
       provider_schema_version: crossref-ror-works-v1
       modes: [conditional_refresh, priority_refresh]
-      canonical_output_types:
-        - raw_observation
-        - public_resource
-        - public_resource_version
+      canonical_output_types: [raw_observation, public_resource, public_resource_version]
       supports_corrections: true
       supports_tombstones: false
       supports_retractions: false
@@ -179,10 +153,7 @@ sources:
     category: corporate_public_footprint
     status: executable
     freshness_max_age_seconds: 604800
-    commercial_use_cases:
-      - organization_research
-      - patent_discovery
-      - public_evidence_map
+    commercial_use_cases: [organization_research, patent_discovery, public_evidence_map]
     candidate_origin: SA-14
     monthly_cost_limit: 0
     metadata:
@@ -201,10 +172,7 @@ sources:
       adapter_version: "1"
       provider_schema_version: patentsview-assignee-patents-v1
       modes: [conditional_refresh, priority_refresh]
-      canonical_output_types:
-        - raw_observation
-        - public_resource
-        - public_resource_version
+      canonical_output_types: [raw_observation, public_resource, public_resource_version]
       supports_corrections: true
       supports_tombstones: false
       supports_retractions: false
@@ -217,10 +185,7 @@ sources:
     category: corporate_public_footprint
     status: executable
     freshness_max_age_seconds: 604800
-    commercial_use_cases:
-      - organization_research
-      - standards_discovery
-      - public_evidence_map
+    commercial_use_cases: [organization_research, standards_discovery, public_evidence_map]
     candidate_origin: SA-14
     monthly_cost_limit: 0
     metadata:
@@ -237,10 +202,38 @@ sources:
       adapter_version: "1"
       provider_schema_version: w3c-affiliation-specifications-v1
       modes: [conditional_refresh, priority_refresh]
-      canonical_output_types:
-        - raw_observation
-        - public_resource
-        - public_resource_version
+      canonical_output_types: [raw_observation, public_resource, public_resource_version]
+      supports_corrections: true
+      supports_tombstones: false
+      supports_retractions: false
+      max_page_size: 20
+      cost_per_request: 0
+
+  - source_id: mojeek-web-search-metadata
+    display_name: Mojeek Web Search API metadata
+    canonical_url: https://api.mojeek.com/search
+    category: corporate_public_footprint
+    status: executable
+    freshness_max_age_seconds: 86400
+    commercial_use_cases: [public_evidence_map, organization_research]
+    candidate_origin: SA-14
+    monthly_cost_limit: 0
+    metadata:
+      executable: true
+      authorization_status: approved
+      provider_onboarding_required: true
+      durable_storage_entitlement_required: true
+      query_registry_required: true
+      raw_response_storage: false
+      third_party_page_body_storage: false
+      search_result_is_evidence: false
+      automatic_opportunity: forbidden
+    adapter:
+      adapter_id: mojeek-web-search
+      adapter_version: "1"
+      provider_schema_version: mojeek-web-search-v1
+      modes: [conditional_refresh, priority_refresh]
+      canonical_output_types: [raw_observation, public_resource, public_resource_version]
       supports_corrections: true
       supports_tombstones: false
       supports_retractions: false

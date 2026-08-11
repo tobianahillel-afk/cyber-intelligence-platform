@@ -9,6 +9,7 @@ from cip.adapters.sources.developer_ecosystem.registry import DeveloperEcosystem
 from cip.adapters.sources.greenhouse.registry import GreenhouseBoard
 from cip.adapters.sources.incident_catalogs.sec_registry import SecIncidentTarget
 from cip.adapters.sources.lever.registry import LeverSite
+from cip.adapters.sources.mojeek_search.registry import MojeekSearchEntitlement
 from cip.adapters.sources.organization_identity.registry import OrganizationIdentityTarget
 from cip.adapters.sources.passive_infrastructure.rdap_registry import RdapTarget
 from cip.adapters.sources.passive_infrastructure.registry import PassiveInfrastructureTarget
@@ -49,6 +50,7 @@ from cip.modules.collection_orchestration.application.reference_adapter import (
 )
 from cip.modules.collection_orchestration.application.search_archive_registration import (
     SearchArchiveRegistrationInputs,
+    SearchArchiveSecretProviders,
     register_search_archive_adapters,
 )
 from cip.modules.collection_orchestration.application.smartrecruiters_adapter import (
@@ -79,21 +81,25 @@ class AdapterCompositionInputs:
     crossref_publication_targets: tuple[CrossrefPublicationTarget, ...]
     patentsview_patent_targets: tuple[PatentsViewPatentTarget, ...]
     w3c_affiliation_targets: tuple[W3cAffiliationTarget, ...]
+    mojeek_entitlement: MojeekSearchEntitlement
     vulnerability_targets: tuple[VulnerabilityQueryTarget, ...]
     passive_infrastructure_targets: tuple[PassiveInfrastructureTarget, ...]
     rdap_targets: tuple[RdapTarget, ...]
     sec_incident_targets: tuple[SecIncidentTarget, ...]
 
 
+@dataclass(frozen=True, slots=True)
+class RuntimeSecretProviders:
+    search_archives: SearchArchiveSecretProviders
+    certspotter_token_provider: Callable[[], str | None]
+    phishtank_token_provider: Callable[[], str | None]
+    teamtailor_token_provider: Callable[[], str | None]
+
+
 def build_runtime_adapters(
     inputs: AdapterCompositionInputs,
+    secrets: RuntimeSecretProviders,
     *,
-    brave_token_provider: Callable[[], str | None],
-    github_code_search_token_provider: Callable[[], str | None],
-    patentsview_api_key_provider: Callable[[], str | None],
-    certspotter_token_provider: Callable[[], str | None],
-    phishtank_token_provider: Callable[[], str | None],
-    teamtailor_token_provider: Callable[[], str | None],
     sec_user_agent: str | None,
     phishtank_user_agent: str | None,
     timeout_seconds: float,
@@ -108,7 +114,7 @@ def build_runtime_adapters(
         inputs.ashby_boards,
         inputs.recruitee_sites,
         inputs.teamtailor_accounts,
-        teamtailor_token_provider=teamtailor_token_provider,
+        teamtailor_token_provider=secrets.teamtailor_token_provider,
         timeout_seconds=timeout_seconds,
     )
     register_procurement_funding_adapters(
@@ -145,10 +151,9 @@ def build_runtime_adapters(
             crossref_publication_targets=inputs.crossref_publication_targets,
             patentsview_patent_targets=inputs.patentsview_patent_targets,
             w3c_affiliation_targets=inputs.w3c_affiliation_targets,
+            mojeek_entitlement=inputs.mojeek_entitlement,
         ),
-        brave_token_provider=brave_token_provider,
-        github_code_search_token_provider=github_code_search_token_provider,
-        patentsview_api_key_provider=patentsview_api_key_provider,
+        secrets.search_archives,
         timeout_seconds=timeout_seconds,
     )
     register_vulnerability_adapters(
@@ -162,14 +167,14 @@ def build_runtime_adapters(
         entries_by_id,
         inputs.passive_infrastructure_targets,
         inputs.rdap_targets,
-        certspotter_token_provider=certspotter_token_provider,
+        certspotter_token_provider=secrets.certspotter_token_provider,
         timeout_seconds=timeout_seconds,
     )
     register_intelligence_adapters(
         adapters,
         entries_by_id,
         inputs.sec_incident_targets,
-        phishtank_token_provider=phishtank_token_provider,
+        phishtank_token_provider=secrets.phishtank_token_provider,
         sec_user_agent=sec_user_agent,
         phishtank_user_agent=phishtank_user_agent,
         timeout_seconds=timeout_seconds,
