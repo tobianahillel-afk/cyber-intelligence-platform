@@ -6,7 +6,7 @@ from decimal import Decimal, InvalidOperation
 from hashlib import sha256
 from uuid import UUID
 
-from cip.adapters.sources.cordis_funding.schemas import CordisFundingBinding
+from cip.adapters.sources.cordis_funding.schemas import CordisOrganizationRecord
 from cip.modules.corporate_changes.domain.models import (
     ChangeClaimSnapshot,
     ChangeClaimType,
@@ -19,21 +19,22 @@ from cip.modules.source_governance.domain.models import DataCategory
 from cip.shared.kernel.time import require_aware_utc
 
 SOURCE_ID = "cordis-eu-funded-projects"
-ADAPTER_ID = "cordis-eurio-sparql-funding"
+ADAPTER_ID = "cordis-horizon-bulk-csv"
 ADAPTER_VERSION = "1.0.0"
-SOURCE_URL = "https://cordis.europa.eu/projects"
+SOURCE_URL = "https://cordis.europa.eu/data/cordis-HORIZONprojects-csv.zip"
 
 
-def map_cordis_funding_binding(
-    binding: CordisFundingBinding,
+def map_cordis_funding_record(
+    record: CordisOrganizationRecord,
     *,
     collection_job_id: UUID,
     collected_at: datetime,
     retention_until: datetime,
 ) -> tuple[RawObservation, ChangeClaimSnapshot]:
     collected = require_aware_utc(collected_at, field_name="collected_at")
-    event_at = _event_timestamp(binding.start_date.value if binding.start_date else None)
-    source_key = _source_key(binding)
+    participation_end = _date_timestamp(record.endOfParticipation)
+    source_key = f"{record.projectID}:{record.organisationID}"
+    source_updated = _date_timestamp(record.contentUpdateDate)
     observation = RawObservation(
         source_id=SOURCE_ID,
         adapter_id=ADAPTER_ID,
@@ -42,12 +43,12 @@ def map_cordis_funding_binding(
         source_record_type="eu_funded_project_participation",
         source_record_key=source_key,
         source_url=SOURCE_URL,
-        payload_hash_sha256=_payload_hash(binding),
+        payload_hash_sha256=_payload_hash(record),
         data_categories=frozenset({DataCategory.PUBLIC_RESULT_METADATA}),
         collected_at=collected,
-        published_at=event_at,
-        source_updated_at=event_at,
-        schema_fingerprint="cordis-eurio-funding-binding-1",
+        published_at=None,
+        source_updated_at=source_updated,
+        schema_fingerprint="cordis-horizon-organization-csv-2026-06",
         content_language="en",
         classification="internal",
         retention_until=retention_until,
@@ -56,69 +57,52 @@ def map_cordis_funding_binding(
         source_id=SOURCE_ID,
         source_kind=ChangeSourceKind.REGULATOR,
         source_record_key=source_key,
-        article_id=binding.project_id.value,
+        article_id=record.projectID,
         source_url=SOURCE_URL,
-        event_key=f"cordis-project:{binding.project_id.value}:{_name_key(binding)}",
+        event_key=f"cordis-project:{record.projectID}:{record.organisationID}",
         claim_type=ChangeClaimType.CONFIRMATION,
         event_type=ChangeEventType.FUNDING,
-        title=f"EU-funded CORDIS project participation — {binding.organisation_name.value}",
-        excerpt=_excerpt(binding),
-        claimed_organization_name=binding.organisation_name.value,
+        title=f"EU-funded CORDIS project participation — {record.name}",
+        excerpt=_excerpt(record),
+        claimed_organization_name=record.name,
         organization_id=None,
         organization_link_status=OrganizationLinkStatus.UNRESOLVED,
         published_at=collected,
-        modified_at=collected,
-        event_at=event_at,
+        modified_at=source_updated or collected,
+        event_at=participation_end,
         independence_key=SOURCE_ID,
         confidence=0.95,
-        historical_only=(event_at is None or event_at < collected - timedelta(days=365)),
+        historical_only=_historical(record, participation_end, collected),
         metadata_only=True,
     )
     return observation, claim
 
 
-def _source_key(binding: CordisFundingBinding) -> str:
-    return f"{binding.project_id.value}:{_name_key(binding)}"
+def _excerpt(record: CordisOrganizationRecord) -> str:
+    acronym = record.projectAcronym or record.projectID
+    role = record.role or "participant"
+    contribution = _contribution_text(record.ecContribution)
+    end = f" Participation end: {record.endOfParticipation}." if record.endOfParticipation else ""
+    return (
+        f"Organisation: {record.name}. Project: {acronym} ({record.projectID}). "
+        f"Role: {role}.{contribution}{end}"
+    )[:500]
 
 
-def _name_key(binding: CordisFundingBinding) -> str:
-    return sha256(binding.organisation_name.value.casefold().encode()).hexdigest()[:16]
-
-
-def _excerpt(binding: CordisFundingBinding) -> str:
-    role = binding.role_label.value if binding.role_label else "participant"
-    contribution = _contribution_text(binding)
-    dates = _date_text(binding)
-    text = (
-        f"Organisation: {binding.organisation_name.value}. "
-        f"Project: {binding.project_title.value} ({binding.project_id.value}). "
-        f"Role: {role}.{contribution}{dates}"
-    )
-    return text[:500]
-
-
-def _contribution_text(binding: CordisFundingBinding) -> str:
-    if binding.eu_contribution is None:
+def _contribution_text(value: str) -> str:
+    if not value:
         return ""
     try:
-        amount = Decimal(binding.eu_contribution.value)
+        amount = Decimal(value)
     except InvalidOperation:
         return ""
     if amount < 0:
         return ""
-    return f" Project-level maximum EU contribution: {amount} EUR."
+    return f" CORDIS organisation ecContribution field: {format(amount, 'f')}."
 
 
-def _date_text(binding: CordisFundingBinding) -> str:
-    start = binding.start_date.value if binding.start_date else None
-    end = binding.end_date.value if binding.end_date else None
-    if not start and not end:
-        return ""
-    return f" Project dates: {start or 'unknown'} to {end or 'unknown'}."
-
-
-def _event_timestamp(value: str | None) -> datetime | None:
-    if value is None:
+def _date_timestamp(value: str) -> datetime | None:
+    if not value:
         return None
     candidate = value.strip()[:10]
     try:
@@ -128,10 +112,26 @@ def _event_timestamp(value: str | None) -> datetime | None:
     return datetime.combine(parsed, datetime.min.time(), UTC)
 
 
-def _payload_hash(binding: CordisFundingBinding) -> str:
-    encoded = json.dumps(
-        binding.model_dump(mode="json"),
-        sort_keys=True,
-        separators=(",", ":"),
-    ).encode()
+def _historical(
+    record: CordisOrganizationRecord,
+    participation_end: datetime | None,
+    collected: datetime,
+) -> bool:
+    inactive = record.active.casefold() in {"false", "0", "no"}
+    expired = participation_end is not None and participation_end < collected - timedelta(days=365)
+    return inactive or expired
+
+
+def _payload_hash(record: CordisOrganizationRecord) -> str:
+    semantic_fields = {
+        "active": record.active,
+        "ecContribution": record.ecContribution,
+        "endOfParticipation": record.endOfParticipation,
+        "name": record.name,
+        "organisationID": record.organisationID,
+        "projectAcronym": record.projectAcronym,
+        "projectID": record.projectID,
+        "role": record.role,
+    }
+    encoded = json.dumps(semantic_fields, sort_keys=True, separators=(",", ":")).encode()
     return sha256(encoded).hexdigest()
