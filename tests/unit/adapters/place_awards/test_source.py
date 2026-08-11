@@ -60,6 +60,10 @@ def test_schema_and_mapper_preserve_award_history_without_cyber_filter() -> None
         retention_until=NOW + timedelta(days=365),
     )
 
+    assert award.annee_de_notification == 2026
+    assert award.geocode_att is not None
+    assert award.geocode_att.lon == 2.35
+    assert award.geocode_att.lat == 48.85
     assert mapped.observation.source_id == "place-awards"
     assert mapped.observation.source_record_type == "procurement_award"
     assert mapped.procurement.publication.kind is ProcurementPublicationKind.AWARD
@@ -70,11 +74,15 @@ def test_schema_and_mapper_preserve_award_history_without_cyber_filter() -> None
     assert mapped.buyer.canonical_name == "Service des achats"
 
 
-def test_schema_rejects_blank_required_and_negative_amount() -> None:
+def test_schema_rejects_blank_required_negative_amount_and_invalid_live_fields() -> None:
     with pytest.raises(ValidationError):
         PlaceAward.model_validate(_award(objet_du_marche=" "))
     with pytest.raises(ValidationError):
         PlaceAward.model_validate(_award(montant=-1))
+    with pytest.raises(ValidationError):
+        PlaceAward.model_validate(_award(annee_de_notification="2201"))
+    with pytest.raises(ValidationError):
+        PlaceAward.model_validate(_award(geocode_att={"lon": 200, "lat": 48.85}))
     with pytest.raises(ValidationError):
         PlaceAwardsResponse.model_validate({"total_count": -1, "results": []})
 
@@ -213,7 +221,7 @@ def _entry() -> SourceRegistryEntry:
 
 def _award(**changes: object) -> dict[str, object]:
     payload: dict[str, object] = {
-        "annee_de_notification": "2026-01-01",
+        "annee_de_notification": "2026",
         "entite_publique": "Ministère exemple",
         "entite_d_achat": "Service des achats",
         "code_postal_entite_d_achat": "75001",
@@ -227,7 +235,7 @@ def _award(**changes: object) -> dict[str, object]:
         "tranche_budgetaire": "100000-500000",
         "montant": 250000,
         "attributaire_est_une_pme": "Oui",
-        "geocode_att": [48.85, 2.35],
+        "geocode_att": {"lon": 2.35, "lat": 48.85},
     }
     payload.update(changes)
     return payload
