@@ -37,6 +37,9 @@ from cip.modules.collection_orchestration.application.passive_infrastructure_reg
     register_passive_infrastructure_adapters,
 )
 from cip.modules.collection_orchestration.application.ports import CollectionAdapter
+from cip.modules.collection_orchestration.application.procurement_funding_registration import (
+    register_procurement_funding_adapters,
+)
 from cip.modules.collection_orchestration.application.public_web_adapter import PublicWebAdapter
 from cip.modules.collection_orchestration.application.reference_adapter import (
     ReferencePortfolioAdapter,
@@ -96,6 +99,11 @@ def build_runtime_adapters(
         inputs.recruitee_sites,
         inputs.teamtailor_accounts,
         teamtailor_token_provider=teamtailor_token_provider,
+        timeout_seconds=timeout_seconds,
+    )
+    register_procurement_funding_adapters(
+        adapters,
+        entries_by_id,
         timeout_seconds=timeout_seconds,
     )
     register_identity_adapters(
