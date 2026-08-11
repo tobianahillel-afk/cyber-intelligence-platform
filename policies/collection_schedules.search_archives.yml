@@ -84,3 +84,15 @@ schedules:
       max_delay_seconds: 7200
       circuit_failure_threshold: 3
       circuit_reset_seconds: 7200
+
+  - source_id: mojeek-web-search-metadata
+    adapter_id: mojeek-web-search
+    enabled: false
+    interval_seconds: 86400
+    lease_seconds: 180
+    retry:
+      max_attempts: 2
+      base_delay_seconds: 900
+      max_delay_seconds: 7200
+      circuit_failure_threshold: 2
+      circuit_reset_seconds: 7200
