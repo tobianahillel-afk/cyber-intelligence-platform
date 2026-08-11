@@ -84,6 +84,7 @@ def test_greenhouse_projection_updates_same_signal_and_opportunity() -> None:
             "soc analyst",
             "security operations",
             "splunk enterprise security",
+            "soc",
         ]
         assert stored_signal.collected_at == updated_at
         assert stored_signal.expires_at == updated_at + timedelta(days=30)
