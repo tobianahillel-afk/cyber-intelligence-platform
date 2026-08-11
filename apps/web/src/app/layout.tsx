@@ -5,6 +5,7 @@ import { AppShell } from "@/shared/components/app-shell";
 
 import "./globals.css";
 import "../features/opportunities/opportunities.css";
+import "../features/need-hypotheses/need-hypotheses.css";
 import "../features/sources/sources.css";
 import "../features/contracts/contracts.css";
 import "../features/public-footprint/public-footprint.css";

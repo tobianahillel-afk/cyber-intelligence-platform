@@ -19,7 +19,7 @@ from cip.modules.procurement_history.infrastructure.queries import (
     get_procurement_contract_detail,
     list_procurement_contracts,
 )
-from cip.modules.service_taxonomy.domain.models import CyberServiceFamily
+from cip.modules.service_taxonomy.domain.models import parse_service_family
 from cip.modules.source_portfolio.api.dependencies import require_control_plane
 from cip.shared.kernel.time import utc_now
 from cip.shared.persistence.dependencies import get_database_session
@@ -36,7 +36,7 @@ SessionDependency = Annotated[Session, Depends(get_database_session)]
 def read_procurement_contracts(
     session: SessionDependency,
     status: Annotated[list[ContractStatus] | None, Query()] = None,
-    family: CyberServiceFamily | None = None,
+    family: str | None = None,
     buyer_organization_id: UUID | None = None,
     renewal_from: date | None = None,
     renewal_to: date | None = None,
@@ -44,11 +44,12 @@ def read_procurement_contracts(
     offset: Annotated[int, Query(ge=0)] = 0,
 ) -> ProcurementContractPageResponse:
     try:
+        parsed_family = parse_service_family(family) if family is not None else None
         page = list_procurement_contracts(
             session,
             now=utc_now(),
             statuses=tuple(status or ()),
-            family=family,
+            family=parsed_family,
             buyer_organization_id=buyer_organization_id,
             renewal_from=renewal_from,
             renewal_to=renewal_to,

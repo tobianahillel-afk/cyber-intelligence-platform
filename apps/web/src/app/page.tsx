@@ -53,8 +53,9 @@ export default async function OpportunityInboxPage({
           <p className="eyebrow">Analyst workspace</p>
           <h1>Opportunity Inbox</h1>
           <p>
-            Review evidence-backed SIEM and SOC buying-intent signals before any commercial
-            action. Scores are calculated from persisted signals and versioned rules.
+            Review evidence-backed cybersecurity service opportunities before any commercial
+            action. Scores are calculated from persisted signals, explainable need hypotheses and
+            versioned rules.
           </p>
         </div>
         <span className="live-label">Live PostgreSQL data</span>
@@ -103,7 +104,8 @@ export default async function OpportunityInboxPage({
             <h3>No matching opportunities</h3>
             <p>
               The inbox contains no persisted opportunity matching these filters. Signals must
-              be normalized and evaluated before an item appears here.
+              be normalized, fused into explainable need hypotheses and evaluated before an item
+              appears here.
             </p>
           </div>
         )}

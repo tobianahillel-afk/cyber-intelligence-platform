@@ -27,7 +27,10 @@ from cip.modules.procurement_history.infrastructure.models import (
     ProcurementPublicationRecord,
     ProcurementServiceClassificationRecord,
 )
-from cip.modules.service_taxonomy.domain.models import CyberServiceFamily
+from cip.modules.service_taxonomy.domain.models import (
+    CyberServiceFamily,
+    service_family_identifiers,
+)
 from cip.shared.kernel.time import require_aware_utc
 
 
@@ -75,7 +78,11 @@ def list_procurement_contracts(
             ProcurementServiceClassificationRecord.contract_id
             == ProcurementContractRecord.id,
         )
-        filters.append(ProcurementServiceClassificationRecord.family == family.value)
+        filters.append(
+            ProcurementServiceClassificationRecord.family.in_(
+                service_family_identifiers(family)
+            )
+        )
 
     total = int(session.scalar(count_query.where(*filters)) or 0)
     records = tuple(

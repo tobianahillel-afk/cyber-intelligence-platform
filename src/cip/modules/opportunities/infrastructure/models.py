@@ -30,6 +30,11 @@ class CommercialSignalRecord(Base):
             "published_at",
             "collected_at",
         ),
+        Index(
+            "ix_commercial_signals_independence",
+            "organization_id",
+            "independence_key",
+        ),
     )
 
     id: Mapped[UUID] = mapped_column(primary_key=True)
@@ -47,6 +52,15 @@ class CommercialSignalRecord(Base):
     )
     created_at: Mapped[datetime] = mapped_column(UTCDateTime())
     idempotency_key: Mapped[str] = mapped_column(String(64))
+    service_families: Mapped[list[str]] = mapped_column(JSON, default=list)
+    hypothesis_classes: Mapped[list[str]] = mapped_column(JSON, default=list)
+    independence_key: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    corroboration_group_key: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    polarity: Mapped[str] = mapped_column(String(40), default="supporting", index=True)
+    is_explicit: Mapped[bool] = mapped_column(Boolean, default=False)
+    historical_only: Mapped[bool] = mapped_column(Boolean, default=False)
+    mapping_rule_id: Mapped[str] = mapped_column(String(100), default="legacy-signal")
+    mapping_rule_version: Mapped[str] = mapped_column(String(50), default="1.0.0")
 
 
 class NeedHypothesisRecord(Base):
@@ -54,6 +68,11 @@ class NeedHypothesisRecord(Base):
     __table_args__ = (
         UniqueConstraint("idempotency_key", name="uq_need_hypotheses_idempotency_key"),
         Index("ix_need_hypotheses_org_family", "organization_id", "family"),
+        Index(
+            "ix_need_hypotheses_org_class",
+            "organization_id",
+            "hypothesis_class",
+        ),
     )
 
     id: Mapped[UUID] = mapped_column(primary_key=True)
@@ -66,6 +85,18 @@ class NeedHypothesisRecord(Base):
     generated_at: Mapped[datetime] = mapped_column(UTCDateTime(), index=True)
     expires_at: Mapped[datetime] = mapped_column(UTCDateTime(), index=True)
     idempotency_key: Mapped[str] = mapped_column(String(64))
+    hypothesis_class: Mapped[str] = mapped_column(
+        String(80), default="research_only_weak_signal", index=True
+    )
+    service_families: Mapped[list[str]] = mapped_column(JSON, default=list)
+    confidence: Mapped[float] = mapped_column(Float, default=0.5)
+    urgency: Mapped[str] = mapped_column(String(40), default="low", index=True)
+    horizon: Mapped[str] = mapped_column(String(40), default="long_term", index=True)
+    applicable_offers: Mapped[list[str]] = mapped_column(JSON, default=list)
+    conflicting_signal_ids: Mapped[list[str]] = mapped_column(JSON, default=list)
+    negative_signal_ids: Mapped[list[str]] = mapped_column(JSON, default=list)
+    source_contributions: Mapped[list[dict[str, object]]] = mapped_column(JSON, default=list)
+    taxonomy_version: Mapped[str] = mapped_column(String(40), default="2026.08")
 
 
 class NeedHypothesisSignalRecord(Base):
