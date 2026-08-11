@@ -31,9 +31,5 @@ jobs:
       - name: Install project
         run: python -m pip install .
 
-      - name: Probe official CORDIS Horizon CSV bulk distribution
-        if: github.event.pull_request.head.ref == 'agent/sa12-eu-funding-completion'
-        run: python scripts/probe_cordis_bulk.py
-
       - name: Controlled PLACE, ADEME and CORDIS live validation
         run: python scripts/live_validate_sa12.py
