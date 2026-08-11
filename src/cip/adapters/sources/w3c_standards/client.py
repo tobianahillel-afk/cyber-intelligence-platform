@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import TypeVar
 from urllib.parse import urlsplit
 
 import httpx
@@ -17,7 +16,6 @@ from cip.adapters.sources.w3c_standards.schemas import (
 _MAX_RESPONSE_BYTES = 2 * 1024 * 1024
 _MAX_GROUPS = 5
 _MAX_RESULTS = 20
-_MODEL = TypeVar("_MODEL", bound=BaseModel)
 
 
 class W3cClientError(RuntimeError):
@@ -130,7 +128,7 @@ class W3cClient:
         return W3cQueryResult(affiliation=affiliation, records=tuple(records))
 
 
-def _get_model(
+def _get_model[_MODEL: BaseModel](
     client: httpx.Client,
     url: str,
     model: type[_MODEL],
