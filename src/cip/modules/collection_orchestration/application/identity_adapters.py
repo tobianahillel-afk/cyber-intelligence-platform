@@ -6,6 +6,9 @@ from cip.adapters.sources.organization_identity.registry import OrganizationIden
 from cip.modules.collection_orchestration.application.bodacc_identity_adapter import (
     BodaccIdentityAdapter,
 )
+from cip.modules.collection_orchestration.application.brreg_identity_adapter import (
+    BrregIdentityAdapter,
+)
 from cip.modules.collection_orchestration.application.gleif_adapter import GleifAdapter
 from cip.modules.collection_orchestration.application.ports import CollectionAdapter
 from cip.modules.collection_orchestration.application.recherche_entreprises_adapter import (
@@ -21,6 +24,16 @@ def register_identity_adapters(
     *,
     timeout_seconds: float,
 ) -> None:
+    brreg_entry = entries_by_id.get(BrregIdentityAdapter.source_id)
+    if brreg_entry is not None:
+        _register(
+            adapters,
+            BrregIdentityAdapter(
+                brreg_entry,
+                targets,
+                timeout_seconds=timeout_seconds,
+            ),
+        )
     if not any(target.enabled for target in targets):
         return
     recherche_entry = entries_by_id.get(RechercheEntreprisesAdapter.source_id)
