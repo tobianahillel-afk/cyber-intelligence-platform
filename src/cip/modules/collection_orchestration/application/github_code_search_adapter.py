@@ -106,7 +106,13 @@ class GitHubCodeSearchAdapter:
         )
         projections = tuple(
             map_search_result_lead(
-                _lead(item, target=target, template=template, rank=index, observed_at=collected_at)
+                _lead(
+                    item,
+                    target=target,
+                    template=template,
+                    rank=index,
+                    observed_at=collected_at,
+                )
             )
             for index, item in enumerate(items, start=1)
         )
@@ -193,13 +199,17 @@ def _lead(
     observed_at: datetime,
 ) -> SearchResultLead:
     title = f"{item.repository.full_name}:{item.path}"
+    snippet = (
+        f"GitHub code-search metadata for {title} at {item.sha}; "
+        "file content not retrieved."
+    )
     return SearchResultLead(
         organization_id=target.organization_id,
         source_id=GitHubCodeSearchAdapter.source_id,
         source_record_key=_record_key(item, template),
         target_url=item.html_url,
         title=title,
-        snippet=f"GitHub code-search metadata for {title} at {item.sha}; file content not retrieved.",
+        snippet=snippet,
         rank=rank,
         observed_at=observed_at,
         query_template_id=template.id,
