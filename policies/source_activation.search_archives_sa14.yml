@@ -74,3 +74,17 @@ sources:
       - authorized
       - executable
       - live_tested
+
+  - source_id: mojeek-web-search-metadata
+    display_name: Mojeek Web Search API metadata
+    category: corporate_public_footprint
+    disposition: active
+    activation_wave: SA-14
+    requires_schedule: false
+    stages:
+      - catalogued
+      - reviewed
+      - mapped
+      - adapter_present
+      - authorized
+      - executable
