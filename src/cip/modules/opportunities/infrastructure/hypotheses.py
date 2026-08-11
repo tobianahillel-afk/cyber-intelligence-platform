@@ -131,7 +131,7 @@ def _required_text(item: dict[str, object], key: str) -> str:
 
 def _required_number(item: dict[str, object], key: str) -> float:
     value = item.get(key)
-    if isinstance(value, bool) or not isinstance(value, (int, float)):
+    if isinstance(value, bool) or not isinstance(value, int | float):
         raise ValueError(f"source contribution {key} must be numeric")
     return float(value)
 
