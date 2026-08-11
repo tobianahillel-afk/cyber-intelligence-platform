@@ -1,50 +1,42 @@
 from __future__ import annotations
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, ConfigDict, field_validator
 
 
-class SparqlValue(BaseModel):
+class CordisOrganizationRecord(BaseModel):
+    """One observed row from CORDIS Horizon `organization.csv`."""
+
     model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
 
-    type: str
-    value: str
-    datatype: str | None = None
-    xml_lang: str | None = Field(default=None, alias="xml:lang")
+    projectID: str
+    projectAcronym: str
+    organisationID: str
+    vatNumber: str
+    name: str
+    shortName: str
+    SME: str
+    activityType: str
+    street: str
+    postCode: str
+    city: str
+    country: str
+    nutsCode: str
+    geolocation: str
+    organizationURL: str
+    contactForm: str
+    contentUpdateDate: str
+    rcn: str
+    order: str
+    role: str
+    ecContribution: str
+    netEcContribution: str
+    totalCost: str
+    endOfParticipation: str
+    active: str
 
-    @field_validator("type", "value")
+    @field_validator("projectID", "organisationID", "name")
     @classmethod
-    def _required_text(cls, value: str) -> str:
+    def _required_identity(cls, value: str) -> str:
         if not value:
-            raise ValueError("CORDIS SPARQL value cannot be blank")
+            raise ValueError("CORDIS funding identity field cannot be blank")
         return value
-
-
-class CordisFundingBinding(BaseModel):
-    model_config = ConfigDict(extra="forbid")
-
-    project_id: SparqlValue
-    project_title: SparqlValue
-    organisation_name: SparqlValue
-    role_label: SparqlValue | None = None
-    start_date: SparqlValue | None = None
-    end_date: SparqlValue | None = None
-    eu_contribution: SparqlValue | None = None
-
-
-class SparqlHead(BaseModel):
-    model_config = ConfigDict(extra="forbid")
-
-    vars: tuple[str, ...]
-
-
-class CordisFundingResults(BaseModel):
-    model_config = ConfigDict(extra="forbid")
-
-    bindings: tuple[CordisFundingBinding, ...]
-
-
-class CordisFundingResponse(BaseModel):
-    model_config = ConfigDict(extra="forbid")
-
-    head: SparqlHead
-    results: CordisFundingResults
