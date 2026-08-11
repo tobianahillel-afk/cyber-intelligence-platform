@@ -4,11 +4,16 @@
 
 This document is normative for future source-activation and acquisition work. Historical lot and SA closeout documents remain truthful records of what was implemented at the time they were merged, but they do not limit the future target state described here.
 
+Detailed mandatory behavior is further defined by:
+
+- [`SOCIAL_COMMUNITY_ACQUISITION_REQUIREMENTS.md`](SOCIAL_COMMUNITY_ACQUISITION_REQUIREMENTS.md);
+- [`OSINT_AUTOMATION_PIPELINES.md`](OSINT_AUTOMATION_PIPELINES.md).
+
 ## Product mandate
 
 Cyber Intelligence Platform must pursue complete implementation of every useful public, licensed, customer-authorized, or provider-authorized acquisition capability that materially improves organization, procurement, technology, cyber-risk, incident, professional-context, market, or commercial intelligence.
 
-A useful source must not be abandoned merely because it currently needs an API key, paid plan, provider account, written permission, target registry, browser workflow, service account, or contract review. Those conditions are implementation prerequisites to resolve and track. They are not a reason to pretend the capability is finished.
+A useful source must not be abandoned merely because it currently needs an API key, paid plan, provider account, written permission, target registry, browser workflow, service account, contract review, administrator installation, user-delegated session or provider-specific onboarding. Those conditions are implementation prerequisites to resolve and track. They are not a reason to pretend the capability is finished.
 
 The target state for each useful source is:
 
@@ -27,7 +32,7 @@ catalogued
 
 ## Completion rule
 
-A source is not complete because it appears in documentation, has a schema, has a mock, passes unit tests, or has a non-executable source record.
+A source is not complete because it appears in documentation, has a schema, has a mock, passes unit tests, has a manual analyst link, or has a non-executable source record.
 
 For a useful source, completion requires all applicable items below:
 
@@ -77,7 +82,12 @@ Required capabilities include:
 - same-origin link discovery;
 - recursive crawling with configurable depth, page, byte, time, concurrency and freshness budgets;
 - canonical URL normalization and duplicate suppression;
-- HTML, JSON-LD, structured data and embedded public metadata extraction;
+- HTML DOM extraction;
+- semantic metadata extraction;
+- JSON-LD extraction;
+- public embedded JSON/application-state extraction;
+- authorized collection of structured JSON responses used by rendered applications;
+- public CSS/resource references where useful for technology attribution;
 - public PDF and office-document discovery through the quarantine pipeline;
 - document text and metadata extraction;
 - JavaScript-rendered page collection through the isolated browser runtime;
@@ -115,12 +125,15 @@ It must support:
 - JavaScript-rendered websites;
 - first-party navigation and interaction;
 - screenshots where evidentially useful;
+- DOM/structured-state capture where permitted;
 - controlled downloads through quarantine;
 - source-specific cookies and session state;
 - provider-approved or customer-authorized login workflows;
 - OAuth and SSO flows where the deployment is authorized to use them;
-- analyst-assisted MFA when the legitimate account requires a human factor;
+- analyst-assisted MFA/CAPTCHA when the legitimate account requires a human factor;
 - provider-approved service/test accounts;
+- user-delegated provider accounts tied to a real CIP tenant/user or deployment service identity;
+- tenant-controlled email aliases where the provider permits automated account lifecycle;
 - deterministic browser adapters with stable extraction contracts;
 - request interception, host allowlists and network isolation;
 - complete audit of navigations and authentication state transitions.
@@ -141,9 +154,11 @@ The full-implementation mandate does not require defeating security controls. Th
 
 When a legitimate provider workflow contains CAPTCHA or MFA, the product must support a human or provider-approved completion step and resume afterward.
 
-## Search and dorking mandate
+## Search, SERP and dorking mandate
 
 The platform must maintain and execute, where an authorized provider path exists, a comprehensive search and dork library for organization research.
+
+A normalized SERP pipeline is mandatory. It must persist provider, query/template identity, rank, URL, canonical URL, title, snippet/description, provider record ID, result type, timestamps and source scope.
 
 Mandatory provider/capability coverage includes:
 
@@ -151,6 +166,7 @@ Mandatory provider/capability coverage includes:
 - Mojeek Web Search;
 - Bing or equivalent approved web-search API;
 - Google analyst links and Google API products where a valid entitlement permits automation;
+- provider-authorized browser search execution where a deployment is permitted to automate it;
 - Common Crawl URL Index;
 - Internet Archive/Wayback CDX and approved archived-content retrieval paths;
 - GDELT current supported API stack;
@@ -158,6 +174,8 @@ Mandatory provider/capability coverage includes:
 - GitLab public APIs;
 - publication, patent, standards and documentation search APIs;
 - organization-domain searches for contracts, tenders, technologies, incidents, hiring, providers, architecture, migration and security documents.
+
+The versioned dork library must cover `site:`, `filetype:`, `intitle:`, `inurl:` and equivalent provider syntax for procurement, contracts, security tooling, cloud, IAM, SOC/SIEM/MDR, AppSec, DevSecOps, GRC, incidents, ransomware, hiring, partners, case studies, technical documents and code/package evidence.
 
 Search metadata remains discovery context until the referenced resource is acquired through an approved evidence path.
 
@@ -235,7 +253,7 @@ Active security testing is a separate capability and requires explicit target au
 
 The platform must support useful local OSINT frameworks through provider-aware modules rather than permanently excluding the framework as a whole.
 
-Mandatory evaluation and implementation coverage includes:
+Mandatory implementation coverage includes:
 
 - Sherlock;
 - OWASP Amass passive and explicitly authorized modules;
@@ -282,21 +300,56 @@ Threat-actor claims must remain claims. Private victim material, stolen credenti
 
 ## Professional and community-source mandate
 
-The product must actively pursue legitimate integrations for professional and community context:
+The product must actively pursue executable integrations for professional and community context.
 
-- LinkedIn official APIs, authorized partner products, or written-authorized collection paths;
-- Reddit official/licensed APIs;
-- Discord administrator-installed bots, authorized exports and consented connectors;
+Mandatory source families include:
+
+- LinkedIn through official APIs, authorized partner products, written-authorized automation or another legitimate executable route;
+- Reddit official/licensed APIs for public communities;
+- Discord administrator-installed bots/connectors and authorized exports;
 - Stack Exchange APIs;
 - public Mastodon APIs;
 - Bluesky APIs;
 - YouTube Data API and permitted transcript/metadata workflows;
 - conference, association and professional-directory sources;
-- licensed B2B professional-contact providers.
+- licensed B2B professional-contact providers;
+- public/authorized vendor communities;
+- BrixHub.cc.
 
-The target is to activate these sources, not leave their categories as documentation-only placeholders. Private messages and unrelated private-life data remain outside normal B2B collection scope.
+For consented Discord servers, the production connector must be able to retrieve authorized channel/message history, server-scoped member identifiers and message chronology, then extract organization-level professional technology/vendor/tool signals with full provenance.
 
-## Document, media and metadata mandate
+Provider-scoped pseudonymous handles must remain pseudonymous unless the user self-declares another professional identity, consents to linking, an administrator provides a mapping, or an authorized professional source provides an explicit identifier match.
+
+LinkedIn activation is not complete until at least one legitimate real deployment access route is production-wired and live-tested. Reddit and Discord likewise require real provider/connector live proof.
+
+## BrixHub.cc mandate
+
+`https://brixhub.cc/` is a mandatory provider-specific activation target.
+
+The project must determine the current owner/operator, terms, privacy policy, datasets, fields, registration flow, authentication/session model, API/export/browser paths, automation rights, storage/reuse rights, quotas, retention/deletion obligations and a controlled validation target.
+
+If an API exists, implement the API adapter. If an authorized browser-only path is the real product interface, implement a provider-specific isolated browser adapter. If both exist, use the API as the primary stable acquisition path and retain browser acquisition for legitimately available browser-only fields.
+
+BrixHub must not remain a generic review-only placeholder. It remains unfinished work until the provider-specific implementation and real live proof are complete, or the product owner explicitly removes it from scope.
+
+## User-delegated provider-account mandate
+
+Where an external provider requires an account, CIP must support provider-approved account lifecycle tied to the real CIP tenant/user or a deployment service principal.
+
+The model must include:
+
+- owning CIP tenant/user/service principal;
+- provider account ID;
+- purpose and authorization scope;
+- isolated secret/session reference;
+- scopes/permissions;
+- creation and renewal timestamps;
+- expiration/revocation/deletion;
+- complete audit history.
+
+Where the provider supports automated registration, CIP may automate it using tenant-controlled aliases or provider-approved service-account mechanisms. Ephemeral aliases may be used for lifecycle isolation only when they remain controlled by the real deployment and do not evade provider controls.
+
+## Document, OCR and media mandate
 
 The safe document-processing stack must expand to include, where useful:
 
@@ -305,13 +358,29 @@ The safe document-processing stack must expand to include, where useful:
 - Apache Tika or equivalent type-specific extraction;
 - ExifTool metadata extraction in isolation;
 - OCR;
-- translation;
+- language detection and translation;
 - image/document metadata normalization;
 - archive-container inspection;
 - malware/file reputation checks for downloaded artifacts;
 - evidence-safe screenshots and page references.
 
-All untrusted files are quarantined and parsed in isolated workers.
+OCR must support scanned PDFs, screenshots and images and retain engine/version, source artifact hash, page/image identity, language, confidence and provenance.
+
+## Reverse-image and visual-research mandate
+
+An automated reverse-image/visual-research pipeline is mandatory where images materially contribute evidence.
+
+It should combine provider-authorized reverse-image APIs and local methods such as:
+
+- perceptual hashes;
+- exact hashes;
+- OCR-derived queries;
+- logo/product/vendor detection;
+- screenshot similarity;
+- image metadata;
+- analyst review for ambiguous matches.
+
+Visual matches remain evidence candidates and do not independently prove organization identity or technology deployment.
 
 ## Developer-ecosystem mandate
 
@@ -336,6 +405,7 @@ A live test must prove at least:
 - current provider connectivity;
 - real provider schema compatibility;
 - authentication path where required;
+- browser/session flow where required;
 - bounded collection behavior;
 - canonical mapping;
 - checkpoint/idempotency behavior where applicable;
@@ -343,10 +413,14 @@ A live test must prove at least:
 - evidence-boundary compliance;
 - real non-empty data when the selected validation target/provider is expected to return data.
 
+For automatic company research, live proof must eventually cover an end-to-end chain from company/domain resolution through search/crawl/browser/document/OCR extraction into provenance-backed evidence.
+
 Skipped workflows, mocks, fixtures and documentation checks never count as live proof.
 
 ## Roadmap ownership
 
-The implementation sequence after SA-14 is defined in [`source_activation/SA_15_20_FULL_ACTIVATION_ROADMAP.md`](source_activation/SA_15_20_FULL_ACTIVATION_ROADMAP.md).
+The implementation sequence after SA-14 is currently defined in [`source_activation/SA_15_20_FULL_ACTIVATION_ROADMAP.md`](source_activation/SA_15_20_FULL_ACTIVATION_ROADMAP.md).
+
+That document is a capability-wave plan, not the final realistic implementation-lot decomposition. A dedicated follow-up roadmap review must split these mandatory capabilities into realistically sized lots/SA increments with exact exit gates.
 
 No later product milestone may claim complete OSINT/source readiness while useful providers remain without a concrete activation plan, production adapter, or legitimate controlled live proof.
