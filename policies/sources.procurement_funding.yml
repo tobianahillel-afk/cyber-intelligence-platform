@@ -90,3 +90,48 @@ sources:
     notes: >-
       Official public funding results. Beneficiary names remain unresolved claims;
       collection never turns a name-only match into a canonical organization merge.
+
+  - id: cordis-eu-funded-projects
+    name: CORDIS — EURIO EU-funded projects
+    base_url: https://cordis.europa.eu/datalab/sparql-endpoint
+    status: enabled
+    source_type: api
+    owner: Publications Office of the European Union
+    terms_url: https://cordis.europa.eu/about/legal
+    licence: CC BY 4.0 for EU-owned editorial/open content, subject to source-specific rights
+    allowed_data_categories:
+      - public_result_metadata
+    prohibited_data_categories:
+      - credential
+      - victim_file
+      - private_communication
+      - private_personal_data
+      - restricted_content
+    rate_limit_per_minute: 6
+    retention_days: 3650
+    attribution_required: true
+    raw_content_storage: false
+    human_review_required: false
+    authorization:
+      status: approved
+      document_reference: cordis-eurio-public-sparql-reuse-2026-08-11
+      reviewed_at: 2026-08-11T10:05:00Z
+      expires_at: null
+      approved_hosts:
+        - cordis.europa.eu
+      approved_path_prefixes:
+        - /datalab/sparql-endpoint
+      approved_purposes:
+        - public-funding-intelligence
+      automated_collection_allowed: true
+      raw_storage_allowed: false
+    economics:
+      commercial_value: high
+      monthly_cost: 0
+      implementation_cost: medium
+      maintenance_cost: medium
+      expected_stability: medium
+    notes: >-
+      Official CORDIS/EURIO public project and organisation evidence queried through
+      the bounded public SPARQL endpoint. Project-level contribution is not attributed
+      as an organisation-specific received amount. Names remain unresolved claims.
