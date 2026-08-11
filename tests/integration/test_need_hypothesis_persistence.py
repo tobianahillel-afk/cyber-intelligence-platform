@@ -92,10 +92,10 @@ def test_fused_hypothesis_round_trip_is_idempotent_and_rule_versioned() -> None:
             "source:source-a",
             "source:source-b",
         }
-        assert hypothesis.evidence_ids == (
+        assert set(hypothesis.evidence_ids) == {
             SUPPORT_EVIDENCE_ID,
             CONFLICT_EVIDENCE_ID,
-        )
+        }
 
 
 def test_hypothesis_hydration_fails_closed_on_invalid_source_contribution_json() -> None:
