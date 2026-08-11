@@ -74,14 +74,7 @@ def hypothesis_from_record(
     supporting = tuple(signal_id for signal_id in signal_ids if signal_id not in excluded)
     evidence_ids = _evidence_ids(session, signal_ids)
     contributions = tuple(
-        SourceContribution(
-            independence_key=str(item["independence_key"]),
-            polarity=SignalPolarity(str(item["polarity"])),
-            signal_ids=tuple(UUID(value) for value in item["signal_ids"]),
-            max_confidence=float(item["max_confidence"]),
-            contribution=float(item["contribution"]),
-        )
-        for item in record.source_contributions
+        _source_contribution_from_json(item) for item in record.source_contributions
     )
     return NeedHypothesis(
         id=record.id,
@@ -108,6 +101,39 @@ def hypothesis_from_record(
         source_contributions=contributions,
         taxonomy_version=record.taxonomy_version,
     )
+
+
+def _source_contribution_from_json(item: dict[str, object]) -> SourceContribution:
+    independence_key = _required_text(item, "independence_key")
+    polarity = _required_text(item, "polarity")
+    raw_signal_ids = item.get("signal_ids")
+    if not isinstance(raw_signal_ids, list) or not all(
+        isinstance(value, str) for value in raw_signal_ids
+    ):
+        raise ValueError("source contribution signal_ids must be a list of UUID strings")
+    max_confidence = _required_number(item, "max_confidence")
+    contribution = _required_number(item, "contribution")
+    return SourceContribution(
+        independence_key=independence_key,
+        polarity=SignalPolarity(polarity),
+        signal_ids=tuple(UUID(value) for value in raw_signal_ids),
+        max_confidence=max_confidence,
+        contribution=contribution,
+    )
+
+
+def _required_text(item: dict[str, object], key: str) -> str:
+    value = item.get(key)
+    if not isinstance(value, str) or not value.strip():
+        raise ValueError(f"source contribution {key} must be a non-empty string")
+    return value
+
+
+def _required_number(item: dict[str, object], key: str) -> float:
+    value = item.get(key)
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        raise ValueError(f"source contribution {key} must be numeric")
+    return float(value)
 
 
 def _hypothesis_values(hypothesis: NeedHypothesis) -> dict[str, object]:
