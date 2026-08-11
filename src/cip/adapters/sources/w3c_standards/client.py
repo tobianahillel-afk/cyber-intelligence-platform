@@ -58,6 +58,7 @@ class W3cClient:
         affiliations_url: str,
         *,
         affiliation_id: int,
+        expected_name: str,
     ) -> W3cQueryResult:
         root = _api_root(affiliations_url)
         affiliation_url = f"{affiliations_url.rstrip('/')}/{affiliation_id}"
@@ -72,6 +73,12 @@ class W3cClient:
                 affiliation_url,
                 W3cAffiliation,
             )
+            if _normalize_name(affiliation.name) != _normalize_name(expected_name):
+                raise W3cClientError(
+                    "W3C affiliation identity did not match configured organization target",
+                    code="target_identity_mismatch",
+                    retryable=False,
+                )
             participations, _ = _get_model(
                 client,
                 participations_url,
@@ -194,3 +201,7 @@ def _group_identity(href: str, root: str) -> tuple[str, str, str] | None:
     if not group_type or not group_shortname:
         return None
     return group_type, group_shortname, f"{root}/groups/{group_type}/{group_shortname}"
+
+
+def _normalize_name(value: str) -> str:
+    return " ".join(value.split()).casefold()
