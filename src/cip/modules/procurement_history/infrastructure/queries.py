@@ -27,7 +27,10 @@ from cip.modules.procurement_history.infrastructure.models import (
     ProcurementPublicationRecord,
     ProcurementServiceClassificationRecord,
 )
-from cip.modules.service_taxonomy.domain.models import CyberServiceFamily
+from cip.modules.service_taxonomy.domain.models import (
+    CyberServiceFamily,
+    service_family_identifiers,
+)
 from cip.shared.kernel.time import require_aware_utc
 
 
@@ -75,7 +78,11 @@ def list_procurement_contracts(
             ProcurementServiceClassificationRecord.contract_id
             == ProcurementContractRecord.id,
         )
-        filters.append(ProcurementServiceClassificationRecord.family == family.value)
+        filters.append(
+            ProcurementServiceClassificationRecord.family.in_(
+                service_family_identifiers(family)
+            )
+        )
 
     total = int(session.scalar(count_query.where(*filters)) or 0)
     records = tuple(
@@ -138,58 +145,22 @@ def get_procurement_contract_detail(
             )
         )
     )
-    return ProcurementContractDetail(
-        contract=_list_item(session, record),
-        contract_key=record.contract_key,
-        procedure_key=procedure.canonical_key,
-        procedure_title=procedure.title,
-        procedure_status=procedure.status,
-        first_published_at=_optional_database_utc(procedure.first_published_at),
-        latest_published_at=_optional_database_utc(procedure.latest_published_at),
-        parties=tuple(_party_item(item) for item in parties),
-        service_classifications=tuple(
-            _classification_item(item) for item in classifications
-        ),
-        publications=tuple(_publication_item(item) for item in publications),
-    )
-
-
-def _list_item(
-    session: Session,
-    record: ProcurementContractRecord,
-) -> ProcurementContractListItem:
     buyer = session.get(OrganizationRecord, record.buyer_organization_id)
-    procedure = session.get(ProcurementProcedureRecord, record.procedure_id)
-    if buyer is None or procedure is None:
-        raise RuntimeError("procurement contract references missing records")
-    provider_names = tuple(
-        session.scalars(
-            select(ProcurementContractPartyRecord.published_name)
-            .where(
-                ProcurementContractPartyRecord.contract_id == record.id,
-                ProcurementContractPartyRecord.role.in_(("awardee", "consortium_member")),
-            )
-            .order_by(ProcurementContractPartyRecord.published_name)
-        )
-    )
-    families = tuple(
-        session.scalars(
-            select(ProcurementServiceClassificationRecord.family)
-            .where(ProcurementServiceClassificationRecord.contract_id == record.id)
-            .order_by(ProcurementServiceClassificationRecord.family)
-        )
-    )
-    return ProcurementContractListItem(
+    if buyer is None:
+        raise RuntimeError("procurement contract buyer organization is missing")
+    return ProcurementContractDetail(
         id=record.id,
         procedure_id=record.procedure_id,
+        procedure_key=procedure.procedure_key,
         buyer_organization_id=record.buyer_organization_id,
         buyer_name=buyer.canonical_name,
         title=record.title,
-        status=record.status,
+        status=ContractStatus(record.status),
+        confidence=record.confidence,
         amount_value=record.amount_value,
-        amount_upper_value=record.amount_upper_value,
-        currency=record.currency,
+        amount_currency=record.amount_currency,
         amount_type=record.amount_type,
+        amount_upper_value=record.amount_upper_value,
         award_date=record.award_date,
         conclusion_date=record.conclusion_date,
         conclusion_date_basis=record.conclusion_date_basis,
@@ -201,11 +172,62 @@ def _list_item(
         end_date_basis=record.end_date_basis,
         renewal_date=record.renewal_date,
         renewal_date_basis=record.renewal_date_basis,
+        created_at=database_utc(record.created_at),
+        updated_at=database_utc(record.updated_at),
+        parties=tuple(_party_item(party) for party in parties),
+        service_families=tuple(
+            ProcurementServiceFamilyItem(
+                family=classification.family,
+                confidence=classification.confidence,
+                matched_terms=tuple(classification.matched_terms),
+            )
+            for classification in classifications
+        ),
+        publications=tuple(_publication_item(publication) for publication in publications),
+    )
+
+
+def _list_item(
+    session: Session,
+    record: ProcurementContractRecord,
+) -> ProcurementContractListItem:
+    buyer_name = session.scalar(
+        select(OrganizationRecord.canonical_name).where(
+            OrganizationRecord.id == record.buyer_organization_id
+        )
+    )
+    if buyer_name is None:
+        raise RuntimeError("procurement contract buyer organization is missing")
+    classifications = tuple(
+        session.scalars(
+            select(ProcurementServiceClassificationRecord)
+            .where(ProcurementServiceClassificationRecord.contract_id == record.id)
+            .order_by(ProcurementServiceClassificationRecord.family)
+        )
+    )
+    return ProcurementContractListItem(
+        id=record.id,
+        procedure_id=record.procedure_id,
+        procedure_key=record.procedure_key,
+        buyer_organization_id=record.buyer_organization_id,
+        buyer_name=buyer_name,
+        title=record.title,
+        status=ContractStatus(record.status),
         confidence=record.confidence,
-        provider_names=provider_names,
-        service_families=families,
-        source_ids=tuple(str(value) for value in procedure.source_ids),
-        updated_at=_database_utc(record.updated_at),
+        amount_value=record.amount_value,
+        amount_currency=record.amount_currency,
+        amount_type=record.amount_type,
+        renewal_date=record.renewal_date,
+        renewal_date_basis=record.renewal_date_basis,
+        updated_at=database_utc(record.updated_at),
+        service_families=tuple(
+            ProcurementServiceFamilyItem(
+                family=classification.family,
+                confidence=classification.confidence,
+                matched_terms=tuple(classification.matched_terms),
+            )
+            for classification in classifications
+        ),
     )
 
 
@@ -220,28 +242,20 @@ def _party_item(record: ProcurementContractPartyRecord) -> ProcurementPartyItem:
     )
 
 
-def _classification_item(
-    record: ProcurementServiceClassificationRecord,
-) -> ProcurementServiceFamilyItem:
-    return ProcurementServiceFamilyItem(
-        family=record.family,
-        matched_terms=tuple(str(value) for value in record.matched_terms),
-        confidence=record.confidence,
-    )
-
-
-def _publication_item(record: ProcurementPublicationRecord) -> ProcurementPublicationItem:
+def _publication_item(
+    record: ProcurementPublicationRecord,
+) -> ProcurementPublicationItem:
     return ProcurementPublicationItem(
         id=record.id,
         source_id=record.source_id,
         source_record_key=record.source_record_key,
+        source_url=record.source_url,
         kind=record.kind,
         procedure_status=record.procedure_status,
         title=record.title,
-        source_url=record.source_url,
-        published_at=_optional_database_utc(record.published_at),
-        collected_at=_database_utc(record.collected_at),
-        details=dict(record.details),
+        published_at=(database_utc(record.published_at) if record.published_at else None),
+        collected_at=database_utc(record.collected_at),
+        details=record.details,
     )
 
 
@@ -252,17 +266,13 @@ def _validate_list_options(
     limit: int,
     offset: int,
 ) -> None:
-    if renewal_from is not None and renewal_to is not None and renewal_to < renewal_from:
-        raise ValueError("renewal_to cannot precede renewal_from")
-    if not 1 <= limit <= 200 or offset < 0:
-        raise ValueError("invalid pagination")
+    if renewal_from is not None and renewal_to is not None and renewal_from > renewal_to:
+        raise ValueError("renewal_from cannot be later than renewal_to")
+    if limit < 1 or limit > 200:
+        raise ValueError("limit must be between 1 and 200")
+    if offset < 0:
+        raise ValueError("offset cannot be negative")
 
 
-def _database_utc(value: datetime) -> datetime:
-    if value.tzinfo is None or value.utcoffset() is None:
-        return value.replace(tzinfo=UTC)
-    return value.astimezone(UTC)
-
-
-def _optional_database_utc(value: datetime | None) -> datetime | None:
-    return None if value is None else _database_utc(value)
+def database_utc(value: datetime) -> datetime:
+    return value.replace(tzinfo=UTC) if value.tzinfo is None else value.astimezone(UTC)
