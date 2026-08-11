@@ -21,6 +21,7 @@ from cip.adapters.sources.github_code_search.registry import (
 from cip.adapters.sources.greenhouse.registry import load_greenhouse_boards
 from cip.adapters.sources.incident_catalogs.sec_registry import load_sec_incident_targets
 from cip.adapters.sources.lever.registry import load_lever_sites
+from cip.adapters.sources.mojeek_search.registry import load_mojeek_search_entitlement
 from cip.adapters.sources.organization_identity.registry import load_organization_identity_targets
 from cip.adapters.sources.passive_infrastructure.rdap_registry import load_rdap_targets
 from cip.adapters.sources.passive_infrastructure.registry import load_passive_infrastructure_targets
@@ -33,6 +34,7 @@ from cip.adapters.sources.vulnerability_catalogs.registry import load_vulnerabil
 from cip.adapters.sources.w3c_standards.registry import load_w3c_affiliation_targets
 from cip.modules.collection_orchestration.application.adapter_composition import (
     AdapterCompositionInputs,
+    RuntimeSecretProviders,
     build_runtime_adapters,
 )
 from cip.modules.collection_orchestration.application.ports import CollectionAdapter
@@ -40,6 +42,9 @@ from cip.modules.collection_orchestration.application.provider_secret_supplier i
     connected_secret_supplier,
 )
 from cip.modules.collection_orchestration.application.scheduler import schedule_due_jobs
+from cip.modules.collection_orchestration.application.search_archive_registration import (
+    SearchArchiveSecretProviders,
+)
 from cip.modules.collection_orchestration.application.worker import (
     WorkerOutcome,
     WorkerStatus,
@@ -103,35 +108,44 @@ def build_collection_runtime(settings: Settings) -> CollectionRuntime:
         sync_source_portfolio(session, portfolio, now=synchronized_at)
     adapters = build_runtime_adapters(
         adapter_inputs,
-        brave_token_provider=connected_secret_supplier(
-            factory,
-            source_id="brave-search-api",
-            secret_name="api_token",
-        ),
-        github_code_search_token_provider=connected_secret_supplier(
-            factory,
-            source_id="github-code-search-metadata",
-            secret_name="api_token",
-        ),
-        patentsview_api_key_provider=connected_secret_supplier(
-            factory,
-            source_id="patentsview-patent-metadata",
-            secret_name="api_key",
-        ),
-        certspotter_token_provider=connected_secret_supplier(
-            factory,
-            source_id="certspotter-ct",
-            secret_name="api_token",
-        ),
-        phishtank_token_provider=connected_secret_supplier(
-            factory,
-            source_id="phishtank-verified-online",
-            secret_name="api_token",
-        ),
-        teamtailor_token_provider=connected_secret_supplier(
-            factory,
-            source_id="teamtailor-public-jobs",
-            secret_name="api_token",
+        RuntimeSecretProviders(
+            search_archives=SearchArchiveSecretProviders(
+                brave_token_provider=connected_secret_supplier(
+                    factory,
+                    source_id="brave-search-api",
+                    secret_name="api_token",
+                ),
+                github_code_search_token_provider=connected_secret_supplier(
+                    factory,
+                    source_id="github-code-search-metadata",
+                    secret_name="api_token",
+                ),
+                patentsview_api_key_provider=connected_secret_supplier(
+                    factory,
+                    source_id="patentsview-patent-metadata",
+                    secret_name="api_key",
+                ),
+                mojeek_api_key_provider=connected_secret_supplier(
+                    factory,
+                    source_id="mojeek-web-search-metadata",
+                    secret_name="api_key",
+                ),
+            ),
+            certspotter_token_provider=connected_secret_supplier(
+                factory,
+                source_id="certspotter-ct",
+                secret_name="api_token",
+            ),
+            phishtank_token_provider=connected_secret_supplier(
+                factory,
+                source_id="phishtank-verified-online",
+                secret_name="api_token",
+            ),
+            teamtailor_token_provider=connected_secret_supplier(
+                factory,
+                source_id="teamtailor-public-jobs",
+                secret_name="api_token",
+            ),
         ),
         sec_user_agent=settings.sec_edgar_user_agent,
         phishtank_user_agent=settings.phishtank_user_agent,
@@ -231,6 +245,9 @@ def _load_adapter_inputs(
         ),
         w3c_affiliation_targets=load_w3c_affiliation_targets(
             settings.w3c_affiliation_target_registry_path
+        ),
+        mojeek_entitlement=load_mojeek_search_entitlement(
+            settings.mojeek_search_entitlement_registry_path
         ),
         vulnerability_targets=load_vulnerability_query_targets(
             settings.vulnerability_query_target_registry_path
