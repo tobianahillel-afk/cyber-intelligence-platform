@@ -26,13 +26,13 @@ schedules:
       circuit_reset_seconds: 3600
 
   - source_id: cordis-eu-funded-projects
-    adapter_id: cordis-eurio-sparql-funding
-    interval_seconds: 86400
-    lease_seconds: 300
+    adapter_id: cordis-horizon-bulk-csv
+    interval_seconds: 604800
+    lease_seconds: 600
     enabled: true
     retry:
-      max_attempts: 4
-      base_delay_seconds: 120
-      max_delay_seconds: 3600
+      max_attempts: 3
+      base_delay_seconds: 300
+      max_delay_seconds: 7200
       circuit_failure_threshold: 3
-      circuit_reset_seconds: 7200
+      circuit_reset_seconds: 14400
