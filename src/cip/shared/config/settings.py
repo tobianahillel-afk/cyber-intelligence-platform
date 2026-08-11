@@ -24,6 +24,9 @@ class Settings(BaseSettings):
     )
     source_registry_path: Path = Path("policies/sources.example.yml")
     identity_source_registry_path: Path = Path("policies/identity_sources.yml")
+    company_identity_expansion_source_registry_path: Path = Path(
+        "policies/sources.company_identity_expansion.yml"
+    )
     decp_source_registry_path: Path = Path("policies/sources.decp.yml")
     procurement_funding_source_registry_path: Path = Path(
         "policies/sources.procurement_funding.yml"
@@ -54,6 +57,9 @@ class Settings(BaseSettings):
     ats_source_registry_path: Path = Path("policies/sources.ats_expansion.yml")
     provider_onboarding_registry_path: Path = Path("policies/provider_onboarding.yml")
     source_portfolio_path: Path = Path("policies/source_portfolio.yml")
+    company_identity_expansion_source_portfolio_path: Path = Path(
+        "policies/source_portfolio.company_identity_expansion.yml"
+    )
     decp_source_portfolio_path: Path = Path("policies/source_portfolio.decp.yml")
     procurement_funding_source_portfolio_path: Path = Path(
         "policies/source_portfolio.procurement_funding.yml"
