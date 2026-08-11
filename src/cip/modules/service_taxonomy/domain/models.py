@@ -82,6 +82,16 @@ def legacy_service_family_ids() -> dict[str, str]:
     return {legacy: family.value for legacy, family in _LEGACY_FAMILY_IDS.items()}
 
 
+def service_family_identifiers(
+    value: str | CyberServiceFamily,
+) -> tuple[str, ...]:
+    family = parse_service_family(value)
+    aliases = tuple(
+        legacy for legacy, mapped in _LEGACY_FAMILY_IDS.items() if mapped is family
+    )
+    return tuple(dict.fromkeys((family.value, *aliases)))
+
+
 @dataclass(frozen=True, slots=True)
 class ServiceFamilyMatch:
     family: CyberServiceFamily
