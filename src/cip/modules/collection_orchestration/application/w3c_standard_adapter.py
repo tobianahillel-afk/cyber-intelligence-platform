@@ -72,17 +72,12 @@ class W3cStandardAdapter:
             ).specifications_for_affiliation(
                 self._entry.policy.base_url,
                 affiliation_id=target.affiliation_id,
+                expected_name=target.canonical_name,
             )
         except W3cClientError as exc:
             raise AdapterExecutionError(
                 str(exc), error_code=exc.code, retryable=exc.retryable
             ) from exc
-        if _normalize_name(result.affiliation.name) != _normalize_name(target.canonical_name):
-            raise AdapterExecutionError(
-                "W3C affiliation identity did not match configured organization target",
-                error_code="target_identity_mismatch",
-                retryable=False,
-            )
         records = tuple(record for record in result.records if _safe_record(record))
         observations = tuple(
             _observation(
@@ -241,10 +236,6 @@ def _specification_url(specification: W3cSpecification) -> str | None:
     ):
         return self_link.href
     return None
-
-
-def _normalize_name(value: str) -> str:
-    return " ".join(value.split()).casefold()
 
 
 def _empty_batch() -> AdapterCollectionBatch:
