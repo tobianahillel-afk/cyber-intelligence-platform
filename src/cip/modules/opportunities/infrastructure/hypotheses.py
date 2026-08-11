@@ -73,16 +73,6 @@ def hypothesis_from_record(
     excluded = set(conflicting + negative)
     supporting = tuple(signal_id for signal_id in signal_ids if signal_id not in excluded)
     evidence_ids = _evidence_ids(session, signal_ids)
-    contributions = tuple(
-        SourceContribution(
-            independence_key=str(item["independence_key"]),
-            polarity=SignalPolarity(str(item["polarity"])),
-            signal_ids=tuple(UUID(value) for value in item["signal_ids"]),
-            max_confidence=float(item["max_confidence"]),
-            contribution=float(item["contribution"]),
-        )
-        for item in record.source_contributions
-    )
     return NeedHypothesis(
         id=record.id,
         organization_id=record.organization_id,
@@ -105,7 +95,7 @@ def hypothesis_from_record(
         applicable_offers=tuple(record.applicable_offers),
         conflicting_signal_ids=conflicting,
         negative_signal_ids=negative,
-        source_contributions=contributions,
+        source_contributions=_source_contributions(record.source_contributions),
         taxonomy_version=record.taxonomy_version,
     )
 
@@ -141,6 +131,46 @@ def _hypothesis_values(hypothesis: NeedHypothesis) -> dict[str, object]:
         ],
         "taxonomy_version": hypothesis.taxonomy_version,
     }
+
+
+def _source_contributions(value: object) -> tuple[SourceContribution, ...]:
+    if not isinstance(value, list):
+        raise ValueError("persisted source_contributions must be a list")
+    contributions: list[SourceContribution] = []
+    for item in value:
+        if not isinstance(item, dict):
+            raise ValueError("persisted source contribution must be a mapping")
+        contributions.append(
+            SourceContribution(
+                independence_key=_required_string(item, "independence_key"),
+                polarity=SignalPolarity(_required_string(item, "polarity")),
+                signal_ids=_uuid_list(item, "signal_ids"),
+                max_confidence=_required_float(item, "max_confidence"),
+                contribution=_required_float(item, "contribution"),
+            )
+        )
+    return tuple(contributions)
+
+
+def _required_string(item: dict[object, object], key: str) -> str:
+    value = item.get(key)
+    if not isinstance(value, str) or not value.strip():
+        raise ValueError(f"persisted source contribution {key} must be a string")
+    return value
+
+
+def _required_float(item: dict[object, object], key: str) -> float:
+    value = item.get(key)
+    if not isinstance(value, int | float) or isinstance(value, bool):
+        raise ValueError(f"persisted source contribution {key} must be numeric")
+    return float(value)
+
+
+def _uuid_list(item: dict[object, object], key: str) -> tuple[UUID, ...]:
+    value = item.get(key)
+    if not isinstance(value, list) or not all(isinstance(entry, str) for entry in value):
+        raise ValueError(f"persisted source contribution {key} must be a string list")
+    return tuple(UUID(entry) for entry in value)
 
 
 def _signal_ids(session: Session, hypothesis_id: UUID) -> tuple[UUID, ...]:
