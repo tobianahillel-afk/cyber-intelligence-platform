@@ -208,7 +208,7 @@ sources:
     human_review_required: false
     authorization:
       status: approved
-      document_reference: docs/source_activation/SA_14_SEARCH_ARCHIVES.md#patentsview-patent-metadata
+      document_reference: docs/source_activation/SA_14_PATENTSVIEW_PATENTS.md
       reviewed_at: "2026-08-11T13:15:00+00:00"
       expires_at: null
       approved_hosts: [search.patentsview.org]
