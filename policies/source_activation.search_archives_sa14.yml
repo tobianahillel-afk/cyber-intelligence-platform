@@ -45,3 +45,17 @@ sources:
       - authorized
       - executable
       - live_tested
+
+  - source_id: patentsview-patent-metadata
+    display_name: PatentsView assignee patent metadata
+    category: corporate_public_footprint
+    disposition: active
+    activation_wave: SA-14
+    requires_schedule: false
+    stages:
+      - catalogued
+      - reviewed
+      - mapped
+      - adapter_present
+      - authorized
+      - executable
