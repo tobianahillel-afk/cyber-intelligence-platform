@@ -2,14 +2,18 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import datetime
+from hashlib import sha256
 from urllib.parse import unquote, urlsplit
 from uuid import UUID
 
-from pydantic import ValidationError
-
 from cip.adapters.sources.cordis_funding.client import CordisFundingClient
-from cip.adapters.sources.cordis_funding.mapper import map_cordis_funding_binding
-from cip.adapters.sources.cordis_funding.schemas import CordisFundingResponse
+from cip.adapters.sources.cordis_funding.mapper import map_cordis_funding_record
+from cip.adapters.sources.cordis_funding.parser import (
+    MAX_RECORDS_PER_BATCH,
+    CordisFundingArchiveError,
+    CordisFundingSchemaError,
+    parse_cordis_archive,
+)
 from cip.modules.corporate_changes.domain.models import ChangeClaimSnapshot
 from cip.modules.raw_observations.domain.entities import RawObservation
 from cip.modules.source_governance.domain.models import (
@@ -25,24 +29,22 @@ class CordisFundingCollectionDeniedError(RuntimeError):
     """Source governance denied CORDIS collection."""
 
 
-class CordisFundingSchemaError(RuntimeError):
-    """CORDIS SPARQL payload no longer matches the selected schema."""
-
-
 class CordisFundingPaginationError(RuntimeError):
-    """CORDIS pagination state is unsafe."""
+    """CORDIS checkpoint state is unsafe."""
 
 
 @dataclass(frozen=True, slots=True)
 class CordisFundingCheckpoint:
+    archive_sha256: str
     offset: int = 0
+    complete: bool = False
 
 
 @dataclass(frozen=True, slots=True)
 class CordisFundingCollectionBatch:
     observations: tuple[RawObservation, ...]
     claims: tuple[ChangeClaimSnapshot, ...]
-    checkpoint: CordisFundingCheckpoint | None
+    checkpoint: CordisFundingCheckpoint
     not_modified: bool
 
 
@@ -54,54 +56,59 @@ def collect_cordis_funding(
     collected_at: datetime,
     retention_until: datetime,
     checkpoint: CordisFundingCheckpoint | None = None,
-    max_pages: int = 5,
+    max_records: int = MAX_RECORDS_PER_BATCH,
 ) -> CordisFundingCollectionBatch:
     collected = require_aware_utc(collected_at, field_name="collected_at")
-    if max_pages < 1:
-        raise ValueError("max_pages must be positive")
-    offset = checkpoint.offset if checkpoint else 0
-    if offset < 0:
-        raise CordisFundingPaginationError("CORDIS offset cannot be negative")
-    observations: list[RawObservation] = []
-    claims: list[ChangeClaimSnapshot] = []
-    next_checkpoint: CordisFundingCheckpoint | None = None
-
-    for _page_index in range(max_pages):
-        target_url = client.page_url(offset)
-        _validate_page_url(entry, target_url)
-        _authorize(entry, target_url, collected_at=collected)
-        response = _parse_response(client.fetch_url(target_url).body)
-        bindings = response.results.bindings
-        for binding in bindings:
-            observation, claim = map_cordis_funding_binding(
-                binding,
-                collection_job_id=collection_job_id,
-                collected_at=collected,
-                retention_until=retention_until,
-            )
-            observations.append(observation)
-            claims.append(claim)
-        if len(bindings) < client.PAGE_SIZE:
-            next_checkpoint = None
-            break
-        offset += client.PAGE_SIZE
-        next_checkpoint = CordisFundingCheckpoint(offset=offset)
-
+    _validate_archive_url(entry, client.archive_url)
+    _authorize(entry, client.archive_url, collected_at=collected)
+    fetched = client.fetch()
+    archive_hash = sha256(fetched.body).hexdigest()
+    if checkpoint and checkpoint.archive_sha256 == archive_hash and checkpoint.complete:
+        return CordisFundingCollectionBatch(
+            observations=(), claims=(), checkpoint=checkpoint, not_modified=True
+        )
+    offset = _resolved_offset(checkpoint, archive_hash)
+    parsed = parse_cordis_archive(fetched.body, offset=offset, max_records=max_records)
+    mapped = [
+        map_cordis_funding_record(
+            record,
+            collection_job_id=collection_job_id,
+            collected_at=collected,
+            retention_until=retention_until,
+        )
+        for record in parsed.records
+    ]
+    next_checkpoint = CordisFundingCheckpoint(
+        archive_sha256=archive_hash,
+        offset=parsed.next_offset,
+        complete=not parsed.has_more,
+    )
     return CordisFundingCollectionBatch(
-        observations=tuple(observations),
-        claims=tuple(claims),
+        observations=tuple(item[0] for item in mapped),
+        claims=tuple(item[1] for item in mapped),
         checkpoint=next_checkpoint,
-        not_modified=not observations,
+        not_modified=not mapped,
     )
 
 
-def _validate_page_url(entry: SourceRegistryEntry, url: str) -> None:
+def _resolved_offset(
+    checkpoint: CordisFundingCheckpoint | None,
+    archive_hash: str,
+) -> int:
+    if checkpoint is None or checkpoint.archive_sha256 != archive_hash:
+        return 0
+    if checkpoint.offset < 0:
+        raise CordisFundingPaginationError("CORDIS offset cannot be negative")
+    return checkpoint.offset
+
+
+def _validate_archive_url(entry: SourceRegistryEntry, url: str) -> None:
     parsed = urlsplit(url)
     base = urlsplit(entry.policy.base_url)
     if parsed.scheme != "https" or parsed.hostname != base.hostname:
         raise CordisFundingPaginationError("CORDIS URL outside provider host")
-    if unquote(parsed.path).rstrip("/") != unquote(base.path).rstrip("/"):
-        raise CordisFundingPaginationError("CORDIS URL outside SPARQL endpoint")
+    if unquote(parsed.path) != unquote(base.path):
+        raise CordisFundingPaginationError("CORDIS URL outside approved bulk path")
 
 
 def _authorize(
@@ -127,10 +134,12 @@ def _authorize(
         raise CordisFundingCollectionDeniedError(decision.reason.value)
 
 
-def _parse_response(body: bytes) -> CordisFundingResponse:
-    try:
-        return CordisFundingResponse.model_validate_json(body)
-    except ValidationError as exc:
-        raise CordisFundingSchemaError(
-            "CORDIS funding response schema validation failed"
-        ) from exc
+__all__ = [
+    "CordisFundingArchiveError",
+    "CordisFundingCheckpoint",
+    "CordisFundingCollectionBatch",
+    "CordisFundingCollectionDeniedError",
+    "CordisFundingPaginationError",
+    "CordisFundingSchemaError",
+    "collect_cordis_funding",
+]
