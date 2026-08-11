@@ -49,7 +49,7 @@ def main() -> None:
             summary["specifications_url"] = specifications_url
             response = client.get(
                 specifications_url,
-                params={"items": 5, "page": 1},
+                params={"items": 5, "page": 1, "embed": 1},
                 headers={"Accept": "application/json"},
             )
             response.raise_for_status()
@@ -90,7 +90,7 @@ def _find_controlled_affiliation(
 ) -> tuple[Mapping[str, object], Mapping[str, object]]:
     response = client.get(
         f"{BASE}/affiliations",
-        params={"items": 30, "page": 1},
+        params={"items": 30, "page": 1, "embed": 1},
         headers={"Accept": "application/json"},
     )
     summary["affiliations_status"] = response.status_code
@@ -121,7 +121,7 @@ def _find_controlled_affiliation(
             continue
         participation_response = client.get(
             f"{BASE}/affiliations/{affiliation_id}/participations",
-            params={"items": 5, "page": 1},
+            params={"items": 5, "page": 1, "embed": 1},
             headers={"Accept": "application/json"},
         )
         attempts.append(
