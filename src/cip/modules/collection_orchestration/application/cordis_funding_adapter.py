@@ -11,6 +11,7 @@ from cip.adapters.sources.cordis_funding.client import (
     CordisFundingResponseError,
 )
 from cip.adapters.sources.cordis_funding.collector import (
+    CordisFundingArchiveError,
     CordisFundingCheckpoint,
     CordisFundingCollectionDeniedError,
     CordisFundingPaginationError,
@@ -27,14 +28,14 @@ from cip.modules.source_governance.infrastructure.registry import SourceRegistry
 
 class CordisFundingAdapter:
     source_id = "cordis-eu-funded-projects"
-    adapter_id = "cordis-eurio-sparql-funding"
+    adapter_id = "cordis-horizon-bulk-csv"
     data_category = DataCategory.PUBLIC_RESULT_METADATA
 
     def __init__(
         self,
         entry: SourceRegistryEntry,
         *,
-        timeout_seconds: float = 30.0,
+        timeout_seconds: float = 120.0,
     ) -> None:
         if entry.policy.id != self.source_id:
             raise ValueError("CORDIS funding adapter requires its source policy")
@@ -55,7 +56,7 @@ class CordisFundingAdapter:
         try:
             with httpx.Client(timeout=self._timeout_seconds, follow_redirects=False) as client:
                 batch = collect_cordis_funding(
-                    CordisFundingClient(client, endpoint_url=self._entry.policy.base_url),
+                    CordisFundingClient(client, archive_url=self._entry.policy.base_url),
                     self._entry,
                     collection_job_id=collection_job_id,
                     collected_at=collected_at,
@@ -66,8 +67,8 @@ class CordisFundingAdapter:
             raise _error(exc, "source_policy_denied", retryable=False) from exc
         except CordisFundingSchemaError as exc:
             raise _error(exc, "source_schema_drift", retryable=False) from exc
-        except CordisFundingPaginationError as exc:
-            raise _error(exc, "unsafe_pagination", retryable=False) from exc
+        except (CordisFundingArchiveError, CordisFundingPaginationError) as exc:
+            raise _error(exc, "unsafe_source_archive", retryable=False) from exc
         except CordisFundingResponseError as exc:
             raise _error(exc, "unsafe_source_response", retryable=True) from exc
         except httpx.HTTPStatusError as exc:
@@ -79,9 +80,11 @@ class CordisFundingAdapter:
             ) from exc
         except (httpx.TimeoutException, httpx.TransportError) as exc:
             raise _error(exc, "source_transport_error", retryable=True) from exc
-        checkpoint_payload_out: Mapping[str, object] | None = (
-            {"offset": batch.checkpoint.offset} if batch.checkpoint else None
-        )
+        checkpoint_payload_out: Mapping[str, object] = {
+            "archive_sha256": batch.checkpoint.archive_sha256,
+            "offset": batch.checkpoint.offset,
+            "complete": batch.checkpoint.complete,
+        }
         return AdapterCollectionBatch(
             observations=batch.observations,
             checkpoint_payload=checkpoint_payload_out,
@@ -95,14 +98,30 @@ def _checkpoint_from_payload(
 ) -> CordisFundingCheckpoint | None:
     if payload is None:
         return None
-    value = payload.get("offset", 0)
-    if not isinstance(value, int) or isinstance(value, bool) or value < 0:
-        raise AdapterExecutionError(
-            "CORDIS offset checkpoint must be a non-negative integer",
-            error_code="invalid_checkpoint",
-            retryable=False,
-        )
-    return CordisFundingCheckpoint(offset=value)
+    archive_hash = payload.get("archive_sha256")
+    offset = payload.get("offset", 0)
+    complete = payload.get("complete", False)
+    if not _valid_hash(archive_hash):
+        raise _checkpoint_error("CORDIS archive hash checkpoint is invalid")
+    if not isinstance(offset, int) or isinstance(offset, bool) or offset < 0:
+        raise _checkpoint_error("CORDIS offset checkpoint must be a non-negative integer")
+    if not isinstance(complete, bool):
+        raise _checkpoint_error("CORDIS complete checkpoint must be boolean")
+    return CordisFundingCheckpoint(
+        archive_sha256=archive_hash,
+        offset=offset,
+        complete=complete,
+    )
+
+
+def _valid_hash(value: object) -> bool:
+    if not isinstance(value, str) or len(value) != 64:
+        return False
+    return all(character in "0123456789abcdef" for character in value)
+
+
+def _checkpoint_error(message: str) -> AdapterExecutionError:
+    return AdapterExecutionError(message, error_code="invalid_checkpoint", retryable=False)
 
 
 def _error(exc: Exception, error_code: str, *, retryable: bool) -> AdapterExecutionError:
