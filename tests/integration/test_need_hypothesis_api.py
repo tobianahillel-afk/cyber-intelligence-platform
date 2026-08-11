@@ -67,10 +67,11 @@ def client() -> Iterator[TestClient]:
     database.close()
 
 
-def test_hypothesis_api_rejects_anonymous_access(client: TestClient) -> None:
+def test_hypothesis_api_uses_test_environment_control_plane_bypass(client: TestClient) -> None:
     response = client.get("/v1/need-hypotheses")
 
-    assert response.status_code == 401
+    assert response.status_code == 200
+    assert len(response.json()["items"]) == 1
 
 
 def test_hypothesis_list_filters_and_detail_expose_fusion_contract(client: TestClient) -> None:
