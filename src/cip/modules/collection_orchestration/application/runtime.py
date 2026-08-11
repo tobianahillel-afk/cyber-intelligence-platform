@@ -30,6 +30,7 @@ from cip.adapters.sources.recruitee.registry import load_recruitee_sites
 from cip.adapters.sources.smartrecruiters.registry import load_smartrecruiters_companies
 from cip.adapters.sources.teamtailor.registry import load_teamtailor_accounts
 from cip.adapters.sources.vulnerability_catalogs.registry import load_vulnerability_query_targets
+from cip.adapters.sources.w3c_standards.registry import load_w3c_affiliation_targets
 from cip.modules.collection_orchestration.application.adapter_composition import (
     AdapterCompositionInputs,
     build_runtime_adapters,
@@ -227,6 +228,9 @@ def _load_adapter_inputs(
         ),
         patentsview_patent_targets=load_patentsview_patent_targets(
             settings.patentsview_patent_target_registry_path
+        ),
+        w3c_affiliation_targets=load_w3c_affiliation_targets(
+            settings.w3c_affiliation_target_registry_path
         ),
         vulnerability_targets=load_vulnerability_query_targets(
             settings.vulnerability_query_target_registry_path
