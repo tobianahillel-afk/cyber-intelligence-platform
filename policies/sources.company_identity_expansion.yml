@@ -1,0 +1,50 @@
+version: 1
+reviewed_at: 2026-08-11
+
+sources:
+  - id: brreg-enhetsregisteret
+    name: Brønnøysundregistrene Enhetsregisteret Open Data
+    base_url: https://data.brreg.no/enhetsregisteret/api/enheter
+    status: enabled
+    source_type: api
+    owner: Brønnøysundregistrene
+    terms_url: https://data.brreg.no/enhetsregisteret/api/dokumentasjon/en/index.html
+    licence: Norwegian Licence for Open Government Data (NLOD) 2.0
+    allowed_data_categories:
+      - organization_metadata
+    prohibited_data_categories:
+      - professional_contact
+      - credential
+      - victim_file
+      - private_communication
+      - private_personal_data
+      - restricted_content
+    rate_limit_per_minute: 30
+    retention_days: 1825
+    attribution_required: true
+    raw_content_storage: false
+    human_review_required: false
+    authorization:
+      status: approved
+      document_reference: brreg-enhetsregisteret-open-data-nlod-2026-08-11
+      reviewed_at: 2026-08-11T09:55:00Z
+      expires_at: null
+      approved_hosts:
+        - data.brreg.no
+      approved_path_prefixes:
+        - /enhetsregisteret/api/enheter/
+      approved_purposes:
+        - organization-identity-resolution
+      automated_collection_allowed: true
+      raw_storage_allowed: false
+    economics:
+      commercial_value: high
+      monthly_cost: 0
+      implementation_cost: medium
+      maintenance_cost: low
+      expected_stability: high
+    notes: >-
+      Uses only exact public entity lookups by Norwegian organisation number.
+      Person-role endpoints, Maskinporten-authorized endpoints, personal identifiers,
+      beneficial-owner data and name-only automatic matching are outside scope.
+      A 410 response is treated as a fail-closed public-disclosure removal signal.
