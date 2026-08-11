@@ -12,4 +12,5 @@ targets:
     siren: null
     siret: null
     lei: null
+    foreign_registration: null
     enabled: false
