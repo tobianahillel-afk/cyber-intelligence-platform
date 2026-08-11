@@ -1,0 +1,20 @@
+version: 1
+
+templates:
+  - id: security-policy-metadata
+    version: 1
+    query_pattern: "security org:{organization} filename:SECURITY.md"
+    purpose: public-security-policy-discovery
+    enabled: false
+
+  - id: dependency-automation-metadata
+    version: 1
+    query_pattern: "updates org:{organization} filename:dependabot.yml"
+    purpose: public-dependency-automation-discovery
+    enabled: false
+
+  - id: code-ownership-metadata
+    version: 1
+    query_pattern: "owners org:{organization} filename:CODEOWNERS"
+    purpose: public-code-ownership-discovery
+    enabled: false
