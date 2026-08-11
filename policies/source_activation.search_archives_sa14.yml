@@ -73,3 +73,4 @@ sources:
       - adapter_present
       - authorized
       - executable
+      - live_tested
