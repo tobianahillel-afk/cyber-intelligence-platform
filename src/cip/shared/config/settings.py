@@ -120,6 +120,9 @@ class Settings(BaseSettings):
     github_code_search_template_registry_path: Path = Path(
         "policies/github_code_search_templates.yml"
     )
+    crossref_publication_target_registry_path: Path = Path(
+        "policies/crossref_publication_targets.yml"
+    )
     vulnerability_query_target_registry_path: Path = Path(
         "policies/vulnerability_query_targets.yml"
     )
