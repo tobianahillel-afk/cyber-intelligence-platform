@@ -12,6 +12,8 @@ from cip.shared.kernel.time import require_aware_utc
 
 class SearchAcquisitionState(StrEnum):
     UNROUTED = "unrouted"
+    ROUTED_PUBLIC_WEB = "routed_public_web"
+    REQUIRES_SOURCE_REVIEW = "requires_source_review"
 
 
 @dataclass(frozen=True, slots=True)
