@@ -137,6 +137,7 @@ def _load_source_entries(settings: Settings) -> tuple[SourceRegistryEntry, ...]:
     return load_source_registry_bundle(
         settings.source_registry_path,
         settings.identity_source_registry_path,
+        settings.company_identity_expansion_source_registry_path,
         settings.decp_source_registry_path,
         settings.procurement_funding_source_registry_path,
         settings.public_web_source_registry_path,
@@ -157,6 +158,7 @@ def _load_source_entries(settings: Settings) -> tuple[SourceRegistryEntry, ...]:
 def _load_portfolio(settings: Settings) -> tuple[SourceCatalogEntry, ...]:
     return load_source_portfolio_bundle(
         settings.source_portfolio_path,
+        settings.company_identity_expansion_source_portfolio_path,
         settings.decp_source_portfolio_path,
         settings.procurement_funding_source_portfolio_path,
         settings.public_web_source_portfolio_path,
