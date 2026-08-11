@@ -53,6 +53,7 @@ def map_place_award(
     payload_hash = _payload_hash(award)
     source_record_key = _source_record_key(award)
     buyer = _buyer(award, collected_at=collected)
+    awardee = _awardee(award)
     published_at = datetime.combine(award.date_de_notification, datetime.min.time(), UTC)
     observation = RawObservation(
         source_id=SOURCE_ID,
@@ -102,7 +103,7 @@ def map_place_award(
         title=award.objet_du_marche,
         status=ContractStatus.AWARDED,
         confidence=0.9,
-        parties=(_awardee(award),),
+        parties=(awardee,) if awardee is not None else (),
         service_families=classify_service_families(award.searchable_text()),
         amount=(
             MoneyAmount(value=award.montant, currency="EUR")
@@ -132,7 +133,9 @@ def _buyer(award: PlaceAward, *, collected_at: datetime) -> Organization:
     )
 
 
-def _awardee(award: PlaceAward) -> ProcurementParty:
+def _awardee(award: PlaceAward) -> ProcurementParty | None:
+    if award.nom_attributaire is None:
+        return None
     siret = _normalized_siret(award.siret_attributaire)
     return ProcurementParty(
         role=ProcurementPartyRole.AWARDEE,
