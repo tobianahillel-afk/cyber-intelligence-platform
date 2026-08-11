@@ -20,7 +20,7 @@ class PlaceAward(BaseModel):
     entite_publique: str
     entite_d_achat: str | None = None
     code_postal_entite_d_achat: str | None = None
-    nom_attributaire: str
+    nom_attributaire: str | None = None
     siret_attributaire: str | None = None
     date_de_notification: date
     code_postal_attributaire: str | None = None
@@ -32,12 +32,17 @@ class PlaceAward(BaseModel):
     attributaire_est_une_pme: str | None = None
     geocode_att: PlaceGeoPoint | None = None
 
-    @field_validator("entite_publique", "nom_attributaire", "objet_du_marche")
+    @field_validator("entite_publique", "objet_du_marche")
     @classmethod
     def _required_text(cls, value: str) -> str:
         if not value:
             raise ValueError("required PLACE text field cannot be blank")
         return value
+
+    @field_validator("nom_attributaire")
+    @classmethod
+    def _optional_awardee(cls, value: str | None) -> str | None:
+        return value or None
 
     @field_validator("annee_de_notification")
     @classmethod
