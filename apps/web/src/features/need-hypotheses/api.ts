@@ -2,6 +2,7 @@ import "server-only";
 
 import type {
   CyberServiceFamily,
+  NeedHypothesis,
   NeedHypothesisClass,
   NeedHypothesisListResponse,
 } from "./types";
@@ -43,16 +44,29 @@ export async function loadNeedHypotheses(
   );
 }
 
+export async function loadNeedHypothesis(id: string): Promise<NeedHypothesis> {
+  return requestJson<NeedHypothesis>(`/v1/need-hypotheses/${encodeURIComponent(id)}`);
+}
+
 function apiBaseUrl(): string {
   return (process.env.CIP_API_BASE_URL ?? DEFAULT_API_BASE_URL).replace(/\/$/, "");
 }
 
+function controlPlaneToken(): string | undefined {
+  const token = process.env.CIP_CONTROL_PLANE_TOKEN?.trim();
+  return token || undefined;
+}
+
 async function requestJson<T>(path: string): Promise<T> {
+  const token = controlPlaneToken();
   let response: Response;
   try {
     response = await fetch(`${apiBaseUrl()}${path}`, {
       cache: "no-store",
-      headers: { accept: "application/json" },
+      headers: {
+        accept: "application/json",
+        ...(token ? { "X-CIP-Control-Token": token } : {}),
+      },
     });
   } catch {
     throw new NeedHypothesisApiError("Need hypothesis API is unavailable", 503);
