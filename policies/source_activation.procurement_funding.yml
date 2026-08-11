@@ -32,7 +32,7 @@ sources:
       - live_tested
 
   - source_id: cordis-eu-funded-projects
-    display_name: CORDIS EURIO EU-funded projects SPARQL
+    display_name: CORDIS Horizon projects and organisations bulk CSV
     category: corporate_change
     disposition: active
     activation_wave: SA-12
