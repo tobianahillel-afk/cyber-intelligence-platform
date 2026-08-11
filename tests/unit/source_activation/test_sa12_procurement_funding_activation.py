@@ -8,6 +8,7 @@ from cip.modules.source_activation.domain.models import (
     ActivationStage,
 )
 from cip.modules.source_activation.infrastructure.inventory import load_activation_inventory
+from cip.modules.source_governance.domain.models import SourceStatus
 from cip.modules.source_governance.infrastructure.registry import load_source_registry
 from cip.modules.source_portfolio.infrastructure.registry_bundle import (
     load_source_portfolio_bundle,
@@ -42,12 +43,12 @@ def test_sa12_source_governance_is_enabled_and_provider_specific() -> None:
     entries = {entry.policy.id: entry for entry in load_source_registry(POLICY_PATH)}
 
     place = entries["place-awards"]
-    assert place.policy.enabled
+    assert place.policy.status is SourceStatus.ENABLED
     assert place.authorization.automated_collection_allowed
     assert place.authorization.approved_hosts == frozenset({"data.economie.gouv.fr"})
 
     ademe = entries["ademe-financial-aid"]
-    assert ademe.policy.enabled
+    assert ademe.policy.status is SourceStatus.ENABLED
     assert ademe.authorization.automated_collection_allowed
     assert ademe.authorization.approved_hosts == frozenset({"data.ademe.fr"})
 
