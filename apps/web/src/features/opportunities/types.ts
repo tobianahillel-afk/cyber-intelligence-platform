@@ -13,13 +13,14 @@ export type OpportunityReviewAction =
   | "reopen";
 
 export type OpportunityDataQuality = "complete" | "partial";
+export type OpportunityFamily = "siem_soc_buying_intent" | "cyber_service_need";
 
 export interface OpportunityListItem {
   id: string;
   organization_id: string;
   organization: string;
   country: string | null;
-  family: "siem_soc_buying_intent";
+  family: OpportunityFamily;
   state: OpportunityState;
   data_quality: OpportunityDataQuality;
   recommended_offer: string;
