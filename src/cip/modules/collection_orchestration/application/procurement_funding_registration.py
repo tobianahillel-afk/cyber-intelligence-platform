@@ -3,6 +3,9 @@ from __future__ import annotations
 from cip.modules.collection_orchestration.application.ademe_funding_adapter import (
     AdemeFundingAdapter,
 )
+from cip.modules.collection_orchestration.application.cordis_funding_adapter import (
+    CordisFundingAdapter,
+)
 from cip.modules.collection_orchestration.application.place_awards_adapter import (
     PlaceAwardsAdapter,
 )
@@ -16,7 +19,7 @@ def register_procurement_funding_adapters(
     *,
     timeout_seconds: float,
 ) -> None:
-    for adapter_type in (PlaceAwardsAdapter, AdemeFundingAdapter):
+    for adapter_type in (PlaceAwardsAdapter, AdemeFundingAdapter, CordisFundingAdapter):
         entry = entries_by_id.get(adapter_type.source_id)
         if entry is None:
             continue
