@@ -3,6 +3,7 @@ from __future__ import annotations
 import csv
 import io
 import zipfile
+from dataclasses import replace
 from datetime import UTC, datetime, timedelta
 from hashlib import sha256
 from pathlib import Path
@@ -35,6 +36,7 @@ from cip.modules.collection_orchestration.application.cordis_funding_adapter imp
     CordisFundingAdapter,
 )
 from cip.modules.collection_orchestration.application.ports import AdapterExecutionError
+from cip.modules.source_governance.domain.models import AuthorizationStatus
 from cip.modules.source_governance.infrastructure.registry import (
     SourceRegistryEntry,
     load_source_registry,
@@ -70,6 +72,7 @@ def test_cordis_client_rejects_unsafe_content_type_and_size() -> None:
     responses = [
         ("text/html", "1", b"x"),
         ("application/zip", "100000001", b"PK"),
+        ("application/zip", "invalid", b"PK"),
     ]
 
     def handler(request: httpx.Request) -> httpx.Response:
@@ -86,6 +89,8 @@ def test_cordis_client_rejects_unsafe_content_type_and_size() -> None:
         with pytest.raises(CordisFundingResponseError, match="content type"):
             client.fetch()
         with pytest.raises(CordisFundingResponseError, match="size limit"):
+            client.fetch()
+        with pytest.raises(CordisFundingResponseError, match="Content-Length"):
             client.fetch()
 
 
@@ -110,6 +115,18 @@ def test_cordis_parser_rejects_missing_member_and_schema_drift() -> None:
         parse_cordis_archive(_archive([invalid]), offset=0)
 
 
+def test_cordis_parser_rejects_invalid_archive_path_and_bounds() -> None:
+    with pytest.raises(ValueError, match="offset cannot be negative"):
+        parse_cordis_archive(_archive([_row()]), offset=-1)
+    with pytest.raises(ValueError, match="max_records outside"):
+        parse_cordis_archive(_archive([_row()]), offset=0, max_records=0)
+    with pytest.raises(CordisFundingArchiveError, match="invalid CORDIS bulk archive"):
+        parse_cordis_archive(b"not-a-zip", offset=0)
+    unsafe = _zip_members({"../escape.csv": b"x", "organization.csv": b"x\n"})
+    with pytest.raises(CordisFundingArchiveError, match="unsafe member path"):
+        parse_cordis_archive(unsafe, offset=0)
+
+
 def test_cordis_mapper_preserves_organisation_funding_semantics() -> None:
     record = CordisOrganizationRecord.model_validate(_row())
     observation, claim = map_cordis_funding_record(
@@ -123,6 +140,35 @@ def test_cordis_mapper_preserves_organisation_funding_semantics() -> None:
     assert claim.organization_id is None
     assert "CORDIS organisation ecContribution field: 2500000" in claim.excerpt
     assert "coordinator" in claim.excerpt
+    assert claim.historical_only is False
+
+
+def test_cordis_mapper_handles_invalid_source_values_without_invention() -> None:
+    row = _row()
+    row["ecContribution"] = "unknown"
+    row["contentUpdateDate"] = "not-a-date"
+    row["endOfParticipation"] = "2020-01-01"
+    row["active"] = "false"
+    _, claim = map_cordis_funding_record(
+        CordisOrganizationRecord.model_validate(row),
+        collection_job_id=uuid4(),
+        collected_at=NOW,
+        retention_until=RETENTION,
+    )
+    assert "ecContribution field" not in claim.excerpt
+    assert claim.published_at == NOW
+    assert claim.modified_at == NOW
+    assert claim.historical_only is True
+
+    future = _row()
+    future["contentUpdateDate"] = "2027-01-01"
+    _, future_claim = map_cordis_funding_record(
+        CordisOrganizationRecord.model_validate(future),
+        collection_job_id=uuid4(),
+        collected_at=NOW,
+        retention_until=RETENTION,
+    )
+    assert future_claim.published_at == NOW
 
 
 def test_cordis_collector_checkpoints_snapshot_and_replay() -> None:
@@ -161,6 +207,35 @@ def test_cordis_collector_checkpoints_snapshot_and_replay() -> None:
     assert replay.observations == ()
 
 
+def test_cordis_collector_resets_offset_when_snapshot_changes() -> None:
+    archive = _archive([_row()])
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(
+            200,
+            headers={"content-type": "application/zip"},
+            content=archive,
+            request=request,
+        )
+
+    stale = CordisFundingCheckpoint(
+        archive_sha256="b" * 64,
+        offset=500,
+        complete=False,
+    )
+    with httpx.Client(transport=httpx.MockTransport(handler)) as http_client:
+        batch = collect_cordis_funding(
+            CordisFundingClient(http_client, archive_url=_entry().policy.base_url),
+            _entry(),
+            collection_job_id=uuid4(),
+            collected_at=NOW,
+            retention_until=RETENTION,
+            checkpoint=stale,
+        )
+    assert len(batch.observations) == 1
+    assert batch.checkpoint.offset == 1
+
+
 def test_cordis_collector_denies_before_network() -> None:
     requested = False
 
@@ -169,7 +244,11 @@ def test_cordis_collector_denies_before_network() -> None:
         requested = True
         return httpx.Response(500, request=request)
 
-    denied = _entry("ademe-financial-aid")
+    entry = _entry()
+    denied = replace(
+        entry,
+        authorization=replace(entry.authorization, status=AuthorizationStatus.REVOKED),
+    )
     with (
         httpx.Client(transport=httpx.MockTransport(handler)) as http_client,
         pytest.raises(CordisFundingCollectionDeniedError),
@@ -219,14 +298,50 @@ def test_cordis_runtime_adapter_round_trips_checkpoint(
         "complete": False,
     }
 
+    invalid_payloads = (
+        {"archive_sha256": "bad", "offset": 0},
+        {"archive_sha256": archive_hash, "offset": True},
+        {"archive_sha256": archive_hash, "offset": 0, "complete": "yes"},
+    )
+    for payload in invalid_payloads:
+        with pytest.raises(AdapterExecutionError) as exc_info:
+            CordisFundingAdapter(_entry()).collect(
+                collection_job_id=uuid4(),
+                checkpoint_payload=payload,
+                collected_at=NOW,
+                retention_until=RETENTION,
+            )
+        assert exc_info.value.error_code == "invalid_checkpoint"
+
+
+@pytest.mark.parametrize(
+    ("failure", "error_code", "retryable"),
+    [
+        (CordisFundingSchemaError("schema"), "source_schema_drift", False),
+        (CordisFundingArchiveError("archive"), "unsafe_source_archive", False),
+        (CordisFundingResponseError("response"), "unsafe_source_response", True),
+        (httpx.TimeoutException("timeout"), "source_transport_error", True),
+    ],
+)
+def test_cordis_runtime_adapter_classifies_failures(
+    monkeypatch: pytest.MonkeyPatch,
+    failure: Exception,
+    error_code: str,
+    retryable: bool,
+) -> None:
+    def fail(*args: object, **kwargs: object) -> CordisFundingCollectionBatch:
+        raise failure
+
+    monkeypatch.setattr(adapter_module, "collect_cordis_funding", fail)
     with pytest.raises(AdapterExecutionError) as exc_info:
         CordisFundingAdapter(_entry()).collect(
             collection_job_id=uuid4(),
-            checkpoint_payload={"archive_sha256": "bad", "offset": 0},
+            checkpoint_payload=None,
             collected_at=NOW,
             retention_until=RETENTION,
         )
-    assert exc_info.value.error_code == "invalid_checkpoint"
+    assert exc_info.value.error_code == error_code
+    assert exc_info.value.retryable is retryable
 
 
 def _row(
