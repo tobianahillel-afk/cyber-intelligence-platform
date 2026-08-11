@@ -3,13 +3,20 @@ from __future__ import annotations
 from datetime import date
 from decimal import Decimal
 
-from pydantic import BaseModel, ConfigDict, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator
+
+
+class PlaceGeoPoint(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    lon: float = Field(ge=-180, le=180)
+    lat: float = Field(ge=-90, le=90)
 
 
 class PlaceAward(BaseModel):
     model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
 
-    annee_de_notification: date | None = None
+    annee_de_notification: int | None = None
     entite_publique: str
     entite_d_achat: str | None = None
     code_postal_entite_d_achat: str | None = None
@@ -23,13 +30,20 @@ class PlaceAward(BaseModel):
     tranche_budgetaire: str | None = None
     montant: Decimal | None = None
     attributaire_est_une_pme: str | None = None
-    geocode_att: tuple[float, float] | None = None
+    geocode_att: PlaceGeoPoint | None = None
 
     @field_validator("entite_publique", "nom_attributaire", "objet_du_marche")
     @classmethod
     def _required_text(cls, value: str) -> str:
         if not value:
             raise ValueError("required PLACE text field cannot be blank")
+        return value
+
+    @field_validator("annee_de_notification")
+    @classmethod
+    def _valid_notification_year(cls, value: int | None) -> int | None:
+        if value is not None and not 1900 <= value <= 2100:
+            raise ValueError("PLACE notification year is outside supported bounds")
         return value
 
     @field_validator("montant")
