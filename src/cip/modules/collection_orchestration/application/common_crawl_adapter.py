@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import json
 from collections.abc import Mapping
 from datetime import UTC, datetime
 from hashlib import sha256
@@ -8,13 +7,12 @@ from urllib.parse import urlsplit
 from uuid import UUID
 
 import httpx
-from pydantic import ValidationError
 
-from cip.adapters.sources.common_crawl.schemas import (
-    CommonCrawlCapture,
-    CommonCrawlCollection,
-    crawl_sort_key,
+from cip.adapters.sources.common_crawl.client import (
+    CommonCrawlClient,
+    CommonCrawlClientError,
 )
+from cip.adapters.sources.common_crawl.schemas import CommonCrawlCapture
 from cip.adapters.sources.public_web.registry import PublicWebTarget
 from cip.modules.collection_orchestration.application.ports import (
     AdapterCollectionBatch,
@@ -33,14 +31,6 @@ from cip.modules.source_governance.domain.models import (
 )
 from cip.modules.source_governance.infrastructure.registry import SourceRegistryEntry
 
-_MAX_RESPONSE_BYTES = 2 * 1024 * 1024
-_MAX_CAPTURES = 50
-_FIELDS = ("timestamp", "url", "mime", "status", "digest", "length", "offset", "filename")
-_USER_AGENT = (
-    "cyber-intelligence-platform/0.24 "
-    "(+https://github.com/tobianahillel-afk/cyber-intelligence-platform)"
-)
-
 
 class CommonCrawlIndexAdapter:
     source_id = "common-crawl-index"
@@ -58,12 +48,12 @@ class CommonCrawlIndexAdapter:
     ) -> None:
         if entry.policy.id != self.source_id:
             raise ValueError("Common Crawl adapter requires common-crawl-index policy")
-        if timeout_seconds <= 0:
-            raise ValueError("timeout_seconds must be positive")
         self._entry = entry
         self._pairs = _target_prefix_pairs(targets)
-        self._timeout_seconds = timeout_seconds
-        self._transport = transport
+        self._client = CommonCrawlClient(
+            timeout_seconds=timeout_seconds,
+            transport=transport,
+        )
 
     def collect(
         self,
@@ -77,58 +67,49 @@ class CommonCrawlIndexAdapter:
         if pair is None:
             return _empty_batch()
         target, prefix = pair
-        collection_url = self._entry.policy.base_url
-        _authorize(self._entry, collection_url, collected_at)
-        collections = _fetch_collections(
-            collection_url,
-            timeout_seconds=self._timeout_seconds,
-            transport=self._transport,
-        )
-        collection = max(collections, key=lambda item: crawl_sort_key(item.id))
-        _validate_collection_endpoint(collection)
-        previous_crawl = crawl_ids.get(_pair_key(target, prefix))
-        if previous_crawl == collection.id:
-            return _checkpoint_batch(next_index, crawl_ids, target, prefix, collection.id)
-        _authorize(self._entry, collection.cdx_api, collected_at)
-        body, request_url = _fetch_captures(
-            collection.cdx_api,
-            url_pattern=_target_pattern(target, prefix),
-            timeout_seconds=self._timeout_seconds,
-            transport=self._transport,
-        )
+        try:
+            _authorize(self._entry, self._entry.policy.base_url, collected_at)
+            collection = self._client.latest_collection(self._entry.policy.base_url)
+            if crawl_ids.get(_pair_key(target, prefix)) == collection.id:
+                return _checkpoint_batch(next_index, crawl_ids, target, prefix, collection.id)
+            _authorize(self._entry, collection.cdx_api, collected_at)
+            fetched = self._client.captures(
+                collection,
+                url_pattern=_target_pattern(target, prefix),
+            )
+        except CommonCrawlClientError as exc:
+            raise AdapterExecutionError(
+                str(exc), error_code=exc.code, retryable=exc.retryable
+            ) from exc
         captures = tuple(
-            capture
-            for capture in _parse_captures(body)
-            if _capture_in_scope(capture, target)
-        )
-        observations = tuple(
-            _observation(
-                capture,
-                collection_id=collection.id,
-                collection_job_id=collection_job_id,
-                collected_at=collected_at,
-                retention_until=retention_until,
-                source_url=request_url,
-            )
-            for capture in captures
-        )
-        projections = tuple(
-            map_common_crawl_index_lead(
-                _lead(
-                    capture,
-                    collection_id=collection.id,
-                    target=target,
-                    observed_at=collected_at,
-                    index_url=collection.cdx_api,
-                )
-            )
-            for capture in captures
+            capture for capture in fetched.captures if _capture_in_scope(capture, target)
         )
         next_crawl_ids = dict(crawl_ids)
         next_crawl_ids[_pair_key(target, prefix)] = collection.id
         return AdapterCollectionBatch(
-            observations=observations,
-            public_footprint_projections=projections,
+            observations=tuple(
+                _observation(
+                    capture,
+                    collection_id=collection.id,
+                    collection_job_id=collection_job_id,
+                    collected_at=collected_at,
+                    retention_until=retention_until,
+                    source_url=fetched.request_url,
+                )
+                for capture in captures
+            ),
+            public_footprint_projections=tuple(
+                map_common_crawl_index_lead(
+                    _lead(
+                        capture,
+                        collection_id=collection.id,
+                        target=target,
+                        observed_at=collected_at,
+                        index_url=collection.cdx_api,
+                    )
+                )
+                for capture in captures
+            ),
             checkpoint_payload={"pair_index": next_index, "crawl_ids": next_crawl_ids},
             not_modified=not captures,
         )
@@ -152,107 +133,6 @@ def _authorize(entry: SourceRegistryEntry, target_url: str, now: datetime) -> No
         raise AdapterExecutionError(
             decision.reason.value,
             error_code="source_policy_denied",
-            retryable=False,
-        )
-
-
-def _fetch_collections(
-    url: str,
-    *,
-    timeout_seconds: float,
-    transport: httpx.BaseTransport | None,
-) -> tuple[CommonCrawlCollection, ...]:
-    body, _ = _get(url, timeout_seconds=timeout_seconds, transport=transport)
-    try:
-        raw = json.loads(body)
-        if not isinstance(raw, list) or not raw:
-            raise ValueError("collection list must be non-empty")
-        return tuple(CommonCrawlCollection.model_validate(item) for item in raw)
-    except (json.JSONDecodeError, TypeError, ValueError, ValidationError) as exc:
-        raise _schema_error("Common Crawl collection metadata changed", exc) from exc
-
-
-def _fetch_captures(
-    url: str,
-    *,
-    url_pattern: str,
-    timeout_seconds: float,
-    transport: httpx.BaseTransport | None,
-) -> tuple[bytes, str]:
-    params: dict[str, str | int] = {
-        "url": url_pattern,
-        "output": "json",
-        "filter": "status:200",
-        "collapse": "digest",
-        "limit": _MAX_CAPTURES,
-        "fl": ",".join(_FIELDS),
-    }
-    return _get(url, params=params, timeout_seconds=timeout_seconds, transport=transport)
-
-
-def _get(
-    url: str,
-    *,
-    params: Mapping[str, str | int] | None = None,
-    timeout_seconds: float,
-    transport: httpx.BaseTransport | None,
-) -> tuple[bytes, str]:
-    try:
-        with httpx.Client(
-            timeout=timeout_seconds,
-            follow_redirects=False,
-            transport=transport,
-            headers={"User-Agent": _USER_AGENT},
-        ) as client:
-            response = client.get(url, params=params)
-            response.raise_for_status()
-    except httpx.HTTPStatusError as exc:
-        status = exc.response.status_code
-        raise AdapterExecutionError(
-            f"Common Crawl returned HTTP {status}",
-            error_code=f"http_{status}",
-            retryable=status == 429 or status >= 500,
-        ) from exc
-    except (httpx.TimeoutException, httpx.TransportError) as exc:
-        raise AdapterExecutionError(
-            str(exc) or type(exc).__name__,
-            error_code="source_transport_error",
-            retryable=True,
-        ) from exc
-    if len(response.content) > _MAX_RESPONSE_BYTES:
-        raise AdapterExecutionError(
-            "Common Crawl response exceeds size limit",
-            error_code="unsafe_source_response",
-            retryable=False,
-        )
-    return response.content, str(response.url)
-
-
-def _parse_captures(body: bytes) -> tuple[CommonCrawlCapture, ...]:
-    captures: list[CommonCrawlCapture] = []
-    for line in body.decode("utf-8").splitlines()[:_MAX_CAPTURES]:
-        if not line.strip():
-            continue
-        try:
-            raw = json.loads(line)
-            captures.append(CommonCrawlCapture.model_validate(raw))
-        except (json.JSONDecodeError, UnicodeDecodeError, ValidationError) as exc:
-            raise _schema_error("Common Crawl capture metadata changed", exc) from exc
-    return tuple(captures)
-
-
-def _validate_collection_endpoint(collection: CommonCrawlCollection) -> None:
-    parsed = urlsplit(collection.cdx_api)
-    if (
-        parsed.scheme != "https"
-        or parsed.hostname != "index.commoncrawl.org"
-        or parsed.path != f"/{collection.id}-index"
-        or parsed.query
-        or parsed.fragment
-    ):
-        raise AdapterExecutionError(
-            "Common Crawl collection endpoint is outside approved shape",
-            error_code="unsafe_source_response",
             retryable=False,
         )
 
@@ -299,9 +179,7 @@ def _next_pair(
     ):
         raise _checkpoint_error()
     valid_keys = {_pair_key(target, prefix) for target, prefix in pairs}
-    crawl_ids = {
-        key: value for key, value in crawl_value.items() if key in valid_keys
-    }
+    crawl_ids = {key: value for key, value in crawl_value.items() if key in valid_keys}
     index = index_value % len(pairs)
     next_index = 0 if index + 1 >= len(pairs) else index + 1
     return pairs[index], next_index, crawl_ids
@@ -380,10 +258,6 @@ def _observation(
         retention_until=retention_until,
         schema_fingerprint="common-crawl-cdxj:v1",
     )
-
-
-def _schema_error(message: str, exc: Exception) -> AdapterExecutionError:
-    return AdapterExecutionError(message, error_code="source_schema_drift", retryable=False)
 
 
 def _checkpoint_error() -> AdapterExecutionError:
