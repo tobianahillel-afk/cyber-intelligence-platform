@@ -18,6 +18,15 @@ interface NeedHypothesisQuery {
   limit?: number;
 }
 
+export class NeedHypothesisApiError extends Error {
+  constructor(
+    message: string,
+    readonly status: number,
+  ) {
+    super(message);
+  }
+}
+
 export async function loadNeedHypotheses(
   query: NeedHypothesisQuery = {},
 ): Promise<NeedHypothesisListResponse> {
@@ -51,10 +60,10 @@ async function requestJson<T>(path: string): Promise<T> {
       headers: { accept: "application/json" },
     });
   } catch {
-    throw new Error("Need-hypothesis API is unavailable");
+    throw new NeedHypothesisApiError("Need-hypothesis API is unavailable", 503);
   }
   if (!response.ok) {
-    throw new Error(await responseMessage(response));
+    throw new NeedHypothesisApiError(await responseMessage(response), response.status);
   }
   return (await response.json()) as T;
 }
