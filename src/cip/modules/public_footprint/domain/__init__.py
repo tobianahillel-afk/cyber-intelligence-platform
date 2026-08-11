@@ -23,6 +23,14 @@ from cip.modules.public_footprint.domain.search import (
     SearchResultLead,
     map_search_result_lead,
 )
+from cip.modules.public_footprint.domain.search_core import (
+    SearchAcquisitionState,
+    SearchDiscoveryCandidate,
+    SearchProviderExecution,
+    SearchProviderHit,
+    SearchQueryPlan,
+    normalize_search_executions,
+)
 from cip.modules.public_footprint.domain.url_identity import (
     CanonicalUrl,
     canonicalize_url,
@@ -46,10 +54,16 @@ __all__ = [
     "PublicResourceVersion",
     "ResourceAccessState",
     "ResourceRetrievalState",
+    "SearchAcquisitionState",
+    "SearchDiscoveryCandidate",
     "SearchLeadClaim",
+    "SearchProviderExecution",
+    "SearchProviderHit",
+    "SearchQueryPlan",
     "SearchQueryTemplate",
     "SearchResultLead",
     "canonicalize_url",
     "map_search_result_lead",
+    "normalize_search_executions",
     "same_origin",
 ]
