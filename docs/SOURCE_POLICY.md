@@ -2,175 +2,318 @@
 
 ## Goal
 
-Every collector must be reviewed individually. A source being visible on the Internet does not, by itself, establish permission to automate collection, republish its database, process personal data, or ignore contractual restrictions.
+Cyber Intelligence Platform must implement every useful public, licensed, customer-authorized or provider-authorized source through a concrete provider-specific acquisition path.
 
-The platform therefore uses a source registry with explicit approval states.
+Source policy is therefore both an authorization control and an activation contract: a useful source that currently lacks an API key, paid plan, account, target registry, written permission, stable API or deployment connector remains unfinished work with an explicit prerequisite owner and target SA.
 
-The complete candidate-source taxonomy, OSINT Framework mapping, collection modes, adapter requirements, and implementation priorities are defined in [`OSINT_COLLECTION_CATALOG.md`](OSINT_COLLECTION_CATALOG.md). That catalog is a discovery and planning document. This policy and the executable source registry remain authoritative for network access.
+The complete target is defined in [`OSINT_FULL_IMPLEMENTATION_MANDATE.md`](OSINT_FULL_IMPLEMENTATION_MANDATE.md).
+
+## Core rule
+
+Internet visibility alone is not authority to ignore provider access controls or contractual scope. At the same time, a missing entitlement or account is not a reason to permanently discard a useful provider.
+
+For every useful provider the project must answer:
+
+1. what legitimate access mode is available;
+2. what account/licence/permission is required;
+3. what exact hosts/paths/methods/fields are in scope;
+4. what data may be stored and for how long;
+5. what production adapter is required;
+6. what live validation will prove the integration;
+7. which SA owns completion.
 
 ## Source states
 
+The existing registry vocabulary may contain `allowed`, `conditional`, and `blocked` for compatibility.
+
 ### `allowed`
 
-A source may be ingested automatically when at least one of the following applies:
+The deployment may execute the approved acquisition path now.
 
-- an official API or downloadable feed expressly permits the intended use;
-- an open-data or compatible content licence covers collection and reuse;
-- the source owner has provided written permission;
-- the source is an official public authority or vendor feed whose reuse terms are compatible;
-- collection is limited to minimal factual metadata and has passed legal, contractual, privacy, and technical review.
+Examples:
+
+- official public API;
+- compatible open-data feed;
+- approved ordinary public-web crawl;
+- licensed API whose current deployment entitlement is connected;
+- administrator-installed connector;
+- written-authorized browser workflow.
 
 ### `conditional`
 
-A source requires constraints such as:
+The source is useful and executable after explicit constraints or prerequisites are satisfied, for example:
 
-- API key or paid licence;
+- API key;
+- paid/enterprise licence;
+- customer authorization;
+- provider account;
 - attribution;
-- strict rate limits;
-- limited fields;
-- no republication of raw content;
-- no personal-data enrichment;
-- manual-only access;
-- geographic restrictions;
 - retention limits;
-- human review before use.
+- bounded fields;
+- target registry;
+- service account;
+- browser session;
+- analyst-assisted MFA;
+- contract approval.
 
-### `blocked`
+`conditional` is active implementation work, not a terminal state.
 
-A source must not be collected when it requires or encourages:
+### `blocked` compatibility state
 
-- bypassing authentication, paywalls, CAPTCHAs, technical controls, or access restrictions;
-- breaching contractual API or platform restrictions;
-- acquiring stolen credentials, victim files, private communications, or extorted datasets;
-- impersonation or deceptive interaction;
-- intrusive probing of third-party systems;
-- collection whose privacy impact cannot be justified or mitigated;
-- de-anonymizing pseudonymous people or building behavioural dossiers from their message history;
-- covertly joining private or restricted communities;
-- scraping LinkedIn, Discord, or another platform contrary to its terms or without express authorization.
+A useful source may temporarily be represented as `blocked` when no current deployment authorization or legitimate access path is ready.
 
-## Ransomware and live-incident sources
+For future work, every useful `blocked` source must also have:
 
-The system may ingest lawful public or licensed metadata such as:
+- an exact missing prerequisite;
+- implementation owner;
+- target SA;
+- planned adapter/access path;
+- acceptance/live-test condition.
+
+A useful provider must not be closed merely because it is currently `blocked`. It remains in the activation backlog until the prerequisite is resolved, it is replaced by an equivalent fully integrated provider, or the product owner explicitly excludes it as no longer useful.
+
+## Supported acquisition modes
+
+Source Governance should be able to authorize all of these legitimate modes:
+
+- `official_api`;
+- `open_data`;
+- `licensed_api`;
+- `feed_or_bulk`;
+- `static_http`;
+- `recursive_web`;
+- `authorized_browser`;
+- `authorized_authenticated_web`;
+- `consented_connector`;
+- `local_tool_module`;
+- `manual_import`.
+
+A source may use several modes with an explicit preference/fallback order.
+
+## Web and crawling policy
+
+For approved organization domains, recursive crawling is an intended production capability.
+
+The policy may authorize:
+
+- robots retrieval/evaluation;
+- sitemap and sitemap-index traversal;
+- RSS/Atom;
+- security.txt;
+- same-origin recursive link discovery;
+- configurable crawl depth;
+- configurable page/byte/time/concurrency budgets;
+- JavaScript-rendered browser collection;
+- permitted document downloads through quarantine;
+- automatic refresh schedules;
+- legitimate authenticated access for exact approved accounts and paths.
+
+Automatic company crawling should be generated from canonical organization/domain evidence when deployment policy approves that research scope.
+
+## Browser and login policy
+
+A useful source must not be excluded simply because it requires JavaScript or a legitimate account.
+
+The platform should implement:
+
+- Playwright/Chromium adapters;
+- provider-approved service/test accounts;
+- OAuth/SSO;
+- account-specific cookies/session state;
+- administrator-installed integrations;
+- analyst-assisted MFA checkpoints;
+- screenshots and controlled downloads;
+- resume-after-human-action workflows.
+
+Browser credentials and sessions remain isolated per source/account/authorization scope.
+
+## CAPTCHA, MFA and access-control boundary
+
+The platform supports CAPTCHA/MFA as human/provider checkpoints for legitimate authorized accounts.
+
+Normal acquisition does not implement techniques whose purpose is to defeat access controls. It must not:
+
+- bypass CAPTCHA or MFA to obtain unauthorized automation;
+- steal/replay another user's session;
+- guess/validate credentials;
+- create deceptive identities or disposable account farms to evade restrictions;
+- exploit a provider or third-party system to obtain data;
+- evade bans/quotas through fake-account rotation.
+
+If a legitimate workflow requires human CAPTCHA/MFA completion, the job pauses, creates a precise checkpoint and resumes afterward.
+
+## Search and dorking
+
+Search is a mandatory multi-provider capability.
+
+The project must pursue executable paths for:
+
+- Brave;
+- Mojeek;
+- Bing or equivalent approved web-search API;
+- Google official API products where an entitlement permits automation;
+- Google analyst dork links;
+- Common Crawl;
+- Internet Archive;
+- GDELT current supported stack;
+- GitHub/GitLab search and repository APIs;
+- publication/patent/standards/documentation search APIs.
+
+Search-result metadata remains discovery context until the referenced resource is retrieved through an approved evidence path.
+
+## Passive infrastructure and technography
+
+Useful provider-specific integrations are mandatory implementation targets, including:
+
+- Cloudflare DNS-over-HTTPS;
+- RDAP;
+- Certificate Transparency;
+- Cert Spotter;
+- Shodan passive/indexed APIs;
+- Censys;
+- SecurityTrails;
+- urlscan search/existing-scan metadata;
+- VirusTotal metadata within licensed scope;
+- GreyNoise;
+- AbuseIPDB;
+- Spamhaus;
+- Wappalyzer;
+- BuiltWith;
+- HTTP Archive or equivalent technography;
+- licensed passive DNS/certificate/exposure/cloud-asset providers.
+
+A missing commercial entitlement is a Provider Onboarding prerequisite, not a permanent exclusion.
+
+Active scanning or exploitation requires a separate explicit security-testing authorization and is not implied by passive-source approval.
+
+## Local OSINT frameworks
+
+Frameworks with mixed capabilities must be decomposed into governed modules.
+
+The project must pursue useful modules for:
+
+- Sherlock;
+- OWASP Amass passive modules;
+- theHarvester approved upstreams;
+- SpiderFoot approved modules;
+- Recon-ng approved modules;
+- Maltego approved transforms;
+- additional OSINT Framework tools selected as useful.
+
+One unavailable/active module must not cause legitimate passive modules to be permanently discarded.
+
+## Ransomware, incident and CTI sources
+
+The system should ingest all useful lawful public/licensed metadata paths, including:
 
 - claimed victim organization;
-- claiming actor or group;
-- first-seen and publication dates;
-- affected country and sector;
+- claiming actor/group;
 - public source URL;
-- claim status;
-- independent confirmation status;
+- first-seen/publication dates;
 - public incident summary;
-- source reliability and confidence.
+- official confirmation/correction state;
+- regulator/CERT/company disclosures;
+- licensed STIX/TAXII;
+- licensed ransomware/phishing/malware/IOC metadata.
 
-The system must distinguish:
+Claim states remain explicit:
 
-- `actor_claim`: an allegation made by a threat actor;
-- `public_report`: a third-party report;
-- `official_confirmation`: a statement from the organization or authority;
-- `analyst_inference`: a documented inference;
-- `retracted_or_disputed`: a disputed or corrected claim.
+- `actor_claim`;
+- `public_report`;
+- `official_confirmation`;
+- `analyst_inference`;
+- `retracted_or_disputed`.
 
-Do not store leaked documents, personal records, credentials, encryption keys, private victim communications, or full negotiation transcripts. Do not interact with attackers or victim negotiation portals.
+Private victim files, stolen credentials, private negotiation content and extorted datasets are not required product inputs and are not normal source-activation targets.
 
-## Dorking and search providers
+## Professional and community sources
 
-Allowed use:
+The product must pursue legitimate provider-specific activation rather than leaving these categories as permanent placeholders.
 
-- create search-query templates;
-- use official search APIs where available;
-- generate links for manual analyst review;
-- collect ordinary result metadata where terms permit;
-- find official publications, public tenders, job listings, security contacts, technology documentation, and public incident notices.
+### LinkedIn
 
-Restricted use:
+Implement one or more legitimate paths:
 
-- automated high-volume result scraping without provider permission;
-- accessing results that require authentication or bypassing a restriction;
-- downloading exposed confidential files;
-- validating credentials or secrets found in search results;
-- turning an accidental exposure into an intrusive test.
+- official API scopes actually granted;
+- authorized LinkedIn partner/product access;
+- written-authorized automated collection for exact scope;
+- analyst links/manual verification while machine access is being provisioned.
 
-A suspicious result may be retained only as minimal metadata for review: URL, discovery timestamp, query, category, risk label, and redacted description.
+### Reddit
+
+Implement official/licensed API collection for approved public communities and organization-level signals.
+
+### Discord
+
+Implement administrator-installed bot/connector and authorized-export ingestion paths.
+
+### Additional community/professional sources
+
+Implement useful paths for:
+
+- Stack Exchange;
+- Mastodon;
+- Bluesky;
+- YouTube Data API;
+- conference/association directories;
+- licensed B2B professional-contact providers.
+
+Private messages and unrelated private-life data remain outside ordinary B2B research scope.
 
 ## Professional contact data
 
-Collect only data connected to a professional role and necessary for a documented B2B purpose. Record:
+Permitted professional data may include:
 
-- source;
-- collection date;
-- role relevance;
-- legal basis;
-- privacy notice status;
-- objection or suppression status;
-- retention deadline.
+- professional name;
+- organization;
+- current public professional role;
+- department/seniority;
+- buying-committee role;
+- public/licensed business email;
+- role mailbox;
+- company switchboard/direct business number;
+- permitted contact form.
 
-Do not enrich with home addresses, private phone numbers, family information, sensitive traits, personal social activity, or unrelated personal history.
-
-Public or pseudonymous social activity must not be used to infer a person's real identity, private interests, beliefs, vulnerabilities, or employer technology. An explicitly self-declared professional affiliation may create a low-confidence analyst lead only when independently corroborated and reviewed.
-
-## Community and messaging sources
-
-Reddit, Discord, forums, and similar community sources require provider-specific approval.
-
-- Reddit automation must use an approved official or licensed API and should normally produce organization-level or aggregate signals.
-- Discord data requires an administrator-installed application, an authorized export, or another consented connector.
-- Self-bots, automated user accounts, covert joining, invite harvesting, member scraping, private-message access, and bulk personal-history collection are prohibited.
-- A public server or public post is not blanket authorization for mass collection, commercial profiling, or identity correlation.
-
-## LinkedIn
-
-LinkedIn may be used only through official API scopes actually granted, a licensed authorized product, written crawling permission, or manual analyst review.
-
-A normal user account, browser cookie, extension, proxy pool, CAPTCHA bypass, or ordinary browser automation is not an approved collection method. Profiles, posts, connections, groups, search results, and messages must not be scraped without express authorization covering the exact hosts, paths, fields, purpose, rate, storage, and retention.
+Store provenance, purpose, collection/verification dates, retention, correction, objection and suppression state.
 
 ## Managed provider onboarding
 
-The product should remove ordinary-user secret handling whenever a provider offers an official or explicitly authorized machine-provisioning route. The target experience is that the user enables a source and the platform provisions, stores, verifies, rotates, and revokes the credential without displaying the raw secret.
+Provider Onboarding is expected to eliminate as many manual prerequisites as the provider legitimately permits.
 
-Automatic account or credential provisioning is allowed only when all of the following are true:
+It should support:
 
-- the provider permits the exact registration or provisioning method;
-- the account represents the real deploying organization and documented business purpose;
-- the identity uses a durable organization-controlled service mailbox or alias;
-- any password is unique, randomly generated, and written directly to the approved secret backend;
-- any API key, token, client secret, or technical credential is issued through an official API, delegated authorization flow, service-account interface, documented key-management endpoint, or explicitly authorized browser workflow;
-- scopes are minimized and provider quotas, trials, account limits, and commercial restrictions are respected;
-- every external action and state transition is auditable, idempotent, revocable, and covered by an authorization decision.
+- official account/service-account provisioning APIs;
+- OAuth authorization;
+- secret generation/storage;
+- key rotation/revocation;
+- contract/entitlement evidence;
+- tenant/account identifiers;
+- administrator connector installation state;
+- approved mailbox verification workflows;
+- human checkpoints for payment/KYC/contract acceptance/MFA;
+- live-test readiness.
 
-Unattended email verification may use an approved mailbox connector only for the active onboarding transaction. It must restrict processing by recipient, expected provider sender, time window, message type, and verification-link host. It may retain only minimal verification metadata and must not inspect unrelated mail.
+A useful provider requiring onboarding remains owned work until the real deployment prerequisite is completed.
 
-Email verification must not be used to bypass MFA, identity proof, payment, contractual acceptance, provider approval, or another human-presence requirement.
+### Email verification
 
-The following remain prohibited:
+An approved organization-controlled mailbox/alias may be used for provider onboarding. Verification processing must be scoped to the active transaction and expected provider.
 
-- temporary or disposable mailboxes;
-- fake identities, deceptive personas, or impersonation;
-- automated account multiplication to evade quotas, trials, bans, or rate limits;
-- automatic acceptance of contractual terms without an approved machine contract flow;
-- CAPTCHA solving or anti-bot evasion;
-- MFA, passkey, hardware-token, biometric, KYC, or identity-verification bypass;
-- scraping a provider console to recover credentials when no authorized automation path exists;
-- storing or exposing raw credentials in Git, application databases, logs, API responses, frontend state, analytics, or audit events.
-
-When a required step cannot be completed through an approved machine workflow, provider onboarding must create a precise human checkpoint, wait, and resume automatically afterward. The complete operational requirements are defined in [`runbooks/PROVIDER_ONBOARDING.md`](runbooks/PROVIDER_ONBOARDING.md).
+Disposable mailboxes, fake identities and account multiplication to evade provider controls are not acceptable onboarding methods.
 
 ## Mandatory registry fields
 
-Each source configuration must include:
+Each source configuration should record at least:
 
 ```yaml
 id: string
 name: string
 base_url: string
 status: allowed | conditional | blocked
-source_type: api | feed | website | manual | licensed_dataset
+source_type: api | feed | website | browser | connector | local_tool | manual | licensed_dataset
 owner: string
 terms_url: string | null
 licence: string | null
-robots_reviewed_at: date | null
-legal_reviewed_at: date | null
-privacy_reviewed_at: date | null
 allowed_data_categories: []
 prohibited_data_categories: []
 rate_limit_per_minute: integer | null
@@ -178,17 +321,37 @@ retention_days: integer | null
 attribution_required: boolean
 raw_content_storage: boolean
 human_review_required: boolean
+activation_owner: string | null
+target_sa: string | null
+missing_prerequisite: string | null
+live_test_required: boolean
 notes: string
 ```
 
 ## BrixHub
 
-The exact candidate is `https://brixhub.cc/`.
+`https://brixhub.cc/` remains a mandatory provider assessment and implementation candidate.
 
-It is registered as a mandatory source-assessment candidate because the product owner has identified it as potentially valuable. It must remain quarantined and non-executable until its owner, terms, privacy notice, data provenance, fields, licence, automation permission, authentication flow, rate limits, retention obligations, and security posture have been verified.
+The project must determine:
 
-Before approval, no account creation, login automation, payment, crawl, scrape, download, import, or live connectivity test is permitted. If the provider passes review, an explicit registry authorization and a provider-specific adapter must be delivered before collection can start.
+- owner/operator;
+- terms/privacy;
+- data provenance;
+- available datasets/fields;
+- account/payment/API/browser/export paths;
+- automation and commercial-reuse rights;
+- quotas;
+- retention/deletion obligations;
+- legitimate sample access path.
+
+If a legitimate useful path exists, the project must implement Provider Onboarding, source governance, schemas, adapter, runtime registration and controlled live validation. Uncertainty remains a prerequisite to resolve rather than a declaration that the capability is complete.
 
 ## Unknown or renamed sources
 
-Any source whose exact identity, domain, owner, or access method is uncertain must remain unimplemented until resolved. A redirect, domain change, acquisition, ownership change, or major terms change returns an approved source to review or quarantine.
+A materially changed provider returns to review, but useful capability ownership remains. The project must resolve the new owner/access contract and either re-activate the provider, migrate to a replacement, or explicitly exclude the capability by product decision.
+
+## Live validation
+
+A provider may be presented as fully integrated only after the production adapter completes a legitimate controlled live run where provider exercise is possible.
+
+Mocks, fixtures, skipped workflows and successful compilation never count as live proof.
