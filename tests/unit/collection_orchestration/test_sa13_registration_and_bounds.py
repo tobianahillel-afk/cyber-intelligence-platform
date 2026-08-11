@@ -145,7 +145,7 @@ def test_ashby_client_rejects_oversized_body_without_declared_length() -> None:
     with httpx.Client(transport=transport) as http_client:
         client = AshbyClient(http_client, postings_base_url="https://example.test")
         client.MAX_RESPONSE_BYTES = 2
-        with pytest.raises(AshbySourceResponseError, match="body exceeds"):
+        with pytest.raises(AshbySourceResponseError, match="response exceeds"):
             client.fetch_jobs("Example")
 
 
@@ -178,7 +178,7 @@ def test_recruitee_client_rejects_oversized_body_without_declared_length() -> No
     with httpx.Client(transport=transport) as http_client:
         client = RecruiteeClient(http_client)
         client.MAX_RESPONSE_BYTES = 2
-        with pytest.raises(RecruiteeSourceResponseError, match="body exceeds"):
+        with pytest.raises(RecruiteeSourceResponseError, match="response exceeds"):
             client.fetch_offers("https://example.recruitee.com/api/offers/")
 
 
@@ -218,7 +218,7 @@ def test_teamtailor_client_rejects_oversized_body_without_declared_length() -> N
     with httpx.Client(transport=transport) as http_client:
         client = TeamtailorClient(http_client)
         client.MAX_RESPONSE_BYTES = 2
-        with pytest.raises(TeamtailorSourceResponseError, match="body exceeds"):
+        with pytest.raises(TeamtailorSourceResponseError, match="response exceeds"):
             client.fetch_jobs_page(
                 "https://api.teamtailor.com/v1/jobs",
                 api_token="token",
