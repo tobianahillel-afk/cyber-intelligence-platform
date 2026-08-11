@@ -59,7 +59,11 @@ def collect_ademe_funding(
     collected = require_aware_utc(collected_at, field_name="collected_at")
     if max_pages < 1:
         raise ValueError("max_pages must be positive")
-    current_url = checkpoint.next_url if checkpoint and checkpoint.next_url else client.first_page_url()
+    current_url = (
+        checkpoint.next_url
+        if checkpoint and checkpoint.next_url
+        else client.first_page_url()
+    )
     observations: list[RawObservation] = []
     claims: list[ChangeClaimSnapshot] = []
     visited: set[str] = set()
