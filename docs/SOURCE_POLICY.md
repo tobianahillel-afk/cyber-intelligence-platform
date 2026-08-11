@@ -4,9 +4,13 @@
 
 Cyber Intelligence Platform must implement every useful public, licensed, customer-authorized or provider-authorized source through a concrete provider-specific acquisition path.
 
-Source policy is therefore both an authorization control and an activation contract: a useful source that currently lacks an API key, paid plan, account, target registry, written permission, stable API or deployment connector remains unfinished work with an explicit prerequisite owner and target SA.
+Source policy is therefore both an authorization control and an activation contract: a useful source that currently lacks an API key, paid plan, account, target registry, written permission, stable API, deployment connector, administrator installation or browser account remains unfinished work with an explicit prerequisite owner and target SA.
 
-The complete target is defined in [`OSINT_FULL_IMPLEMENTATION_MANDATE.md`](OSINT_FULL_IMPLEMENTATION_MANDATE.md).
+The complete target is defined in:
+
+- [`OSINT_FULL_IMPLEMENTATION_MANDATE.md`](OSINT_FULL_IMPLEMENTATION_MANDATE.md);
+- [`SOCIAL_COMMUNITY_ACQUISITION_REQUIREMENTS.md`](SOCIAL_COMMUNITY_ACQUISITION_REQUIREMENTS.md);
+- [`OSINT_AUTOMATION_PIPELINES.md`](OSINT_AUTOMATION_PIPELINES.md).
 
 ## Core rule
 
@@ -37,7 +41,8 @@ Examples:
 - approved ordinary public-web crawl;
 - licensed API whose current deployment entitlement is connected;
 - administrator-installed connector;
-- written-authorized browser workflow.
+- written-authorized browser workflow;
+- provider-authorized user-delegated browser session.
 
 ### `conditional`
 
@@ -52,8 +57,10 @@ The source is useful and executable after explicit constraints or prerequisites 
 - bounded fields;
 - target registry;
 - service account;
+- user-delegated account;
 - browser session;
-- analyst-assisted MFA;
+- analyst-assisted MFA/CAPTCHA;
+- administrator installation;
 - contract approval.
 
 `conditional` is active implementation work, not a terminal state.
@@ -70,7 +77,7 @@ For future work, every useful `blocked` source must also have:
 - planned adapter/access path;
 - acceptance/live-test condition.
 
-A useful provider must not be closed merely because it is currently `blocked`. It remains in the activation backlog until the prerequisite is resolved, it is replaced by an equivalent fully integrated provider, or the product owner explicitly excludes it as no longer useful.
+A useful provider must not be closed merely because it is currently `blocked`. It remains in the activation backlog until the prerequisite is resolved, it is replaced by an equivalent fully integrated provider, or the product owner explicitly removes it from product scope.
 
 ## Supported acquisition modes
 
@@ -84,7 +91,9 @@ Source Governance should be able to authorize all of these legitimate modes:
 - `recursive_web`;
 - `authorized_browser`;
 - `authorized_authenticated_web`;
+- `user_delegated_session`;
 - `consented_connector`;
+- `administrator_installed_bot`;
 - `local_tool_module`;
 - `manual_import`.
 
@@ -104,6 +113,10 @@ The policy may authorize:
 - configurable crawl depth;
 - configurable page/byte/time/concurrency budgets;
 - JavaScript-rendered browser collection;
+- HTML DOM and semantic metadata extraction;
+- JSON-LD and public embedded JSON/application-state extraction;
+- provider-authorized structured browser JSON responses;
+- CSS/resource references where useful for technology attribution;
 - permitted document downloads through quarantine;
 - automatic refresh schedules;
 - legitimate authenticated access for exact approved accounts and paths.
@@ -118,14 +131,34 @@ The platform should implement:
 
 - Playwright/Chromium adapters;
 - provider-approved service/test accounts;
+- user-delegated provider accounts;
 - OAuth/SSO;
 - account-specific cookies/session state;
 - administrator-installed integrations;
-- analyst-assisted MFA checkpoints;
+- analyst-assisted MFA/CAPTCHA checkpoints;
 - screenshots and controlled downloads;
+- resumable browser jobs;
 - resume-after-human-action workflows.
 
 Browser credentials and sessions remain isolated per source/account/authorization scope.
+
+## User-delegated account policy
+
+A user-delegated external account may represent the real authenticated CIP tenant/user or deployment service principal when the provider permits that account/provisioning model.
+
+It must record:
+
+- owning CIP tenant/user/service principal;
+- provider account identifier;
+- source/purpose authorization;
+- secret/session reference;
+- scopes/permissions;
+- creation/authorization time;
+- expiry/renewal;
+- revocation/deletion;
+- audit history.
+
+Where provider rules allow automated registration, CIP may use a durable tenant-controlled email alias or provider-approved service-account mechanism. An alias may be short-lived for operational isolation if it remains controlled by the real deployment and is not used to evade account limits or security controls.
 
 ## CAPTCHA, MFA and access-control boundary
 
@@ -142,7 +175,7 @@ Normal acquisition does not implement techniques whose purpose is to defeat acce
 
 If a legitimate workflow requires human CAPTCHA/MFA completion, the job pauses, creates a precise checkpoint and resumes afterward.
 
-## Search and dorking
+## Search, SERP and dorking
 
 Search is a mandatory multi-provider capability.
 
@@ -152,12 +185,15 @@ The project must pursue executable paths for:
 - Mojeek;
 - Bing or equivalent approved web-search API;
 - Google official API products where an entitlement permits automation;
+- provider-authorized browser search execution where permitted;
 - Google analyst dork links;
 - Common Crawl;
 - Internet Archive;
 - GDELT current supported stack;
 - GitHub/GitLab search and repository APIs;
 - publication/patent/standards/documentation search APIs.
+
+A normalized SERP record must preserve query/template identity, provider, rank, URL, title/snippet, timestamps and provenance.
 
 Search-result metadata remains discovery context until the referenced resource is retrieved through an approved evidence path.
 
@@ -193,10 +229,10 @@ Frameworks with mixed capabilities must be decomposed into governed modules.
 The project must pursue useful modules for:
 
 - Sherlock;
-- OWASP Amass passive modules;
-- theHarvester approved upstreams;
-- SpiderFoot approved modules;
-- Recon-ng approved modules;
+- OWASP Amass passive and explicitly authorized modules;
+- theHarvester governed upstreams;
+- SpiderFoot governed modules;
+- Recon-ng governed modules;
 - Maltego approved transforms;
 - additional OSINT Framework tools selected as useful.
 
@@ -228,24 +264,40 @@ Private victim files, stolen credentials, private negotiation content and extort
 
 ## Professional and community sources
 
-The product must pursue legitimate provider-specific activation rather than leaving these categories as permanent placeholders.
+The product must pursue executable provider-specific activation rather than leaving these categories as permanent placeholders. Detailed requirements are normative in [`SOCIAL_COMMUNITY_ACQUISITION_REQUIREMENTS.md`](SOCIAL_COMMUNITY_ACQUISITION_REQUIREMENTS.md).
 
 ### LinkedIn
 
-Implement one or more legitimate paths:
+LinkedIn is mandatory. Implement one or more legitimate paths:
 
 - official API scopes actually granted;
 - authorized LinkedIn partner/product access;
 - written-authorized automated collection for exact scope;
-- analyst links/manual verification while machine access is being provisioned.
+- provider-authorized user-delegated browser collection;
+- analyst verification while machine access is being provisioned.
+
+When an authorized browser path exists, provider-approved rendered DOM/public structured state may be collected for professional/company/technology evidence.
 
 ### Reddit
 
-Implement official/licensed API collection for approved public communities and organization-level signals.
+Implement official/licensed API collection for approved public communities, posts and comments, with chronology, edits/deletions, provider-scoped pseudonymous identifiers and technology/vendor/product signal extraction.
 
 ### Discord
 
 Implement administrator-installed bot/connector and authorized-export ingestion paths.
+
+For a server/channel where explicit permissions exist, the connector may collect:
+
+- authorized message history;
+- threads;
+- edits/deletions;
+- server/channel metadata;
+- provider-scoped usernames/display names/member IDs exposed by granted permissions;
+- links/domains/attachment metadata;
+- technology/vendor/tool mentions;
+- organization/team/project context.
+
+Pseudonymous handles remain provider-scoped unless self-declared, consented, administrator-mapped or explicitly linked by an authorized professional source. Private DMs are not ordinary bot collection.
 
 ### Additional community/professional sources
 
@@ -256,9 +308,8 @@ Implement useful paths for:
 - Bluesky;
 - YouTube Data API;
 - conference/association directories;
+- vendor communities;
 - licensed B2B professional-contact providers.
-
-Private messages and unrelated private-life data remain outside ordinary B2B research scope.
 
 ## Professional contact data
 
@@ -283,14 +334,15 @@ Provider Onboarding is expected to eliminate as many manual prerequisites as the
 It should support:
 
 - official account/service-account provisioning APIs;
+- user-delegated account state;
 - OAuth authorization;
 - secret generation/storage;
 - key rotation/revocation;
 - contract/entitlement evidence;
 - tenant/account identifiers;
 - administrator connector installation state;
-- approved mailbox verification workflows;
-- human checkpoints for payment/KYC/contract acceptance/MFA;
+- approved mailbox/tenant-alias verification workflows;
+- human checkpoints for payment/KYC/contract acceptance/MFA/CAPTCHA;
 - live-test readiness.
 
 A useful provider requiring onboarding remains owned work until the real deployment prerequisite is completed.
@@ -299,7 +351,23 @@ A useful provider requiring onboarding remains owned work until the real deploym
 
 An approved organization-controlled mailbox/alias may be used for provider onboarding. Verification processing must be scoped to the active transaction and expected provider.
 
-Disposable mailboxes, fake identities and account multiplication to evade provider controls are not acceptable onboarding methods.
+Tenant-controlled aliases may be automated when the provider permits them. Disposable third-party mailboxes, deceptive identities and account multiplication to evade provider controls are not acceptable onboarding methods.
+
+## Document, OCR and visual-research sources
+
+The acquisition programme must support:
+
+- PDF and Office documents;
+- Apache Tika or equivalent extraction;
+- ExifTool in isolation;
+- OCR;
+- translation;
+- screenshot/media metadata;
+- image similarity and reverse-image provider APIs where authorized;
+- perceptual/exact hashing;
+- logo/product/vendor detection.
+
+Visual/OCR results remain derived evidence with provenance to the source artifact.
 
 ## Mandatory registry fields
 
@@ -310,7 +378,7 @@ id: string
 name: string
 base_url: string
 status: allowed | conditional | blocked
-source_type: api | feed | website | browser | connector | local_tool | manual | licensed_dataset
+source_type: api | feed | website | browser | connector | bot | local_tool | manual | licensed_dataset
 owner: string
 terms_url: string | null
 licence: string | null
@@ -330,7 +398,7 @@ notes: string
 
 ## BrixHub
 
-`https://brixhub.cc/` remains a mandatory provider assessment and implementation candidate.
+`https://brixhub.cc/` is a mandatory provider-specific implementation target.
 
 The project must determine:
 
@@ -339,12 +407,15 @@ The project must determine:
 - data provenance;
 - available datasets/fields;
 - account/payment/API/browser/export paths;
+- authentication/session model;
 - automation and commercial-reuse rights;
 - quotas;
 - retention/deletion obligations;
-- legitimate sample access path.
+- legitimate sample/live-validation path.
 
-If a legitimate useful path exists, the project must implement Provider Onboarding, source governance, schemas, adapter, runtime registration and controlled live validation. Uncertainty remains a prerequisite to resolve rather than a declaration that the capability is complete.
+If an API exists, implement the API adapter. If the legitimate useful provider path is browser-only, implement a provider-specific isolated browser adapter. If both exist, prefer the API as primary and use the authorized browser path for legitimately browser-only fields.
+
+BrixHub must not remain a generic review-only placeholder. It remains unfinished work until provider-specific runtime implementation and controlled live proof are complete or the product owner explicitly removes it from scope.
 
 ## Unknown or renamed sources
 
