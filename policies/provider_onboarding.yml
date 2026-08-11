@@ -208,6 +208,26 @@ providers:
     automatic_onboarding: false
     blocked_reason: null
 
+  - source_id: patentsview-patent-metadata
+    display_name: PatentsView PatentSearch API
+    auth_mode: api_key
+    documentation_url: https://search.patentsview.org/docs/docs/Search%20API/SearchAPIReference/
+    signup_url: null
+    console_url: null
+    required_secret_names:
+      - api_key
+    human_actions:
+      - open_official_signup
+      - sign_in
+      - accept_provider_terms
+      - request_provider_access
+      - wait_for_provider_approval
+      - retrieve_technical_credentials
+      - register_secret_reference
+      - enable_source_policy
+    automatic_onboarding: false
+    blocked_reason: null
+
   - source_id: internet-archive-cdx
     display_name: Internet Archive CDX
     auth_mode: none

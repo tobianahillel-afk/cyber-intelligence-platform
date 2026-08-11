@@ -60,3 +60,15 @@ schedules:
       max_delay_seconds: 7200
       circuit_failure_threshold: 3
       circuit_reset_seconds: 7200
+
+  - source_id: patentsview-patent-metadata
+    adapter_id: patentsview-assignee-patents
+    enabled: false
+    interval_seconds: 604800
+    lease_seconds: 180
+    retry:
+      max_attempts: 2
+      base_delay_seconds: 1800
+      max_delay_seconds: 14400
+      circuit_failure_threshold: 2
+      circuit_reset_seconds: 14400

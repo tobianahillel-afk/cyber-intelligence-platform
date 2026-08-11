@@ -12,6 +12,7 @@ from cip.adapters.sources.lever.registry import LeverSite
 from cip.adapters.sources.organization_identity.registry import OrganizationIdentityTarget
 from cip.adapters.sources.passive_infrastructure.rdap_registry import RdapTarget
 from cip.adapters.sources.passive_infrastructure.registry import PassiveInfrastructureTarget
+from cip.adapters.sources.patentsview_patents.registry import PatentsViewPatentTarget
 from cip.adapters.sources.public_web.registry import PublicWebTarget
 from cip.adapters.sources.recruitee.registry import RecruiteeCareerSite
 from cip.adapters.sources.smartrecruiters.registry import SmartRecruitersCompany
@@ -46,6 +47,7 @@ from cip.modules.collection_orchestration.application.reference_adapter import (
     ReferencePortfolioAdapter,
 )
 from cip.modules.collection_orchestration.application.search_archive_registration import (
+    SearchArchiveRegistrationInputs,
     register_search_archive_adapters,
 )
 from cip.modules.collection_orchestration.application.smartrecruiters_adapter import (
@@ -74,6 +76,7 @@ class AdapterCompositionInputs:
     search_templates: tuple[SearchQueryTemplate, ...]
     github_code_search_templates: tuple[SearchQueryTemplate, ...]
     crossref_publication_targets: tuple[CrossrefPublicationTarget, ...]
+    patentsview_patent_targets: tuple[PatentsViewPatentTarget, ...]
     vulnerability_targets: tuple[VulnerabilityQueryTarget, ...]
     passive_infrastructure_targets: tuple[PassiveInfrastructureTarget, ...]
     rdap_targets: tuple[RdapTarget, ...]
@@ -85,6 +88,7 @@ def build_runtime_adapters(
     *,
     brave_token_provider: Callable[[], str | None],
     github_code_search_token_provider: Callable[[], str | None],
+    patentsview_api_key_provider: Callable[[], str | None],
     certspotter_token_provider: Callable[[], str | None],
     phishtank_token_provider: Callable[[], str | None],
     teamtailor_token_provider: Callable[[], str | None],
@@ -131,13 +135,17 @@ def build_runtime_adapters(
     register_search_archive_adapters(
         adapters,
         entries_by_id,
-        inputs.public_web_targets,
-        inputs.search_templates,
-        inputs.developer_ecosystem_targets,
-        inputs.github_code_search_templates,
-        inputs.crossref_publication_targets,
+        SearchArchiveRegistrationInputs(
+            public_web_targets=inputs.public_web_targets,
+            search_templates=inputs.search_templates,
+            developer_targets=inputs.developer_ecosystem_targets,
+            github_code_search_templates=inputs.github_code_search_templates,
+            crossref_publication_targets=inputs.crossref_publication_targets,
+            patentsview_patent_targets=inputs.patentsview_patent_targets,
+        ),
         brave_token_provider=brave_token_provider,
         github_code_search_token_provider=github_code_search_token_provider,
+        patentsview_api_key_provider=patentsview_api_key_provider,
         timeout_seconds=timeout_seconds,
     )
     register_vulnerability_adapters(

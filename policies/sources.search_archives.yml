@@ -190,3 +190,42 @@ sources:
       observation hashing. A ROR match may represent contributor affiliation or funding metadata;
       it is therefore quarantined discovery metadata and not proof that the organization authored,
       owns, deploys, endorses, or commercially needs anything described by the work.
+
+  - id: patentsview-patent-metadata
+    name: PatentsView assignee patent metadata
+    base_url: https://search.patentsview.org/api/v1/patent/
+    status: enabled
+    source_type: search_provider
+    owner: USPTO PatentsView
+    terms_url: https://patentsview.org/policies
+    licence: PatentsView API data licensed CC BY 4.0
+    allowed_data_categories: [public_result_metadata]
+    prohibited_data_categories: *prohibited
+    rate_limit_per_minute: 10
+    retention_days: 365
+    attribution_required: true
+    raw_content_storage: false
+    human_review_required: false
+    authorization:
+      status: approved
+      document_reference: docs/source_activation/SA_14_PATENTSVIEW_PATENTS.md
+      reviewed_at: "2026-08-11T13:15:00+00:00"
+      expires_at: null
+      approved_hosts: [search.patentsview.org]
+      approved_path_prefixes: [/api/v1/patent/]
+      approved_purposes: [patent-discovery]
+      automated_collection_allowed: true
+      raw_storage_allowed: false
+    economics:
+      commercial_value: medium
+      monthly_cost: 0
+      implementation_cost: medium
+      maintenance_cost: medium
+      expected_stability: medium
+    notes: >-
+      Real PatentsView PatentSearch adapter scoped to explicit organization-bound assignee labels.
+      Runtime execution additionally requires a connected `api_key`. CIP retains only patent id,
+      title, grant date, type and exact assignee organization; abstracts, claims, inventors,
+      classifications and full text are excluded. Returned assignee identity is revalidated before
+      persistence. Patent presence is quarantined discovery metadata and not evidence of deployment,
+      vulnerability, compromise, cyber need, opportunity or outreach authorization.

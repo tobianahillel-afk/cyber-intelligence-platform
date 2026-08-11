@@ -123,6 +123,9 @@ class Settings(BaseSettings):
     crossref_publication_target_registry_path: Path = Path(
         "policies/crossref_publication_targets.yml"
     )
+    patentsview_patent_target_registry_path: Path = Path(
+        "policies/patentsview_patent_targets.yml"
+    )
     vulnerability_query_target_registry_path: Path = Path(
         "policies/vulnerability_query_targets.yml"
     )
