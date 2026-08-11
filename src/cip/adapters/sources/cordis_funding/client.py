@@ -1,76 +1,52 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from urllib.parse import urlencode
 
 import httpx
 
 
 class CordisFundingResponseError(RuntimeError):
-    """CORDIS returned an unsafe or unusable SPARQL response."""
+    """CORDIS returned an unsafe or unusable bulk response."""
 
 
 @dataclass(frozen=True, slots=True)
 class CordisFundingFetchResult:
     body: bytes
     request_url: str
+    etag: str | None
+    last_modified: str | None
 
 
 class CordisFundingClient:
-    PAGE_SIZE = 100
-    MAX_RESPONSE_BYTES = 5_000_000
-    QUERY_TEMPLATE = """PREFIX eurio: <http://data.europa.eu/s66#>
-SELECT DISTINCT ?project_id ?project_title ?organisation_name ?role_label
-                ?start_date ?end_date ?eu_contribution
-WHERE {
-  ?project a eurio:Project ;
-           eurio:identifier ?project_id ;
-           eurio:title ?project_title ;
-           eurio:hasInvolvedParty ?role .
-  ?role eurio:isRoleOf ?organisation .
-  ?organisation eurio:legalName ?organisation_name .
-  OPTIONAL { ?role eurio:roleLabel ?role_label . }
-  OPTIONAL { ?project eurio:startDate ?start_date . }
-  OPTIONAL { ?project eurio:endDate ?end_date . }
-  OPTIONAL { ?project eurio:ecMaxContribution ?eu_contribution . }
-}
-ORDER BY DESC(?start_date) ?project_id ?organisation_name
-LIMIT __LIMIT__
-OFFSET __OFFSET__
-"""
+    MAX_RESPONSE_BYTES = 100_000_000
 
-    def __init__(self, client: httpx.Client, *, endpoint_url: str) -> None:
+    def __init__(self, client: httpx.Client, *, archive_url: str) -> None:
         self._client = client
-        self._endpoint_url = endpoint_url.rstrip("/")
+        self._archive_url = archive_url
 
-    def page_url(self, offset: int) -> str:
-        if offset < 0:
-            raise ValueError("offset cannot be negative")
-        query = self.QUERY_TEMPLATE.replace("__LIMIT__", str(self.PAGE_SIZE)).replace(
-            "__OFFSET__", str(offset)
-        )
-        params = urlencode(
-            {
-                "query": query,
-                "format": "application/sparql-results+json",
-            }
-        )
-        return f"{self._endpoint_url}?{params}"
+    @property
+    def archive_url(self) -> str:
+        return self._archive_url
 
-    def fetch_url(self, url: str) -> CordisFundingFetchResult:
+    def fetch(self) -> CordisFundingFetchResult:
         response = self._client.get(
-            url,
-            headers={"Accept": "application/sparql-results+json"},
+            self._archive_url,
+            headers={"Accept": "application/zip, application/octet-stream"},
         )
         response.raise_for_status()
         _validate_content_type(response)
         _validate_size(response, max_bytes=self.MAX_RESPONSE_BYTES)
-        return CordisFundingFetchResult(body=response.content, request_url=str(response.url))
+        return CordisFundingFetchResult(
+            body=response.content,
+            request_url=str(response.url),
+            etag=response.headers.get("etag"),
+            last_modified=response.headers.get("last-modified"),
+        )
 
 
 def _validate_content_type(response: httpx.Response) -> None:
     content_type = response.headers.get("content-type", "").split(";", maxsplit=1)[0].strip()
-    accepted = {"application/sparql-results+json", "application/json"}
+    accepted = {"application/zip", "application/octet-stream"}
     if content_type not in accepted:
         raise CordisFundingResponseError(
             f"unexpected content type: {content_type or 'missing'}"
