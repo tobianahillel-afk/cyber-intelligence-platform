@@ -2,390 +2,448 @@
 
 ## Purpose
 
-This document defines the OSINT source families, tools, collection modes, evidence rules, and safety boundaries required by Cyber Intelligence Platform.
+This document defines the OSINT capabilities that Cyber Intelligence Platform must implement end-to-end.
 
-The objective is to discover and qualify organizations that may need cybersecurity services or products by collecting lawful public or licensed evidence about:
+The product goal is no longer merely to catalogue tools or classify providers. Every useful public, licensed, customer-authorized or provider-authorized capability must have a provider-specific activation path to production execution and controlled live validation.
 
-- legal identity, establishments, groups, subsidiaries, brands, and domains;
-- public contracts, suppliers, integrators, customers, partners, incumbents, and renewal timing;
-- cyber hiring, teams, roles, projects, technologies, and buying committees;
-- public internet assets, certificates, DNS, exposed services, and externally visible technologies;
-- vulnerabilities, advisories, exploitation status, and product risk;
-- incidents, ransomware claims, official confirmations, regulatory notices, and public reporting;
-- professional organization roles and public or licensed business contact channels.
+The normative target is [`OSINT_FULL_IMPLEMENTATION_MANDATE.md`](OSINT_FULL_IMPLEMENTATION_MANDATE.md). The delivery sequence is [`source_activation/SA_15_20_FULL_ACTIVATION_ROADMAP.md`](source_activation/SA_15_20_FULL_ACTIVATION_ROADMAP.md).
 
-This is a source catalog and implementation standard. It is not permission to crawl every listed website. The source registry and its authorization decision remain authoritative before any network request.
+Historical Source Activation records remain truthful snapshots of prior state, but a historical `blocked`, `manual`, adapter-only or non-live status does not mean a useful capability is considered finished forever.
 
-## Governing rule
+## Mandatory lifecycle
 
-A resource appearing in OSINT Framework, an OSINT blog, a GitHub list, a search result, or a commercial catalog means only that the resource exists. It does not establish that automated collection, commercial reuse, personal-data processing, storage, or republication is permitted.
+For every useful provider or tool:
 
-Every candidate must be assigned exactly one collection mode:
+```text
+catalogued
+-> provider identified
+-> access path reviewed
+-> source governance
+-> provider onboarding / entitlement
+-> target model
+-> production adapter
+-> deterministic tests
+-> runtime registration
+-> schedule or explicit invocation
+-> canonical evidence mapping
+-> controlled live production-adapter proof
+-> operational support
+```
+
+A missing key, contract, provider account, deployment target, written permission or stable API is a prerequisite to resolve, not a completion condition.
+
+## Acquisition modes
+
+The platform must support all legitimate acquisition modes required by useful sources:
 
 | Mode | Meaning |
-|---|---|
-| `official_api` | Official documented API or feed approved for the exact fields and purpose. |
-| `open_data` | Official downloadable dataset or open-data endpoint with compatible reuse terms. |
-| `licensed_api` | Contracted provider whose licence covers the intended B2B intelligence use. |
-| `bounded_web` | Public website crawl explicitly approved after terms, robots, privacy, copyright, rate, and retention review. |
-| `manual_review` | The platform generates an analyst link or search query; no automated extraction. |
-| `authorized_browser` | Browser workflow covered by written authorization for exact hosts, paths, fields, and purpose. |
-| `consented_connector` | Data accessed through an administrator-installed application, customer-controlled workspace, authorized export, or equivalent consented integration. |
-| `quarantined` | Potentially useful but identity, owner, terms, licence, access method, or data provenance is not validated. No network execution. |
-| `blocked` | Collection would require circumvention, deception, private communications, stolen data, prohibited scraping, intrusive testing, or unjustified personal profiling. |
+| --- | --- |
+| `official_api` | Provider-documented API with the required access scope. |
+| `open_data` | Official reusable dataset/feed/bulk export. |
+| `licensed_api` | Contracted API/dataset whose licence covers the deployment use. |
+| `static_http` | Ordinary approved public-page/document retrieval. |
+| `recursive_web` | Governed recursive crawl inside approved origin/path/resource budgets. |
+| `authorized_browser` | Isolated Playwright/Chromium rendering and first-party interaction. |
+| `authorized_authenticated_web` | Legitimate provider/customer-authorized account/session workflow. |
+| `consented_connector` | Administrator/customer-installed application, bot, export or workspace connector. |
+| `local_tool_module` | Local OSINT framework module whose upstream behavior is separately governed. |
+| `manual_import` | Approved export/import path through quarantine. |
 
-## OSINT Framework integration
+`manual_review` may exist as a temporary fallback but must not hide a useful executable provider path that should be implemented.
 
-OSINT Framework is used as a discovery and taxonomy feed, not as an executable collector list.
+## Global safety and authorization boundary
 
-The platform should periodically import the public OSINT Framework catalog into a non-executable candidate registry and record:
+The product is required to implement broad acquisition capabilities, including recursive crawling, browser rendering and legitimate authenticated workflows.
 
-- category and subcategory;
-- tool name and canonical URL;
-- declared input and output;
-- API, registration, installation, dork, and editable-URL indicators;
-- active or passive network behavior;
-- last catalog observation;
-- current availability;
-- owner and terms URL when discoverable;
-- proposed project use case;
-- legal, privacy, security, and commercial review status;
-- approved collection mode or rejection reason.
+Normal OSINT acquisition does not require defeating access controls. The product must not use:
 
-No imported tool becomes executable automatically. New and changed entries create review tasks. Dead, redirected, ownership-changed, compromised, or materially changed tools return to quarantine.
+- CAPTCHA/MFA/authentication bypass to obtain unauthorized access;
+- stolen/replayed third-party sessions;
+- credential guessing or validation;
+- deceptive identities/account farms to evade provider controls;
+- exploit-based collection against third parties;
+- private victim files, stolen credentials, extorted datasets or private communications.
 
-The relevant OSINT Framework branches are covered below. Categories aimed primarily at private-life investigation, dating profiles, residential information, personal phone enrichment, friendship mapping, or de-anonymization are not product requirements and must remain blocked.
+CAPTCHA/MFA encountered by a legitimate authorized account is handled through a human/provider-approved checkpoint and resume flow.
 
-## Collection architecture
+Active scanning/exploitation is a separate security-testing capability requiring explicit target/technique/time authorization. Passive OSINT approval never silently grants it.
 
-```text
-organization or domain seed
-  -> collection requirement
-  -> candidate-source selector
-  -> source-policy preflight
-  -> approved adapter or analyst task
-  -> bounded transport and provider schema
-  -> evidence metadata and content hash
-  -> canonical observation
-  -> organization and asset resolution
-  -> corroboration and conflict detection
-  -> confidence-scored fact or hypothesis
-  -> human review where required
-  -> retention, correction, objection, and deletion lifecycle
-```
+---
 
-Every adapter must implement:
+# 1. Company identity, establishments, groups and registries
 
-1. approved host and path allowlists;
-2. explicit purpose and allowed data categories;
-3. GET-only operation unless a reviewed official API requires another method;
-4. authentication through secret references only;
-5. MIME type, response size, pagination, date-window, concurrency, and rate limits;
-6. retries, backoff, circuit breaking, checkpoints, leases, and idempotency;
-7. source timestamps, retrieval timestamps, canonical URL, evidence hash, and provenance;
-8. provider-specific strict schemas and normalized output contracts;
-9. no storage of raw HTML or documents unless separately approved;
-10. redaction and minimization before persistence;
-11. retention deadlines and deletion support;
-12. automatic shutdown when authorization expires or the source changes materially.
-
-## Priority source families
-
-### 1. Company identity, establishments, groups, and public records
-
-**Primary sources**
+## Required providers/capabilities
 
 - API Recherche d'entreprises;
-- Sirene, subject to the approved direct-access mode;
-- INPI / Registre national des entreprises, subject to approved fields and access;
+- Sirene direct path where it adds provider value;
 - BODACC;
-- GLEIF LEI and relationship data;
-- European Business Register and national company registries where licensed or openly reusable;
-- OpenCorporates or equivalent licensed company-data provider;
-- official annual reports, registration documents, regulatory filings, and company publications.
+- GLEIF LEI and relationships;
+- BRREG / Brønnøysundregistrene;
+- INPI/RNE when legitimate account credentials are provisioned;
+- OpenCorporates or equivalent licensed global company data;
+- European Business Register/national registries where legitimate machine access exists;
+- official corporate filings and annual reports.
 
-**Required outputs**
+## Required outputs
 
-- legal-unit and establishment identity;
-- official identifiers and validation state;
-- legal names, trading names, aliases, and prior names;
-- status, activity, addresses, headquarters, and establishment relationships;
-- direct and ultimate parent claims;
-- source-specific claims and conflicts;
-- non-diffusion and suppression constraints.
+- legal entity and establishment identity;
+- authoritative identifiers;
+- aliases/prior names;
+- status/activity/address;
+- parent/subsidiary/group claims;
+- canonical domain candidates;
+- source conflicts;
+- non-diffusion/suppression constraints.
 
-**Restrictions**
+## Activation rule
 
-Do not collect beneficial-owner, shareholder, director, or personal-address information unless the exact dataset, field, purpose, and legal basis have been separately approved. Do not use name-only matching to merge organizations automatically.
+Target-dependent adapters must gain real deployment target provisioning and controlled live proof rather than remain permanently dormant.
 
-### 2. Procurement, contracts, suppliers, integrators, customers, and renewals
+Target SA: residual completion in **SA-20**.
 
-**Primary sources**
+---
 
-- TED Search API;
-- BOAMP / DILA Explore API;
-- French DECP and official award datasets;
-- PLACE and other official procurement portals through approved APIs, feeds, or bounded public metadata access;
-- national and regional procurement portals;
-- EU funding and grant transparency datasets;
-- official award notices, contract notices, modifications, cancellations, and results;
+# 2. Procurement, contracts, suppliers, grants and renewal timing
+
+## Required providers
+
+- TED Search;
+- BOAMP;
+- DECP;
+- PLACE;
+- CORDIS;
+- ADEME;
+- useful national/regional procurement portals;
+- EU/national funding transparency datasets;
 - public framework agreements;
-- official supplier, technology-partner, marketplace, and customer-reference directories;
-- annual reports and regulatory filings that name material customers or suppliers;
-- published case studies from vendors, integrators, MSSPs, SOC providers, and customers.
+- official award/contract notices;
+- supplier/partner/customer directories;
+- case studies and official relationship publications.
 
-**Required outputs**
+## Required outputs
 
-- buyer, beneficiary, contracting authority, awardee, consortium, and subcontractor;
-- tender and lot identifiers;
-- subject, taxonomy, technologies, services, and quantities;
-- publication, deadline, award, start, end, renewal, and modification dates;
-- amounts, currencies, durations, options, and framework limits;
-- incumbent and provider hypotheses;
-- evidence-backed renewal window;
-- explicit distinction between confirmed contract, published relationship, case-study claim, and analyst inference.
+- buyer/authority;
+- awardee/provider;
+- procedure/lot identifiers;
+- subject/taxonomy;
+- amount/currency;
+- publication/deadline/award/start/end/modification dates;
+- incumbent/provider hypotheses;
+- renewal windows;
+- exact distinction among contract evidence, public relationship publication and inference.
 
-### 3. Hiring, roles, teams, and project signals
+Existing executable TED/BOAMP/DECP paths without current `live_tested` evidence must receive controlled live validation.
 
-**Primary sources**
+Target SA: **SA-20** for residual live proof and portal expansion.
 
-- Greenhouse public Job Board API;
-- Lever public Postings API;
-- SmartRecruiters public Posting API;
-- additional official ATS APIs such as Workday, Ashby, Teamtailor, Recruitee, iCIMS, Taleo, SuccessFactors, and company-specific career feeds after separate review;
-- official career pages through sitemap, structured data, RSS, or bounded crawling when terms permit;
-- public conference speaker biographies and professional event programs;
-- official company team, governance, leadership, and contact pages.
+---
 
-**Required outputs**
+# 3. Hiring, cyber teams and ATS
 
-- organization, location, team, role, seniority, and job family;
-- cyber domain such as SOC, SIEM, detection engineering, incident response, GRC, IAM, cloud security, application security, or vulnerability management;
-- technologies explicitly named in the posting;
-- project, migration, deployment, managed-service, or transformation language;
-- first seen, updated, withdrawn, and freshness state;
-- evidence that a role is currently public.
+## Required provider coverage
 
-Candidate forms, applicant data, resumes, screening questions, private emails, and write endpoints are excluded.
+- Greenhouse;
+- Lever;
+- SmartRecruiters;
+- Ashby;
+- Recruitee;
+- Teamtailor;
+- Workday;
+- iCIMS;
+- Taleo;
+- SuccessFactors;
+- company-specific public career feeds/pages.
 
-### 4. Search engines, dorks, document discovery, and web archives
+## Required outputs
 
-**Candidate providers and tools**
+- role/title/team;
+- location;
+- seniority/job family;
+- explicit technologies;
+- cyber service/capability terms;
+- programme/migration/transformation language;
+- first/last seen;
+- withdrawn/current status;
+- organization target linkage.
+
+Existing Ashby/Recruitee live proofs remain valid historical evidence. Teamtailor and additional ATS remain mandatory activation work.
+
+Target SA: residual completion in **SA-20**.
+
+---
+
+# 4. Search engines, dorks, archives and web discovery
+
+## Required providers
 
 - Brave Search API;
-- Bing Web Search or another contractually approved search API;
-- Google searches and dorks as analyst-generated links unless an approved API or written crawling authorization covers the use;
-- Google Programmable Search only where an existing approved entitlement and its current terms permit it;
-- Common Crawl indexes and datasets;
-- Internet Archive Wayback Machine APIs and approved CDX access;
-- Archive.today for manual review only unless explicit reuse and automation terms are validated;
-- GDELT, Media Cloud, RSS, Atom, sitemaps, and official newsroom feeds;
-- GitHub code search and official APIs;
-- GitLab, package registries, documentation indexes, and public code-hosting APIs;
-- academic, patent, standards, and publication search APIs.
+- Mojeek Web Search;
+- Bing or equivalent approved independent search API;
+- Google analyst dorks and official Google API products where valid entitlement permits automation;
+- Common Crawl URL Index;
+- Internet Archive/Wayback CDX;
+- approved archived-body retrieval where separately governed;
+- GDELT current supported stack;
+- GitHub Code Search;
+- GitLab search/API paths;
+- publication, patent, standards and documentation search providers;
+- Crossref;
+- W3C;
+- PatentsView.
 
-**Dork families to maintain**
+## Mandatory dork families
 
-- official-domain documents and subdomains;
-- public tenders, awards, contracts, statements of work, and framework agreements;
-- SIEM, SOC, EDR, XDR, MDR, IAM, PAM, firewall, cloud, and security-product names;
-- architecture, migration, deployment, outsourcing, managed service, renewal, and support terms;
-- job titles and cyber-team terms;
-- public incident, ransomware, breach, regulator, and notification terms;
-- vendor case studies, partner directories, customer stories, and marketplace listings;
-- annual reports, sustainability reports, investor presentations, and regulatory filings;
-- conference slides, webinars, podcasts, and technical presentations.
-
-Example analyst queries:
+### Contracts/procurement
 
 ```text
-site:example.com (SIEM OR SOC OR EDR OR XDR) filetype:pdf
-"Example Company" (attributaire OR marché OR accord-cadre OR renouvellement)
-"Example Company" (Splunk OR Sentinel OR Sekoia OR QRadar OR Elastic)
-"Example Company" (ransomware OR cyberattack OR data breach OR regulator)
-site:careers.example.com (SOC OR SIEM OR detection OR incident response)
+"{organization}" (marché OR accord-cadre OR contrat OR attributaire OR titulaire OR renouvellement)
+"{organization}" (appel d'offres OR consultation OR CCTP OR DCE) cybersecurity
+site:{organization_domain} (contrat OR prestataire OR fournisseur OR intégrateur) filetype:pdf
 ```
 
-Search results are discovery metadata. They are not evidence until the referenced source is retrieved through an approved path and preserved with provenance.
+### Cyber service needs
 
-### 5. Corporate websites, documents, blogs, forums, and technical publications
+```text
+"{organization}" (pentest OR "test d'intrusion" OR "red team" OR "purple team")
+"{organization}" (SOC OR SIEM OR MDR OR XDR OR SOAR OR "threat hunting")
+"{organization}" (IAM OR IGA OR PAM OR "Zero Trust")
+"{organization}" (NIS2 OR DORA OR "ISO 27001" OR "SOC 2" OR "PCI DSS" OR HDS)
+"{organization}" (CSPM OR CNAPP OR Kubernetes OR "cloud security")
+"{organization}" (AppSec OR DevSecOps OR SAST OR DAST OR SCA OR SBOM)
+"{organization}" (DFIR OR forensic OR ransomware OR "incident response")
+```
 
-**Approved collection patterns**
+### Domain-focused research
 
-- official RSS or Atom feeds;
-- official APIs;
-- sitemaps and structured data;
-- bounded public-page crawling after terms and robots review;
-- manual review for ambiguous or copyrighted long-form content;
-- short factual snippets and extracted claims with canonical URLs rather than wholesale content replication.
+```text
+site:{organization_domain} (cybersécurité OR sécurité OR risque OR conformité) filetype:pdf
+site:{organization_domain} (architecture OR migration OR transformation) (cloud OR IAM OR SOC OR sécurité)
+site:{organization_domain} (prestataire OR partenaire OR intégrateur OR fournisseur)
+site:{organization_domain} (incident OR ransomware OR indisponibilité OR "violation de données")
+site:{organization_domain} (recrutement OR carrière OR jobs) (pentest OR GRC OR AppSec OR SOC OR IAM)
+```
 
-**Useful sources**
+Search metadata is a discovery lead until the referenced resource is acquired through an approved evidence path.
 
-- company newsrooms and blogs;
-- vendor, integrator, MSSP, and partner blogs;
-- public engineering blogs;
-- public documentation and support portals;
-- standards bodies and industry associations;
-- public webinars, podcasts, conference programs, and slide decks;
-- public GitHub and GitLab organizations;
-- Stack Exchange / Stack Overflow APIs for public organization-relevant technical discussion when the attribution is explicit and the use is approved;
-- Reddit official API for approved public communities and organization-level signals;
-- public Mastodon and Bluesky APIs where their terms and server policies permit the exact use;
-- YouTube Data API for public channel, video, description, and transcript metadata where licensing permits.
+Target SA: **SA-15**.
 
-A personal post or alias must not be treated as proof of an employer's technology. At most it can create a low-confidence review lead when the professional affiliation is self-declared, current, relevant, and corroborated.
+---
 
-### 6. Professional people, organization charts, and business contacts
+# 5. Automatic corporate website crawling
 
-**Preferred sources**
+## Required product behavior
 
-- official company leadership, team, governance, and contact pages;
-- official press releases and appointment notices;
-- annual reports and regulatory filings;
-- conference and webinar speaker pages;
-- public professional association directories;
-- licensed B2B contact-data providers whose contract covers the intended use;
-- LinkedIn official APIs or specifically authorized partner products for the exact approved fields and purpose;
-- analyst-generated LinkedIn links for manual verification when automated access is not authorized.
+For every organization with a resolved canonical public domain and deployment-approved research scope, the platform must be able to create a governed crawl target automatically and collect the maximum useful public evidence inside that scope.
 
-**Permitted data**
+## Required crawler capabilities
 
-- professional name;
-- current organization and public professional role;
-- department, seniority, and buying-committee role;
-- public business email, role mailbox, switchboard, direct business number, or contact form where collection and reuse are permitted;
-- source, collection date, confidence, legal basis, notice, objection, suppression, and retention state.
+- automatic `robots.txt` discovery/evaluation;
+- sitemap and sitemap-index recursion;
+- RSS/Atom discovery;
+- security.txt;
+- same-origin link extraction;
+- recursive traversal;
+- configurable depth/page/byte/time/concurrency budgets;
+- approved-origin/path filtering;
+- canonical URL/deduplication;
+- HTML/structured data/JSON-LD;
+- public PDF/Office document discovery;
+- document text extraction through quarantine;
+- JavaScript-rendered browser fallback;
+- legitimate authenticated paths for exact authorized accounts;
+- ETag/Last-Modified/hash incremental refresh;
+- resource versioning and tombstones;
+- crawl freshness schedules;
+- complete provenance.
 
-**Prohibited behavior**
+Recursive crawling is required; “unlimited” resource consumption is not. Bounds are operational/safety controls.
 
-- scraping LinkedIn profiles, posts, connections, search results, or messages without express permission;
-- creating false accounts, impersonating people, or using deceptive personas;
-- bypassing rate limits, authentication, CAPTCHA, MFA, or access controls;
-- collecting private messages, connection graphs, private groups, personal emails, private phones, home addresses, family data, or sensitive traits;
-- inferring a person's identity from a pseudonym or correlating aliases across platforms to de-anonymize them;
-- collecting an individual's full posting or message history to profile interests, behavior, beliefs, vulnerabilities, or private life;
-- treating unverified social activity as an employer fact.
+Target SA: **SA-16**.
 
-### 7. Reddit, Discord, communities, and pseudonymous content
+---
 
-#### Reddit
+# 6. Headless browser and legitimate login
 
-Permitted only through the official API or another licensed route for approved public subreddits and fields. The principal use is organization-level and market-level signal discovery, for example:
+A generalized Playwright/Chromium runtime is mandatory.
 
-- public discussion of a product migration or outage;
-- recurring implementation problems;
-- vendor sentiment aggregated across a community;
-- public links to official documents or announcements;
-- explicit public statements by verified organization accounts.
+It must support:
 
-Do not build dossiers on individual Reddit users, link their pseudonyms to real identities, or infer their employer's technology from personal discussions without explicit self-attribution and independent corroboration.
+- JavaScript rendering;
+- first-party navigation/interactions;
+- source-specific cookies;
+- provider-approved service/test accounts;
+- OAuth/SSO when authorized;
+- administrator-installed integrations;
+- analyst-assisted MFA;
+- screenshots;
+- controlled downloads;
+- disposable contexts/processes;
+- request interception;
+- audit of all browser/auth transitions.
 
-#### Discord
+A useful source must not be permanently excluded solely because it requires browser execution or a legitimate login.
 
-Discord data may be processed only through a `consented_connector`, such as:
+Target SA: **SA-16**.
 
-- a bot installed by the server owner or administrator for a documented purpose;
-- an authorized export supplied by the server owner or customer;
-- an official API workflow whose permissions and data handling have been reviewed.
+---
 
-No self-bots, automated user accounts, covert joining, invite harvesting, member scraping, private-message collection, or bulk history extraction are permitted. Public visibility does not authorize mass scraping or commercial profiling.
+# 7. Domains, DNS, certificates, passive exposure and technography
 
-The allowed output should normally be aggregated community or organization-level trends. Individual-level attribution requires explicit professional relevance, a valid basis, minimization, and human review.
+## Mandatory open/public coverage
 
-### 8. Domains, DNS, certificates, passive internet exposure, and technology detection
+- Cloudflare DNS-over-HTTPS;
+- IANA-bootstrapped RDAP;
+- Certificate Transparency;
+- Cert Spotter;
+- ASN/BGP public data.
 
-**Primary sources and tools**
+## Mandatory commercial/provider activation targets
 
-- RDAP and official registry services;
-- DNS and passive-DNS providers such as SecurityTrails or an equivalent licensed service;
-- Certificate Transparency through crt.sh or an approved CT provider;
-- Censys official APIs;
-- Shodan official APIs;
-- urlscan.io official API;
-- VirusTotal official APIs within the licensed scope;
-- GreyNoise, AbuseIPDB, Spamhaus, and other approved reputation feeds;
-- official ASN and BGP datasets;
-- Wappalyzer, BuiltWith, HTTP Archive, or equivalent licensed technography sources;
-- passive metadata from public code, package manifests, SBOMs, headers, certificates, DNS, and vendor case studies;
-- Amass, theHarvester, SpiderFoot, Recon-ng, Maltego, and similar frameworks only through reviewed modules and approved upstream sources.
+- Shodan passive/indexed APIs;
+- Censys;
+- SecurityTrails;
+- urlscan existing-scan/search;
+- VirusTotal metadata within licensed scope;
+- GreyNoise;
+- AbuseIPDB;
+- Spamhaus;
+- Wappalyzer;
+- BuiltWith;
+- HTTP Archive/equivalent technography;
+- licensed passive DNS;
+- licensed certificate telemetry;
+- licensed passive exposure;
+- licensed cloud-asset metadata.
 
-**Restrictions**
+Every useful commercial provider must have an onboarding/entitlement plan and live-validation target. Lack of current commercial rights is a prerequisite to resolve.
 
-- passive collection only for prospects;
-- no port scanning, vulnerability scanning, authentication tests, credential validation, exploitation, or intrusive probing;
-- no direct requests to candidate assets beyond separately approved ordinary public-page retrieval;
-- observed technology and observed version must be timestamped and may be stale;
-- a hostname or certificate relationship is a claim until organization ownership is resolved.
+Target SA: **SA-17**.
 
-MAC-address intelligence is generally irrelevant to external B2B organization research and must not be collected from individuals.
+---
 
-### 9. Technologies, products, versions, and stack inference
+# 8. Local OSINT frameworks and OSINT Framework catalogue
 
-The platform must combine independent evidence instead of relying on a single detector.
+## Mandatory local-tool coverage
 
-**Evidence sources**
+- Sherlock;
+- OWASP Amass passive modules;
+- theHarvester approved upstream providers;
+- SpiderFoot approved modules;
+- Recon-ng approved modules;
+- Maltego approved transforms;
+- additional useful OSINT Framework entries.
 
-- official contracts and award notices;
-- official customer stories and partner directories;
-- current job postings;
-- official engineering repositories and package manifests;
-- public architecture presentations and documentation;
-- externally visible headers, certificates, DNS, scripts, and service metadata;
-- licensed technography providers;
-- current support or migration tenders;
-- public vendor marketplaces and integration directories.
+## Module decomposition rule
 
-**Fact and hypothesis states**
+A framework is not treated as one binary authorization decision. Each module/provider is classified by:
 
-- `confirmed_current`;
-- `confirmed_historical`;
-- `strongly_corroborated`;
-- `probable`;
-- `weak_lead`;
-- `conflicted`;
-- `unknown`.
+- target type;
+- upstream host/provider;
+- passive/active behavior;
+- credential requirements;
+- data category;
+- network behavior;
+- quota;
+- output mapping;
+- deployment authorization.
 
-An exact current contract or official case study may support a high-confidence relationship. A single old job posting cannot prove current production use. A personal forum message cannot prove employer use.
+Legitimate useful modules proceed independently even when another module requires a different authorization or is not selected.
 
-### 10. Vulnerabilities, advisories, exploitation, and product risk
+## OSINT Framework import
 
-**Primary sources**
+OSINT Framework remains a discovery taxonomy, but every useful imported candidate must eventually receive:
 
-- CVE.org;
-- NVD API;
+- canonical provider/tool identity;
+- implementation owner;
+- target SA;
+- provider/module access plan;
+- adapter/runtime design;
+- live-test plan.
+
+Target SA: **SA-17**, with residual final audit in **SA-20**.
+
+---
+
+# 9. Technologies, public code and developer ecosystems
+
+## Existing/required providers
+
+- GitHub organization repositories;
+- GitHub Code Search;
+- GitLab groups/projects;
+- PyPI;
+- npm;
+- Maven Central;
+- NuGet;
+- crates.io;
+- RubyGems;
+- public container registries;
+- SBOM/release feeds;
+- public issue trackers;
+- technical documentation indexes;
+- Stack Exchange;
+- vendor community portals.
+
+## Required outputs
+
+- official organization repositories/projects;
+- package/artifact identity;
+- release cadence;
+- declared technology/dependency evidence;
+- public documentation;
+- security advisories;
+- organization-level technical hypotheses.
+
+Personal developer identity correlation is not required for ordinary organization research.
+
+Target SA: **SA-20**.
+
+---
+
+# 10. Vulnerabilities and advisories
+
+## Mandatory providers
+
 - CISA KEV;
+- NVD;
 - FIRST EPSS;
-- OSV;
 - GitHub Security Advisories;
-- official vendor PSIRTs and advisory feeds;
-- CERT-FR, ENISA, national CERTs, and sector advisories;
-- approved threat-intelligence feeds.
+- CVE Services;
+- OSV;
+- CIRCL Vulnerability-Lookup;
+- vendor PSIRTs;
+- CERT-FR;
+- ENISA;
+- national/sector CERT feeds;
+- Linux distribution advisories;
+- package/ecosystem advisories;
+- cloud/container advisories where useful.
 
-**Required outputs**
+Existing executable providers must receive real controlled live proof.
 
-- canonical vulnerability identity;
-- affected products, versions, configurations, and ecosystems;
-- fixed versions and mitigations;
-- CVSS, CWE, EPSS, KEV, exploit maturity, and vendor status;
-- publication, modification, and ingestion timestamps;
-- product-to-organization applicability confidence.
+Global vulnerability data remains separate from organization-specific technology/applicability evidence.
 
-The platform must not state that an organization is vulnerable unless an applicable product and version are supported by sufficiently precise, fresh evidence. Otherwise the result is a review hypothesis.
+Target SA: **SA-18**.
 
-### 11. Incidents, breaches, ransomware claims, and regulatory reporting
+---
 
-**Preferred sources**
+# 11. Incidents, CTI, ransomware and phishing
 
-- organization statements and status pages;
-- regulator and data-protection authority notices;
-- stock-exchange and financial filings;
-- court and public-authority records;
-- national CERT and law-enforcement publications;
-- reputable licensed news sources;
-- approved ransomware-claim aggregators that expose metadata only;
-- official post-incident reports and public notifications.
+## Mandatory provider families
 
-**Claim states**
+- organization incident statements/status pages;
+- SEC EDGAR cyber disclosures;
+- regulator/data-protection notices;
+- CERT/law-enforcement/public authority notices;
+- PhishTank;
+- licensed incident/news APIs;
+- licensed STIX/TAXII;
+- licensed ransomware-claim metadata;
+- licensed phishing metadata;
+- licensed malware/IOC metadata;
+- passive threat/infrastructure feeds.
+
+## Claim states
 
 - `actor_claim`;
 - `public_report`;
@@ -395,239 +453,178 @@ The platform must not state that an organization is vulnerable unless an applica
 - `retracted_or_disputed`;
 - `false_attribution`.
 
-Do not access victim portals, interact with threat actors, download leaked documents, ingest stolen credentials, retain private victim communications, or store extorted datasets.
+Threat-actor/public-source claims must not be silently promoted to official facts.
 
-Have I Been Pwned domain-level searches may be used only for a domain controlled by the customer or organization that has authorized the assessment and completed the provider's domain-verification process.
+Private victim files, stolen credentials, extorted datasets and private negotiations are not required acquisition targets.
 
-### 12. Images, videos, documents, metadata, translation, and archives
+Target SA: **SA-18**.
 
-**Candidate tools and services**
+---
 
-- official document repositories and search APIs;
-- ExifTool, Apache Tika, pdf parsers, office-document parsers, and file-type validators in an isolated processing environment;
-- OCR and translation services covered by an approved data-processing agreement;
-- reverse-image search as an analyst workflow where automated terms are unclear;
-- Wayback Machine, Common Crawl, and approved archive providers;
-- URL and file reputation services such as urlscan.io and VirusTotal within licence limits.
+# 12. LinkedIn, Reddit, Discord and professional/community intelligence
 
-**Outputs**
+## LinkedIn
 
-- document title, publisher, date, language, canonical URL, hash, and extraction quality;
-- organization, product, contract, person-role, and incident mentions;
-- redacted factual snippets and page references;
-- image or document metadata relevant to provenance.
+The project must pursue an executable legitimate path through one or more of:
 
-Do not persist unnecessary personal metadata, raw copyrighted corpora, or documents containing exposed confidential information. Suspicious documents are quarantined and never opened in the collection worker.
+- official LinkedIn API scopes actually granted;
+- authorized LinkedIn partner/product integration;
+- written-authorized automated collection for exact scope;
+- analyst-link/manual verification while machine access is being provisioned.
 
-### 13. Code, developer ecosystems, and public technical activity
+A missing current LinkedIn entitlement is an activation prerequisite, not a declaration that professional-network intelligence is unimportant.
 
-**Sources**
+## Reddit
 
-- GitHub official API, code search, releases, advisories, organization repositories, and public events;
-- GitLab official API;
-- public package registries such as PyPI, npm, Maven Central, NuGet, crates.io, RubyGems, and container registries;
-- official SBOM and release feeds;
-- public issue trackers and technical documentation;
-- Stack Exchange APIs;
-- official vendor community portals.
+Implement official/licensed API collection for approved public communities and organization-level signals.
 
-**Permitted uses**
+## Discord
 
-- identify technologies published by an official organization account;
-- discover open-source projects, release cadence, dependency families, and security advisories;
-- locate official documentation and implementation evidence;
-- create organization-level technology hypotheses.
+Implement administrator-installed bot/connector and authorized-export paths with exact server/tenant scope.
 
-Do not map developers' personal accounts to employers by hidden identifiers, historical emails, SSH keys, or username correlation unless the relationship is explicitly public, professionally relevant, and required for an authorized investigation. Private repositories, tokens, secrets, accidental exposures, and commit data outside the approved purpose are excluded.
+## Additional providers
 
-### 14. News, market, regulatory, and industry change signals
+- Stack Exchange;
+- Mastodon;
+- Bluesky;
+- YouTube Data API and permitted transcript/metadata workflows;
+- conference/event speaker directories;
+- professional associations;
+- licensed B2B professional-contact providers.
 
-**Sources**
+Private messages and unrelated private-life data remain outside ordinary product research.
 
-- official company newsrooms and RSS;
-- regulator, CERT, court, procurement, and public-authority feeds;
-- licensed press and news APIs;
-- GDELT and other approved event-data providers;
-- industry associations, standards bodies, and analyst publications;
-- mergers, acquisitions, funding, leadership, restructuring, new-site, data-center, cloud, and digital-transformation announcements.
+Target SA: **SA-19**.
 
-Each extracted statement must preserve publication date, event date, source type, claim type, organization resolution, and confirmation status.
+---
 
-## BrixHub requirement
+# 13. Corporate news, regulatory and market-change intelligence
 
-`https://brixhub.cc/` is a mandatory candidate for source assessment because the product owner has identified it as potentially valuable.
+Required sources include:
 
-It remains `quarantined` until the following are verified and documented:
+- official company newsrooms/feeds;
+- regulator/CERT/court/public-authority feeds;
+- licensed news APIs;
+- GDELT current supported stack;
+- industry associations;
+- standards bodies;
+- M&A/funding/restructuring/leadership/new-site/data-centre/cloud/transformation announcements.
 
-1. legal owner and operator;
-2. official terms of service and privacy notice;
-3. data provenance and whether the provider is authorized to redistribute it;
-4. exact available datasets, fields, countries, and update cadence;
-5. account, payment, API, browser, export, and download methods;
-6. permission for automated collection and commercial reuse;
-7. robots and technical access rules;
-8. rate limits and quotas;
-9. retention, correction, objection, deletion, and audit requirements;
-10. whether personal, breach, credential, victim, private-message, or restricted data is present;
-11. a reviewed sample obtained through a legitimate authorized workflow;
-12. security review of downloads and provider connectivity.
+Every extracted event preserves publication time, event time, source type, claim type, organization-resolution confidence and correction state.
 
-Before approval, no account creation, login automation, payment, crawl, scrape, download, import, or live connectivity test is permitted. If approved, the adapter must use secret references, exact host/path allowlists, provider-specific schemas, bounded pagination, no raw secret storage, and a documented retention policy.
+Target SA: **SA-15/SA-18** depending provider family.
 
-## LinkedIn requirement
+---
 
-LinkedIn is a high-value professional source but is not a general-purpose crawl target.
+# 14. Documents, files, metadata, OCR and translation
 
-Allowed integration paths are:
+## Mandatory safe processing capabilities
 
-- official LinkedIn API scopes actually granted to the application;
-- a licensed LinkedIn product or authorized partner workflow whose contract covers the exact use;
-- written crawling authorization covering exact hosts, paths, fields, rate, storage, and purpose;
-- analyst-generated links and manual verification without automated extraction.
+- PDF parsing;
+- Office Open XML parsing;
+- Apache Tika or equivalent extraction;
+- ExifTool metadata extraction in isolation;
+- OCR;
+- translation;
+- image/document metadata normalization;
+- archive/container inspection;
+- safe screenshot evidence;
+- file reputation/malware screening;
+- bounded extraction and page references.
 
-Until one of these paths is approved, LinkedIn remains non-executable. The system must never use a normal user account, browser session, cookie, self-created persona, extension, proxy pool, or anti-bot bypass to scrape profiles, posts, connections, groups, search results, or messages.
+All downloaded artifacts are quarantined and parsed in disposable workers.
 
-## Confidence and corroboration
+Target SA: **SA-20**.
 
-Every material output must expose its evidence and confidence components. The scoring model should consider:
+---
 
-- source authority;
-- directness of the statement;
-- entity-match quality;
-- temporal freshness;
-- field specificity;
-- independent corroboration;
-- contradictions;
-- source incentives and possible bias;
-- whether the evidence is current or historical.
+# 15. BrixHub
 
-Suggested evidence hierarchy:
+`https://brixhub.cc/` remains a mandatory provider assessment/implementation candidate.
 
-| Evidence | Typical maximum confidence before conflict adjustment |
-|---|---:|
-| Official current contract, filing, regulator notice, or organization statement | 0.95 |
-| Official vendor/customer case study or current authoritative registry | 0.90 |
-| Current tender or award naming an exact product/provider | 0.90 |
-| Current official job posting naming an exact technology | 0.75 |
-| Official organization repository or architecture publication | 0.80 |
-| Passive technology detection with current timestamp | 0.65 |
-| Reputable licensed news report | 0.70 |
-| Public forum or social post with verified professional attribution | 0.45 |
-| Unverified pseudonymous statement | 0.20 and review-only |
+Required work:
 
-Scores are not facts. They must be calibrated against labelled outcomes and shown with the underlying reasons.
+1. identify owner/operator;
+2. verify terms/privacy;
+3. verify data provenance;
+4. enumerate datasets/fields/countries;
+5. determine account/payment/API/browser/export methods;
+6. determine automation/commercial-reuse rights;
+7. document quotas/rate limits;
+8. determine retention/correction/deletion obligations;
+9. obtain a legitimate reviewed sample when permitted;
+10. implement source governance and Provider Onboarding;
+11. implement exact schemas/adapter;
+12. run controlled live production-adapter validation.
 
-## Source-catalog record
+If no useful legitimate access path ultimately exists, the product owner must explicitly reject the source; uncertainty alone is not completion.
 
-Every candidate source or tool must record at least:
+Target SA: prerequisite work begins immediately, final residual gate **SA-20**.
 
-```yaml
-id: string
-name: string
-canonical_url: string
-owner: string | null
-osint_framework_category: string | null
-project_use_cases: []
-collection_mode: official_api | open_data | licensed_api | bounded_web | manual_review | authorized_browser | consented_connector | quarantined | blocked
-status: proposed | reviewing | approved | disabled | quarantined | blocked | retired
-terms_url: string | null
-privacy_url: string | null
-licence: string | null
-api_documentation_url: string | null
-authentication_modes: []
-approved_hosts: []
-approved_path_prefixes: []
-allowed_data_categories: []
-prohibited_data_categories: []
-automated_collection_allowed: boolean
-raw_storage_allowed: boolean
-human_review_required: boolean
-rate_limit_per_minute: integer | null
-concurrency_limit: integer | null
-retention_days: integer | null
-attribution_required: boolean
-legal_reviewed_at: datetime | null
-privacy_reviewed_at: datetime | null
-security_reviewed_at: datetime | null
-authorization_expires_at: datetime | null
-last_health_check_at: datetime | null
-notes: string
+---
+
+# 16. Provider onboarding, accounts and credentials
+
+Useful providers requiring accounts/keys must be operationalized through Provider Onboarding.
+
+Supported patterns must include:
+
+- API keys;
+- OAuth;
+- service accounts;
+- paid subscriptions;
+- tenant/account identifiers;
+- provider-approved service/test accounts;
+- browser account sessions;
+- administrator-installed connectors;
+- approved organization-controlled verification mailbox/alias;
+- human checkpoints for KYC/payment/contract/MFA.
+
+Raw secrets never enter Git or ordinary application persistence.
+
+Disposable mailboxes, fake identities and account multiplication to evade provider controls are not required implementation techniques.
+
+---
+
+# 17. Controlled live-validation standard
+
+For every legitimately exercisable provider, live proof must use the production adapter and establish:
+
+- current connectivity;
+- provider schema compatibility;
+- authentication path where applicable;
+- policy-before-network;
+- bounded collection;
+- canonical RawObservation/evidence mapping;
+- checkpoint/idempotency behavior;
+- secret hygiene;
+- evidence boundary;
+- expected non-empty data for the chosen validation target/provider.
+
+Mocks, fixtures, skipped workflows and deterministic CI never count as live provider evidence.
+
+---
+
+# 18. Implementation waves
+
+| SA | Mandatory outcome |
+| --- | --- |
+| SA-15 | Search/news completion: Mojeek, PatentsView, GDELT, Brave/IA live proof, additional search provider, Google official path where entitled. |
+| SA-16 | Automatic company crawl, recursive crawling, generalized headless browser, legitimate authenticated login, OAuth/SSO, analyst-assisted MFA. |
+| SA-17 | Passive infrastructure/technography + Shodan/Censys/SecurityTrails/urlscan/VT/GreyNoise/etc. + local OSINT frameworks. |
+| SA-18 | Vulnerability live proof, vendor/CERT advisories, incidents, CTI, ransomware, phishing, STIX/TAXII. |
+| SA-19 | LinkedIn legitimate path, Reddit, Discord consented connector, professional/community sources. |
+| SA-20 | Documents/media, developer ecosystems, residual identity/procurement/ATS live proof, final broad completeness gate. |
+
+## Final definition of completeness
+
+At SA-20, every useful source must be one of:
+
+```text
+fully integrated
+replaced by a fully integrated canonical source
+duplicate of a fully integrated canonical source
+explicitly excluded by product-owner decision
 ```
 
-## Adapter acceptance tests
-
-An adapter is not complete until tests prove:
-
-- policy denial occurs before network access;
-- only approved hosts and paths are reachable;
-- redirects cannot escape the allowlist;
-- secrets are referenced and redacted;
-- rate, concurrency, size, MIME, date-window, and pagination limits are enforced;
-- retries and circuits do not duplicate observations;
-- checkpoints advance only after transactional success;
-- provider payloads cannot leak into canonical domain models;
-- PII minimization and prohibited-field rejection work;
-- timestamps and hashes are deterministic;
-- replays are idempotent;
-- removal or correction updates projections;
-- authorization expiry disables collection;
-- live network is absent from unit tests;
-- integration fixtures are synthetic, minimized, licensed, or provider-published.
-
-## Implementation priorities
-
-### Priority A — authoritative structured sources
-
-- organization registries;
-- procurement and awards;
-- official ATS APIs;
-- vulnerability and advisory feeds;
-- official corporate, regulatory, and CERT feeds.
-
-### Priority B — passive organization and technology evidence
-
-- search APIs and dork workflow;
-- corporate sites, sitemaps, RSS, and documents;
-- RDAP, DNS, CT, Censys, Shodan, SecurityTrails, urlscan, Wappalyzer, and BuiltWith;
-- GitHub, GitLab, package registries, and official engineering publications.
-
-### Priority C — people, providers, and market relationships
-
-- licensed B2B professional data;
-- organization charts and buying committees;
-- partner directories, case studies, incumbent-provider and renewal analysis;
-- LinkedIn official or explicitly authorized integration.
-
-### Priority D — communities and unstructured intelligence
-
-- Reddit official API;
-- consented Discord connectors;
-- public forums, blogs, podcasts, videos, transcripts, and conference material;
-- aggregation and corroboration models that prevent individual surveillance.
-
-### Priority E — quarantined and high-risk providers
-
-- BrixHub assessment;
-- browser-only sources;
-- ransomware and dark-web metadata providers;
-- any source containing breach, identity, or personal data.
-
-These sources require the strongest legal, privacy, security, provenance, and human-review gates before implementation.
-
-## Non-negotiable exclusions
-
-The platform must not:
-
-- create deceptive accounts or personas;
-- covertly join private or restricted communities;
-- scrape LinkedIn or Discord without express authorization;
-- collect private messages or full personal message histories;
-- de-anonymize pseudonyms or correlate aliases to expose real identities;
-- profile individuals' beliefs, health, politics, religion, sexuality, private interests, or vulnerabilities;
-- buy, download, search, or retain stolen credentials, infostealer logs, victim files, extorted data, or private datasets;
-- bypass authentication, paywalls, CAPTCHA, MFA, rate limits, robots enforcement, or access controls;
-- actively scan, exploit, authenticate to, or test prospect systems;
-- autonomously contact, message, follow, connect with, or engage prospects;
-- present a probabilistic lead as a confirmed fact.
-
-The commercial value of a source never overrides source authorization, privacy, security, data minimization, evidence quality, or human accountability.
+A useful provider that merely lacks a key, entitlement, account, target, browser workflow, stable API or controlled live proof remains unfinished work.
