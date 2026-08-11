@@ -14,6 +14,7 @@ class AdemeFundingLine(BaseModel):
     nature: str
     date: str = Field(alias="dateConvention")
     montant: Decimal
+    score: float | None = Field(default=None, alias="_score")
 
     @field_validator("id", "nom", "objet", "nature", "date")
     @classmethod
