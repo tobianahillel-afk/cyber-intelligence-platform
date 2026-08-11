@@ -1,3 +1,11 @@
-from cip.modules.service_taxonomy.domain.models import CyberServiceFamily, ServiceFamilyMatch
+from cip.modules.service_taxonomy.domain.models import (
+    CANONICAL_TAXONOMY_VERSION,
+    CyberServiceFamily,
+    ServiceFamilyMatch,
+)
 
-__all__ = ["CyberServiceFamily", "ServiceFamilyMatch"]
+__all__ = [
+    "CANONICAL_TAXONOMY_VERSION",
+    "CyberServiceFamily",
+    "ServiceFamilyMatch",
+]
