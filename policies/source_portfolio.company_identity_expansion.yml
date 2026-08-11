@@ -1,0 +1,24 @@
+version: 1
+
+sources:
+  - source_id: brreg-enhetsregisteret
+    display_name: Brønnøysundregistrene Enhetsregisteret Open Data
+    canonical_url: https://data.brreg.no/enhetsregisteret/api/enheter
+    category: organization_identity
+    status: executable
+    freshness_max_age_seconds: 86400
+    commercial_use_cases: [organization_resolution]
+    monthly_cost_limit: 0
+    metadata:
+      activation_requires: explicit_norwegian_registration_target
+      scheduled_by_default: false
+      personal_role_endpoints: prohibited
+    adapter:
+      adapter_id: brreg-enhetsregisteret-entity
+      adapter_version: "1"
+      provider_schema_version: brreg-enhet-v2
+      modes: [entity_lookup, priority_refresh]
+      canonical_output_types: [identity_claim]
+      supports_corrections: true
+      max_page_size: 1
+      cost_per_request: 0
