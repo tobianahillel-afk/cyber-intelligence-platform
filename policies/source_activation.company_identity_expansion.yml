@@ -7,7 +7,7 @@ sources:
     disposition: active
     activation_wave: SA-11
     requires_schedule: false
-    stages: [catalogued, reviewed, mapped, adapter_present, authorized, executable]
+    stages: [catalogued, reviewed, mapped, adapter_present, authorized, executable, live_tested]
 
   - source_id: sirene-api
     display_name: INSEE Sirene API direct connector candidate
