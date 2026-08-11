@@ -88,7 +88,7 @@ def test_hypothesis_list_filters_and_detail_expose_fusion_contract(client: TestC
     detail = client.get(f"/v1/need-hypotheses/{item['id']}")
     assert detail.status_code == 200
     assert detail.json()["rule_id"] == "lot24-need-fusion"
-    assert detail.json()["taxonomy_version"] == "2.0.0"
+    assert detail.json()["taxonomy_version"] == "2026.08"
 
 
 def test_hypothesis_api_rejects_invalid_filters_and_missing_detail(client: TestClient) -> None:
