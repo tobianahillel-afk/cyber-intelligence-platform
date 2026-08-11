@@ -110,7 +110,7 @@ def test_patentsview_maps_only_exact_assignee_minimal_metadata() -> None:
     assert request.url.path == "/api/v1/patent/"
     assert request.headers["X-Api-Key"] == "live-key"
     assert loads(request.url.params["q"]) == {
-        "assignees.assignee_organization": "Example Corporation"
+        "_eq": {"assignees.assignee_organization": "Example Corporation"}
     }
     assert loads(request.url.params["o"]) == {"size": 20}
     fields = loads(request.url.params["f"])
