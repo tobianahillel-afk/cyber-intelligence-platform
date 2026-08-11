@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 import { NeedHypothesisApiError, loadNeedHypotheses } from "@/features/need-hypotheses/api";
 import type {
   CyberServiceFamily,
@@ -182,7 +184,9 @@ function HypothesisCard({ hypothesis }: { hypothesis: NeedHypothesis }) {
       <div className="hypothesis-heading">
         <div>
           <p className="eyebrow">{formatLabel(hypothesis.hypothesis_class)}</p>
-          <h3>{hypothesis.organization}</h3>
+          <h3>
+            <Link href={`/need-hypotheses/${hypothesis.id}`}>{hypothesis.organization}</Link>
+          </h3>
         </div>
         <div className="detail-badges">
           <span className={urgent ? "hypothesis-pill hypothesis-pill-urgent" : "hypothesis-pill"}>
