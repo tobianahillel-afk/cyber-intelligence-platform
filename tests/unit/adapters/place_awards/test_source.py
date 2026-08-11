@@ -105,11 +105,13 @@ def test_client_rejects_non_json_and_oversized_response() -> None:
     transport = httpx.MockTransport(
         lambda _: httpx.Response(200, headers={"content-type": "text/html"}, text="bad")
     )
-    with httpx.Client(transport=transport) as http_client:
-        with pytest.raises(PlaceSourceResponseError, match="content type"):
-            PlaceAwardsClient(http_client, records_url="https://example.test").fetch_page(
-                offset=0
-            )
+    with (
+        httpx.Client(transport=transport) as http_client,
+        pytest.raises(PlaceSourceResponseError, match="content type"),
+    ):
+        PlaceAwardsClient(http_client, records_url="https://example.test").fetch_page(
+            offset=0
+        )
 
     oversized = httpx.MockTransport(
         lambda _: httpx.Response(
