@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections.abc import Mapping
 from dataclasses import dataclass
 from urllib.parse import urlsplit
 
@@ -133,7 +134,7 @@ def _get_model[MODEL: BaseModel](
     url: str,
     model: type[MODEL],
     *,
-    params: dict[str, object] | None = None,
+    params: Mapping[str, str | int | float | bool | None] | None = None,
 ) -> tuple[MODEL, str]:
     try:
         response = client.get(
