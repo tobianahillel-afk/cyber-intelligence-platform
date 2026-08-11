@@ -19,7 +19,7 @@ class CordisFundingFetchResult:
 class CordisFundingClient:
     PAGE_SIZE = 100
     MAX_RESPONSE_BYTES = 5_000_000
-    QUERY = """PREFIX eurio: <http://data.europa.eu/s66#>
+    QUERY_TEMPLATE = """PREFIX eurio: <http://data.europa.eu/s66#>
 SELECT DISTINCT ?project_id ?project_title ?organisation_name ?role_label
                 ?start_date ?end_date ?eu_contribution
 WHERE {
@@ -35,8 +35,8 @@ WHERE {
   OPTIONAL { ?project eurio:ecMaxContribution ?eu_contribution . }
 }
 ORDER BY DESC(?start_date) ?project_id ?organisation_name
-LIMIT {limit}
-OFFSET {offset}
+LIMIT __LIMIT__
+OFFSET __OFFSET__
 """
 
     def __init__(self, client: httpx.Client, *, endpoint_url: str) -> None:
@@ -46,7 +46,9 @@ OFFSET {offset}
     def page_url(self, offset: int) -> str:
         if offset < 0:
             raise ValueError("offset cannot be negative")
-        query = self.QUERY.format(limit=self.PAGE_SIZE, offset=offset)
+        query = self.QUERY_TEMPLATE.replace("__LIMIT__", str(self.PAGE_SIZE)).replace(
+            "__OFFSET__", str(offset)
+        )
         params = urlencode(
             {
                 "query": query,
