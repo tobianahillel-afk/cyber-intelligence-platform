@@ -105,11 +105,9 @@ def test_schema_rejects_blank_fields_negative_amount_and_negative_total() -> Non
 
 
 def test_client_builds_public_selected_field_query() -> None:
-    client = AdemeFundingClient(httpx.Client(), lines_url=BASE_URL)
-    try:
+    with httpx.Client() as http_client:
+        client = AdemeFundingClient(http_client, lines_url=BASE_URL)
         url = client.first_page_url()
-    finally:
-        client._client.close()  # noqa: SLF001
     assert "size=100" in url
     assert "select=_id%2Cnom%2Cobjet%2Cnature%2Cdate%2Cmontant" in url
 
@@ -118,9 +116,11 @@ def test_client_rejects_non_json_and_oversized_response() -> None:
     transport = httpx.MockTransport(
         lambda _: httpx.Response(200, headers={"content-type": "text/html"}, text="bad")
     )
-    with httpx.Client(transport=transport) as http_client:
-        with pytest.raises(AdemeFundingResponseError, match="content type"):
-            AdemeFundingClient(http_client, lines_url=BASE_URL).fetch_url(BASE_URL)
+    with (
+        httpx.Client(transport=transport) as http_client,
+        pytest.raises(AdemeFundingResponseError, match="content type"),
+    ):
+        AdemeFundingClient(http_client, lines_url=BASE_URL).fetch_url(BASE_URL)
 
     oversized = httpx.MockTransport(
         lambda _: httpx.Response(
