@@ -26,9 +26,7 @@ class Settings(BaseSettings):
     identity_source_registry_path: Path = Path("policies/identity_sources.yml")
     decp_source_registry_path: Path = Path("policies/sources.decp.yml")
     public_web_source_registry_path: Path = Path("policies/sources.public_web.yml")
-    vulnerability_source_registry_path: Path = Path(
-        "policies/sources.vulnerability.yml"
-    )
+    vulnerability_source_registry_path: Path = Path("policies/sources.vulnerability.yml")
     search_archive_source_registry_path: Path = Path(
         "policies/sources.search_archives.yml"
     )
@@ -46,15 +44,12 @@ class Settings(BaseSettings):
     corporate_change_source_registry_path: Path = Path(
         "policies/sources.corporate_changes.yml"
     )
-    relationship_source_registry_path: Path = Path(
-        "policies/sources.relationships.yml"
-    )
+    relationship_source_registry_path: Path = Path("policies/sources.relationships.yml")
     conditional_integration_source_registry_path: Path = Path(
         "policies/sources.conditional_integrations.yml"
     )
-    provider_onboarding_registry_path: Path = Path(
-        "policies/provider_onboarding.yml"
-    )
+    ats_source_registry_path: Path = Path("policies/sources.ats_expansion.yml")
+    provider_onboarding_registry_path: Path = Path("policies/provider_onboarding.yml")
     source_portfolio_path: Path = Path("policies/source_portfolio.yml")
     decp_source_portfolio_path: Path = Path("policies/source_portfolio.decp.yml")
     public_web_source_portfolio_path: Path = Path(
@@ -90,12 +85,16 @@ class Settings(BaseSettings):
     conditional_integration_source_portfolio_path: Path = Path(
         "policies/source_portfolio.conditional_integrations.yml"
     )
+    ats_source_portfolio_path: Path = Path("policies/source_portfolio.ats_expansion.yml")
     source_activation_path: Path = Path("policies/source_activation.yml")
     greenhouse_board_registry_path: Path = Path("policies/greenhouse_boards.yml")
     lever_site_registry_path: Path = Path("policies/lever_sites.yml")
     smartrecruiters_company_registry_path: Path = Path(
         "policies/smartrecruiters_companies.yml"
     )
+    ashby_board_registry_path: Path = Path("policies/ashby_boards.yml")
+    recruitee_site_registry_path: Path = Path("policies/recruitee_sites.yml")
+    teamtailor_account_registry_path: Path = Path("policies/teamtailor_accounts.yml")
     organization_identity_target_registry_path: Path = Path(
         "policies/organization_identity_targets.yml"
     )
@@ -113,14 +112,10 @@ class Settings(BaseSettings):
         "policies/passive_infrastructure_targets.yml"
     )
     rdap_target_registry_path: Path = Path("policies/rdap_targets.yml")
-    sec_incident_target_registry_path: Path = Path(
-        "policies/sec_incident_targets.yml"
-    )
+    sec_incident_target_registry_path: Path = Path("policies/sec_incident_targets.yml")
     retention_policy_path: Path = Path("policies/retention.yml")
     collection_schedule_path: Path = Path("policies/collection_schedules.yml")
-    decp_collection_schedule_path: Path = Path(
-        "policies/collection_schedules.decp.yml"
-    )
+    decp_collection_schedule_path: Path = Path("policies/collection_schedules.decp.yml")
     public_web_collection_schedule_path: Path = Path(
         "policies/collection_schedules.public_web.yml"
     )
@@ -138,6 +133,9 @@ class Settings(BaseSettings):
     )
     threat_telemetry_collection_schedule_path: Path = Path(
         "policies/collection_schedules.threat_telemetry.yml"
+    )
+    ats_collection_schedule_path: Path = Path(
+        "policies/collection_schedules.ats_expansion.yml"
     )
     sec_edgar_user_agent: str | None = Field(default=None, max_length=300)
     phishtank_user_agent: str | None = Field(default=None, max_length=300)

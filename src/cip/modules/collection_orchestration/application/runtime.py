@@ -10,24 +10,19 @@ from time import sleep
 
 from sqlalchemy.orm import Session, sessionmaker
 
-from cip.adapters.sources.developer_ecosystem.registry import (
-    load_developer_ecosystem_targets,
-)
+from cip.adapters.sources.ashby.registry import load_ashby_boards
+from cip.adapters.sources.developer_ecosystem.registry import load_developer_ecosystem_targets
 from cip.adapters.sources.greenhouse.registry import load_greenhouse_boards
 from cip.adapters.sources.incident_catalogs.sec_registry import load_sec_incident_targets
 from cip.adapters.sources.lever.registry import load_lever_sites
-from cip.adapters.sources.organization_identity.registry import (
-    load_organization_identity_targets,
-)
+from cip.adapters.sources.organization_identity.registry import load_organization_identity_targets
 from cip.adapters.sources.passive_infrastructure.rdap_registry import load_rdap_targets
-from cip.adapters.sources.passive_infrastructure.registry import (
-    load_passive_infrastructure_targets,
-)
+from cip.adapters.sources.passive_infrastructure.registry import load_passive_infrastructure_targets
 from cip.adapters.sources.public_web.registry import load_public_web_targets
+from cip.adapters.sources.recruitee.registry import load_recruitee_sites
 from cip.adapters.sources.smartrecruiters.registry import load_smartrecruiters_companies
-from cip.adapters.sources.vulnerability_catalogs.registry import (
-    load_vulnerability_query_targets,
-)
+from cip.adapters.sources.teamtailor.registry import load_teamtailor_accounts
+from cip.adapters.sources.vulnerability_catalogs.registry import load_vulnerability_query_targets
 from cip.modules.collection_orchestration.application.adapter_composition import (
     AdapterCompositionInputs,
     build_runtime_adapters,
@@ -50,14 +45,10 @@ from cip.modules.data_governance.domain.retention import RetentionPolicy
 from cip.modules.data_governance.infrastructure.retention_loader import load_retention_policy
 from cip.modules.provider_onboarding.application.service import sync_provider_profiles
 from cip.modules.provider_onboarding.infrastructure.registry import load_provider_profiles
-from cip.modules.public_footprint.infrastructure.search_registry import (
-    load_search_query_templates,
-)
+from cip.modules.public_footprint.infrastructure.search_registry import load_search_query_templates
 from cip.modules.source_governance.infrastructure.persistence import sync_source_registry
 from cip.modules.source_governance.infrastructure.registry import SourceRegistryEntry
-from cip.modules.source_governance.infrastructure.registry_bundle import (
-    load_source_registry_bundle,
-)
+from cip.modules.source_governance.infrastructure.registry_bundle import load_source_registry_bundle
 from cip.modules.source_portfolio.application.backfill_worker import (
     BackfillWorkerOutcome,
     BackfillWorkerStatus,
@@ -69,9 +60,7 @@ from cip.modules.source_portfolio.application.service import (
     sync_source_portfolio,
 )
 from cip.modules.source_portfolio.domain.models import CatalogStatus, SourceCatalogEntry
-from cip.modules.source_portfolio.infrastructure.registry_bundle import (
-    load_source_portfolio_bundle,
-)
+from cip.modules.source_portfolio.infrastructure.registry_bundle import load_source_portfolio_bundle
 from cip.shared.config.settings import Settings
 from cip.shared.kernel.time import utc_now
 from cip.shared.persistence.session import (
@@ -121,6 +110,11 @@ def build_collection_runtime(settings: Settings) -> CollectionRuntime:
             source_id="phishtank-verified-online",
             secret_name="api_token",
         ),
+        teamtailor_token_provider=connected_secret_supplier(
+            factory,
+            source_id="teamtailor-public-jobs",
+            secret_name="api_token",
+        ),
         sec_user_agent=settings.sec_edgar_user_agent,
         phishtank_user_agent=settings.phishtank_user_agent,
         timeout_seconds=settings.source_http_timeout_seconds,
@@ -155,6 +149,7 @@ def _load_source_entries(settings: Settings) -> tuple[SourceRegistryEntry, ...]:
         settings.corporate_change_source_registry_path,
         settings.relationship_source_registry_path,
         settings.conditional_integration_source_registry_path,
+        settings.ats_source_registry_path,
     )
 
 
@@ -173,6 +168,7 @@ def _load_portfolio(settings: Settings) -> tuple[SourceCatalogEntry, ...]:
         settings.corporate_change_source_portfolio_path,
         settings.relationship_source_portfolio_path,
         settings.conditional_integration_source_portfolio_path,
+        settings.ats_source_portfolio_path,
     )
 
 
@@ -182,19 +178,20 @@ def _load_adapter_inputs(
 ) -> AdapterCompositionInputs:
     return AdapterCompositionInputs(
         entries=entries,
-        greenhouse_boards=load_greenhouse_boards(
-            settings.greenhouse_board_registry_path
-        ),
+        greenhouse_boards=load_greenhouse_boards(settings.greenhouse_board_registry_path),
         lever_sites=load_lever_sites(settings.lever_site_registry_path),
         smartrecruiters_companies=load_smartrecruiters_companies(
             settings.smartrecruiters_company_registry_path
         ),
+        ashby_boards=load_ashby_boards(settings.ashby_board_registry_path),
+        recruitee_sites=load_recruitee_sites(settings.recruitee_site_registry_path),
+        teamtailor_accounts=load_teamtailor_accounts(
+            settings.teamtailor_account_registry_path
+        ),
         identity_targets=load_organization_identity_targets(
             settings.organization_identity_target_registry_path
         ),
-        public_web_targets=load_public_web_targets(
-            settings.public_web_target_registry_path
-        ),
+        public_web_targets=load_public_web_targets(settings.public_web_target_registry_path),
         developer_ecosystem_targets=load_developer_ecosystem_targets(
             settings.developer_ecosystem_target_registry_path
         ),
@@ -224,6 +221,7 @@ def _load_schedules(settings: Settings) -> tuple[SourceSchedule, ...]:
         settings.passive_infrastructure_collection_schedule_path,
         settings.incident_collection_schedule_path,
         settings.threat_telemetry_collection_schedule_path,
+        settings.ats_collection_schedule_path,
     )
 
 

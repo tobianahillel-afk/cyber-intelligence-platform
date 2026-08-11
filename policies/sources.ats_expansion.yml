@@ -1,0 +1,115 @@
+version: 1
+reviewed_at: 2026-08-11
+
+sources:
+  - id: ashby-job-board
+    name: Ashby Public Job Postings API
+    base_url: https://api.ashbyhq.com/posting-api/job-board
+    status: enabled
+    source_type: api
+    owner: Ashby, Inc.
+    terms_url: https://developers.ashbyhq.com/docs/public-job-posting-api
+    licence: Public Job Postings API documentation
+    allowed_data_categories: [public_job_posting, organization_metadata]
+    prohibited_data_categories: &ats_prohibited
+      - professional_contact
+      - credential
+      - victim_file
+      - private_communication
+      - private_personal_data
+      - restricted_content
+    rate_limit_per_minute: 4
+    retention_days: 365
+    attribution_required: true
+    raw_content_storage: false
+    human_review_required: false
+    authorization:
+      status: approved
+      document_reference: docs/source_activation/SA_13_ATS_EXPANSION.md#ashby
+      reviewed_at: "2026-08-11T00:15:00+02:00"
+      expires_at: null
+      approved_hosts: [api.ashbyhq.com]
+      approved_path_prefixes: [/posting-api/job-board/]
+      approved_purposes: [commercial-hiring-intelligence]
+      automated_collection_allowed: true
+      raw_storage_allowed: false
+    economics:
+      commercial_value: high
+      monthly_cost: 0
+      implementation_cost: medium
+      maintenance_cost: medium
+      expected_stability: high
+    notes: >-
+      GET-only public job-board data. Compensation is not requested. Unlisted jobs,
+      application forms, candidate data and write APIs are excluded.
+
+  - id: recruitee-careers-site
+    name: Recruitee Careers Site API
+    base_url: https://peopleforpeople.recruitee.com/api/offers/
+    status: enabled
+    source_type: api
+    owner: Tellent / Recruitee
+    terms_url: https://docs.recruitee.com/reference/intro-to-careers-site-api
+    licence: Public Careers Site API documentation
+    allowed_data_categories: [public_job_posting, organization_metadata]
+    prohibited_data_categories: *ats_prohibited
+    rate_limit_per_minute: 4
+    retention_days: 365
+    attribution_required: true
+    raw_content_storage: false
+    human_review_required: false
+    authorization:
+      status: approved
+      document_reference: docs/source_activation/SA_13_ATS_EXPANSION.md#recruitee
+      reviewed_at: "2026-08-11T00:15:00+02:00"
+      expires_at: null
+      approved_hosts: [peopleforpeople.recruitee.com]
+      approved_path_prefixes: [/api/offers/]
+      approved_purposes: [commercial-hiring-intelligence]
+      automated_collection_allowed: true
+      raw_storage_allowed: false
+    economics:
+      commercial_value: high
+      monthly_cost: 0
+      implementation_cost: medium
+      maintenance_cost: medium
+      expected_stability: medium
+    notes: >-
+      GET-only published offers from a configured public Careers Site. Candidate
+      creation/application endpoints and the authenticated ATS API are excluded.
+
+  - id: teamtailor-public-jobs
+    name: Teamtailor Public Read Jobs API
+    base_url: https://api.teamtailor.com/v1/jobs
+    status: enabled
+    source_type: api
+    owner: Teamtailor AB
+    terms_url: https://docs.teamtailor.com/
+    licence: Teamtailor account API terms and Public Read scope
+    allowed_data_categories: [public_job_posting, organization_metadata]
+    prohibited_data_categories: *ats_prohibited
+    rate_limit_per_minute: 30
+    retention_days: 365
+    attribution_required: true
+    raw_content_storage: false
+    human_review_required: false
+    authorization:
+      status: approved
+      document_reference: docs/source_activation/SA_13_ATS_EXPANSION.md#teamtailor
+      reviewed_at: "2026-08-11T00:15:00+02:00"
+      expires_at: null
+      approved_hosts: [api.teamtailor.com, api.na.teamtailor.com, api.au.teamtailor.com]
+      approved_path_prefixes: [/v1/jobs]
+      approved_purposes: [commercial-hiring-intelligence]
+      automated_collection_allowed: true
+      raw_storage_allowed: false
+    economics:
+      commercial_value: high
+      monthly_cost: unknown
+      implementation_cost: medium
+      maintenance_cost: medium
+      expected_stability: high
+    notes: >-
+      Runtime execution requires a deployment-connected Public Read API key tied
+      to one approved Teamtailor account. Internal/Admin scopes and candidate data
+      are outside this adapter.

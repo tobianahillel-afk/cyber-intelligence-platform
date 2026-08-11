@@ -13,8 +13,15 @@ def test_repository_provider_catalog_has_safe_defaults() -> None:
     profiles = load_provider_profiles(Path("policies/provider_onboarding.yml"))
     by_source = {profile.source_id: profile for profile in profiles}
 
-    assert len(profiles) == 20
+    assert len(profiles) == 23
     assert by_source["cisa-kev"].initial_state is OnboardingState.CONNECTED
+    assert by_source["ashby-job-board"].auth_mode is AuthMode.NONE
+    assert by_source["ashby-job-board"].initial_state is OnboardingState.CONNECTED
+    assert by_source["recruitee-careers-site"].auth_mode is AuthMode.NONE
+    assert by_source["recruitee-careers-site"].initial_state is OnboardingState.CONNECTED
+    assert by_source["teamtailor-public-jobs"].auth_mode is AuthMode.API_KEY
+    assert by_source["teamtailor-public-jobs"].required_secret_names == ("api_token",)
+    assert by_source["teamtailor-public-jobs"].initial_state is OnboardingState.NOT_CONFIGURED
     assert by_source["sirene-api"].auth_mode is AuthMode.NONE
     assert by_source["inpi-rne"].required_secret_names == ("username", "password")
     assert by_source["brave-search-api"].auth_mode is AuthMode.API_KEY

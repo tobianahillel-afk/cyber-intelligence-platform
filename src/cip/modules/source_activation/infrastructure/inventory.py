@@ -13,6 +13,21 @@ from cip.modules.source_activation.domain.models import (
 
 
 def load_activation_inventory(path: Path) -> tuple[ActivationRecord, ...]:
+    paths = (path, *sorted(path.parent.glob(f"{path.stem}.*{path.suffix}")))
+    records: list[ActivationRecord] = []
+    source_ids: set[str] = set()
+    for inventory_path in paths:
+        for record in _load_inventory_file(inventory_path):
+            if record.source_id in source_ids:
+                raise ValueError(
+                    f"duplicate source activation id across bundles: {record.source_id}"
+                )
+            source_ids.add(record.source_id)
+            records.append(record)
+    return tuple(records)
+
+
+def _load_inventory_file(path: Path) -> tuple[ActivationRecord, ...]:
     document = yaml.safe_load(path.read_text(encoding="utf-8"))
     if not isinstance(document, dict) or document.get("version") != 1:
         raise ValueError("source activation inventory must declare version: 1")

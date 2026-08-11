@@ -1,0 +1,44 @@
+version: 1
+
+sources:
+  - source_id: ashby-job-board
+    display_name: Ashby Public Job Postings API
+    category: public_hiring
+    disposition: active
+    activation_wave: SA-13
+    stages:
+      - catalogued
+      - reviewed
+      - mapped
+      - adapter_present
+      - authorized
+      - executable
+      - scheduled
+      - live_tested
+
+  - source_id: recruitee-careers-site
+    display_name: Recruitee Careers Site API
+    category: public_hiring
+    disposition: active
+    activation_wave: SA-13
+    stages:
+      - catalogued
+      - reviewed
+      - mapped
+      - adapter_present
+      - authorized
+      - executable
+      - scheduled
+      - live_tested
+
+  - source_id: teamtailor-public-jobs
+    display_name: Teamtailor Public Read Jobs API
+    category: public_hiring
+    disposition: active
+    activation_wave: SA-13
+    stages:
+      - catalogued
+      - reviewed
+      - mapped
+      - adapter_present
+      - authorized

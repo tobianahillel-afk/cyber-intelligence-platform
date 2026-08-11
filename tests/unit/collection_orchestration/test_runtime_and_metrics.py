@@ -75,10 +75,11 @@ def test_runtime_syncs_sources_and_schedules_idempotently(tmp_path: Path) -> Non
     get_metadata().create_all(create_database_engine(settings.database_url))
 
     runtime = build_collection_runtime(settings)
-    assert run_scheduler_once(runtime, now=NOW) == 10
+    assert run_scheduler_once(runtime, now=NOW) == 12
     assert run_scheduler_once(runtime, now=NOW) == 0
 
     expected_sources = (
+        "ashby-job-board",
         "boamp",
         "cisa-kev",
         "decp",
@@ -87,6 +88,7 @@ def test_runtime_syncs_sources_and_schedules_idempotently(tmp_path: Path) -> Non
         "internet-archive-cdx",
         "lever-job-board",
         "nvd-vulnerabilities",
+        "recruitee-careers-site",
         "smartrecruiters-job-board",
         "ted-search",
     )
@@ -101,6 +103,7 @@ def test_runtime_syncs_sources_and_schedules_idempotently(tmp_path: Path) -> Non
         for source in sources.values()
     )
     assert {(job.source_id, job.adapter_id) for job in jobs} == {
+        ("ashby-job-board", "ashby-public-job-postings-api"),
         ("boamp", "boamp-explore-api"),
         ("cisa-kev", "cisa-kev-feed"),
         ("decp", "decp-explore-api"),
@@ -109,6 +112,7 @@ def test_runtime_syncs_sources_and_schedules_idempotently(tmp_path: Path) -> Non
         ("internet-archive-cdx", "internet-archive-cdx"),
         ("lever-job-board", "lever-postings-api"),
         ("nvd-vulnerabilities", "nvd-cve-api"),
+        ("recruitee-careers-site", "recruitee-careers-site-api"),
         ("smartrecruiters-job-board", "smartrecruiters-posting-api"),
         ("ted-search", "ted-search-api"),
     }

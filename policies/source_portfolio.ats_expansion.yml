@@ -1,0 +1,77 @@
+version: 1
+
+sources:
+  - source_id: ashby-job-board
+    display_name: Ashby Public Job Postings API
+    canonical_url: https://api.ashbyhq.com/posting-api/job-board
+    category: public_hiring
+    status: executable
+    freshness_max_age_seconds: 7200
+    commercial_use_cases: [program_transformation, capability_gap]
+    candidate_origin: SA-13
+    monthly_cost_limit: 0
+    metadata:
+      executable: true
+      authorization_status: approved
+      raw_response_storage: false
+      candidate_data: forbidden
+    adapter:
+      adapter_id: ashby-public-job-postings-api
+      adapter_version: "1"
+      provider_schema_version: ashby-public-job-posting-v1
+      modes: [incremental_cursor, priority_refresh]
+      canonical_output_types: [raw_observation, commercial_signal]
+      supports_corrections: true
+      supports_tombstones: true
+      max_page_size: 5000
+      cost_per_request: 0
+
+  - source_id: recruitee-careers-site
+    display_name: Recruitee Careers Site API
+    canonical_url: https://peopleforpeople.recruitee.com/api/offers/
+    category: public_hiring
+    status: executable
+    freshness_max_age_seconds: 7200
+    commercial_use_cases: [program_transformation, capability_gap]
+    candidate_origin: SA-13
+    monthly_cost_limit: 0
+    metadata:
+      executable: true
+      authorization_status: approved
+      raw_response_storage: false
+      candidate_data: forbidden
+    adapter:
+      adapter_id: recruitee-careers-site-api
+      adapter_version: "1"
+      provider_schema_version: recruitee-careers-site-offers-v1
+      modes: [incremental_cursor, priority_refresh]
+      canonical_output_types: [raw_observation, commercial_signal]
+      supports_corrections: true
+      supports_tombstones: true
+      max_page_size: 5000
+      cost_per_request: 0
+
+  - source_id: teamtailor-public-jobs
+    display_name: Teamtailor Public Read Jobs API
+    canonical_url: https://api.teamtailor.com/v1/jobs
+    category: public_hiring
+    status: paused
+    freshness_max_age_seconds: 7200
+    commercial_use_cases: [program_transformation, capability_gap]
+    candidate_origin: SA-13
+    monthly_cost_limit: 0
+    metadata:
+      activation_requires: connected_public_read_token_and_account
+      authorization_status: approved
+      raw_response_storage: false
+      candidate_data: forbidden
+    adapter:
+      adapter_id: teamtailor-public-read-jobs-api
+      adapter_version: "1"
+      provider_schema_version: teamtailor-jsonapi-public-jobs-v1
+      modes: [incremental_cursor, priority_refresh]
+      canonical_output_types: [raw_observation, commercial_signal]
+      supports_corrections: true
+      supports_tombstones: true
+      max_page_size: 30
+      cost_per_request: 0

@@ -123,6 +123,34 @@ class CanonicalPublicJob:
         }
 
 
+def canonical_public_job_observation(
+    job: CanonicalPublicJob,
+    *,
+    collection_job_id: UUID,
+    collected_at: datetime,
+    retention_until: datetime,
+) -> RawObservation:
+    collected = require_aware_utc(collected_at, field_name="collected_at")
+    return RawObservation(
+        source_id=job.source_id,
+        adapter_id=job.adapter_id,
+        adapter_version=job.adapter_version,
+        collection_job_id=collection_job_id,
+        source_record_type="public_job_posting",
+        source_record_key=job.source_record_key,
+        source_url=job.source_url,
+        payload_hash_sha256=job.fingerprint(),
+        data_categories=frozenset({DataCategory.PUBLIC_JOB_POSTING}),
+        collected_at=collected,
+        published_at=job.published_at,
+        source_updated_at=job.published_at,
+        schema_fingerprint=job.schema_fingerprint,
+        content_language=job.language,
+        classification="internal",
+        retention_until=retention_until,
+    )
+
+
 def map_canonical_public_job(
     job: CanonicalPublicJob,
     *,
@@ -183,22 +211,10 @@ def map_canonical_public_job(
         expires_at=collected + timedelta(days=_SIGNAL_TTL_DAYS),
         created_at=collected,
     )
-    observation = RawObservation(
-        source_id=job.source_id,
-        adapter_id=job.adapter_id,
-        adapter_version=job.adapter_version,
+    observation = canonical_public_job_observation(
+        job,
         collection_job_id=collection_job_id,
-        source_record_type="public_job_posting",
-        source_record_key=job.source_record_key,
-        source_url=job.source_url,
-        payload_hash_sha256=payload_hash,
-        data_categories=frozenset({DataCategory.PUBLIC_JOB_POSTING}),
         collected_at=collected,
-        published_at=job.published_at,
-        source_updated_at=job.published_at,
-        schema_fingerprint=job.schema_fingerprint,
-        content_language=job.language,
-        classification="internal",
         retention_until=retention_until,
     )
     return observation, CommercialProjection(organization, evidence, signal)

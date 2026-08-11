@@ -2,7 +2,7 @@
 
 ## Reading this matrix
 
-This document is a human-readable projection of `policies/source_activation.yml`. The policy file and executable invariants are authoritative when prose and state disagree.
+This document is a human-readable projection of the Source Activation bundle rooted at `policies/source_activation.yml` plus additive `policies/source_activation.*.yml` files. The machine-readable activation bundle and executable invariants are authoritative when prose and state disagree.
 
 Symbols:
 
@@ -24,6 +24,9 @@ Symbols:
 | Greenhouse | legacy validation | Y | Y | Y | Y | Y | - | executable, controlled live proof outstanding |
 | Lever | legacy validation | Y | Y | Y | Y | Y | - | executable, controlled live proof outstanding |
 | SmartRecruiters | legacy validation | Y | Y | Y | Y | Y | - | executable, controlled live proof outstanding |
+| Ashby Public Job Postings API `ashby-job-board` | SA-13 | Y | Y | Y | Y | Y | Y | fully integrated; controlled live adapter proof retrieved 59 public jobs |
+| Recruitee Careers Site API `recruitee-careers-site` | SA-13 | Y | Y | Y | Y | Y | Y | fully integrated; controlled live adapter proof retrieved 1 public job |
+| Teamtailor Public Read Jobs API `teamtailor-public-jobs` | SA-13 | Y | Y | Y | - | - | - | real adapter present; account-specific Public Read token/account required before executable, scheduled and live-tested stages |
 | Recherche d'entreprises `recherche-entreprises` | target activation | Y | Y | - | - | N/A | - | MANUAL until an explicit canonical organization target and deployment authorization exist |
 | GLEIF `gleif` | target activation | Y | Y | - | - | N/A | - | MANUAL until an analyst/deployment-selected LEI target exists |
 | BODACC identity `bodacc-identity` | target activation | Y | Y | - | - | N/A | - | MANUAL until an explicit organization/SIREN target and reviewed deployment authorization exist |
@@ -92,7 +95,7 @@ Symbols:
 
 The repository already models candidate families delivered in Lots 13–22: incident reporting, ransomware metadata, threat telemetry, passive exposure, advisory providers, corporate-change intelligence, relationship intelligence, professional context and conditional premium integrations. SA-10 resolves family placeholders as non-executable terminal records; a future useful source must be introduced provider-specifically rather than reopening a generic family as an adapter.
 
-SA-00 established the lifecycle and truth model. SA-01 through SA-04 promote only provider-specific paths whose implementation, authorization and runtime boundaries are explicit. Priority B and SA-05 through SA-09 preserve the same provider-level discipline.
+SA-00 established the lifecycle and truth model. SA-01 through SA-04 promote only provider-specific paths whose implementation, authorization and runtime boundaries are explicit. Priority B and SA-05 through SA-09 preserve the same provider-level discipline. SA-13 extends that same provider-specific model with separately evidenced live ATS integrations.
 
 ## Reconciliation invariant
 
@@ -110,12 +113,26 @@ SA-10 separates classification completeness from controlled live validation:
 - `public-web-example-fr-organization` is terminal `not_relevant` as a production source while the checked-in sample remains disabled and unauthorized;
 - `official-company-incident-disclosures`, `regulator-cert-incident-notices`, `official-vendor-psirt`, `official-linux-security-advisories` and `official-package-security-advisories` are terminal `not_relevant` as generic executable sources; any useful future provider must receive a concrete source record;
 - terminal non-executable records require reasons and never gain authorization/execution/live stages for completeness metrics;
-- active real sources without `live_tested` remain unresolved by `audit_inventory` even when unit/integration CI is green;
-- `reference-synthetic` remains the only fully integrated checked-in source until separately authorized controlled provider live evidence is recorded;
+- active real sources missing any mandatory integration stage remain unresolved by `audit_inventory` even when unit/integration CI is green;
+- `reference-synthetic`, `ashby-job-board` and `recruitee-careers-site` are currently fully integrated checked-in records; future provider-specific controlled live evidence may extend this set;
 - CI must not be reinterpreted as provider live validation;
 - activation truth, this matrix and `SA_10_FINAL_SOURCE_COMPLETENESS_AUDIT.md` must agree on the classification-complete but live-validation-open state;
-- one exact final SHA must pass the complete backend and frontend CI before the SA-10 repository classification increment is merged;
+- one exact final SHA must pass the complete backend and frontend CI before an SA increment is merged;
 - issue SA-10 remains open until the outstanding active-source controlled live-validation set is empty.
+
+## SA-13 extended ATS activation boundary
+
+SA-13 is complete only when:
+
+- `ashby-job-board` and `recruitee-careers-site` have provider-specific Source Governance, target registries, real adapters, canonical job mapping, executable portfolio entries, enabled schedules and controlled live provider proof;
+- the dedicated live workflow executes the production `AshbyAdapter` and `RecruiteeAdapter`, not synthetic provider clients, and requires non-empty provider checkpoints;
+- successful controlled provider proof has demonstrated actual public acquisition (59 Ashby jobs and 1 Recruitee job in the recorded proof) while preserving zero commercial projections when those real jobs contain no canonical cyber match;
+- Recruitee's observed `YYYY-MM-DD HH:MM:SS UTC` timestamp form is normalized explicitly and locked by a deterministic regression test rather than weakening timezone requirements;
+- `teamtailor-public-jobs` has a real JSON:API Public Read adapter with regional host, API-version and bounded pagination controls, but remains non-executable/non-scheduled/non-live until one approved account and Public Read token exist through Provider Onboarding;
+- no ATS path accesses applications, resumes, screening data, candidate records or write endpoints;
+- all three adapters reuse the existing collection scheduler/worker and `CanonicalPublicJob` path; no ATS-specific scheduler, health subsystem or persistence silo is introduced;
+- Source Activation bundle truth, this matrix, `SA_13_ATS_EXPANSION.md`, deterministic tests and the live workflow agree on the exact stages;
+- the normal repository CI and the dedicated live workflow both pass on the exact final PR head before squash merge.
 
 ## SA-05 governed local OSINT completion boundary
 
