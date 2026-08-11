@@ -24,6 +24,7 @@ from cip.adapters.sources.lever.registry import load_lever_sites
 from cip.adapters.sources.organization_identity.registry import load_organization_identity_targets
 from cip.adapters.sources.passive_infrastructure.rdap_registry import load_rdap_targets
 from cip.adapters.sources.passive_infrastructure.registry import load_passive_infrastructure_targets
+from cip.adapters.sources.patentsview_patents.registry import load_patentsview_patent_targets
 from cip.adapters.sources.public_web.registry import load_public_web_targets
 from cip.adapters.sources.recruitee.registry import load_recruitee_sites
 from cip.adapters.sources.smartrecruiters.registry import load_smartrecruiters_companies
@@ -110,6 +111,11 @@ def build_collection_runtime(settings: Settings) -> CollectionRuntime:
             factory,
             source_id="github-code-search-metadata",
             secret_name="api_token",
+        ),
+        patentsview_api_key_provider=connected_secret_supplier(
+            factory,
+            source_id="patentsview-patent-metadata",
+            secret_name="api_key",
         ),
         certspotter_token_provider=connected_secret_supplier(
             factory,
@@ -218,6 +224,9 @@ def _load_adapter_inputs(
         ),
         crossref_publication_targets=load_crossref_publication_targets(
             settings.crossref_publication_target_registry_path
+        ),
+        patentsview_patent_targets=load_patentsview_patent_targets(
+            settings.patentsview_patent_target_registry_path
         ),
         vulnerability_targets=load_vulnerability_query_targets(
             settings.vulnerability_query_target_registry_path
