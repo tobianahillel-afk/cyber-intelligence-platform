@@ -30,3 +30,17 @@ sources:
       - executable
       - scheduled
       - live_tested
+
+  - source_id: cordis-eu-funded-projects
+    display_name: CORDIS EURIO EU-funded projects SPARQL
+    category: corporate_change
+    disposition: active
+    activation_wave: SA-12
+    stages:
+      - catalogued
+      - reviewed
+      - mapped
+      - adapter_present
+      - authorized
+      - executable
+      - scheduled
