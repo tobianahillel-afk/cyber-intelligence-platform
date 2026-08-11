@@ -14,18 +14,24 @@ from cip.adapters.sources.cordis_funding.client import (
 )
 from cip.adapters.sources.cordis_funding.collector import (
     CordisFundingCheckpoint,
+    CordisFundingCollectionBatch,
     CordisFundingCollectionDeniedError,
     CordisFundingSchemaError,
     collect_cordis_funding,
 )
 from cip.adapters.sources.cordis_funding.mapper import map_cordis_funding_binding
 from cip.adapters.sources.cordis_funding.schemas import CordisFundingBinding
-from cip.modules.collection_orchestration.application import cordis_funding_adapter as adapter_module
+from cip.modules.collection_orchestration.application import (
+    cordis_funding_adapter as adapter_module,
+)
 from cip.modules.collection_orchestration.application.cordis_funding_adapter import (
     CordisFundingAdapter,
 )
 from cip.modules.collection_orchestration.application.ports import AdapterExecutionError
-from cip.modules.source_governance.infrastructure.registry import load_source_registry
+from cip.modules.source_governance.infrastructure.registry import (
+    SourceRegistryEntry,
+    load_source_registry,
+)
 
 NOW = datetime(2026, 8, 11, 10, 15, tzinfo=UTC)
 RETENTION = NOW + timedelta(days=3650)
@@ -129,26 +135,30 @@ def test_cordis_collector_rejects_schema_drift_and_policy_denial() -> None:
             request=request,
         )
 
-    with httpx.Client(transport=httpx.MockTransport(invalid_schema)) as http_client:
-        with pytest.raises(CordisFundingSchemaError):
-            collect_cordis_funding(
-                CordisFundingClient(http_client, endpoint_url=_entry().policy.base_url),
-                _entry(),
-                collection_job_id=uuid4(),
-                collected_at=NOW,
-                retention_until=RETENTION,
-            )
+    with (
+        httpx.Client(transport=httpx.MockTransport(invalid_schema)) as http_client,
+        pytest.raises(CordisFundingSchemaError),
+    ):
+        collect_cordis_funding(
+            CordisFundingClient(http_client, endpoint_url=_entry().policy.base_url),
+            _entry(),
+            collection_job_id=uuid4(),
+            collected_at=NOW,
+            retention_until=RETENTION,
+        )
 
     denied = _entry("ademe-financial-aid")
-    with httpx.Client(transport=httpx.MockTransport(invalid_schema)) as http_client:
-        with pytest.raises(CordisFundingCollectionDeniedError):
-            collect_cordis_funding(
-                CordisFundingClient(http_client, endpoint_url=denied.policy.base_url),
-                denied,
-                collection_job_id=uuid4(),
-                collected_at=NOW,
-                retention_until=RETENTION,
-            )
+    with (
+        httpx.Client(transport=httpx.MockTransport(invalid_schema)) as http_client,
+        pytest.raises(CordisFundingCollectionDeniedError),
+    ):
+        collect_cordis_funding(
+            CordisFundingClient(http_client, endpoint_url=denied.policy.base_url),
+            denied,
+            collection_job_id=uuid4(),
+            collected_at=NOW,
+            retention_until=RETENTION,
+        )
 
 
 def test_cordis_runtime_adapter_checkpoint_and_failure_mapping(
@@ -156,10 +166,8 @@ def test_cordis_runtime_adapter_checkpoint_and_failure_mapping(
 ) -> None:
     seen: dict[str, object] = {}
 
-    def fake_collect(*args: object, **kwargs: object):  # type: ignore[no-untyped-def]
+    def fake_collect(*args: object, **kwargs: object) -> CordisFundingCollectionBatch:
         seen["checkpoint"] = kwargs["checkpoint"]
-        from cip.adapters.sources.cordis_funding.collector import CordisFundingCollectionBatch
-
         return CordisFundingCollectionBatch(
             observations=(),
             claims=(),
@@ -191,7 +199,11 @@ def _binding() -> CordisFundingBinding:
     return CordisFundingBinding.model_validate(
         {
             "project_id": {"type": "literal", "value": "101000001"},
-            "project_title": {"type": "literal", "value": "Cyber resilience research"},
+            "project_title": {
+                "type": "literal",
+                "value": "Cyber resilience research",
+                "xml:lang": "en",
+            },
             "organisation_name": {
                 "type": "literal",
                 "value": "Example Cyber Research SAS",
@@ -230,12 +242,14 @@ def _payload() -> bytes:
                     "eu_contribution",
                 ]
             },
-            "results": {"bindings": [_binding().model_dump(mode="json")]},
+            "results": {
+                "bindings": [_binding().model_dump(mode="json", by_alias=True)]
+            },
         }
     ).encode()
 
 
-def _entry(source_id: str = "cordis-eu-funded-projects"):
+def _entry(source_id: str = "cordis-eu-funded-projects") -> SourceRegistryEntry:
     return next(
         entry for entry in load_source_registry(POLICY_PATH) if entry.policy.id == source_id
     )
