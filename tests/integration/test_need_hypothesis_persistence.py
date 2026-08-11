@@ -5,6 +5,7 @@ from uuid import UUID
 
 import pytest
 from sqlalchemy import func, select
+from sqlalchemy.orm import Session
 
 from cip.modules.evidence.infrastructure.models import EvidenceRecord
 from cip.modules.opportunities.domain.entities import (
@@ -125,7 +126,7 @@ def test_hypothesis_hydration_fails_closed_on_invalid_source_contribution_json()
             hypothesis_from_record(session, record)
 
 
-def _seed_context(session) -> None:
+def _seed_context(session: Session) -> None:
     session.add(
         OrganizationRecord(
             id=ORG_ID,
