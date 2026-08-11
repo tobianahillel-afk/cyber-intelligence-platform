@@ -36,16 +36,22 @@ class SignalPolarity(StrEnum):
 
 class NeedHypothesisClass(StrEnum):
     EXPLICIT_PROCUREMENT = "explicit_procurement"
-    CONTRACT_RENEWAL_REPLACEMENT = "contract_renewal_replacement"
-    PROGRAM_BUILD_TRANSFORMATION = "program_build_transformation"
+    CONTRACT_RENEWAL_REPLACEMENT = "contract_renewal_or_replacement"
+    CONTRACT_RENEWAL_OR_REPLACEMENT = "contract_renewal_or_replacement"
+    PROGRAM_BUILD_TRANSFORMATION = "program_build_or_transformation"
+    PROGRAM_BUILD_OR_TRANSFORMATION = "program_build_or_transformation"
     CAPABILITY_GAP = "capability_gap"
     INCIDENT_URGENCY = "incident_urgency"
-    REGULATORY_DEADLINE_GAP = "regulatory_deadline_gap"
-    TECHNOLOGY_RISK_LIFECYCLE = "technology_risk_lifecycle"
+    REGULATORY_DEADLINE_GAP = "regulatory_deadline_or_gap"
+    REGULATORY_DEADLINE_OR_GAP = "regulatory_deadline_or_gap"
+    TECHNOLOGY_RISK_LIFECYCLE = "technology_risk_or_lifecycle"
+    TECHNOLOGY_RISK_OR_LIFECYCLE = "technology_risk_or_lifecycle"
     EXTERNAL_EXPOSURE = "external_exposure"
     ORGANIZATIONAL_CHANGE = "organizational_change"
-    PROVIDER_DISSATISFACTION_TRANSITION = "provider_dissatisfaction_transition"
-    SKILLS_TRAINING = "skills_training"
+    PROVIDER_DISSATISFACTION_TRANSITION = "provider_dissatisfaction_or_transition"
+    PROVIDER_DISSATISFACTION_OR_TRANSITION = "provider_dissatisfaction_or_transition"
+    SKILLS_TRAINING = "skills_and_training_need"
+    SKILLS_AND_TRAINING_NEED = "skills_and_training_need"
     RESEARCH_ONLY_WEAK_SIGNAL = "research_only_weak_signal"
 
 
