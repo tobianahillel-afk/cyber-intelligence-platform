@@ -23,9 +23,11 @@ from cip.adapters.sources.brreg_identity.collector import (
 )
 from cip.adapters.sources.brreg_identity.mapper import map_brreg_entity
 from cip.adapters.sources.brreg_identity.schemas import BrregEntity
-from cip.adapters.sources.organization_identity.registry import OrganizationIdentityTarget
-from cip.modules.organizations.domain.identity import MatchMethod
+from cip.adapters.sources.organization_identity.registry import (
+    OrganizationIdentityTarget,
+)
 from cip.modules.organizations.domain.identifiers import IdentifierScheme
+from cip.modules.organizations.domain.identity import MatchMethod
 from cip.modules.source_governance.domain.models import SourceStatus
 from cip.modules.source_governance.infrastructure.registry import (
     SourceRegistryEntry,
@@ -73,6 +75,8 @@ def test_schema_and_mapper_attach_only_on_exact_norwegian_registration() -> None
     assert projection.identity.address == "Havnegata 48, 8900 BRØNNØYSUND"
     assert projection.attached_organization is not None
     assert projection.merge_candidates[0].method is MatchMethod.EXACT_IDENTIFIER
+    assert entity.organisasjonsform.links is not None
+    assert "self" in entity.organisasjonsform.links
     assert len(fingerprint) == 64
 
 
@@ -180,11 +184,13 @@ def test_client_handles_public_media_type_size_and_legal_removal() -> None:
     assert result.request_url.endswith("/974760673")
 
     removed = httpx.MockTransport(lambda request: httpx.Response(410, request=request))
-    with httpx.Client(transport=removed) as http_client:
-        with pytest.raises(BrregEntityRemovedError, match="removed"):
-            BrregIdentityClient(http_client, entities_url=ENTITIES_URL).fetch_entity(
-                "974760673"
-            )
+    with (
+        httpx.Client(transport=removed) as http_client,
+        pytest.raises(BrregEntityRemovedError, match="removed"),
+    ):
+        BrregIdentityClient(http_client, entities_url=ENTITIES_URL).fetch_entity(
+            "974760673"
+        )
 
     non_json = httpx.MockTransport(
         lambda request: httpx.Response(
@@ -194,11 +200,13 @@ def test_client_handles_public_media_type_size_and_legal_removal() -> None:
             request=request,
         )
     )
-    with httpx.Client(transport=non_json) as http_client:
-        with pytest.raises(BrregSourceResponseError, match="content type"):
-            BrregIdentityClient(http_client, entities_url=ENTITIES_URL).fetch_entity(
-                "974760673"
-            )
+    with (
+        httpx.Client(transport=non_json) as http_client,
+        pytest.raises(BrregSourceResponseError, match="content type"),
+    ):
+        BrregIdentityClient(http_client, entities_url=ENTITIES_URL).fetch_entity(
+            "974760673"
+        )
 
 
 def _target() -> OrganizationIdentityTarget:
@@ -217,7 +225,9 @@ def _target() -> OrganizationIdentityTarget:
 def _entry() -> SourceRegistryEntry:
     return next(
         entry
-        for entry in load_source_registry(Path("policies/sources.company_identity_expansion.yml"))
+        for entry in load_source_registry(
+            Path("policies/sources.company_identity_expansion.yml")
+        )
         if entry.policy.id == "brreg-enhetsregisteret"
     )
 
@@ -227,8 +237,21 @@ def _entity(**changes: object) -> dict[str, object]:
         "respons_klasse": "Enhet",
         "organisasjonsnummer": "974760673",
         "navn": "BRØNNØYSUNDREGISTRENE",
-        "organisasjonsform": {"kode": "ORGL", "beskrivelse": "Organisasjonsledd"},
-        "historiskeNavn": [{"navn": "BRØNNØYSUNDREGISTRENE", "fraDato": "1998-01-16 19:22:18"}],
+        "organisasjonsform": {
+            "kode": "ORGL",
+            "beskrivelse": "Organisasjonsledd",
+            "_links": {
+                "self": {
+                    "href": (
+                        "https://data.brreg.no/enhetsregisteret/api/"
+                        "organisasjonsformer/ORGL"
+                    )
+                }
+            },
+        },
+        "historiskeNavn": [
+            {"navn": "BRØNNØYSUNDREGISTRENE", "fraDato": "1998-01-16 19:22:18"}
+        ],
         "forretningsadresse": {
             "land": "Norge",
             "landkode": "NO",
@@ -243,7 +266,10 @@ def _entity(**changes: object) -> dict[str, object]:
         "konkurs": False,
         "underAvvikling": False,
         "underTvangsavviklingEllerTvangsopplosning": False,
-        "naeringskode1": {"kode": "84.110", "beskrivelse": "Generell offentlig administrasjon"},
+        "naeringskode1": {
+            "kode": "84.110",
+            "beskrivelse": "Generell offentlig administrasjon",
+        },
         "antallAnsatte": 590,
         "_links": {"self": {"href": f"{ENTITIES_URL}/974760673"}},
     }
