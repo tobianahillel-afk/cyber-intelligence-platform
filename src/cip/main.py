@@ -9,6 +9,9 @@ from cip.modules.conditional_integrations.api.routes import (
 from cip.modules.corporate_changes.api.routes import router as corporate_changes_router
 from cip.modules.corporate_graph.api.routes import router as corporate_graph_router
 from cip.modules.incident_intelligence.api.routes import router as incident_router
+from cip.modules.opportunities.api.hypothesis_routes import (
+    router as need_hypotheses_router,
+)
 from cip.modules.opportunities.api.routes import router as opportunities_router
 from cip.modules.organizations.api.routes import router as organizations_router
 from cip.modules.passive_exposure.api.routes import router as passive_exposure_router
@@ -42,7 +45,8 @@ def create_app() -> FastAPI:
             "organization relationship intelligence, reversible entity resolution, "
             "temporal corporate graph context, governed professional organization "
             "context, conditional provider approval controls, governed analyst "
-            "research orchestration, and evidence-backed opportunity discovery."
+            "research orchestration, explainable need hypotheses, and evidence-backed "
+            "opportunity discovery."
         ),
     )
     application.include_router(source_governance_router)
@@ -62,6 +66,7 @@ def create_app() -> FastAPI:
     application.include_router(threat_telemetry_router)
     application.include_router(passive_exposure_router)
     application.include_router(organizations_router)
+    application.include_router(need_hypotheses_router)
     application.include_router(opportunities_router)
 
     @application.get("/health", tags=["system"])

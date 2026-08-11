@@ -16,8 +16,10 @@ from cip.modules.opportunities.application.view_models import (
 from cip.modules.opportunities.domain.entities import (
     CommercialSignal,
     DataQuality,
+    NeedHypothesisClass,
     Opportunity,
     OpportunityState,
+    SignalPolarity,
     SignalType,
 )
 from cip.modules.opportunities.domain.scoring import (
@@ -34,6 +36,7 @@ from cip.modules.opportunities.infrastructure.models import (
     OpportunityScoreComponentRecord,
 )
 from cip.modules.organizations.infrastructure.models import OrganizationRecord
+from cip.modules.service_taxonomy.domain.models import parse_service_family
 
 
 def signal_from_record(record: CommercialSignalRecord) -> CommercialSignal:
@@ -50,6 +53,19 @@ def signal_from_record(record: CommercialSignalRecord) -> CommercialSignal:
         collected_at=database_utc(record.collected_at),
         expires_at=optional_database_utc(record.expires_at),
         created_at=database_utc(record.created_at),
+        service_families=tuple(
+            parse_service_family(value) for value in record.service_families
+        ),
+        hypothesis_classes=tuple(
+            NeedHypothesisClass(value) for value in record.hypothesis_classes
+        ),
+        independence_key=record.independence_key,
+        corroboration_group_key=record.corroboration_group_key,
+        polarity=SignalPolarity(record.polarity),
+        is_explicit=record.is_explicit,
+        historical_only=record.historical_only,
+        mapping_rule_id=record.mapping_rule_id,
+        mapping_rule_version=record.mapping_rule_version,
     )
 
 

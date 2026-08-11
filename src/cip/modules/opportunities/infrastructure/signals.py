@@ -8,7 +8,9 @@ from sqlalchemy.dialects.postgresql import insert as postgresql_insert
 from sqlalchemy.dialects.sqlite import insert as sqlite_insert
 from sqlalchemy.orm import Session
 
+from cip.modules.evidence.infrastructure.models import EvidenceRecord
 from cip.modules.opportunities.domain.entities import CommercialSignal
+from cip.modules.opportunities.domain.signal_mapping import map_signal_to_canonical_needs
 from cip.modules.opportunities.infrastructure.models import CommercialSignalRecord
 
 _MUTABLE_FIELDS = (
@@ -19,11 +21,21 @@ _MUTABLE_FIELDS = (
     "published_at",
     "collected_at",
     "expires_at",
+    "service_families",
+    "hypothesis_classes",
+    "independence_key",
+    "corroboration_group_key",
+    "polarity",
+    "is_explicit",
+    "historical_only",
+    "mapping_rule_id",
+    "mapping_rule_version",
 )
 
 
 def store_commercial_signal(session: Session, signal: CommercialSignal) -> UUID:
-    values = _signal_values(signal)
+    canonical = _canonical_signal(session, signal)
+    values = _signal_values(canonical)
     dialect = session.get_bind().dialect.name
     if dialect == "postgresql":
         postgres_statement = postgresql_insert(CommercialSignalRecord).values(**values)
@@ -48,12 +60,21 @@ def store_commercial_signal(session: Session, signal: CommercialSignal) -> UUID:
             )
         )
     else:
-        _store_portable(session, values, signal.idempotency_key)
+        _store_portable(session, values, canonical.idempotency_key)
     session.flush()
-    stored = _load_stored_signal(session, signal.idempotency_key)
+    stored = _load_stored_signal(session, canonical.idempotency_key)
     if stored is None:
         raise RuntimeError("commercial signal was not persisted")
     return stored.id
+
+
+def _canonical_signal(session: Session, signal: CommercialSignal) -> CommercialSignal:
+    source_id = session.scalar(
+        select(EvidenceRecord.source_id).where(EvidenceRecord.id == signal.evidence_id)
+    )
+    if source_id is None:
+        raise RuntimeError("commercial signal evidence must be persisted first")
+    return map_signal_to_canonical_needs(signal, source_id=source_id)
 
 
 def _signal_values(signal: CommercialSignal) -> dict[str, object]:
@@ -71,6 +92,17 @@ def _signal_values(signal: CommercialSignal) -> dict[str, object]:
         "expires_at": signal.expires_at,
         "created_at": signal.created_at,
         "idempotency_key": signal.idempotency_key,
+        "service_families": [family.value for family in signal.service_families],
+        "hypothesis_classes": [
+            hypothesis_class.value for hypothesis_class in signal.hypothesis_classes
+        ],
+        "independence_key": signal.independence_key,
+        "corroboration_group_key": signal.corroboration_group_key,
+        "polarity": signal.polarity.value,
+        "is_explicit": signal.is_explicit,
+        "historical_only": signal.historical_only,
+        "mapping_rule_id": signal.mapping_rule_id,
+        "mapping_rule_version": signal.mapping_rule_version,
     }
 
 
