@@ -280,7 +280,7 @@ def _next_pair(
     if not pairs:
         return None, 0
     value = 0 if payload is None else payload.get("pair_index", 0)
-    if not isinstance(value, int) or value < 0:
+    if isinstance(value, bool) or not isinstance(value, int) or value < 0:
         raise AdapterExecutionError(
             "invalid Mojeek Search checkpoint",
             error_code="invalid_checkpoint",
