@@ -19,7 +19,14 @@ class AdemeFundingFetchResult:
 class AdemeFundingClient:
     PAGE_SIZE = 100
     MAX_RESPONSE_BYTES = 5_000_000
-    SELECT_FIELDS = ("_id", "nom", "objet", "nature", "date", "montant")
+    SELECT_FIELDS = (
+        "_id",
+        "nomBeneficiaire",
+        "objet",
+        "nature",
+        "dateConvention",
+        "montant",
+    )
 
     def __init__(self, client: httpx.Client, *, lines_url: str) -> None:
         self._client = client
