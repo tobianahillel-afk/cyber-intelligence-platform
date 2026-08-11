@@ -5,7 +5,7 @@ from datetime import UTC, datetime
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
-_CRAWL_ID = re.compile(r"^CC-MAIN-\d{4}(?:-\d{2})?$")
+_CRAWL_ID = re.compile(r"^CC-MAIN-\d{4}(?:-\d{2}|-\d{4})?$")
 
 
 class CommonCrawlCollection(BaseModel):
