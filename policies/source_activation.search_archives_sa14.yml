@@ -15,3 +15,18 @@ sources:
       - executable
       - scheduled
       - live_tested
+
+  - source_id: github-code-search-metadata
+    display_name: GitHub REST code-search metadata
+    category: corporate_public_footprint
+    disposition: active
+    activation_wave: SA-14
+    requires_schedule: false
+    stages:
+      - catalogued
+      - reviewed
+      - mapped
+      - adapter_present
+      - authorized
+      - executable
+      - live_tested
