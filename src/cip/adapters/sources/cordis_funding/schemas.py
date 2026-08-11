@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from pydantic import BaseModel, ConfigDict, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
 class SparqlValue(BaseModel):
@@ -9,7 +9,7 @@ class SparqlValue(BaseModel):
     type: str
     value: str
     datatype: str | None = None
-    xml_lang: str | None = None
+    xml_lang: str | None = Field(default=None, alias="xml:lang")
 
     @field_validator("type", "value")
     @classmethod
