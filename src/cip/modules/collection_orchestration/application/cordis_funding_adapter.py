@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 from datetime import datetime
+from typing import TypeGuard
 from uuid import UUID
 
 import httpx
@@ -114,7 +115,7 @@ def _checkpoint_from_payload(
     )
 
 
-def _valid_hash(value: object) -> bool:
+def _valid_hash(value: object) -> TypeGuard[str]:
     if not isinstance(value, str) or len(value) != 64:
         return False
     return all(character in "0123456789abcdef" for character in value)
