@@ -27,17 +27,30 @@ def main() -> None:
     retention_until = now + timedelta(days=3650)
     place = PlaceAwardsAdapter(_entry(entries, "place-awards"), timeout_seconds=30)
     ademe = AdemeFundingAdapter(
-        _entry(entries, "ademe-financial-aid"),
-        timeout_seconds=30,
+        _entry(entries, "ademe-financial-aid"), timeout_seconds=30
     )
     cordis = CordisFundingAdapter(
-        _entry(entries, "cordis-eu-funded-projects"),
-        timeout_seconds=30,
+        _entry(entries, "cordis-eu-funded-projects"), timeout_seconds=30
     )
 
-    place_batch = _collect(place, now=now, retention_until=retention_until)
-    ademe_batch = _collect(ademe, now=now, retention_until=retention_until)
-    cordis_batch = _collect(cordis, now=now, retention_until=retention_until)
+    place_batch = place.collect(
+        collection_job_id=uuid4(),
+        checkpoint_payload=None,
+        collected_at=now,
+        retention_until=retention_until,
+    )
+    ademe_batch = ademe.collect(
+        collection_job_id=uuid4(),
+        checkpoint_payload=None,
+        collected_at=now,
+        retention_until=retention_until,
+    )
+    cordis_batch = cordis.collect(
+        collection_job_id=uuid4(),
+        checkpoint_payload=None,
+        collected_at=now,
+        retention_until=retention_until,
+    )
 
     place_count = len(place_batch.observations)
     ademe_count = len(ademe_batch.observations)
@@ -60,18 +73,8 @@ def main() -> None:
     )
 
 
-def _collect(adapter: object, *, now: datetime, retention_until: datetime):  # type: ignore[no-untyped-def]
-    return adapter.collect(  # type: ignore[attr-defined,no-any-return]
-        collection_job_id=uuid4(),
-        checkpoint_payload=None,
-        collected_at=now,
-        retention_until=retention_until,
-    )
-
-
 def _entry(
-    entries: dict[str, SourceRegistryEntry],
-    source_id: str,
+    entries: dict[str, SourceRegistryEntry], source_id: str
 ) -> SourceRegistryEntry:
     try:
         return entries[source_id]
