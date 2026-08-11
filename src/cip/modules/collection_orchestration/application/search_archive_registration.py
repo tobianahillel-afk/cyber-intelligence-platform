@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from collections.abc import Callable
 
+from cip.adapters.sources.developer_ecosystem.registry import DeveloperEcosystemTarget
 from cip.adapters.sources.public_web.registry import PublicWebTarget
 from cip.modules.collection_orchestration.application.archive_cdx_adapter import (
     InternetArchiveCdxAdapter,
@@ -11,6 +12,9 @@ from cip.modules.collection_orchestration.application.brave_search_adapter impor
 )
 from cip.modules.collection_orchestration.application.common_crawl_adapter import (
     CommonCrawlIndexAdapter,
+)
+from cip.modules.collection_orchestration.application.github_code_search_adapter import (
+    GitHubCodeSearchAdapter,
 )
 from cip.modules.collection_orchestration.application.ports import CollectionAdapter
 from cip.modules.public_footprint.domain.search import SearchQueryTemplate
@@ -22,8 +26,11 @@ def register_search_archive_adapters(
     entries_by_id: dict[str, SourceRegistryEntry],
     targets: tuple[PublicWebTarget, ...],
     templates: tuple[SearchQueryTemplate, ...],
+    developer_targets: tuple[DeveloperEcosystemTarget, ...],
+    github_code_search_templates: tuple[SearchQueryTemplate, ...],
     *,
     brave_token_provider: Callable[[], str | None],
+    github_code_search_token_provider: Callable[[], str | None],
     timeout_seconds: float,
 ) -> None:
     brave_entry = entries_by_id.get(BraveSearchAdapter.source_id)
@@ -57,6 +64,19 @@ def register_search_archive_adapters(
             CommonCrawlIndexAdapter(
                 common_crawl_entry,
                 targets,
+                timeout_seconds=timeout_seconds,
+            ),
+        )
+
+    github_code_entry = entries_by_id.get(GitHubCodeSearchAdapter.source_id)
+    if github_code_entry is not None:
+        _register(
+            adapters,
+            GitHubCodeSearchAdapter(
+                github_code_entry,
+                developer_targets,
+                github_code_search_templates,
+                token_provider=github_code_search_token_provider,
                 timeout_seconds=timeout_seconds,
             ),
         )

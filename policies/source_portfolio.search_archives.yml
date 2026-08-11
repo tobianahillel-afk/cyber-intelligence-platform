@@ -99,3 +99,40 @@ sources:
       supports_retractions: false
       max_page_size: 50
       cost_per_request: 0
+
+  - source_id: github-code-search-metadata
+    display_name: GitHub REST code-search metadata
+    canonical_url: https://api.github.com/search/code
+    category: corporate_public_footprint
+    status: executable
+    freshness_max_age_seconds: 86400
+    commercial_use_cases:
+      - public_evidence_map
+      - organization_research
+      - public_engineering_context
+    candidate_origin: SA-14
+    monthly_cost_limit: 0
+    metadata:
+      executable: true
+      authorization_status: approved
+      provider_onboarding_required: true
+      target_registry_required: true
+      query_registry_required: true
+      raw_source_code_storage: false
+      search_result_is_evidence: false
+      automatic_opportunity: forbidden
+      secret_hunting: forbidden
+    adapter:
+      adapter_id: github-rest-code-search
+      adapter_version: "1"
+      provider_schema_version: github-code-search-v1
+      modes: [conditional_refresh, priority_refresh]
+      canonical_output_types:
+        - raw_observation
+        - public_resource
+        - public_resource_version
+      supports_corrections: true
+      supports_tombstones: false
+      supports_retractions: false
+      max_page_size: 20
+      cost_per_request: 0
