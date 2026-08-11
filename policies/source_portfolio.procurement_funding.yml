@@ -1,0 +1,58 @@
+version: 1
+
+sources:
+  - source_id: place-awards
+    display_name: PLACE Marchés conclus
+    canonical_url: https://data.economie.gouv.fr/explore/dataset/marches-publics-conclus-recenses-sur-la-plateforme-des-achats-de-letat-/
+    category: procurement
+    status: executable
+    freshness_max_age_seconds: 86400
+    commercial_use_cases:
+      - contract_history
+      - incumbent_discovery
+      - renewal_context
+    monthly_cost_limit: 0
+    adapter:
+      adapter_id: place-open-data-awards-api
+      adapter_version: "1"
+      provider_schema_version: place-awards-selected-fields-v1
+      modes:
+        - historical_backfill
+        - incremental_cursor
+      canonical_output_types:
+        - raw_observation
+        - procurement_publication
+        - procurement_contract
+      supports_corrections: true
+      supports_tombstones: false
+      supports_retractions: false
+      max_page_size: 100
+      max_window_days: 3650
+      cost_per_request: 0
+
+  - source_id: ademe-financial-aid
+    display_name: ADEME Aides financières
+    canonical_url: https://data.ademe.fr/datasets/les-aides-financieres-de-l%27ademe
+    category: corporate_change
+    status: executable
+    freshness_max_age_seconds: 86400
+    commercial_use_cases:
+      - funding_event_context
+      - transformation_program_context
+    monthly_cost_limit: 0
+    adapter:
+      adapter_id: ademe-data-fair-financial-aid-api
+      adapter_version: "1"
+      provider_schema_version: ademe-financial-aid-selected-fields-v1
+      modes:
+        - historical_backfill
+        - incremental_cursor
+      canonical_output_types:
+        - raw_observation
+        - corporate_change_claim
+      supports_corrections: true
+      supports_tombstones: false
+      supports_retractions: false
+      max_page_size: 100
+      max_window_days: 3650
+      cost_per_request: 0

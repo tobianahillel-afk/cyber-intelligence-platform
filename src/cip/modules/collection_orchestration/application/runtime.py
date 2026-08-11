@@ -138,6 +138,7 @@ def _load_source_entries(settings: Settings) -> tuple[SourceRegistryEntry, ...]:
         settings.source_registry_path,
         settings.identity_source_registry_path,
         settings.decp_source_registry_path,
+        settings.procurement_funding_source_registry_path,
         settings.public_web_source_registry_path,
         settings.vulnerability_source_registry_path,
         settings.search_archive_source_registry_path,
@@ -157,6 +158,7 @@ def _load_portfolio(settings: Settings) -> tuple[SourceCatalogEntry, ...]:
     return load_source_portfolio_bundle(
         settings.source_portfolio_path,
         settings.decp_source_portfolio_path,
+        settings.procurement_funding_source_portfolio_path,
         settings.public_web_source_portfolio_path,
         settings.vulnerability_source_portfolio_path,
         settings.search_archive_source_portfolio_path,
@@ -215,6 +217,7 @@ def _load_schedules(settings: Settings) -> tuple[SourceSchedule, ...]:
     return load_collection_schedule_bundle(
         settings.collection_schedule_path,
         settings.decp_collection_schedule_path,
+        settings.procurement_funding_collection_schedule_path,
         settings.public_web_collection_schedule_path,
         settings.vulnerability_collection_schedule_path,
         settings.search_archive_collection_schedule_path,

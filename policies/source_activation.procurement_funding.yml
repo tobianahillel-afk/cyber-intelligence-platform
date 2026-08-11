@@ -1,0 +1,32 @@
+version: 1
+
+sources:
+  - source_id: place-awards
+    display_name: PLACE Marchés publics conclus API
+    category: procurement
+    disposition: active
+    activation_wave: SA-12
+    stages:
+      - catalogued
+      - reviewed
+      - mapped
+      - adapter_present
+      - authorized
+      - executable
+      - scheduled
+      - live_tested
+
+  - source_id: ademe-financial-aid
+    display_name: ADEME Aides financières API
+    category: corporate_change
+    disposition: active
+    activation_wave: SA-12
+    stages:
+      - catalogued
+      - reviewed
+      - mapped
+      - adapter_present
+      - authorized
+      - executable
+      - scheduled
+      - live_tested

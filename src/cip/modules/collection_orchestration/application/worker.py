@@ -22,6 +22,7 @@ from cip.modules.collection_orchestration.infrastructure.repository import (
     complete_job,
     fail_job,
 )
+from cip.modules.corporate_changes.infrastructure.projections import persist_change_claims
 from cip.modules.data_governance.domain.retention import RetentionPolicy
 from cip.modules.incident_intelligence.infrastructure.projections import persist_incident_claims
 from cip.modules.opportunities.infrastructure.projections import (
@@ -202,6 +203,7 @@ def _complete_success(
             now=now,
         )
         persist_incident_claims(session, batch.incident_claims, now=now)
+        persist_change_claims(session, batch.corporate_change_claims, now=now)
         persist_indicator_snapshots(
             session,
             batch.threat_indicator_snapshots,

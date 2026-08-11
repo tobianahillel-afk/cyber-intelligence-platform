@@ -6,6 +6,7 @@ from datetime import datetime
 from typing import Protocol
 from uuid import UUID
 
+from cip.modules.corporate_changes.domain.models import ChangeClaimSnapshot
 from cip.modules.evidence.domain.entities import Evidence
 from cip.modules.incident_intelligence.domain.models import IncidentClaimSnapshot
 from cip.modules.opportunities.domain.entities import CommercialSignal
@@ -53,6 +54,7 @@ class AdapterCollectionBatch:
     vulnerability_snapshots: tuple[VulnerabilitySnapshot, ...] = ()
     passive_exposure_projections: tuple[PassiveObservationSnapshot, ...] = ()
     incident_claims: tuple[IncidentClaimSnapshot, ...] = ()
+    corporate_change_claims: tuple[ChangeClaimSnapshot, ...] = ()
     threat_indicator_snapshots: tuple[IndicatorSnapshot, ...] = ()
     quota_remaining: int | None = None
     request_cost: float = 0.0
