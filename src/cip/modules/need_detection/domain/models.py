@@ -115,6 +115,9 @@ def _optional_hash(value: str | None) -> str | None:
     normalized = _optional_text(value, maximum=64)
     if normalized is None:
         return None
-    if len(normalized) != 64 or any(character not in "0123456789abcdef" for character in normalized):
+    invalid_character = any(
+        character not in "0123456789abcdef" for character in normalized
+    )
+    if len(normalized) != 64 or invalid_character:
         raise ValueError("content_hash_sha256 must be a lowercase SHA-256 digest")
     return normalized
