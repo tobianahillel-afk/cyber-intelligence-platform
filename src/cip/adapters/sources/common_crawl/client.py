@@ -11,7 +11,6 @@ from pydantic import ValidationError
 from cip.adapters.sources.common_crawl.schemas import (
     CommonCrawlCapture,
     CommonCrawlCollection,
-    crawl_sort_key,
 )
 
 MAX_RESPONSE_BYTES = 2 * 1024 * 1024
@@ -59,8 +58,7 @@ class CommonCrawlClient:
 
     def latest_collection(self, collection_url: str) -> CommonCrawlCollection:
         body, _ = self._get(collection_url)
-        collections = _parse_collections(body)
-        collection = max(collections, key=lambda item: crawl_sort_key(item.id))
+        collection = max(_parse_collections(body), key=lambda item: item.to_at)
         _validate_collection_endpoint(collection)
         return collection
 
