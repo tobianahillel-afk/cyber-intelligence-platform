@@ -14,6 +14,21 @@ from cip.modules.service_taxonomy.domain.models import CyberServiceFamily
 NOW = datetime(2026, 8, 10, 12, 0, tzinfo=UTC)
 ORG_ID = uuid4()
 
+CANONICAL_HYPOTHESIS_IDS = {
+    "explicit_procurement",
+    "contract_renewal_or_replacement",
+    "program_build_or_transformation",
+    "capability_gap",
+    "incident_urgency",
+    "regulatory_deadline_or_gap",
+    "technology_risk_or_lifecycle",
+    "external_exposure",
+    "organizational_change",
+    "provider_dissatisfaction_or_transition",
+    "skills_and_training_need",
+    "research_only_weak_signal",
+}
+
 
 def test_two_independent_sources_can_fuse_every_service_family() -> None:
     signals: list[CommercialSignal] = []
@@ -30,6 +45,35 @@ def test_two_independent_sources_can_fuse_every_service_family() -> None:
     assert len(hypotheses) == 19
     assert {item.service_families[0] for item in hypotheses} == set(CyberServiceFamily)
     assert all(item.confidence > 0.58 for item in hypotheses)
+
+
+def test_every_service_family_has_a_negative_case_that_cannot_create_a_need() -> None:
+    for family in CyberServiceFamily:
+        negative = _signal(
+            family,
+            source=f"negative-{family.value}",
+            polarity=SignalPolarity.NEGATIVE,
+            confidence=0.95,
+        )
+        assert fuse_need_hypotheses(ORG_ID, (negative,), now=NOW) == ()
+
+
+def test_every_service_family_has_an_ambiguous_case_that_stays_research_only() -> None:
+    for family in CyberServiceFamily:
+        ambiguous = _signal(
+            family,
+            source=f"ambiguous-{family.value}",
+            confidence=0.60,
+            signal_type=SignalType.RESEARCH_DISCOVERY,
+        )
+        hypothesis = fuse_need_hypotheses(ORG_ID, (ambiguous,), now=NOW)[0]
+        assert hypothesis.hypothesis_class is NeedHypothesisClass.RESEARCH_ONLY_WEAK_SIGNAL
+        assert hypothesis.confidence <= 0.40
+
+
+def test_need_hypothesis_ids_match_the_locked_documented_contract() -> None:
+    assert {item.value for item in NeedHypothesisClass} == CANONICAL_HYPOTHESIS_IDS
+    assert len(NeedHypothesisClass) == 12
 
 
 def test_two_independent_sources_preserve_every_need_hypothesis_class() -> None:
