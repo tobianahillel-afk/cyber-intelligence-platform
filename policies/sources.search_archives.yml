@@ -1,5 +1,5 @@
 version: 1
-reviewed_at: 2026-08-09
+reviewed_at: 2026-08-11
 
 sources:
   - id: brave-search-api
@@ -76,3 +76,41 @@ sources:
     notes: >-
       CDX index metadata only. Archived body retrieval is a separate acquisition path and archive
       timestamps never imply current conditions.
+
+  - id: common-crawl-index
+    name: Common Crawl CDXJ URL Index discovery
+    base_url: https://index.commoncrawl.org/collinfo.json
+    status: enabled
+    source_type: api
+    owner: Common Crawl Foundation
+    terms_url: https://commoncrawl.org/terms-of-use
+    licence: Common Crawl Terms of Use; third-party crawled-content rights remain source-specific
+    allowed_data_categories: [public_result_metadata]
+    prohibited_data_categories: *prohibited
+    rate_limit_per_minute: 2
+    retention_days: 365
+    attribution_required: true
+    raw_content_storage: false
+    human_review_required: false
+    authorization:
+      status: approved
+      document_reference: docs/source_activation/SA_14_SEARCH_ARCHIVES.md#common-crawl-index
+      reviewed_at: "2026-08-11T10:35:00+00:00"
+      expires_at: null
+      approved_hosts: [index.commoncrawl.org]
+      approved_path_prefixes:
+        - /collinfo.json
+        - /CC-MAIN-
+      approved_purposes: [archive-discovery]
+      automated_collection_allowed: true
+      raw_storage_allowed: false
+    economics:
+      commercial_value: high
+      monthly_cost: 0
+      implementation_cost: medium
+      maintenance_cost: medium
+      expected_stability: high
+    notes: >-
+      Target-bound Common Crawl URL-index metadata only. WARC body retrieval is intentionally
+      excluded from this source path. A capture proves historical index presence only; it does not
+      prove current deployment, exposure, vulnerability, compromise, need, or outreach authority.

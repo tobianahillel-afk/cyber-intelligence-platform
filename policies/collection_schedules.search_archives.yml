@@ -24,3 +24,15 @@ schedules:
       max_delay_seconds: 3600
       circuit_failure_threshold: 3
       circuit_reset_seconds: 3600
+
+  - source_id: common-crawl-index
+    adapter_id: common-crawl-cdxj-index
+    enabled: true
+    interval_seconds: 604800
+    lease_seconds: 180
+    retry:
+      max_attempts: 3
+      base_delay_seconds: 600
+      max_delay_seconds: 7200
+      circuit_failure_threshold: 3
+      circuit_reset_seconds: 14400

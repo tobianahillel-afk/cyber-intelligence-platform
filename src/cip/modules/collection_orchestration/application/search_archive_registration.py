@@ -9,6 +9,9 @@ from cip.modules.collection_orchestration.application.archive_cdx_adapter import
 from cip.modules.collection_orchestration.application.brave_search_adapter import (
     BraveSearchAdapter,
 )
+from cip.modules.collection_orchestration.application.common_crawl_adapter import (
+    CommonCrawlIndexAdapter,
+)
 from cip.modules.collection_orchestration.application.ports import CollectionAdapter
 from cip.modules.public_footprint.domain.search import SearchQueryTemplate
 from cip.modules.source_governance.infrastructure.registry import SourceRegistryEntry
@@ -42,6 +45,17 @@ def register_search_archive_adapters(
             adapters,
             InternetArchiveCdxAdapter(
                 archive_entry,
+                targets,
+                timeout_seconds=timeout_seconds,
+            ),
+        )
+
+    common_crawl_entry = entries_by_id.get(CommonCrawlIndexAdapter.source_id)
+    if common_crawl_entry is not None:
+        _register(
+            adapters,
+            CommonCrawlIndexAdapter(
+                common_crawl_entry,
                 targets,
                 timeout_seconds=timeout_seconds,
             ),

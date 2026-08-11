@@ -75,7 +75,7 @@ def test_runtime_syncs_sources_and_schedules_idempotently(tmp_path: Path) -> Non
     get_metadata().create_all(create_database_engine(settings.database_url))
 
     runtime = build_collection_runtime(settings)
-    assert run_scheduler_once(runtime, now=NOW) == 15
+    assert run_scheduler_once(runtime, now=NOW) == 16
     assert run_scheduler_once(runtime, now=NOW) == 0
 
     expected_sources = (
@@ -83,6 +83,7 @@ def test_runtime_syncs_sources_and_schedules_idempotently(tmp_path: Path) -> Non
         "ashby-job-board",
         "boamp",
         "cisa-kev",
+        "common-crawl-index",
         "cordis-eu-funded-projects",
         "decp",
         "github-global-advisories",
@@ -110,6 +111,7 @@ def test_runtime_syncs_sources_and_schedules_idempotently(tmp_path: Path) -> Non
         ("ashby-job-board", "ashby-public-job-postings-api"),
         ("boamp", "boamp-explore-api"),
         ("cisa-kev", "cisa-kev-feed"),
+        ("common-crawl-index", "common-crawl-cdxj-index"),
         ("cordis-eu-funded-projects", "cordis-horizon-bulk-csv"),
         ("decp", "decp-explore-api"),
         ("github-global-advisories", "github-global-advisories"),
