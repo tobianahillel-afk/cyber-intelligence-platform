@@ -540,7 +540,7 @@ sources:
     category: public_archive
     disposition: active
     activation_wave: SA-02
-    stages: [catalogued, reviewed, mapped, adapter_present, authorized, executable, scheduled]
+    stages: [catalogued, reviewed, mapped, adapter_present, authorized, executable, scheduled, live_tested]
 
   - source_id: sherlock-local
     display_name: Sherlock username OSINT tool
