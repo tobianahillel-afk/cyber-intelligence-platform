@@ -9,10 +9,10 @@ class AdemeFundingLine(BaseModel):
     model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
 
     id: str = Field(alias="_id")
-    nom: str
+    nom: str = Field(alias="nomBeneficiaire")
     objet: str
     nature: str
-    date: str
+    date: str = Field(alias="dateConvention")
     montant: Decimal
 
     @field_validator("id", "nom", "objet", "nature", "date")
