@@ -1,0 +1,48 @@
+version: 1
+
+sources:
+  - source_id: brreg-enhetsregisteret
+    display_name: Brønnøysundregistrene Enhetsregisteret Open Data
+    category: organization_identity
+    disposition: active
+    activation_wave: SA-11
+    requires_schedule: false
+    stages: [catalogued, reviewed, mapped, adapter_present, authorized, executable, live_tested]
+
+  - source_id: sirene-api
+    display_name: INSEE Sirene API direct connector candidate
+    category: organization_identity
+    disposition: manual
+    activation_wave: SA-11
+    requires_schedule: false
+    reason: >-
+      INSEE confirms current Sirene open-data API availability, but the direct
+      connector remains intentionally unpromoted until its exact deployed
+      connection mode and incremental value beyond the existing Sirene-backed
+      Recherche d'entreprises adapter are locked provider-specifically.
+    stages: [catalogued, reviewed, mapped]
+
+  - source_id: inpi-rne
+    display_name: INPI Registre national des entreprises
+    category: organization_identity
+    disposition: blocked
+    activation_wave: SA-11
+    requires_schedule: false
+    reason: >-
+      Official RNE API/SFTP access requires technical identifiers provisioned
+      through an authenticated INPI account. No deployment credentials or
+      reviewed access grant are present, so no executable or live-tested stage
+      may be claimed.
+    stages: [catalogued, reviewed, mapped]
+
+  - source_id: opencorporates-licensed
+    display_name: OpenCorporates licensed company-data candidate
+    category: organization_identity
+    disposition: blocked
+    activation_wave: SA-11
+    requires_schedule: false
+    reason: >-
+      No repository evidence proves a product-use licence, credentials, approved
+      fields, retention conditions or customer-facing incorporation rights.
+      A public website or unauthorised scraping route is not a substitute.
+    stages: [catalogued, reviewed, mapped]

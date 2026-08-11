@@ -27,6 +27,7 @@ class OrganizationIdentityTarget:
     siren: str | None = None
     siret: str | None = None
     lei: str | None = None
+    foreign_registration: str | None = None
     enabled: bool = True
 
     def __post_init__(self) -> None:
@@ -42,10 +43,11 @@ class OrganizationIdentityTarget:
         if self.postal_code is not None:
             postal_code = self.postal_code.strip()
             object.__setattr__(self, "postal_code", postal_code or None)
-        for field_name, scheme in (
-            ("siren", IdentifierScheme.SIREN),
-            ("siret", IdentifierScheme.SIRET),
-            ("lei", IdentifierScheme.LEI),
+        for field_name, scheme, issuing_country in (
+            ("siren", IdentifierScheme.SIREN, "FR"),
+            ("siret", IdentifierScheme.SIRET, "FR"),
+            ("lei", IdentifierScheme.LEI, None),
+            ("foreign_registration", IdentifierScheme.FOREIGN_REGISTRATION, country),
         ):
             value = getattr(self, field_name)
             if value is None:
@@ -55,7 +57,7 @@ class OrganizationIdentityTarget:
                 value=value,
                 source_id="target-registry",
                 verified_at=_REGISTRY_TIME,
-                issuing_country="FR" if scheme is not IdentifierScheme.LEI else None,
+                issuing_country=issuing_country,
             )
             object.__setattr__(self, field_name, identifier.value)
 
@@ -66,10 +68,15 @@ class OrganizationIdentityTarget:
         verified_at: datetime,
     ) -> tuple[OfficialIdentifier, ...]:
         identifiers: list[OfficialIdentifier] = []
-        for value, scheme in (
-            (self.siren, IdentifierScheme.SIREN),
-            (self.siret, IdentifierScheme.SIRET),
-            (self.lei, IdentifierScheme.LEI),
+        for value, scheme, issuing_country in (
+            (self.siren, IdentifierScheme.SIREN, "FR"),
+            (self.siret, IdentifierScheme.SIRET, "FR"),
+            (self.lei, IdentifierScheme.LEI, None),
+            (
+                self.foreign_registration,
+                IdentifierScheme.FOREIGN_REGISTRATION,
+                self.country_code,
+            ),
         ):
             if value is None:
                 continue
@@ -79,7 +86,7 @@ class OrganizationIdentityTarget:
                     value=value,
                     source_id=source_id,
                     verified_at=verified_at,
-                    issuing_country="FR" if scheme is not IdentifierScheme.LEI else None,
+                    issuing_country=issuing_country,
                 )
             )
         return tuple(identifiers)
@@ -132,6 +139,7 @@ def _parse_target(payload: dict[str, Any]) -> OrganizationIdentityTarget:
         siren=_optional_string(payload, "siren"),
         siret=_optional_string(payload, "siret"),
         lei=_optional_string(payload, "lei"),
+        foreign_registration=_optional_string(payload, "foreign_registration"),
         enabled=enabled,
     )
 
@@ -158,7 +166,8 @@ def _optional_string(payload: dict[str, Any], key: str) -> str | None:
         return None
     if not isinstance(value, str):
         raise ValueError(f"{key} must be a string or null")
-    return value
+    normalized = value.strip()
+    return normalized or None
 
 
 def _positive_int(payload: dict[str, Any], key: str) -> int:
