@@ -34,17 +34,13 @@ from cip.adapters.sources.vulnerability_catalogs.registry import load_vulnerabil
 from cip.adapters.sources.w3c_standards.registry import load_w3c_affiliation_targets
 from cip.modules.collection_orchestration.application.adapter_composition import (
     AdapterCompositionInputs,
-    RuntimeSecretProviders,
     build_runtime_adapters,
 )
 from cip.modules.collection_orchestration.application.ports import CollectionAdapter
-from cip.modules.collection_orchestration.application.provider_secret_supplier import (
-    connected_secret_supplier,
+from cip.modules.collection_orchestration.application.runtime_secret_providers import (
+    build_runtime_secret_providers,
 )
 from cip.modules.collection_orchestration.application.scheduler import schedule_due_jobs
-from cip.modules.collection_orchestration.application.search_archive_registration import (
-    SearchArchiveSecretProviders,
-)
 from cip.modules.collection_orchestration.application.worker import (
     WorkerOutcome,
     WorkerStatus,
@@ -108,45 +104,7 @@ def build_collection_runtime(settings: Settings) -> CollectionRuntime:
         sync_source_portfolio(session, portfolio, now=synchronized_at)
     adapters = build_runtime_adapters(
         adapter_inputs,
-        RuntimeSecretProviders(
-            search_archives=SearchArchiveSecretProviders(
-                brave_token_provider=connected_secret_supplier(
-                    factory,
-                    source_id="brave-search-api",
-                    secret_name="api_token",
-                ),
-                github_code_search_token_provider=connected_secret_supplier(
-                    factory,
-                    source_id="github-code-search-metadata",
-                    secret_name="api_token",
-                ),
-                patentsview_api_key_provider=connected_secret_supplier(
-                    factory,
-                    source_id="patentsview-patent-metadata",
-                    secret_name="api_key",
-                ),
-                mojeek_api_key_provider=connected_secret_supplier(
-                    factory,
-                    source_id="mojeek-web-search-metadata",
-                    secret_name="api_key",
-                ),
-            ),
-            certspotter_token_provider=connected_secret_supplier(
-                factory,
-                source_id="certspotter-ct",
-                secret_name="api_token",
-            ),
-            phishtank_token_provider=connected_secret_supplier(
-                factory,
-                source_id="phishtank-verified-online",
-                secret_name="api_token",
-            ),
-            teamtailor_token_provider=connected_secret_supplier(
-                factory,
-                source_id="teamtailor-public-jobs",
-                secret_name="api_token",
-            ),
-        ),
+        build_runtime_secret_providers(factory),
         sec_user_agent=settings.sec_edgar_user_agent,
         phishtank_user_agent=settings.phishtank_user_agent,
         timeout_seconds=settings.source_http_timeout_seconds,
