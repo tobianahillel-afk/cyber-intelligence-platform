@@ -40,6 +40,10 @@ BASE_URL = (
     "https://data.ademe.fr/data-fair/api/v1/datasets/"
     "les-aides-financieres-de-l'ademe/lines"
 )
+SELECT_QUERY = (
+    "size=100&select=_id%2CnomBeneficiaire%2Cobjet%2Cnature%2C"
+    "dateConvention%2Cmontant"
+)
 
 
 class StubAdemeClient:
@@ -48,7 +52,7 @@ class StubAdemeClient:
         self.urls: list[str] = []
 
     def first_page_url(self) -> str:
-        return f"{BASE_URL}?size=100&select=_id%2Cnom%2Cobjet%2Cnature%2Cdate%2Cmontant"
+        return f"{BASE_URL}?{SELECT_QUERY}"
 
     def fetch_url(self, url: str) -> AdemeFundingFetchResult:
         self.urls.append(url)
@@ -64,6 +68,8 @@ def test_schema_and_mapper_create_official_unresolved_funding_claim() -> None:
         retention_until=NOW + timedelta(days=365),
     )
 
+    assert line.nom == "Example SAS"
+    assert line.date == "2026-08-01"
     assert observation.source_id == "ademe-financial-aid"
     assert observation.source_record_type == "public_funding_award"
     assert claim.event_type is ChangeEventType.FUNDING
@@ -75,7 +81,7 @@ def test_schema_and_mapper_create_official_unresolved_funding_claim() -> None:
 
 
 def test_mapper_marks_old_or_unparseable_event_dates_historical() -> None:
-    old = AdemeFundingLine.model_validate(_line(date="2024-01-01"))
+    old = AdemeFundingLine.model_validate(_line(dateConvention="2024-01-01"))
     _observation, claim = map_ademe_funding_line(
         old,
         collection_job_id=uuid4(),
@@ -84,7 +90,7 @@ def test_mapper_marks_old_or_unparseable_event_dates_historical() -> None:
     )
     assert claim.historical_only is True
 
-    unknown = AdemeFundingLine.model_validate(_line(date="Période 2026"))
+    unknown = AdemeFundingLine.model_validate(_line(dateConvention="Période 2026"))
     _observation, claim = map_ademe_funding_line(
         unknown,
         collection_job_id=uuid4(),
@@ -97,7 +103,7 @@ def test_mapper_marks_old_or_unparseable_event_dates_historical() -> None:
 
 def test_schema_rejects_blank_fields_negative_amount_and_negative_total() -> None:
     with pytest.raises(ValidationError):
-        AdemeFundingLine.model_validate(_line(nom=" "))
+        AdemeFundingLine.model_validate(_line(nomBeneficiaire=" "))
     with pytest.raises(ValidationError):
         AdemeFundingLine.model_validate(_line(montant=-1))
     with pytest.raises(ValidationError):
@@ -109,7 +115,9 @@ def test_client_builds_public_selected_field_query() -> None:
         client = AdemeFundingClient(http_client, lines_url=BASE_URL)
         url = client.first_page_url()
     assert "size=100" in url
-    assert "select=_id%2Cnom%2Cobjet%2Cnature%2Cdate%2Cmontant" in url
+    assert "nomBeneficiaire" in url
+    assert "dateConvention" in url
+    assert "select=_id%2CnomBeneficiaire" in url
 
 
 def test_client_rejects_non_json_and_oversized_response() -> None:
@@ -137,14 +145,16 @@ def test_client_rejects_non_json_and_oversized_response() -> None:
 
 
 def test_collector_follows_safe_cursor_and_persists_next_checkpoint() -> None:
-    first_url = f"{BASE_URL}?size=100&select=_id%2Cnom%2Cobjet%2Cnature%2Cdate%2Cmontant"
+    first_url = f"{BASE_URL}?{SELECT_QUERY}"
     second_url = f"{BASE_URL}?after=cursor-1"
     client = StubAdemeClient(
         {
             first_url: {"total": 2, "results": [_line()], "next": second_url},
             second_url: {
                 "total": 2,
-                "results": [_line(_id="aid-2", nom="Other SAS")],
+                "results": [
+                    _line(_id="aid-2", nomBeneficiaire="Other SAS")
+                ],
                 "next": None,
             },
         }
@@ -175,7 +185,7 @@ def test_collector_follows_safe_cursor_and_persists_next_checkpoint() -> None:
 
 
 def test_collector_rejects_policy_schema_and_unsafe_pagination() -> None:
-    first_url = f"{BASE_URL}?size=100&select=_id%2Cnom%2Cobjet%2Cnature%2Cdate%2Cmontant"
+    first_url = f"{BASE_URL}?{SELECT_QUERY}"
     denied = replace(
         _entry(),
         policy=replace(_entry().policy, status=SourceStatus.QUARANTINED),
@@ -233,10 +243,10 @@ def _entry() -> SourceRegistryEntry:
 def _line(**changes: object) -> dict[str, object]:
     payload: dict[str, object] = {
         "_id": "aid-1",
-        "nom": "Example SAS",
+        "nomBeneficiaire": "Example SAS",
         "objet": "Programme de transformation industrielle",
-        "nature": "Subvention",
-        "date": "2026-08-01",
+        "nature": "aide en numéraire",
+        "dateConvention": "2026-08-01",
         "montant": 125000,
     }
     payload.update(changes)
