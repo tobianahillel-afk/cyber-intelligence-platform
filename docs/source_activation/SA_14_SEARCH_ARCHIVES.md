@@ -227,33 +227,111 @@ The dedicated SA-14 workflow runs `scripts/live_validate_sa14_crossref.py` again
 
 The one-for-one observation/projection result proves that the current provider contract, ROR filter and minimal selected schema work through the production adapter. It does not establish authorship, ownership, endorsement, technology deployment or commercial need for the target organization.
 
-That real provider proof justified adding `live_tested` to Crossref Source Activation. Because the documentation and activation promotion change the branch head, the complete normal repository CI and Crossref live workflow must pass again on the exact final candidate before merge.
+That real provider proof justified adding `live_tested` to Crossref Source Activation. The Crossref tranche was later exact-SHA validated and squash-merged on `main` at `986dca271a1dea021c6fb6861480181b6a9b9bc5`.
+
+## PatentsView patent metadata
+
+Source id: `patentsview-patent-metadata`.
+
+The fourth SA-14 tranche adds a real PatentsView PatentSearch adapter scoped to an explicit canonical-organization-bound assignee label. It is wired through the normal runtime and Provider Onboarding secret supplier, with a checked-in target registry and schedule that are both fail-closed by default.
+
+The adapter retains only patent id, title, grant date, type and the exact assignee organization returned by the provider. Abstracts, claims, inventors, classifications and full text are excluded from the normalized material.
+
+PatentsView requires `X-Api-Key`. The adapter therefore requires a connected Provider Onboarding `api_key` before any request can be made. The current provider documentation states that new API-key grants are temporarily suspended, so this source is intentionally recorded only through `executable`: no synthetic run, skipped workflow or mock is presented as `live_tested`.
+
+The PatentsView tranche was fully deterministic-CI validated and squash-merged on `main` at `3bcf142aaaa3e4cd41b0ec5b034472f313a70a0a`. A future legitimate provider key must be provisioned and the real production adapter must pass an exact-SHA controlled live run before `live_tested` is added.
+
+Detailed contract and entitlement notes are in `docs/source_activation/SA_14_PATENTSVIEW_PATENTS.md`.
+
+## W3C affiliation standards metadata
+
+Source id: `w3c-affiliation-specification-metadata`.
+
+The fifth SA-14 tranche adds public W3C standards/specification discovery through the W3C read-only API. The capability is target-bound by a canonical CIP organization UUID, a reviewed canonical affiliation name and an explicit W3C affiliation id.
+
+The checked-in target registry is empty and the checked-in schedule is `enabled: false`. W3C requires no API credential for this public read-only path.
+
+### Identity and traversal boundary
+
+The production adapter first requests `/affiliations/{id}` and validates that the provider-returned affiliation name equals the configured canonical name after whitespace/case normalization. Identity mismatch fails closed before any participation request.
+
+After successful identity validation, the adapter follows only:
+
+1. `/affiliations/{id}/participations?items=20&page=1&embed=1`;
+2. approved HTTPS `api.w3.org/groups/<type>/<shortname>` group links;
+3. `/groups/<type>/<shortname>/specifications?items=20&page=1&embed=1`.
+
+W3C HAL collections require `embed=1` to materialize the collection resources used by the adapter. A temporary provider schema probe established that current behavior and was deleted before production live validation.
+
+The adapter never follows participant/person links. It never calls users, chairs, team contacts or editors, and never retrieves specification versions or specification bodies.
+
+Execution is bounded to 5 valid groups, 20 unique specification results total, JSON-only responses of at most 2 MiB, no redirects, and approved W3C hosts/paths only.
+
+### Data minimization and evidence boundary
+
+CIP materializes only:
+
+- affiliation id and configured canonical name;
+- group type and shortname;
+- specification shortname and title;
+- a safe W3C specification/document URL;
+- provider request URL as observation provenance.
+
+Every accepted specification emits one immutable `RawObservation` plus one quarantined Lot 12 `SEARCH_RESULT` projection and zero claims. Group participation does not prove authorship, ownership, endorsement, deployment, vulnerability applicability, compromise, cyber need, commercial opportunity or outreach authorization.
+
+### Controlled production live validation
+
+The live workflow now executes `scripts/live_validate_sa14_w3c.py` against the production `W3cStandardAdapter`; the temporary schema probe is not present in the candidate.
+
+The controlled target is Lawrence Berkeley National Laboratory, W3C affiliation id `1015`. The provider relationship used during validation includes the Devices and Sensors Working Group (`wg/das`).
+
+On source head `d50392bedad80a7d8ddbb7908a091b4f0eaee77c`, the real W3C API produced:
+
+- observations: `20`;
+- quarantined projections: `20`;
+- claims: `0`;
+- person endpoint fetches: `0`;
+- specification-body fetches: `0`.
+
+The same source head passed complete repository validation:
+
+- `1378` tests;
+- `90.03%` branch-aware coverage;
+- strict Mypy on `667` source files;
+- `36` architecture/release contracts;
+- reversible Alembic migrations;
+- dependency audit and frontend audit/typecheck/build.
+
+That provider proof justifies `live_tested`. `scheduled` remains intentionally absent because the checked-in schedule stays disabled.
+
+The full W3C boundary, target semantics and live proof are documented in `docs/source_activation/SA_14_W3C_STANDARDS.md`.
 
 ## GDELT migration boundary
 
 GDELT remains a high-value SA-14 event/news-discovery candidate. In 2026 the provider announced migration of the API ecosystem toward GDELT 5 / Spanner. SA-14 will not create a new production adapter against a legacy contract merely to mark the candidate complete. GDELT will be revisited against the current documented public interface once the migration provides a stable provider-specific execution contract.
 
-## Remaining SA-14 work after Crossref
+## Remaining SA-14 work after W3C
 
-Crossref completes the first publication-metadata provider, but issue #108 remains open. Remaining work includes:
+Common Crawl, GitHub Code Search, Crossref, the production-wired PatentsView adapter and W3C standards discovery now cover the first archive/code/publication/patent/standards expansion tranches. Issue #108 remains open because the following provider work is still unresolved:
 
-- a patent-discovery provider with a current provider-specific contract and real live proof;
-- a standards/public-specification discovery provider with bounded metadata semantics;
-- a second general web-search provider. Mojeek is the current candidate, but it requires a real API entitlement/key before CIP can legitimately mark it `live_tested`;
-- GDELT once its current GDELT 5 execution contract is stable enough for a new production adapter.
+- a second general web-search provider. Mojeek is the current candidate and has a current Web Search API, but a real account/API key and terms-compatible storage entitlement are required before CIP can legitimately mark it `live_tested`;
+- PatentsView live validation once the provider again permits a legitimate API-key grant or an already-authorized key is explicitly provisioned through Provider Onboarding;
+- GDELT once the current GDELT 5 execution contract is stable enough for a new production adapter.
 
-No provider is considered complete merely because it is catalogued or because a synthetic test passes.
+No provider is considered complete merely because it is catalogued, because a deterministic mock passes or because a credential-dependent workflow is skipped.
 
-## Completion gate for the Crossref tranche
+## Completion gate for the W3C tranche
 
-Crossref may be squash-merged only when:
+W3C may be squash-merged only when:
 
-1. Source Governance, portfolio, runtime registration, target registry and disabled-by-default schedule agree on `crossref-publication-metadata` / `crossref-ror-works`;
-2. the checked-in ROR target registry remains empty by default;
-3. provider selection is limited to `DOI,title,type,URL`, and authors/abstracts/references/full-text links cannot enter normalized observation material;
-4. deterministic tests cover ROR normalization, no-target/no-network behavior, safe DOI mapping, invalid checkpoint, schema drift and rate limiting;
-5. the production adapter obtains non-empty metadata from the real Crossref endpoint using a controlled ROR target;
-6. every retained live result maps one-for-one to an observation and quarantined projection with zero claims and zero full-text retrieval;
-7. `live_tested` is recorded only after the controlled provider proof;
-8. complete backend/frontend CI and the dedicated live workflow pass on the exact final PR head;
-9. reviews and review threads are clear before squash merge.
+1. Source Governance, portfolio, runtime registration, target registry and disabled-by-default schedule agree on `w3c-affiliation-specification-metadata` / `w3c-affiliation-specifications`;
+2. the checked-in W3C target registry remains empty by default;
+3. provider affiliation identity is revalidated before participation traversal;
+4. traversal is limited to approved W3C group links and bounded group/specification collections;
+5. participant/user/chair/editor/specification-body endpoints are not retrieved;
+6. deterministic tests cover no-target/no-network behavior, identity mismatch, safe URL mapping, invalid checkpoint, schema drift and rate limiting;
+7. the production adapter obtains non-empty metadata from the real W3C API using a controlled affiliation target;
+8. every retained live result maps one-for-one to an observation and quarantined projection with zero claims, zero person fetches and zero specification-body retrieval;
+9. `live_tested` is recorded only after that real provider proof;
+10. complete backend/frontend CI and the dedicated W3C live workflow pass on the exact final PR head;
+11. reviews and review threads are clear before squash merge.
