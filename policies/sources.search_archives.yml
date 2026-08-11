@@ -152,3 +152,41 @@ sources:
       users, contributors, credentials and private repositories are not retrieved or persisted.
       Search hits are quarantined discovery leads and never directly prove deployment, exposure,
       vulnerability applicability, compromise, commercial need, opportunity or outreach authority.
+
+  - id: crossref-publication-metadata
+    name: Crossref ROR-associated publication metadata
+    base_url: https://api.crossref.org/works
+    status: enabled
+    source_type: search_provider
+    owner: Crossref
+    terms_url: https://www.crossref.org/documentation/retrieve-metadata/rest-api/
+    licence: Open Crossref scholarly metadata; abstracts excluded from CIP materialization
+    allowed_data_categories: [public_result_metadata]
+    prohibited_data_categories: *prohibited
+    rate_limit_per_minute: 5
+    retention_days: 180
+    attribution_required: true
+    raw_content_storage: false
+    human_review_required: false
+    authorization:
+      status: approved
+      document_reference: docs/source_activation/SA_14_SEARCH_ARCHIVES.md#crossref-publication-metadata
+      reviewed_at: "2026-08-11T12:55:00+00:00"
+      expires_at: null
+      approved_hosts: [api.crossref.org]
+      approved_path_prefixes: [/works]
+      approved_purposes: [publication-discovery]
+      automated_collection_allowed: true
+      raw_storage_allowed: false
+    economics:
+      commercial_value: medium
+      monthly_cost: 0
+      implementation_cost: low
+      maintenance_cost: low
+      expected_stability: high
+    notes: >-
+      Public Crossref metadata queried only by explicitly configured ROR identifiers. CIP selects
+      DOI/title/type/URL and discards authors, abstracts, references and full-text links before
+      observation hashing. A ROR match may represent contributor affiliation or funding metadata;
+      it is therefore quarantined discovery metadata and not proof that the organization authored,
+      owns, deploys, endorses, or commercially needs anything described by the work.
