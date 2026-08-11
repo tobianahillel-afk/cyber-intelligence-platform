@@ -34,13 +34,13 @@ class AdemeFundingLine(BaseModel):
 class AdemeFundingResponse(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    total: int
+    total: int | None = None
     results: tuple[AdemeFundingLine, ...]
     next: str | None = None
 
     @field_validator("total")
     @classmethod
-    def _non_negative_total(cls, value: int) -> int:
-        if value < 0:
+    def _non_negative_total(cls, value: int | None) -> int | None:
+        if value is not None and value < 0:
             raise ValueError("ADEME total cannot be negative")
         return value
