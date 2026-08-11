@@ -8,6 +8,7 @@ from uuid import uuid4
 import httpx
 import pytest
 
+from cip.adapters.sources.ademe_funding.client import AdemeFundingResponseError
 from cip.adapters.sources.ademe_funding.collector import (
     AdemeFundingCheckpoint,
     AdemeFundingCollectionBatch,
@@ -15,7 +16,6 @@ from cip.adapters.sources.ademe_funding.collector import (
     AdemeFundingPaginationError,
     AdemeFundingSchemaError,
 )
-from cip.adapters.sources.ademe_funding.client import AdemeFundingResponseError
 from cip.adapters.sources.place_awards.client import PlaceSourceResponseError
 from cip.adapters.sources.place_awards.collector import (
     PlaceCheckpoint,
