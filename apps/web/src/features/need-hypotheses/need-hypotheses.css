@@ -1,0 +1,108 @@
+.hypothesis-list {
+  display: grid;
+  gap: 14px;
+  padding: 20px;
+}
+
+.hypothesis-card {
+  display: grid;
+  gap: 16px;
+  padding: 18px;
+  border: 1px solid #2a3341;
+  border-radius: 10px;
+  background: #0e151f;
+}
+
+.hypothesis-heading,
+.hypothesis-meta,
+.hypothesis-contribution-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.hypothesis-heading h3,
+.hypothesis-heading p {
+  margin: 0;
+}
+
+.hypothesis-heading p,
+.hypothesis-rationale,
+.hypothesis-secondary {
+  color: #9ca8b8;
+}
+
+.hypothesis-rationale {
+  margin: 0;
+  line-height: 1.55;
+}
+
+.hypothesis-meta {
+  justify-content: flex-start;
+}
+
+.hypothesis-meta span,
+.hypothesis-pill {
+  padding: 5px 8px;
+  border: 1px solid #354053;
+  border-radius: 999px;
+  background: #111a26;
+  color: #cbd4df;
+  font-size: 0.75rem;
+}
+
+.hypothesis-pill-urgent {
+  border-color: #874c4c;
+  background: #371c20;
+  color: #ffc0c0;
+}
+
+.hypothesis-pill-research {
+  border-color: #685b34;
+  background: #2d2817;
+  color: #ead89d;
+}
+
+.hypothesis-offers,
+.hypothesis-contributions {
+  display: grid;
+  gap: 8px;
+}
+
+.hypothesis-offers ul,
+.hypothesis-contributions ul {
+  display: grid;
+  gap: 7px;
+  margin: 0;
+  padding-left: 20px;
+}
+
+.hypothesis-contributions li {
+  color: #aeb8c7;
+}
+
+.hypothesis-contributions strong {
+  color: #edf2f7;
+}
+
+.hypothesis-counts {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  color: #8995a6;
+  font-size: 0.78rem;
+}
+
+.hypothesis-error {
+  padding: 28px;
+  text-align: center;
+}
+
+@media (max-width: 760px) {
+  .hypothesis-heading,
+  .hypothesis-contribution-heading {
+    display: grid;
+  }
+}
