@@ -1,0 +1,16 @@
+version: 1
+
+sources:
+  - source_id: common-crawl-index
+    display_name: Common Crawl CDXJ URL Index
+    category: corporate_public_footprint
+    disposition: active
+    activation_wave: SA-14
+    stages:
+      - catalogued
+      - reviewed
+      - mapped
+      - adapter_present
+      - authorized
+      - executable
+      - scheduled
