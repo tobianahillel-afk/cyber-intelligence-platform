@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import date
 
-from pydantic import BaseModel, ConfigDict, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
 class BrregLink(BaseModel):
@@ -11,17 +11,13 @@ class BrregLink(BaseModel):
     href: str
 
 
-class BrregLinks(BaseModel):
-    model_config = ConfigDict(extra="allow")
-
-
 class BrregOrganizationForm(BaseModel):
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra="forbid", populate_by_name=True)
 
     kode: str
     beskrivelse: str | None = None
     utgaatt: date | None = None
-    _links: BrregLinks | None = None
+    links: dict[str, BrregLink] | None = Field(default=None, alias="_links")
 
 
 class BrregIndustryCode(BaseModel):
@@ -62,7 +58,7 @@ class BrregHistoricalName(BaseModel):
 
 
 class BrregEntity(BaseModel):
-    model_config = ConfigDict(extra="allow", str_strip_whitespace=True)
+    model_config = ConfigDict(extra="allow", str_strip_whitespace=True, populate_by_name=True)
 
     respons_klasse: str | None = None
     organisasjonsnummer: str
@@ -84,7 +80,7 @@ class BrregEntity(BaseModel):
     antallAnsatte: int | None = None
     overordnetEnhet: str | None = None
     hjemmeside: str | None = None
-    _links: BrregLinks | None = None
+    links: dict[str, BrregLink] | None = Field(default=None, alias="_links")
 
     @field_validator("organisasjonsnummer")
     @classmethod
