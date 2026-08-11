@@ -14,6 +14,7 @@ sources:
       - authorized
       - executable
       - scheduled
+      - live_tested
 
   - source_id: ademe-financial-aid
     display_name: ADEME Aides financières API
@@ -28,3 +29,4 @@ sources:
       - authorized
       - executable
       - scheduled
+      - live_tested
