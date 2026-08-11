@@ -1,0 +1,5 @@
+version: 1
+entitlement:
+  durable_storage_authorized: false
+  plan: unprovisioned
+  evidence_reference: null
