@@ -136,3 +136,39 @@ sources:
       supports_retractions: false
       max_page_size: 20
       cost_per_request: 0
+
+  - source_id: crossref-publication-metadata
+    display_name: Crossref ROR-associated publication metadata
+    canonical_url: https://api.crossref.org/works
+    category: corporate_public_footprint
+    status: executable
+    freshness_max_age_seconds: 604800
+    commercial_use_cases:
+      - organization_research
+      - publication_discovery
+      - public_evidence_map
+    candidate_origin: SA-14
+    monthly_cost_limit: 0
+    metadata:
+      executable: true
+      authorization_status: approved
+      target_registry_required: true
+      raw_abstract_storage: false
+      raw_full_text_storage: false
+      author_metadata_materialization: false
+      search_result_is_evidence: false
+      automatic_opportunity: forbidden
+    adapter:
+      adapter_id: crossref-ror-works
+      adapter_version: "1"
+      provider_schema_version: crossref-ror-works-v1
+      modes: [conditional_refresh, priority_refresh]
+      canonical_output_types:
+        - raw_observation
+        - public_resource
+        - public_resource_version
+      supports_corrections: true
+      supports_tombstones: false
+      supports_retractions: false
+      max_page_size: 20
+      cost_per_request: 0

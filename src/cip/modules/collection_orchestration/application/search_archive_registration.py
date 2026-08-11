@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from collections.abc import Callable
 
+from cip.adapters.sources.crossref_publications.registry import CrossrefPublicationTarget
 from cip.adapters.sources.developer_ecosystem.registry import DeveloperEcosystemTarget
 from cip.adapters.sources.public_web.registry import PublicWebTarget
 from cip.modules.collection_orchestration.application.archive_cdx_adapter import (
@@ -12,6 +13,9 @@ from cip.modules.collection_orchestration.application.brave_search_adapter impor
 )
 from cip.modules.collection_orchestration.application.common_crawl_adapter import (
     CommonCrawlIndexAdapter,
+)
+from cip.modules.collection_orchestration.application.crossref_publication_adapter import (
+    CrossrefPublicationAdapter,
 )
 from cip.modules.collection_orchestration.application.github_code_search_adapter import (
     GitHubCodeSearchAdapter,
@@ -28,6 +32,7 @@ def register_search_archive_adapters(
     templates: tuple[SearchQueryTemplate, ...],
     developer_targets: tuple[DeveloperEcosystemTarget, ...],
     github_code_search_templates: tuple[SearchQueryTemplate, ...],
+    crossref_publication_targets: tuple[CrossrefPublicationTarget, ...],
     *,
     brave_token_provider: Callable[[], str | None],
     github_code_search_token_provider: Callable[[], str | None],
@@ -77,6 +82,17 @@ def register_search_archive_adapters(
                 developer_targets,
                 github_code_search_templates,
                 token_provider=github_code_search_token_provider,
+                timeout_seconds=timeout_seconds,
+            ),
+        )
+
+    crossref_entry = entries_by_id.get(CrossrefPublicationAdapter.source_id)
+    if crossref_entry is not None:
+        _register(
+            adapters,
+            CrossrefPublicationAdapter(
+                crossref_entry,
+                crossref_publication_targets,
                 timeout_seconds=timeout_seconds,
             ),
         )

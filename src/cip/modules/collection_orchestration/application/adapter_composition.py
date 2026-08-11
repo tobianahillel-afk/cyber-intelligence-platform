@@ -4,6 +4,7 @@ from collections.abc import Callable
 from dataclasses import dataclass
 
 from cip.adapters.sources.ashby.registry import AshbyBoard
+from cip.adapters.sources.crossref_publications.registry import CrossrefPublicationTarget
 from cip.adapters.sources.developer_ecosystem.registry import DeveloperEcosystemTarget
 from cip.adapters.sources.greenhouse.registry import GreenhouseBoard
 from cip.adapters.sources.incident_catalogs.sec_registry import SecIncidentTarget
@@ -72,6 +73,7 @@ class AdapterCompositionInputs:
     developer_ecosystem_targets: tuple[DeveloperEcosystemTarget, ...]
     search_templates: tuple[SearchQueryTemplate, ...]
     github_code_search_templates: tuple[SearchQueryTemplate, ...]
+    crossref_publication_targets: tuple[CrossrefPublicationTarget, ...]
     vulnerability_targets: tuple[VulnerabilityQueryTarget, ...]
     passive_infrastructure_targets: tuple[PassiveInfrastructureTarget, ...]
     rdap_targets: tuple[RdapTarget, ...]
@@ -133,6 +135,7 @@ def build_runtime_adapters(
         inputs.search_templates,
         inputs.developer_ecosystem_targets,
         inputs.github_code_search_templates,
+        inputs.crossref_publication_targets,
         brave_token_provider=brave_token_provider,
         github_code_search_token_provider=github_code_search_token_provider,
         timeout_seconds=timeout_seconds,

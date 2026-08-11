@@ -48,3 +48,15 @@ schedules:
       max_delay_seconds: 7200
       circuit_failure_threshold: 2
       circuit_reset_seconds: 7200
+
+  - source_id: crossref-publication-metadata
+    adapter_id: crossref-ror-works
+    enabled: false
+    interval_seconds: 604800
+    lease_seconds: 180
+    retry:
+      max_attempts: 3
+      base_delay_seconds: 600
+      max_delay_seconds: 7200
+      circuit_failure_threshold: 3
+      circuit_reset_seconds: 7200

@@ -11,6 +11,9 @@ from time import sleep
 from sqlalchemy.orm import Session, sessionmaker
 
 from cip.adapters.sources.ashby.registry import load_ashby_boards
+from cip.adapters.sources.crossref_publications.registry import (
+    load_crossref_publication_targets,
+)
 from cip.adapters.sources.developer_ecosystem.registry import load_developer_ecosystem_targets
 from cip.adapters.sources.github_code_search.registry import (
     load_github_code_search_templates,
@@ -212,6 +215,9 @@ def _load_adapter_inputs(
         ),
         github_code_search_templates=load_github_code_search_templates(
             settings.github_code_search_template_registry_path
+        ),
+        crossref_publication_targets=load_crossref_publication_targets(
+            settings.crossref_publication_target_registry_path
         ),
         vulnerability_targets=load_vulnerability_query_targets(
             settings.vulnerability_query_target_registry_path
