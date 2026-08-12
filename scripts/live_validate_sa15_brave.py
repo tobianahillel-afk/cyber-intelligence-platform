@@ -65,6 +65,7 @@ def _controlled_target() -> PublicWebTarget:
         base_url=base_url,
         sitemap_urls=(),
         feed_urls=(),
+        seed_urls=(base_url,),
         discover_security_txt=False,
         allowed_path_prefixes=("/",),
         enabled=True,
