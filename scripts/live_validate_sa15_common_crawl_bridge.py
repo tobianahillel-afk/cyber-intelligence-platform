@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections.abc import Mapping
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from uuid import UUID, uuid4
@@ -10,20 +11,13 @@ from cip.modules.collection_orchestration.application.common_crawl_adapter impor
 )
 from cip.modules.collection_orchestration.application.common_crawl_search_bridge import (
     COMMON_CRAWL_PROVIDER_ID,
-    build_common_crawl_search_plan,
-    normalize_common_crawl_batch,
 )
 from cip.modules.collection_orchestration.application.ports import AdapterCollectionBatch
-from cip.modules.collection_orchestration.application.search_acquisition_router import (
-    SearchAcquisitionRoute,
-    SearchAcquisitionRouteKind,
-    route_search_discovery_candidates,
-)
-from cip.modules.public_footprint.domain.search_core import SearchDiscoveryCandidate
 from cip.modules.source_governance.infrastructure.registry import load_source_registry
 
 POLICY_PATH = Path("policies/sources.search_archives.yml")
 ORG_ID = UUID("7a0b182e-353e-5a61-8be4-703e935e227d")
+_TARGET_ID = "sa15-common-crawl-normalized-live"
 
 
 def main() -> None:
@@ -40,27 +34,19 @@ def main() -> None:
         collected_at=now,
         retention_until=now + timedelta(days=365),
     )
-    plan = build_common_crawl_search_plan(
-        organization_id=ORG_ID,
-        organization_name="Common Crawl Foundation",
-        target_base_url=target.base_url,
-        created_at=now,
-    )
-    candidates = normalize_common_crawl_batch(plan, batch, executed_at=now)
-    routes = route_search_discovery_candidates(candidates, (target,), routed_at=now)
-    _assert_live_truth(batch, candidates, routes)
+    routing = _assert_live_truth(batch)
     print(
-        "SA-15 C1 live validation passed: "
+        "SA-15 C1 production-integrated live validation passed: "
         f"observations={len(batch.observations)} "
-        f"normalized_candidates={len(candidates)} "
-        f"automatic_routes={len(routes)} "
+        f"normalized_candidates={routing['candidate_count']} "
+        f"automatic_routes={routing['public_web_route_count']} "
         f"provider={COMMON_CRAWL_PROVIDER_ID}"
     )
 
 
 def _target(now: datetime) -> PublicWebTarget:
     return PublicWebTarget(
-        id="sa15-common-crawl-normalized-live",
+        id=_TARGET_ID,
         organization_id=ORG_ID,
         canonical_name="Common Crawl Foundation",
         base_url="https://commoncrawl.org",
@@ -80,34 +66,43 @@ def _target(now: datetime) -> PublicWebTarget:
     )
 
 
-def _assert_live_truth(
-    batch: AdapterCollectionBatch,
-    candidates: tuple[SearchDiscoveryCandidate, ...],
-    routes: tuple[SearchAcquisitionRoute, ...],
-) -> None:
+def _assert_live_truth(batch: AdapterCollectionBatch) -> Mapping[str, object]:
     observations = len(batch.observations)
     if observations < 1 or observations > 50:
-        raise RuntimeError("Common Crawl live bridge returned an invalid observation count")
+        raise RuntimeError("Common Crawl live adapter returned an invalid observation count")
     if len(batch.public_footprint_projections) != observations:
-        raise RuntimeError("Common Crawl live bridge lost archive projections")
-    if len(candidates) < 1 or len(candidates) > observations:
-        raise RuntimeError("Common Crawl live bridge produced invalid normalized candidates")
-    if len(routes) != len(candidates):
-        raise RuntimeError("Common Crawl normalized candidates did not all enter routing")
+        raise RuntimeError("Common Crawl live adapter lost archive projections")
     if any(projection.claims for projection in batch.public_footprint_projections):
         raise RuntimeError("Common Crawl archive metadata unexpectedly produced claims")
-    if any(candidate.provider_count != 1 for candidate in candidates):
-        raise RuntimeError("Common Crawl provider provenance was not preserved")
-    if any(
-        hit.provider_id != COMMON_CRAWL_PROVIDER_ID
-        for candidate in candidates
-        for hit in candidate.provider_hits
-    ):
+
+    checkpoint = batch.checkpoint_payload
+    if not isinstance(checkpoint, Mapping):
+        raise RuntimeError("Common Crawl live adapter did not persist a checkpoint")
+    routing = checkpoint.get("normalized_discovery")
+    if not isinstance(routing, Mapping):
+        raise RuntimeError(
+            "Common Crawl production adapter did not execute normalized discovery routing"
+        )
+    if routing.get("provider_id") != COMMON_CRAWL_PROVIDER_ID:
         raise RuntimeError("Common Crawl normalized provider id drifted")
-    if any(route.route_kind is not SearchAcquisitionRouteKind.PUBLIC_WEB for route in routes):
-        raise RuntimeError("Common Crawl normalized candidate failed governed public-web routing")
-    if any(not route.automatic for route in routes):
-        raise RuntimeError("Common Crawl normalized route is not automatic")
+
+    candidate_count = routing.get("candidate_count")
+    public_web_count = routing.get("public_web_route_count")
+    source_review_count = routing.get("source_review_route_count")
+    routes = routing.get("routes")
+    if not isinstance(candidate_count, int) or not 1 <= candidate_count <= observations:
+        raise RuntimeError("Common Crawl production adapter produced invalid normalized candidates")
+    if public_web_count != candidate_count or source_review_count != 0:
+        raise RuntimeError("Common Crawl normalized candidates did not all route to PUBLIC_WEB")
+    if not isinstance(routes, list) or len(routes) != candidate_count:
+        raise RuntimeError("Common Crawl production routing checkpoint lost routes")
+    if any(not isinstance(route, Mapping) for route in routes):
+        raise RuntimeError("Common Crawl production routing checkpoint contains invalid routes")
+    if any(route.get("route_kind") != "public_web" for route in routes):
+        raise RuntimeError("Common Crawl normalized candidate failed governed PUBLIC_WEB routing")
+    if any(route.get("public_web_target_id") != _TARGET_ID for route in routes):
+        raise RuntimeError("Common Crawl normalized route lost governed target provenance")
+    return routing
 
 
 if __name__ == "__main__":

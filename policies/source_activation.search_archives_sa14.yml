@@ -49,16 +49,19 @@ sources:
   - source_id: patentsview-patent-metadata
     display_name: PatentsView assignee patent metadata
     category: corporate_public_footprint
-    disposition: active
-    activation_wave: SA-14
+    disposition: blocked
+    activation_wave: SA-15-C2
     requires_schedule: false
+    reason: >-
+      The historical PatentSearch endpoint is no longer an authorized current provider route.
+      PatentsView access has moved to the USPTO Open Data Portal; activation must remain blocked
+      until the current ODP endpoint, schema, terms and deployment credential are reviewed and a
+      controlled production-adapter run succeeds on an exact candidate SHA.
     stages:
       - catalogued
       - reviewed
       - mapped
       - adapter_present
-      - authorized
-      - executable
 
   - source_id: w3c-affiliation-specification-metadata
     display_name: W3C affiliation standards metadata

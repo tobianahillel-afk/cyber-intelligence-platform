@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections.abc import Mapping
 from dataclasses import dataclass, replace
 from datetime import datetime
 from enum import StrEnum
@@ -50,15 +51,28 @@ def route_search_discovery_candidates(
     targets: tuple[PublicWebTarget, ...],
     *,
     routed_at: datetime,
+    target_usage: Mapping[str, CrawlUsage] | None = None,
 ) -> tuple[SearchAcquisitionRoute, ...]:
     now = require_aware_utc(routed_at, field_name="routed_at")
-    routes = tuple(_route_candidate(candidate, targets, now=now) for candidate in candidates)
+    usage_by_target = dict(target_usage or {})
+    routes: list[SearchAcquisitionRoute] = []
+    for candidate in candidates:
+        route = _route_candidate(candidate, targets, usage_by_target, now=now)
+        routes.append(route)
+        target_id = route.public_web_target_id
+        if target_id is not None:
+            current = usage_by_target.get(target_id, CrawlUsage())
+            usage_by_target[target_id] = CrawlUsage(
+                pages_fetched=current.pages_fetched + 1,
+                bytes_fetched=current.bytes_fetched,
+            )
     return tuple(sorted(routes, key=_route_sort_key))
 
 
 def _route_candidate(
     candidate: SearchDiscoveryCandidate,
     targets: tuple[PublicWebTarget, ...],
+    usage_by_target: Mapping[str, CrawlUsage],
     *,
     now: datetime,
 ) -> SearchAcquisitionRoute:
@@ -72,7 +86,7 @@ def _route_candidate(
             candidate.target_url,
             depth=0,
             redirects=0,
-            usage=CrawlUsage(),
+            usage=usage_by_target.get(target.id, CrawlUsage()),
         ).allowed
     )
     if len(matching) > 1:
@@ -100,7 +114,7 @@ def _route_candidate(
         requested_url=review_candidate.target_url,
         public_web_target_id=None,
         reason=(
-            "candidate URL is not inside an executable governed public-web target; "
+            "candidate URL is not admissible to an executable governed public-web target; "
             "provider/source review is required before retrieval"
         ),
     )

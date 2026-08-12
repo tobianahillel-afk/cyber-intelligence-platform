@@ -14,6 +14,9 @@ from cip.adapters.sources.common_crawl.client import (
 )
 from cip.adapters.sources.common_crawl.schemas import CommonCrawlCapture
 from cip.adapters.sources.public_web.registry import PublicWebTarget
+from cip.modules.collection_orchestration.application.common_crawl_search_bridge import (
+    build_common_crawl_routing_checkpoint,
+)
 from cip.modules.collection_orchestration.application.ports import (
     AdapterCollectionBatch,
     AdapterExecutionError,
@@ -86,7 +89,7 @@ class CommonCrawlIndexAdapter:
         )
         next_crawl_ids = dict(crawl_ids)
         next_crawl_ids[_pair_key(target, prefix)] = collection.id
-        return AdapterCollectionBatch(
+        batch = AdapterCollectionBatch(
             observations=tuple(
                 _observation(
                     capture,
@@ -112,6 +115,21 @@ class CommonCrawlIndexAdapter:
             ),
             checkpoint_payload={"pair_index": next_index, "crawl_ids": next_crawl_ids},
             not_modified=not captures,
+        )
+        routing_checkpoint = build_common_crawl_routing_checkpoint(
+            target,
+            batch,
+            executed_at=collected_at,
+        )
+        return AdapterCollectionBatch(
+            observations=batch.observations,
+            public_footprint_projections=batch.public_footprint_projections,
+            checkpoint_payload={
+                "pair_index": next_index,
+                "crawl_ids": next_crawl_ids,
+                "normalized_discovery": routing_checkpoint,
+            },
+            not_modified=batch.not_modified,
         )
 
 

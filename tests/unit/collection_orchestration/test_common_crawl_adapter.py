@@ -24,7 +24,7 @@ ORG_ID = UUID("86fe6126-5731-5c4d-a206-69a6a736cae5")
 POLICY_PATH = Path("policies/sources.search_archives.yml")
 
 
-def test_common_crawl_uses_latest_collection_and_maps_only_in_scope() -> None:
+def test_common_crawl_uses_latest_collection_maps_and_routes_in_scope() -> None:
     requests: list[httpx.Request] = []
 
     def handler(request: httpx.Request) -> httpx.Response:
@@ -59,6 +59,19 @@ def test_common_crawl_uses_latest_collection_and_maps_only_in_scope() -> None:
     assert batch.checkpoint_payload == {
         "pair_index": 0,
         "crawl_ids": {"common-crawl-live:/public": "CC-MAIN-2026-30"},
+        "normalized_discovery": {
+            "provider_id": "common-crawl-index",
+            "candidate_count": 1,
+            "public_web_route_count": 1,
+            "source_review_route_count": 0,
+            "routes": [
+                {
+                    "target_url": "https://example.com/public/report",
+                    "route_kind": "public_web",
+                    "public_web_target_id": "common-crawl-live",
+                }
+            ],
+        },
     }
 
 

@@ -64,6 +64,7 @@ class SearchQueryPlan:
         template: SearchQueryTemplate,
         provider_ids: tuple[str, ...],
         created_at: datetime,
+        organization_domain: str | None = None,
     ) -> SearchQueryPlan:
         if not template.enabled:
             raise ValueError("search query template must be enabled before execution")
@@ -73,7 +74,10 @@ class SearchQueryPlan:
             template_id=template.id,
             template_version=template.version,
             purpose=template.purpose,
-            rendered_query=template.render(organization_name),
+            rendered_query=template.render(
+                organization_name,
+                organization_domain=organization_domain,
+            ),
             provider_ids=provider_ids,
             created_at=created_at,
         )
@@ -131,6 +135,7 @@ class SearchProviderHit:
     source_record_key: str
     rank: int
     observed_at: datetime
+    executed_at: datetime
     title: str
     snippet: str
     rendered_query: str
@@ -165,6 +170,7 @@ class SearchProviderHit:
         if self.query_template_version < 1:
             raise ValueError("search query template version must be positive")
         observed_at = require_aware_utc(self.observed_at, field_name="observed_at")
+        executed_at = require_aware_utc(self.executed_at, field_name="executed_at")
         object.__setattr__(self, "provider_id", provider_id)
         object.__setattr__(self, "source_record_key", record_key)
         object.__setattr__(self, "title", title)
@@ -172,6 +178,7 @@ class SearchProviderHit:
         object.__setattr__(self, "rendered_query", rendered_query)
         object.__setattr__(self, "query_template_id", template_id)
         object.__setattr__(self, "observed_at", observed_at)
+        object.__setattr__(self, "executed_at", executed_at)
 
 
 @dataclass(frozen=True, slots=True)
@@ -254,6 +261,7 @@ def _provider_hit(
         source_record_key=result.source_record_key,
         rank=result.rank,
         observed_at=result.observed_at,
+        executed_at=execution.executed_at,
         title=result.title,
         snippet=result.snippet,
         rendered_query=execution.rendered_query,

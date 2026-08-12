@@ -33,14 +33,24 @@ class _GdeltContractModel(BaseModel):
 
     @model_validator(mode="after")
     def validate_contract_readiness(self) -> _GdeltContractModel:
+        if self.product_generation.strip() != "GDELT 5":
+            raise ValueError("GDELT contract gate requires product_generation exactly GDELT 5")
         _validate_official_references(self.official_references)
         if self.status is GdeltContractStatus.STABLE_PUBLIC_CONTRACT:
-            if not self.api_base_url or not self.api_version or not self.schema_reference:
+            api_version = (self.api_version or "").strip()
+            if (
+                not self.api_base_url
+                or not api_version
+                or not self.schema_reference
+                or not self.storage_terms_reference
+            ):
                 raise ValueError(
-                    "stable GDELT contract requires API base URL, version, and schema reference"
+                    "stable GDELT contract requires API base URL, version, schema reference, "
+                    "and storage terms reference"
                 )
             _validate_current_endpoint(self.api_base_url)
             _validate_official_url(self.schema_reference)
+            _validate_official_url(self.storage_terms_reference)
         return self
 
 
@@ -83,7 +93,7 @@ def load_gdelt_api_contract(path: Path) -> GdeltApiContract:
         reviewed_at=parsed.reviewed_at,
         official_references=parsed.official_references,
         api_base_url=parsed.api_base_url,
-        api_version=parsed.api_version,
+        api_version=parsed.api_version.strip() if parsed.api_version else None,
         schema_reference=parsed.schema_reference,
         storage_terms_reference=parsed.storage_terms_reference,
     )
@@ -107,8 +117,12 @@ def _is_official_gdelt_host(host: str) -> bool:
 
 def _validate_current_endpoint(value: str) -> None:
     _validate_official_url(value)
-    path = urlparse(value).path.casefold()
-    if "/api/v1/" in path or "/api/v2/" in path:
+    path = urlparse(value).path.casefold().rstrip("/")
+    if path == "/api/v1" or path.startswith("/api/v1/"):
+        raise ValueError(
+            "legacy GDELT API endpoints cannot satisfy the current GDELT contract gate"
+        )
+    if path == "/api/v2" or path.startswith("/api/v2/"):
         raise ValueError(
             "legacy GDELT API endpoints cannot satisfy the current GDELT contract gate"
         )

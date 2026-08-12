@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from dataclasses import replace
 from datetime import UTC, datetime, timedelta
 from json import loads
 from pathlib import Path
@@ -16,6 +17,10 @@ from cip.modules.collection_orchestration.application.patentsview_patent_adapter
     PatentsViewPatentAdapter,
 )
 from cip.modules.collection_orchestration.application.ports import AdapterExecutionError
+from cip.modules.source_governance.domain.models import (
+    AuthorizationStatus,
+    SourceStatus,
+)
 from cip.modules.source_governance.infrastructure.registry import (
     SourceRegistryEntry,
     load_source_registry,
@@ -54,12 +59,39 @@ def test_patentsview_without_enabled_target_performs_no_network_or_secret_read()
     assert secret_reads == []
 
 
-def test_patentsview_requires_connected_api_key_before_network() -> None:
+def test_checked_in_patentsview_policy_denies_before_secret_or_network() -> None:
+    secret_reads: list[int] = []
+    network_reads: list[int] = []
+
+    def token_provider() -> str | None:
+        secret_reads.append(1)
+        return "future-odp-key-must-not-reach-legacy-route"
+
+    def fail_network(_request: httpx.Request) -> httpx.Response:
+        network_reads.append(1)
+        raise AssertionError("revoked legacy route must not reach network")
+
+    adapter = PatentsViewPatentAdapter(
+        _entry(),
+        (_target(),),
+        token_provider=token_provider,
+        transport=httpx.MockTransport(fail_network),
+    )
+    with pytest.raises(AdapterExecutionError) as exc_info:
+        _collect(adapter)
+
+    assert exc_info.value.error_code == "source_policy_denied"
+    assert exc_info.value.retryable is False
+    assert secret_reads == []
+    assert network_reads == []
+
+
+def test_historical_adapter_requires_connected_api_key_before_network() -> None:
     def fail_network(_request: httpx.Request) -> httpx.Response:
         raise AssertionError("network must not be used without provider key")
 
     adapter = PatentsViewPatentAdapter(
-        _entry(),
+        _authorized_historical_test_entry(),
         (_target(),),
         token_provider=lambda: None,
         transport=httpx.MockTransport(fail_network),
@@ -70,7 +102,7 @@ def test_patentsview_requires_connected_api_key_before_network() -> None:
     assert exc_info.value.retryable is False
 
 
-def test_patentsview_maps_only_exact_assignee_minimal_metadata() -> None:
+def test_historical_adapter_maps_only_exact_assignee_minimal_metadata() -> None:
     requests: list[httpx.Request] = []
 
     def handler(request: httpx.Request) -> httpx.Response:
@@ -98,9 +130,9 @@ def test_patentsview_maps_only_exact_assignee_minimal_metadata() -> None:
         )
 
     adapter = PatentsViewPatentAdapter(
-        _entry(),
+        _authorized_historical_test_entry(),
         (_target(),),
-        token_provider=lambda: "live-key",
+        token_provider=lambda: "historical-contract-test-key",
         transport=httpx.MockTransport(handler),
     )
     batch = _collect(adapter)
@@ -108,7 +140,7 @@ def test_patentsview_maps_only_exact_assignee_minimal_metadata() -> None:
     assert len(requests) == 1
     request = requests[0]
     assert request.url.path == "/api/v1/patent/"
-    assert request.headers["X-Api-Key"] == "live-key"
+    assert request.headers["X-Api-Key"] == "historical-contract-test-key"
     assert loads(request.url.params["q"]) == {
         "_eq": {"assignees.assignee_organization": "Example Corporation"}
     }
@@ -130,7 +162,7 @@ def test_patentsview_maps_only_exact_assignee_minimal_metadata() -> None:
     assert batch.checkpoint_payload == {"target_index": 0}
 
 
-def test_patentsview_rejects_invalid_checkpoint() -> None:
+def test_patentsview_rejects_invalid_checkpoint_before_policy_evaluation() -> None:
     adapter = PatentsViewPatentAdapter(
         _entry(),
         (_target(),),
@@ -142,7 +174,7 @@ def test_patentsview_rejects_invalid_checkpoint() -> None:
     assert exc_info.value.error_code == "invalid_checkpoint"
 
 
-def test_patentsview_classifies_schema_rate_limit_and_error_envelope() -> None:
+def test_historical_adapter_classifies_schema_rate_limit_and_error_envelope() -> None:
     def malformed(request: httpx.Request) -> httpx.Response:
         return httpx.Response(
             200,
@@ -152,9 +184,9 @@ def test_patentsview_classifies_schema_rate_limit_and_error_envelope() -> None:
         )
 
     malformed_adapter = PatentsViewPatentAdapter(
-        _entry(),
+        _authorized_historical_test_entry(),
         (_target(),),
-        token_provider=lambda: "key",
+        token_provider=lambda: "historical-test-key",
         transport=httpx.MockTransport(malformed),
     )
     with pytest.raises(AdapterExecutionError) as schema_info:
@@ -169,9 +201,9 @@ def test_patentsview_classifies_schema_rate_limit_and_error_envelope() -> None:
         )
 
     rate_adapter = PatentsViewPatentAdapter(
-        _entry(),
+        _authorized_historical_test_entry(),
         (_target(),),
-        token_provider=lambda: "key",
+        token_provider=lambda: "historical-test-key",
         transport=httpx.MockTransport(rate_limited),
     )
     with pytest.raises(AdapterExecutionError) as rate_info:
@@ -188,9 +220,9 @@ def test_patentsview_classifies_schema_rate_limit_and_error_envelope() -> None:
         )
 
     error_adapter = PatentsViewPatentAdapter(
-        _entry(),
+        _authorized_historical_test_entry(),
         (_target(),),
-        token_provider=lambda: "key",
+        token_provider=lambda: "historical-test-key",
         transport=httpx.MockTransport(provider_error),
     )
     with pytest.raises(AdapterExecutionError) as envelope_info:
@@ -203,6 +235,26 @@ def _entry() -> SourceRegistryEntry:
         entry
         for entry in load_source_registry(POLICY_PATH)
         if entry.policy.id == "patentsview-patent-metadata"
+    )
+
+
+def _authorized_historical_test_entry() -> SourceRegistryEntry:
+    """Exercise retained adapter behavior without changing checked-in production governance."""
+    entry = _entry()
+    return SourceRegistryEntry(
+        policy=replace(entry.policy, status=SourceStatus.ENABLED),
+        authorization=replace(
+            entry.authorization,
+            status=AuthorizationStatus.APPROVED,
+            document_reference="test-only-historical-patentsview-contract",
+            reviewed_at=NOW,
+            approved_hosts=frozenset({"search.patentsview.org"}),
+            approved_path_prefixes=("/api/v1/patent/",),
+            approved_purposes=frozenset({"patent-discovery"}),
+            automated_collection_allowed=True,
+        ),
+        economics=entry.economics,
+        notes=entry.notes,
     )
 
 

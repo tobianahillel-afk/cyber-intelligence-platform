@@ -43,13 +43,32 @@ class SearchQueryTemplate:
         purpose = _required_text(self.purpose, field_name="purpose", max_length=200)
         if self.version < 1:
             raise ValueError("search query template version must be positive")
-        if pattern.count("{organization}") != 1:
-            raise ValueError("search query pattern requires one {organization} placeholder")
+        organization_placeholders = pattern.count("{organization}")
+        domain_placeholders = pattern.count("{domain}")
+        if organization_placeholders + domain_placeholders != 1:
+            raise ValueError(
+                "search query pattern requires exactly one {organization} or {domain} placeholder"
+            )
+        remainder = pattern.replace("{organization}", "").replace("{domain}", "")
+        if "{" in remainder or "}" in remainder:
+            raise ValueError("search query pattern contains an unsupported placeholder")
         object.__setattr__(self, "id", identifier)
         object.__setattr__(self, "query_pattern", pattern)
         object.__setattr__(self, "purpose", purpose)
 
-    def render(self, organization_name: str) -> str:
+    @property
+    def requires_domain(self) -> bool:
+        return "{domain}" in self.query_pattern
+
+    def render(
+        self,
+        organization_name: str,
+        *,
+        organization_domain: str | None = None,
+    ) -> str:
+        if self.requires_domain:
+            domain = _required_domain(organization_domain)
+            return self.query_pattern.replace("{domain}", domain)
         name = _required_text(
             organization_name,
             field_name="organization_name",
@@ -187,6 +206,21 @@ def _metadata_material(lead: SearchResultLead) -> bytes:
         separators=(",", ":"),
         sort_keys=True,
     ).encode()
+
+
+def _required_domain(value: str | None) -> str:
+    if value is None:
+        raise ValueError("organization_domain is required for domain-scoped search templates")
+    domain = _required_text(value, field_name="organization_domain", max_length=253).rstrip(".")
+    if "://" in domain or "/" in domain or any(character.isspace() for character in domain):
+        raise ValueError("organization_domain must be a bare public hostname")
+    try:
+        canonical = CanonicalUrl(f"https://{domain}")
+    except ValueError as exc:
+        raise ValueError("organization_domain must be a bare public hostname") from exc
+    if not canonical.host or "." not in canonical.host:
+        raise ValueError("organization_domain must be a bare public hostname")
+    return canonical.host
 
 
 def _required_text(value: str, *, field_name: str, max_length: int) -> str:

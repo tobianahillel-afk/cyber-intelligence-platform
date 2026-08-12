@@ -3,6 +3,8 @@ from __future__ import annotations
 from pathlib import Path
 from urllib.parse import parse_qs, urlparse
 
+import pytest
+
 from cip.modules.public_footprint.infrastructure.manual_search import (
     build_google_analyst_search_url,
 )
@@ -48,17 +50,29 @@ def test_sa15_dork_library_covers_every_required_family() -> None:
         assert term in combined
 
 
-def test_sa15_dork_library_is_versioned_and_disabled_by_default() -> None:
+def test_sa15_dork_library_is_versioned_disabled_and_uses_correct_placeholders() -> None:
     templates = load_search_query_templates(REGISTRY_PATH)
 
     for template in templates:
         assert template.version == 2
         assert template.purpose.startswith("corporate-public-footprint")
         assert template.enabled is False
-        assert template.query_pattern.count("{organization}") == 1
-        rendered = template.render("Example Corp")
-        assert "{organization}" not in rendered
-        assert "Example Corp" in rendered
+        if template.id == "q-site-company-research":
+            assert template.query_pattern.count("{domain}") == 1
+            assert "{organization}" not in template.query_pattern
+            with pytest.raises(ValueError, match="organization_domain"):
+                template.render("Example Corp")
+            rendered = template.render(
+                "Example Corp",
+                organization_domain="example.com",
+            )
+            assert rendered.startswith("site:example.com ")
+        else:
+            assert template.query_pattern.count("{organization}") == 1
+            assert "{domain}" not in template.query_pattern
+            rendered = template.render("Example Corp")
+            assert "{organization}" not in rendered
+            assert "Example Corp" in rendered
 
 
 def test_sa15_google_route_builds_manual_link_without_network_io() -> None:
@@ -74,3 +88,18 @@ def test_sa15_google_route_builds_manual_link_without_network_io() -> None:
     query = parse_qs(parsed.query)["q"][0]
     assert "Example Corp" in query
     assert "filetype:pdf" in query
+
+
+def test_sa15_google_site_route_uses_domain_not_display_name() -> None:
+    templates = load_search_query_templates(REGISTRY_PATH)
+    template = next(item for item in templates if item.id == "q-site-company-research")
+
+    url = build_google_analyst_search_url(
+        template,
+        "Example Corp",
+        organization_domain="example.com",
+    )
+    query = parse_qs(urlparse(url).query)["q"][0]
+
+    assert query.startswith("site:example.com ")
+    assert "site:Example Corp" not in query

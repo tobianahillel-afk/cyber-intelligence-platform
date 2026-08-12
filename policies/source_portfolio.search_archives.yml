@@ -148,19 +148,21 @@ sources:
       cost_per_request: 0
 
   - source_id: patentsview-patent-metadata
-    display_name: PatentsView assignee patent metadata
+    display_name: PatentsView assignee patent metadata (legacy PatentSearch route)
     canonical_url: https://search.patentsview.org/api/v1/patent/
     category: corporate_public_footprint
-    status: executable
+    status: paused
     freshness_max_age_seconds: 604800
     commercial_use_cases: [organization_research, patent_discovery, public_evidence_map]
-    candidate_origin: SA-14
+    candidate_origin: SA-15-C2
     monthly_cost_limit: 0
     metadata:
-      executable: true
-      authorization_status: approved
+      executable: false
+      authorization_status: revoked
       provider_onboarding_required: true
       target_registry_required: true
+      current_contract_required: USPTO_ODP
+      legacy_endpoint_execution: forbidden
       raw_abstract_storage: false
       raw_claim_storage: false
       raw_full_text_storage: false
