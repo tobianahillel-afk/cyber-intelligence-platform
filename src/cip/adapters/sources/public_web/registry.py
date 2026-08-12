@@ -37,7 +37,9 @@ class PublicWebTarget:
     authorization_expires_at: datetime | None = None
     terms_url: str | None = None
     feed_urls: tuple[str, ...] = ()
+    seed_urls: tuple[str, ...] = ()
     discover_security_txt: bool = False
+    source_id: str | None = None
     max_pages: int = 100
     max_total_bytes: int = 10_000_000
     max_resource_bytes: int = 1_000_000
@@ -50,9 +52,10 @@ class PublicWebTarget:
             raise ValueError("public web target id and canonical_name are required")
         base = CanonicalUrl(self.base_url)
         _validate_public_hostname(base.host)
+        seeds = _same_origin_urls(base, self.seed_urls, label="seed")
         sitemaps = _same_origin_urls(base, self.sitemap_urls, label="sitemap")
         feeds = _same_origin_urls(base, self.feed_urls, label="feed")
-        if not sitemaps and not feeds and not self.discover_security_txt:
+        if not seeds and not sitemaps and not feeds and not self.discover_security_txt:
             raise ValueError("public web target requires an explicit discovery path")
         reviewed_at = _optional_time(
             self.authorization_reviewed_at,
@@ -67,6 +70,7 @@ class PublicWebTarget:
         reference = _optional_text(self.authorization_reference)
         if self.enabled and (reference is None or reviewed_at is None):
             raise ValueError("enabled public web target requires reviewed authorization")
+        source_id = _optional_text(self.source_id) or identifier
         terms_url = CanonicalUrl(self.terms_url).value if self.terms_url else None
         prefixes = self.allowed_path_prefixes
         if self.discover_security_txt and _SECURITY_TXT_PATH not in prefixes:
@@ -83,12 +87,14 @@ class PublicWebTarget:
         object.__setattr__(self, "id", identifier)
         object.__setattr__(self, "canonical_name", name)
         object.__setattr__(self, "base_url", base.value)
+        object.__setattr__(self, "seed_urls", seeds)
         object.__setattr__(self, "sitemap_urls", sitemaps)
         object.__setattr__(self, "feed_urls", feeds)
         object.__setattr__(self, "allowed_path_prefixes", scope.allowed_path_prefixes)
         object.__setattr__(self, "authorization_reference", reference)
         object.__setattr__(self, "authorization_reviewed_at", reviewed_at)
         object.__setattr__(self, "authorization_expires_at", expires_at)
+        object.__setattr__(self, "source_id", source_id)
         object.__setattr__(self, "terms_url", terms_url)
 
     @property
@@ -161,9 +167,11 @@ def _parse_target(payload: dict[str, Any]) -> PublicWebTarget:
         organization_id=UUID(_required_string(payload, "organization_id")),
         canonical_name=_required_string(payload, "canonical_name"),
         base_url=_required_string(payload, "base_url"),
+        seed_urls=_string_tuple(payload, "seed_urls", minimum=0),
         sitemap_urls=_string_tuple(payload, "sitemap_urls", minimum=0),
         feed_urls=_string_tuple(payload, "feed_urls", minimum=0),
         discover_security_txt=_optional_bool(payload, "discover_security_txt", default=False),
+        source_id=_optional_string(payload, "source_id"),
         allowed_path_prefixes=_string_tuple(
             payload,
             "allowed_path_prefixes",
