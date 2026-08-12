@@ -35,6 +35,8 @@ from cip.modules.public_footprint.domain import (
 from cip.modules.raw_observations.domain.entities import RawObservation
 from cip.modules.source_governance.domain.models import DataCategory
 
+__all__ = ("MappedPublicPage", "PreviousPageState", "map_public_page")
+
 _NOT_MODIFIED_STATUS = 304
 _TECHNOLOGY_TERMS = (
     "amazon web services",
