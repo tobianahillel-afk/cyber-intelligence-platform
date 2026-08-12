@@ -186,6 +186,7 @@ class PublicWebClient:
         robots: RobotsRules,
         *,
         usage: CrawlUsage,
+        depth: int = 0,
     ) -> PublicWebFetchResult:
         requested = CanonicalUrl(url).value
         current = requested
@@ -193,7 +194,7 @@ class PublicWebClient:
         while True:
             decision = target.crawl_scope.evaluate_target(
                 current,
-                depth=0,
+                depth=depth,
                 redirects=redirects,
                 usage=usage,
             )
