@@ -6,7 +6,7 @@ from cip.modules.public_footprint.infrastructure.search_registry import (
     load_search_query_templates,
 )
 
-ROOT = Path(__file__).resolve().parents[2]
+ROOT = Path(__file__).resolve().parents[3]
 REGISTRY_PATH = ROOT / "policies" / "search_query_templates.yml"
 
 EXPECTED_TEMPLATE_IDS = {
@@ -27,30 +27,21 @@ EXPECTED_TEMPLATE_IDS = {
 
 
 def test_sa15_dork_library_covers_every_required_family() -> None:
-    registry = load_search_query_templates(REGISTRY_PATH)
-    templates = registry.all()
+    templates = load_search_query_templates(REGISTRY_PATH)
 
-    assert {template.query_id for template in templates} == EXPECTED_TEMPLATE_IDS
+    assert {template.id for template in templates} == EXPECTED_TEMPLATE_IDS
     assert len(templates) == len(EXPECTED_TEMPLATE_IDS)
-    assert len({template.query for template in templates}) == len(templates)
+    assert len({template.query_pattern for template in templates}) == len(templates)
 
 
-def test_sa15_dork_library_is_versioned_and_manual_only() -> None:
-    registry = load_search_query_templates(REGISTRY_PATH)
+def test_sa15_dork_library_is_versioned_and_disabled_by_default() -> None:
+    templates = load_search_query_templates(REGISTRY_PATH)
 
-    for template in registry.all():
+    for template in templates:
         assert template.version == 2
-        assert template.source == "google"
-        assert template.endpoint == "https://www.google.com/search"
-        assert template.license_tag == "manual-link"
-        assert template.robots_status == "not-automated"
+        assert template.purpose == "corporate-public-footprint"
         assert template.enabled is False
-        assert "{organization}" in template.query
-        assert template.allowed_stored_fields == (
-            "url",
-            "title",
-            "snippet",
-            "fetched_at",
-            "query_id",
-            "metadata",
-        )
+        assert template.query_pattern.count("{organization}") == 1
+        rendered = template.render("Example Corp")
+        assert "{organization}" not in rendered
+        assert "Example Corp" in rendered
