@@ -66,6 +66,7 @@ def _target(now: datetime) -> PublicWebTarget:
         base_url="https://commoncrawl.org",
         sitemap_urls=(),
         feed_urls=(),
+        seed_urls=("https://commoncrawl.org/",),
         discover_security_txt=False,
         allowed_path_prefixes=("/",),
         enabled=True,
