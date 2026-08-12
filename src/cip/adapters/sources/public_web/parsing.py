@@ -30,6 +30,12 @@ class SitemapEntry:
 
 
 @dataclass(frozen=True, slots=True)
+class SitemapDocument:
+    entries: tuple[SitemapEntry, ...]
+    child_sitemaps: tuple[str, ...]
+
+
+@dataclass(frozen=True, slots=True)
 class ExtractedHtml:
     title: str | None
     language: str | None
@@ -50,6 +56,24 @@ def parse_sitemap(
     *,
     max_entries: int | None = None,
 ) -> tuple[SitemapEntry, ...]:
+    document = parse_sitemap_document(
+        body,
+        target,
+        max_entries=max_entries,
+        max_child_sitemaps=target.max_sitemaps,
+    )
+    if document.child_sitemaps:
+        raise PublicWebParseError("sitemap index requires recursive traversal")
+    return document.entries
+
+
+def parse_sitemap_document(
+    body: bytes,
+    target: PublicWebTarget,
+    *,
+    max_entries: int | None = None,
+    max_child_sitemaps: int | None = None,
+) -> SitemapDocument:
     upper = body.upper()
     if any(marker in upper for marker in _FORBIDDEN_XML_MARKERS):
         raise PublicWebParseError("sitemap DTD and entities are not allowed")
@@ -57,11 +81,32 @@ def parse_sitemap(
         root = ElementTree.fromstring(body)
     except ElementTree.ParseError as exc:
         raise PublicWebParseError("invalid sitemap XML") from exc
-    if _local_name(root.tag) != "urlset":
-        raise PublicWebParseError("only sitemap urlset documents are supported")
-    limit = max_entries or target.max_pages
-    if not 1 <= limit <= target.max_pages:
+    root_name = _local_name(root.tag)
+    if root_name not in {"urlset", "sitemapindex"}:
+        raise PublicWebParseError("unsupported sitemap document root")
+    entry_limit = max_entries or target.max_pages
+    sitemap_limit = max_child_sitemaps or target.max_sitemaps
+    if not 1 <= entry_limit <= target.max_pages:
         raise ValueError("sitemap entry limit must fit the target page budget")
+    if not 1 <= sitemap_limit <= target.max_sitemaps:
+        raise ValueError("child sitemap limit must fit the target sitemap budget")
+    if root_name == "urlset":
+        return SitemapDocument(
+            entries=_parse_urlset(root, target, limit=entry_limit),
+            child_sitemaps=(),
+        )
+    return SitemapDocument(
+        entries=(),
+        child_sitemaps=_parse_sitemap_index(root, target, limit=sitemap_limit),
+    )
+
+
+def _parse_urlset(
+    root: ElementTree.Element,
+    target: PublicWebTarget,
+    *,
+    limit: int,
+) -> tuple[SitemapEntry, ...]:
     entries: list[SitemapEntry] = []
     seen: set[str] = set()
     for node in root:
@@ -92,6 +137,39 @@ def parse_sitemap(
         if len(entries) == limit:
             break
     return tuple(entries)
+
+
+def _parse_sitemap_index(
+    root: ElementTree.Element,
+    target: PublicWebTarget,
+    *,
+    limit: int,
+) -> tuple[str, ...]:
+    sitemaps: list[str] = []
+    seen: set[str] = set()
+    for node in root:
+        if _local_name(node.tag) != "sitemap":
+            continue
+        location = _child_text(node, "loc")
+        if location is None:
+            continue
+        try:
+            canonical = CanonicalUrl(location).value
+        except ValueError:
+            continue
+        decision = target.crawl_scope.evaluate_target(
+            canonical,
+            depth=0,
+            redirects=0,
+            usage=CrawlUsage(),
+        )
+        if not decision.allowed or canonical in seen:
+            continue
+        seen.add(canonical)
+        sitemaps.append(canonical)
+        if len(sitemaps) == limit:
+            break
+    return tuple(sitemaps)
 
 
 def extract_html(body: bytes, *, max_text_chars: int = 20_000) -> ExtractedHtml:
