@@ -3,9 +3,12 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import datetime
 from hashlib import sha256
-from uuid import UUID
+from uuid import UUID, uuid4
 
-from cip.adapters.sources.public_web.client import PublicWebFetchResult
+from cip.adapters.sources.public_web.client import (
+    PublicWebFetchResult,
+    PublicWebResponseError,
+)
 from cip.adapters.sources.public_web.content_extraction import (
     ExtractedPublicContent,
     extract_public_content,
@@ -29,6 +32,7 @@ from cip.modules.raw_observations.domain.entities import RawObservation
 from cip.modules.source_governance.domain.models import DataCategory
 
 _TOMBSTONE_MIME_TYPE = "application/x-public-resource-tombstone"
+_NOT_MODIFIED_STATUS = 304
 _TECHNOLOGY_TERMS = (
     "amazon web services",
     "aws",
@@ -58,6 +62,8 @@ class PreviousPageState:
     version_id: UUID
     canonical_url: str
     resource_kind: PublicResourceKind = PublicResourceKind.WEB_PAGE
+    mime_type: str | None = None
+    byte_size: int | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -79,14 +85,25 @@ def map_public_page(
     discovery_source_url: str | None = None,
     allow_claims: bool = True,
 ) -> MappedPublicPage:
+    not_modified = result.status_code == _NOT_MODIFIED_STATUS
+    if not_modified:
+        _validate_not_modified(previous, result)
     tombstoned = _is_tombstone(result)
-    content_hash = _content_hash(result)
-    quarantined = not tombstoned and contains_credential_marker(result.body)
-    unchanged = _is_unchanged(previous, result, content_hash)
-    extracted = extract_public_content(
-        result,
-        quarantined=quarantined,
-        tombstoned=tombstoned,
+    content_hash = _content_hash(result, previous)
+    quarantined = (
+        not tombstoned
+        and not not_modified
+        and contains_credential_marker(result.body)
+    )
+    unchanged = not_modified or _is_unchanged(previous, result, content_hash)
+    extracted = (
+        None
+        if not_modified
+        else extract_public_content(
+            result,
+            quarantined=quarantined,
+            tombstoned=tombstoned,
+        )
     )
     indexable_text = _indexable_text(extracted)
     resource = _resource(
@@ -107,6 +124,7 @@ def map_public_page(
         collected_at=collected_at,
         previous=previous,
         unchanged=unchanged,
+        not_modified=not_modified,
         content_hash=content_hash,
         indexable_text=indexable_text,
         extracted=extracted,
@@ -115,7 +133,7 @@ def map_public_page(
     )
     claims = (
         ()
-        if tombstoned or not allow_claims
+        if tombstoned or not_modified or not allow_claims
         else _claims(target, resource, version, indexable_text)
     )
     projection = PublicFootprintProjection(resource=resource, version=version, claims=claims)
@@ -187,6 +205,7 @@ def _version(
     collected_at: datetime,
     previous: PreviousPageState | None,
     unchanged: bool,
+    not_modified: bool,
     content_hash: str,
     indexable_text: str,
     extracted: ExtractedPublicContent | None,
@@ -198,13 +217,30 @@ def _version(
         if tombstoned
         else extracted.excerpt if extracted is not None else None
     )
+    mime_type = (
+        _required_previous(previous).mime_type
+        if not_modified
+        else result.mime_type
+    )
+    byte_size = (
+        _required_previous(previous).byte_size
+        if not_modified
+        else len(result.body)
+    )
+    assert mime_type is not None
+    assert byte_size is not None
     return PublicResourceVersion(
         resource_key=resource.identity_key,
         source_url=result.fetched_url,
         content_hash_sha256=content_hash,
         fetched_at=collected_at,
-        mime_type=result.mime_type,
-        byte_size=len(result.body),
+        mime_type=mime_type,
+        byte_size=byte_size,
+        id=(
+            _required_previous(previous).version_id
+            if not_modified
+            else uuid4()
+        ),
         title=extracted.title if extracted is not None else None,
         language=extracted.language if extracted is not None else None,
         extracted_text_hash_sha256=(
@@ -260,10 +296,32 @@ def _observation(
     )
 
 
-def _content_hash(result: PublicWebFetchResult) -> str:
+def _content_hash(
+    result: PublicWebFetchResult,
+    previous: PreviousPageState | None,
+) -> str:
+    if result.status_code == _NOT_MODIFIED_STATUS:
+        return _required_previous(previous).content_hash_sha256
     if _is_tombstone(result):
         return sha256(f"http-status:{result.status_code}".encode()).hexdigest()
     return sha256(result.body).hexdigest()
+
+
+def _validate_not_modified(
+    previous: PreviousPageState | None,
+    result: PublicWebFetchResult,
+) -> None:
+    state = _required_previous(previous)
+    if state.canonical_url != result.fetched_url:
+        raise PublicWebResponseError("304 response changed the canonical resource URL")
+    if state.mime_type is None or state.byte_size is None:
+        raise PublicWebResponseError("304 response requires complete previous representation metadata")
+
+
+def _required_previous(previous: PreviousPageState | None) -> PreviousPageState:
+    if previous is None:
+        raise PublicWebResponseError("304 response requires previous page state")
+    return previous
 
 
 def _is_tombstone(result: PublicWebFetchResult) -> bool:
@@ -292,7 +350,7 @@ def _resource_kind(
     result: PublicWebFetchResult,
     previous: PreviousPageState | None,
 ) -> PublicResourceKind:
-    if _is_tombstone(result) and previous is not None:
+    if (result.status_code == _NOT_MODIFIED_STATUS or _is_tombstone(result)) and previous is not None:
         return previous.resource_kind
     if result.mime_type in {"application/pdf", "text/plain"}:
         return PublicResourceKind.DOCUMENT
