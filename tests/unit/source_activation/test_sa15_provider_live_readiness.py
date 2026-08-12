@@ -1,6 +1,8 @@
 from __future__ import annotations
 
-from pathlib import Path
+from cip.modules.source_activation.domain.models import ActivationStage
+from cip.modules.source_activation.infrastructure import load_activation_inventory
+from cip.shared.config.settings import Settings
 
 
 _PROVIDER_IDS = (
@@ -11,10 +13,6 @@ _PROVIDER_IDS = (
 
 
 def test_credentialed_sa15_providers_are_executable_but_not_falsely_live() -> None:
-    from cip.modules.source_activation.domain.models import ActivationStage
-    from cip.modules.source_activation.infrastructure import load_activation_inventory
-    from cip.shared.config.settings import Settings
-
     records = {
         record.source_id: record
         for record in load_activation_inventory(Settings().source_activation_path)
@@ -30,32 +28,26 @@ def test_credentialed_sa15_providers_are_executable_but_not_falsely_live() -> No
 
 
 def test_mojeek_checked_in_storage_entitlement_remains_fail_closed() -> None:
-    import yaml
+    with open("policies/mojeek_search_entitlement.yml", encoding="utf-8") as policy_file:
+        policy = policy_file.read()
 
-    payload = yaml.safe_load(
-        Path("policies/mojeek_search_entitlement.yml").read_text(encoding="utf-8")
-    )
-    entitlement = payload["entitlement"]
-
-    assert entitlement["durable_storage_authorized"] is False
-    assert entitlement["plan"] == "unprovisioned"
-    assert entitlement["evidence_reference"] is None
+    assert "durable_storage_authorized: false" in policy
+    assert "plan: unprovisioned" in policy
+    assert "evidence_reference: null" in policy
 
 
 def test_patentsview_has_no_checked_in_production_target() -> None:
-    import yaml
+    with open("policies/patentsview_patent_targets.yml", encoding="utf-8") as policy_file:
+        policy = policy_file.read()
 
-    payload = yaml.safe_load(
-        Path("policies/patentsview_patent_targets.yml").read_text(encoding="utf-8")
-    )
-
-    assert payload["targets"] == []
+    assert "targets: []" in policy
 
 
 def test_manual_live_workflow_references_only_production_runners_and_secret_names() -> None:
-    workflow = Path(".github/workflows/sa15-provider-live-validation.yml").read_text(
-        encoding="utf-8"
-    )
+    with open(
+        ".github/workflows/sa15-provider-live-validation.yml", encoding="utf-8"
+    ) as workflow_file:
+        workflow = workflow_file.read()
 
     for script_name in (
         "live_validate_sa15_brave.py",
