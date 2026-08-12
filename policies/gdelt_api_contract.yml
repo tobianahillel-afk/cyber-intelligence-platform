@@ -1,0 +1,14 @@
+version: 1
+
+contract:
+  product_generation: GDELT 5
+  status: awaiting_official_contract
+  reviewed_at: 2026-08-12
+  official_references:
+    - https://blog.gdeltproject.org/scaling-gdelt-for-a-new-era-migrating-to-spanner-with-agentic-interactive-gemini/
+    - https://blog.gdeltproject.org/2026/06/
+    - https://blog.gdeltproject.org/using-the-new-web-ngrams-dataset-to-find-relevant-coverage/
+  api_base_url: null
+  api_version: null
+  schema_reference: null
+  storage_terms_reference: null
