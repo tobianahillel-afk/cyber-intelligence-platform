@@ -7,6 +7,41 @@ def test_mojeek_checked_in_storage_entitlement_remains_fail_closed() -> None:
     assert "evidence_reference: null" in policy
 
 
+def test_marginalia_checked_in_entitlement_and_governance_remain_fail_closed() -> None:
+    with open(
+        "policies/marginalia_search_entitlement.yml", encoding="utf-8"
+    ) as entitlement_file:
+        entitlement = entitlement_file.read()
+    with open(
+        "policies/sources.search_providers_sa15.yml", encoding="utf-8"
+    ) as governance_file:
+        governance = governance_file.read()
+    with open(
+        "policies/source_activation.search_providers_sa15.yml", encoding="utf-8"
+    ) as activation_file:
+        activation = activation_file.read()
+
+    assert "commercial_use_rights: false" in entitlement
+    assert "plan: unprovisioned" in entitlement
+    assert "evidence_reference: null" in entitlement
+    assert "api_key_secret_ref: null" in entitlement
+
+    marginalia_governance = governance.split(
+        "  - id: marginalia-web-search-metadata", 1
+    )[1]
+    assert "status: draft" in marginalia_governance
+    assert "status: missing" in marginalia_governance
+    assert "approved_hosts: []" in marginalia_governance
+    assert "automated_collection_allowed: false" in marginalia_governance
+
+    marginalia_activation = activation.split(
+        "  - source_id: marginalia-web-search-metadata", 1
+    )[1].split("  - source_id: google-search-governed-route", 1)[0]
+    assert "disposition: blocked" in marginalia_activation
+    assert "stages: [catalogued, reviewed, mapped, adapter_present]" in marginalia_activation
+    assert "live_tested" not in marginalia_activation
+
+
 def test_patentsview_has_no_checked_in_production_target() -> None:
     with open("policies/patentsview_patent_targets.yml", encoding="utf-8") as policy_file:
         policy = policy_file.read()
@@ -14,15 +49,27 @@ def test_patentsview_has_no_checked_in_production_target() -> None:
     assert "targets: []" in policy
 
 
-def test_brave_and_mojeek_live_runners_have_valid_controlled_discovery_seed() -> None:
+def test_search_provider_live_runners_have_valid_controlled_discovery_seed() -> None:
     for script_name in (
         "scripts/live_validate_sa15_brave.py",
         "scripts/live_validate_sa15_mojeek.py",
+        "scripts/live_validate_sa15_marginalia.py",
     ):
         with open(script_name, encoding="utf-8") as script_file:
             script = script_file.read()
         assert "seed_urls=(base_url,)" in script
         assert "discover_security_txt=False" in script
+
+
+def test_marginalia_live_runner_defers_secret_read_to_fail_closed_adapter() -> None:
+    with open(
+        "scripts/live_validate_sa15_marginalia.py", encoding="utf-8"
+    ) as script_file:
+        script = script_file.read()
+
+    assert 'token_provider=lambda: _required_env("MARGINALIA_API_KEY")' in script
+    assert "MarginaliaSearchAdapter" in script
+    assert "load_marginalia_search_entitlement" in script
 
 
 def test_patentsview_legacy_live_runner_fails_before_reading_any_credential() -> None:
@@ -61,7 +108,7 @@ def test_patentsview_legacy_governance_and_activation_are_revoked() -> None:
     assert "- live_tested" not in patentsview_activation
 
 
-def test_manual_live_workflow_exposes_only_current_credentialed_provider_runners() -> None:
+def test_manual_live_workflow_exposes_only_prepared_credentialed_provider_runners() -> None:
     with open(
         ".github/workflows/sa15-provider-live-validation.yml", encoding="utf-8"
     ) as workflow_file:
@@ -70,11 +117,13 @@ def test_manual_live_workflow_exposes_only_current_credentialed_provider_runners
     for script_name in (
         "live_validate_sa15_brave.py",
         "live_validate_sa15_mojeek.py",
+        "live_validate_sa15_marginalia.py",
     ):
         assert f"python scripts/{script_name}" in workflow
     for secret_name in (
         "BRAVE_SEARCH_API_TOKEN",
         "MOJEEK_API_KEY",
+        "MARGINALIA_API_KEY",
     ):
         assert f"secrets.{secret_name}" in workflow
     assert "live_validate_sa15_patentsview.py" not in workflow
