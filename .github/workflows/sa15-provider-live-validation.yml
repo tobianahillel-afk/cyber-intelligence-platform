@@ -10,7 +10,6 @@ on:
         options:
           - brave
           - mojeek
-          - patentsview
       organization_name:
         description: Controlled organization name used by search validation
         required: true
@@ -20,11 +19,6 @@ on:
         description: Controlled public organization URL used by search validation
         required: true
         default: https://archive.org/
-        type: string
-      patentsview_assignee:
-        description: Exact PatentsView assignee_organization (required only for patentsview)
-        required: false
-        default: ""
         type: string
 
 permissions:
@@ -41,11 +35,8 @@ jobs:
     env:
       BRAVE_SEARCH_API_TOKEN: ${{ secrets.BRAVE_SEARCH_API_TOKEN }}
       MOJEEK_API_KEY: ${{ secrets.MOJEEK_API_KEY }}
-      PATENTSVIEW_API_KEY: ${{ secrets.PATENTSVIEW_API_KEY }}
       SA15_SEARCH_ORGANIZATION: ${{ inputs.organization_name }}
       SA15_SEARCH_ORGANIZATION_URL: ${{ inputs.organization_url }}
-      SA15_PATENTSVIEW_CANONICAL_NAME: ${{ inputs.organization_name }}
-      SA15_PATENTSVIEW_ASSIGNEE: ${{ inputs.patentsview_assignee }}
     steps:
       - name: Check out requested exact ref
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
@@ -69,9 +60,6 @@ jobs:
               ;;
             mojeek)
               python scripts/live_validate_sa15_mojeek.py
-              ;;
-            patentsview)
-              python scripts/live_validate_sa15_patentsview.py
               ;;
             *)
               echo "Unsupported SA-15 provider" >&2
