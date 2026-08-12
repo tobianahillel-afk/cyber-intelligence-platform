@@ -25,8 +25,9 @@ sources:
     reason: >-
       The route-resolution contract is present and fail-closed. Custom Search JSON API may only be
       enabled for a deployment with recorded existing-customer entitlement plus secret references.
-      Browser automation may only be enabled when explicit provider-permission evidence is recorded;
-      CAPTCHA and anti-bot bypass remain forbidden. Otherwise C3 requires a demonstrably equivalent
-      canonical search provider with real normalized-SERP live proof. Analyst-opened Google search
-      links remain available but do not count as automated live proof.
-    stages: [catalogued, reviewed, mapped, contract_present]
+      Browser automation may only be enabled when explicit, verified provider-permission evidence is
+      recorded and current; CAPTCHA and anti-bot bypass remain forbidden. Otherwise C3 requires a
+      demonstrably equivalent canonical search provider with real normalized-SERP live proof.
+      Analyst-opened Google search links remain available but do not count as automated live proof.
+      The contract itself is governance metadata, not an activation stage or runtime adapter.
+    stages: [catalogued, reviewed, mapped]
