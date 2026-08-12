@@ -2,12 +2,6 @@ from __future__ import annotations
 
 from pathlib import Path
 
-import yaml
-
-from cip.modules.source_activation.domain.models import ActivationStage
-from cip.modules.source_activation.infrastructure import load_activation_inventory
-from cip.shared.config.settings import Settings
-
 
 _PROVIDER_IDS = (
     "brave-search-api",
@@ -17,6 +11,10 @@ _PROVIDER_IDS = (
 
 
 def test_credentialed_sa15_providers_are_executable_but_not_falsely_live() -> None:
+    from cip.modules.source_activation.domain.models import ActivationStage
+    from cip.modules.source_activation.infrastructure import load_activation_inventory
+    from cip.shared.config.settings import Settings
+
     records = {
         record.source_id: record
         for record in load_activation_inventory(Settings().source_activation_path)
@@ -32,6 +30,8 @@ def test_credentialed_sa15_providers_are_executable_but_not_falsely_live() -> No
 
 
 def test_mojeek_checked_in_storage_entitlement_remains_fail_closed() -> None:
+    import yaml
+
     payload = yaml.safe_load(
         Path("policies/mojeek_search_entitlement.yml").read_text(encoding="utf-8")
     )
@@ -43,6 +43,8 @@ def test_mojeek_checked_in_storage_entitlement_remains_fail_closed() -> None:
 
 
 def test_patentsview_has_no_checked_in_production_target() -> None:
+    import yaml
+
     payload = yaml.safe_load(
         Path("policies/patentsview_patent_targets.yml").read_text(encoding="utf-8")
     )
