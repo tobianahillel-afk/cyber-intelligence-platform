@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Callable
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 from cip.adapters.sources.ashby.registry import AshbyBoard
 from cip.adapters.sources.crossref_publications.registry import CrossrefPublicationTarget
@@ -9,6 +9,7 @@ from cip.adapters.sources.developer_ecosystem.registry import DeveloperEcosystem
 from cip.adapters.sources.greenhouse.registry import GreenhouseBoard
 from cip.adapters.sources.incident_catalogs.sec_registry import SecIncidentTarget
 from cip.adapters.sources.lever.registry import LeverSite
+from cip.adapters.sources.marginalia_search.registry import MarginaliaSearchEntitlement
 from cip.adapters.sources.mojeek_search.registry import MojeekSearchEntitlement
 from cip.adapters.sources.organization_identity.registry import OrganizationIdentityTarget
 from cip.adapters.sources.passive_infrastructure.rdap_registry import RdapTarget
@@ -86,6 +87,9 @@ class AdapterCompositionInputs:
     passive_infrastructure_targets: tuple[PassiveInfrastructureTarget, ...]
     rdap_targets: tuple[RdapTarget, ...]
     sec_incident_targets: tuple[SecIncidentTarget, ...]
+    marginalia_entitlement: MarginaliaSearchEntitlement = field(
+        default_factory=MarginaliaSearchEntitlement
+    )
 
 
 @dataclass(frozen=True, slots=True)
@@ -152,6 +156,7 @@ def build_runtime_adapters(
             patentsview_patent_targets=inputs.patentsview_patent_targets,
             w3c_affiliation_targets=inputs.w3c_affiliation_targets,
             mojeek_entitlement=inputs.mojeek_entitlement,
+            marginalia_entitlement=inputs.marginalia_entitlement,
         ),
         secrets.search_archives,
         timeout_seconds=timeout_seconds,
