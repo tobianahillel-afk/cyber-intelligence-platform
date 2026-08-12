@@ -36,6 +36,9 @@ class Settings(BaseSettings):
     search_archive_source_registry_path: Path = Path(
         "policies/sources.search_archives.yml"
     )
+    search_provider_source_registry_path: Path = Path(
+        "policies/sources.search_providers_sa15.yml"
+    )
     incident_source_registry_path: Path = Path("policies/sources.incidents.yml")
     threat_telemetry_source_registry_path: Path = Path(
         "policies/sources.threat_telemetry.yml"
@@ -132,6 +135,9 @@ class Settings(BaseSettings):
     mojeek_search_entitlement_registry_path: Path = Path(
         "policies/mojeek_search_entitlement.yml"
     )
+    marginalia_search_entitlement_registry_path: Path = Path(
+        "policies/marginalia_search_entitlement.yml"
+    )
     vulnerability_query_target_registry_path: Path = Path(
         "policies/vulnerability_query_targets.yml"
     )
@@ -178,10 +184,9 @@ class Settings(BaseSettings):
     worker_poll_seconds: float = Field(default=2.0, gt=0, le=300)
     source_http_timeout_seconds: float = Field(default=30.0, gt=0, le=120)
     api_host: str = "127.0.0.1"
-    api_port: int = Field(default=8000, ge=1, le=65_535)
-    api_reload: bool = False
+    api_port: int = Field(default=8000, ge=1, le=65535)
 
 
-@lru_cache(maxsize=1)
+@lru_cache
 def get_settings() -> Settings:
     return Settings()
