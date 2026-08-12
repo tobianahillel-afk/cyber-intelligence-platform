@@ -183,6 +183,8 @@ def _validate_status_requirements(contract: _GoogleSearchContractModel) -> None:
             raise ValueError("existing-customer API route requires entitlement and API-key refs")
         if not api.search_engine_id_secret_ref:
             raise ValueError("existing-customer API route requires a search-engine-id ref")
+        if api.existing_customer_sunset < contract.reviewed_at:
+            raise ValueError("existing-customer Google API route is past provider sunset")
     elif contract.status is GoogleSearchContractStatus.PROVIDER_AUTHORIZED_BROWSER:
         browser = contract.browser_route
         if not browser.enabled:
@@ -193,6 +195,8 @@ def _validate_status_requirements(contract: _GoogleSearchContractModel) -> None:
             raise ValueError("provider-authorized browser requires verified provider permission")
         if not browser.provider_permission_issued_at or not browser.provider_permission_expires_at:
             raise ValueError("provider-authorized browser requires permission validity dates")
+        if browser.provider_permission_issued_at > contract.reviewed_at:
+            raise ValueError("provider browser permission issuance cannot be after contract review")
         if browser.provider_permission_expires_at < browser.provider_permission_issued_at:
             raise ValueError("provider browser permission expiry cannot precede issuance")
         if browser.provider_permission_expires_at < contract.reviewed_at:
