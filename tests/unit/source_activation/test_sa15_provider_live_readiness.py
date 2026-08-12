@@ -20,6 +20,10 @@ def test_marginalia_checked_in_entitlement_and_governance_remain_fail_closed() -
         "policies/source_activation.search_providers_sa15.yml", encoding="utf-8"
     ) as activation_file:
         activation = activation_file.read()
+    with open(
+        "policies/source_portfolio.search_providers_sa15.yml", encoding="utf-8"
+    ) as portfolio_file:
+        portfolio = portfolio_file.read()
 
     assert "commercial_use_rights: false" in entitlement
     assert "plan: unprovisioned" in entitlement
@@ -40,6 +44,14 @@ def test_marginalia_checked_in_entitlement_and_governance_remain_fail_closed() -
     assert "disposition: blocked" in marginalia_activation
     assert "stages: [catalogued, reviewed, mapped, adapter_present]" in marginalia_activation
     assert "live_tested" not in marginalia_activation
+
+    marginalia_portfolio = portfolio.split(
+        "  - source_id: marginalia-web-search-metadata", 1
+    )[1].split("  - source_id: google-search-governed-route", 1)[0]
+    assert "status: candidate" in marginalia_portfolio
+    assert "executable: false" in marginalia_portfolio
+    assert "runtime_adapter_present: true" in marginalia_portfolio
+    assert "adapter_id: marginalia-web-search" in marginalia_portfolio
 
 
 def test_patentsview_has_no_checked_in_production_target() -> None:
