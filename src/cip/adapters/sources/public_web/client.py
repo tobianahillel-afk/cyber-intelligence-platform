@@ -26,6 +26,7 @@ _FEED_MIME_TYPES = {
     "application/xml",
     "text/xml",
 }
+_NOT_MODIFIED_MIME_TYPE = "application/x-public-resource-not-modified"
 
 
 class PublicWebResponseError(RuntimeError):
@@ -210,10 +211,13 @@ class PublicWebClient:
         *,
         usage: CrawlUsage,
         depth: int = 0,
+        etag: str | None = None,
+        last_modified: str | None = None,
     ) -> PublicWebFetchResult:
         requested = CanonicalUrl(url).value
         current = requested
         redirects = 0
+        conditional_request = etag is not None or last_modified is not None
         while True:
             decision = target.crawl_scope.evaluate_target(
                 current,
@@ -227,10 +231,11 @@ class PublicWebClient:
                 raise PublicWebPolicyDeniedError("robots.txt denied page collection")
             response = self._client.get(
                 current,
-                headers={
-                    "Accept": "text/html,application/pdf,text/plain;q=0.9,*/*;q=0.1",
-                    "User-Agent": _USER_AGENT,
-                },
+                headers=_page_headers(
+                    include_validators=current == requested,
+                    etag=etag,
+                    last_modified=last_modified,
+                ),
                 follow_redirects=False,
             )
             if response.status_code in _REDIRECT_STATUSES:
@@ -240,6 +245,21 @@ class PublicWebClient:
                 redirects += 1
                 current = CanonicalUrl(urljoin(current, location)).value
                 continue
+            if response.status_code == httpx.codes.NOT_MODIFIED:
+                if not conditional_request or current != requested:
+                    raise PublicWebResponseError(
+                        "unexpected 304 response without an applicable validator"
+                    )
+                return PublicWebFetchResult(
+                    requested_url=requested,
+                    fetched_url=current,
+                    body=b"",
+                    mime_type=_NOT_MODIFIED_MIME_TYPE,
+                    etag=_header(response, "etag") or etag,
+                    last_modified=_header(response, "last-modified") or last_modified,
+                    redirects=redirects,
+                    status_code=response.status_code,
+                )
             if response.status_code in _TOMBSTONE_STATUSES:
                 return PublicWebFetchResult(
                     requested_url=requested,
@@ -271,6 +291,23 @@ class PublicWebClient:
                 redirects=redirects,
                 status_code=response.status_code,
             )
+
+
+def _page_headers(
+    *,
+    include_validators: bool,
+    etag: str | None,
+    last_modified: str | None,
+) -> dict[str, str]:
+    headers = {
+        "Accept": "text/html,application/pdf,text/plain;q=0.9,*/*;q=0.1",
+        "User-Agent": _USER_AGENT,
+    }
+    if include_validators and etag is not None:
+        headers["If-None-Match"] = etag
+    if include_validators and last_modified is not None:
+        headers["If-Modified-Since"] = last_modified
+    return headers
 
 
 def _robots_sitemaps(
