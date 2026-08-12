@@ -38,6 +38,11 @@ class AutomaticPublicWebPolicy:
     allowed_path_prefixes: tuple[str, ...] = ("/",)
     refresh_interval_seconds: int = 86_400
     max_link_depth: int = 1
+    discover_sitemaps: bool = True
+    discover_feeds: bool = True
+    max_sitemap_depth: int = 2
+    max_sitemaps: int = 10
+    max_feeds: int = 5
     max_pages: int = 100
     max_total_bytes: int = 10_000_000
     max_resource_bytes: int = 1_000_000
@@ -61,6 +66,12 @@ class AutomaticPublicWebPolicy:
             raise ValueError("refresh_interval_seconds must be at least 60")
         if not 0 <= self.max_link_depth <= 20:
             raise ValueError("max_link_depth must be between 0 and 20")
+        if not 0 <= self.max_sitemap_depth <= 10:
+            raise ValueError("max_sitemap_depth must be between 0 and 10")
+        if not 1 <= self.max_sitemaps <= 100:
+            raise ValueError("max_sitemaps must be between 1 and 100")
+        if not 1 <= self.max_feeds <= 50:
+            raise ValueError("max_feeds must be between 1 and 50")
         object.__setattr__(self, "authorization_reference", reference)
         object.__setattr__(self, "reviewed_at", reviewed)
         object.__setattr__(self, "expires_at", expires)
@@ -95,12 +106,17 @@ def provision_public_web_target(
         sitemap_urls=(),
         feed_urls=(),
         discover_security_txt=True,
+        discover_sitemaps=policy.discover_sitemaps,
+        discover_feeds=policy.discover_feeds,
         allowed_path_prefixes=policy.allowed_path_prefixes,
         enabled=True,
         authorization_reference=policy.authorization_reference,
         authorization_reviewed_at=policy.reviewed_at,
         authorization_expires_at=policy.expires_at,
         max_link_depth=policy.max_link_depth,
+        max_sitemap_depth=policy.max_sitemap_depth,
+        max_sitemaps=policy.max_sitemaps,
+        max_feeds=policy.max_feeds,
         max_pages=policy.max_pages,
         max_total_bytes=policy.max_total_bytes,
         max_resource_bytes=policy.max_resource_bytes,
