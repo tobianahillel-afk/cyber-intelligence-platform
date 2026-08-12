@@ -1,164 +1,80 @@
-schema_version: 1
-registry: search_query_templates
-
-defaults:
-  enabled: false
-  purpose: corporate-public-footprint
-  max_age_days: 30
+version: 1
 
 templates:
   - id: q-procurement-contracts
-    query: '"{organization}" (tender OR RFP OR procurement OR contract OR marché OR appel d offres) cybersecurity'
-    provider: google
-    endpoint: "https://www.google.com/search"
-    license_tag: manual-link
-    robots_status: not-automated
-    allowed_stored_fields: [url, title, snippet, fetched_at, query_id, metadata]
+    version: 2
     enabled: false
     purpose: corporate-public-footprint
-    max_age_days: 7
-    version: 2
+    query_pattern: '"{organization}" (tender OR RFP OR procurement OR contract OR marché OR "appel d offres") cybersecurity'
 
   - id: q-products-providers
-    query: '"{organization}" (cybersecurity OR security) (product OR platform OR provider OR vendor OR supplier)'
-    provider: google
-    endpoint: "https://www.google.com/search"
-    license_tag: manual-link
-    robots_status: not-automated
-    allowed_stored_fields: [url, title, snippet, fetched_at, query_id, metadata]
+    version: 2
     enabled: false
     purpose: corporate-public-footprint
-    max_age_days: 14
-    version: 2
+    query_pattern: '"{organization}" (cybersecurity OR security) (product OR platform OR provider OR vendor OR supplier)'
 
   - id: q-soc-siem-mdr-xdr-soar
-    query: '"{organization}" (SOC OR SIEM OR MDR OR XDR OR SOAR) (security OR cybersecurity)'
-    provider: google
-    endpoint: "https://www.google.com/search"
-    license_tag: manual-link
-    robots_status: not-automated
-    allowed_stored_fields: [url, title, snippet, fetched_at, query_id, metadata]
+    version: 2
     enabled: false
     purpose: corporate-public-footprint
-    max_age_days: 14
-    version: 2
+    query_pattern: '"{organization}" (SOC OR SIEM OR MDR OR XDR OR SOAR) (security OR cybersecurity)'
 
   - id: q-iam-pam-iga-zero-trust
-    query: '"{organization}" (IAM OR PAM OR IGA OR "Zero Trust" OR ZeroTrust)'
-    provider: google
-    endpoint: "https://www.google.com/search"
-    license_tag: manual-link
-    robots_status: not-automated
-    allowed_stored_fields: [url, title, snippet, fetched_at, query_id, metadata]
+    version: 2
     enabled: false
     purpose: corporate-public-footprint
-    max_age_days: 14
-    version: 2
+    query_pattern: '"{organization}" (IAM OR PAM OR IGA OR "Zero Trust" OR ZeroTrust)'
 
   - id: q-cloud-kubernetes
-    query: '"{organization}" (cloud OR AWS OR Azure OR GCP OR Kubernetes OR K8s) security'
-    provider: google
-    endpoint: "https://www.google.com/search"
-    license_tag: manual-link
-    robots_status: not-automated
-    allowed_stored_fields: [url, title, snippet, fetched_at, query_id, metadata]
+    version: 2
     enabled: false
     purpose: corporate-public-footprint
-    max_age_days: 14
-    version: 2
+    query_pattern: '"{organization}" (cloud OR AWS OR Azure OR GCP OR Kubernetes OR K8s) security'
 
   - id: q-appsec-devsecops-sast-dast-sca-sbom
-    query: '"{organization}" (AppSec OR DevSecOps OR SAST OR DAST OR SCA OR SBOM OR "software supply chain")'
-    provider: google
-    endpoint: "https://www.google.com/search"
-    license_tag: manual-link
-    robots_status: not-automated
-    allowed_stored_fields: [url, title, snippet, fetched_at, query_id, metadata]
+    version: 2
     enabled: false
     purpose: corporate-public-footprint
-    max_age_days: 14
-    version: 2
+    query_pattern: '"{organization}" (AppSec OR DevSecOps OR SAST OR DAST OR SCA OR SBOM OR "software supply chain")'
 
   - id: q-pentest-red-purple
-    query: '"{organization}" (pentest OR penetration testing OR red-team OR "red team" OR purple-team OR "purple team")'
-    provider: google
-    endpoint: "https://www.google.com/search"
-    license_tag: manual-link
-    robots_status: not-automated
-    allowed_stored_fields: [url, title, snippet, fetched_at, query_id, metadata]
+    version: 2
     enabled: false
     purpose: corporate-public-footprint
-    max_age_days: 14
-    version: 2
+    query_pattern: '"{organization}" (pentest OR "penetration testing" OR red-team OR "red team" OR purple-team OR "purple team")'
 
   - id: q-grc-compliance
-    query: '"{organization}" (GRC OR NIS2 OR DORA OR ISO27001 OR "ISO 27001" OR SOC2 OR "SOC 2" OR "PCI DSS" OR HDS)'
-    provider: google
-    endpoint: "https://www.google.com/search"
-    license_tag: manual-link
-    robots_status: not-automated
-    allowed_stored_fields: [url, title, snippet, fetched_at, query_id, metadata]
+    version: 2
     enabled: false
     purpose: corporate-public-footprint
-    max_age_days: 30
-    version: 2
+    query_pattern: '"{organization}" (GRC OR NIS2 OR DORA OR ISO27001 OR "ISO 27001" OR SOC2 OR "SOC 2" OR "PCI DSS" OR HDS)'
 
   - id: q-incidents-ransomware-regulator
-    query: '"{organization}" (incident OR breach OR ransomware OR cyberattack OR regulator OR notification)'
-    provider: google
-    endpoint: "https://www.google.com/search"
-    license_tag: manual-link
-    robots_status: not-automated
-    allowed_stored_fields: [url, title, snippet, fetched_at, query_id, metadata]
+    version: 2
     enabled: false
     purpose: corporate-public-footprint
-    max_age_days: 7
-    version: 2
+    query_pattern: '"{organization}" (incident OR breach OR ransomware OR cyberattack OR regulator OR notification)'
 
   - id: q-hiring-team-growth
-    query: '"{organization}" (cybersecurity OR security) (jobs OR careers OR hiring OR recruitment OR analyst OR engineer OR CISO)'
-    provider: google
-    endpoint: "https://www.google.com/search"
-    license_tag: manual-link
-    robots_status: not-automated
-    allowed_stored_fields: [url, title, snippet, fetched_at, query_id, metadata]
+    version: 2
     enabled: false
     purpose: corporate-public-footprint
-    max_age_days: 7
-    version: 2
+    query_pattern: '"{organization}" (cybersecurity OR security) (jobs OR careers OR hiring OR recruitment OR analyst OR engineer OR CISO)'
 
   - id: q-architecture-migration-transformation
-    query: '"{organization}" (architecture OR migration OR transformation OR modernization OR modernisation) (cloud OR security OR infrastructure)'
-    provider: google
-    endpoint: "https://www.google.com/search"
-    license_tag: manual-link
-    robots_status: not-automated
-    allowed_stored_fields: [url, title, snippet, fetched_at, query_id, metadata]
+    version: 2
     enabled: false
     purpose: corporate-public-footprint
-    max_age_days: 30
-    version: 2
+    query_pattern: '"{organization}" (architecture OR migration OR transformation OR modernization OR modernisation) (cloud OR security OR infrastructure)'
 
   - id: q-partners-customers-case-studies
-    query: '"{organization}" (partner OR partnership OR customer OR client OR "case study" OR "success story") cybersecurity'
-    provider: google
-    endpoint: "https://www.google.com/search"
-    license_tag: manual-link
-    robots_status: not-automated
-    allowed_stored_fields: [url, title, snippet, fetched_at, query_id, metadata]
+    version: 2
     enabled: false
     purpose: corporate-public-footprint
-    max_age_days: 30
-    version: 2
+    query_pattern: '"{organization}" (partner OR partnership OR customer OR client OR "case study" OR "success story") cybersecurity'
 
   - id: q-reports-presentations-standards-publications
-    query: '"{organization}" ("annual report" OR presentation OR standard OR specification OR "technical publication" OR whitepaper) (security OR cybersecurity OR technology)'
-    provider: google
-    endpoint: "https://www.google.com/search"
-    license_tag: manual-link
-    robots_status: not-automated
-    allowed_stored_fields: [url, title, snippet, fetched_at, query_id, metadata]
+    version: 2
     enabled: false
     purpose: corporate-public-footprint
-    max_age_days: 90
-    version: 2
+    query_pattern: '"{organization}" ("annual report" OR presentation OR standard OR specification OR "technical publication" OR whitepaper) (security OR cybersecurity OR technology)'
