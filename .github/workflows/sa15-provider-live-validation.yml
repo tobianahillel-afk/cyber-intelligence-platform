@@ -10,6 +10,7 @@ on:
         options:
           - brave
           - mojeek
+          - marginalia
       organization_name:
         description: Controlled organization name used by search validation
         required: true
@@ -35,6 +36,7 @@ jobs:
     env:
       BRAVE_SEARCH_API_TOKEN: ${{ secrets.BRAVE_SEARCH_API_TOKEN }}
       MOJEEK_API_KEY: ${{ secrets.MOJEEK_API_KEY }}
+      MARGINALIA_API_KEY: ${{ secrets.MARGINALIA_API_KEY }}
       SA15_SEARCH_ORGANIZATION: ${{ inputs.organization_name }}
       SA15_SEARCH_ORGANIZATION_URL: ${{ inputs.organization_url }}
     steps:
@@ -60,6 +62,9 @@ jobs:
               ;;
             mojeek)
               python scripts/live_validate_sa15_mojeek.py
+              ;;
+            marginalia)
+              python scripts/live_validate_sa15_marginalia.py
               ;;
             *)
               echo "Unsupported SA-15 provider" >&2
