@@ -13,10 +13,13 @@ from cip.modules.collection_orchestration.application.common_crawl_search_bridge
     build_common_crawl_search_plan,
     normalize_common_crawl_batch,
 )
+from cip.modules.collection_orchestration.application.ports import AdapterCollectionBatch
 from cip.modules.collection_orchestration.application.search_acquisition_router import (
+    SearchAcquisitionRoute,
     SearchAcquisitionRouteKind,
     route_search_discovery_candidates,
 )
+from cip.modules.public_footprint.domain.search_core import SearchDiscoveryCandidate
 from cip.modules.source_governance.infrastructure.registry import load_source_registry
 
 POLICY_PATH = Path("policies/sources.search_archives.yml")
@@ -76,7 +79,11 @@ def _target(now: datetime) -> PublicWebTarget:
     )
 
 
-def _assert_live_truth(batch, candidates, routes) -> None:
+def _assert_live_truth(
+    batch: AdapterCollectionBatch,
+    candidates: tuple[SearchDiscoveryCandidate, ...],
+    routes: tuple[SearchAcquisitionRoute, ...],
+) -> None:
     observations = len(batch.observations)
     if observations < 1 or observations > 50:
         raise RuntimeError("Common Crawl live bridge returned an invalid observation count")
