@@ -40,6 +40,36 @@ def test_query_plan_requires_an_enabled_template_and_unique_providers() -> None:
         )
 
 
+def test_domain_scoped_query_plan_requires_and_uses_a_bare_domain() -> None:
+    template = SearchQueryTemplate(
+        id="site-security",
+        version=1,
+        query_pattern="site:{domain} security",
+        purpose="corporate-public-footprint-domain",
+        enabled=True,
+    )
+
+    with pytest.raises(ValueError, match="organization_domain"):
+        SearchQueryPlan.from_template(
+            organization_id=ORGANIZATION_ID,
+            organization_name="Example Corp",
+            template=template,
+            provider_ids=("brave-web-search",),
+            created_at=NOW,
+        )
+
+    plan = SearchQueryPlan.from_template(
+        organization_id=ORGANIZATION_ID,
+        organization_name="Example Corp",
+        organization_domain="Example.COM.",
+        template=template,
+        provider_ids=("brave-web-search",),
+        created_at=NOW,
+    )
+
+    assert plan.rendered_query == "site:example.com security"
+
+
 def test_normalization_deduplicates_canonical_url_and_preserves_each_provider_hit() -> None:
     plan = _plan()
     brave = SearchProviderExecution(
@@ -59,13 +89,14 @@ def test_normalization_deduplicates_canonical_url_and_preserves_each_provider_hi
             ),
         ),
     )
+    mojeek_executed_at = NOW + timedelta(seconds=1)
     mojeek = SearchProviderExecution(
         provider_id="mojeek-web-search-metadata",
         organization_id=ORGANIZATION_ID,
         rendered_query=plan.rendered_query,
         query_template_id=plan.template_id,
         query_template_version=plan.template_version,
-        executed_at=NOW + timedelta(seconds=1),
+        executed_at=mojeek_executed_at,
         results=(
             _lead(
                 provider="mojeek-web-search-metadata",
@@ -100,6 +131,12 @@ def test_normalization_deduplicates_canonical_url_and_preserves_each_provider_hi
         "brave-1",
         "mojeek-7",
     }
+    execution_times = {hit.provider_id: hit.executed_at for hit in shared.provider_hits}
+    assert execution_times == {
+        "brave-web-search": NOW,
+        "mojeek-web-search-metadata": mojeek_executed_at,
+    }
+    assert all(hit.observed_at == NOW for hit in shared.provider_hits)
     assert shared.acquisition_state is SearchAcquisitionState.UNROUTED
     assert candidates[1].target_url == "https://example.com/architecture"
 
