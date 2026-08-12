@@ -113,9 +113,16 @@ class PublicWebClient:
     ) -> PublicWebFetchResult:
         canonical = CanonicalUrl(sitemap_url).value
         explicit = canonical in target.sitemap_urls
-        if not explicit and not (discovered and target.discover_sitemaps):
-            raise PublicWebPolicyDeniedError("sitemap URL is not configured or discoverable")
-        _require_structured_url_in_scope(target, canonical)
+        if not explicit:
+            if not discovered:
+                raise PublicWebPolicyDeniedError(
+                    "sitemap URL is not explicitly configured"
+                )
+            if not target.discover_sitemaps:
+                raise PublicWebPolicyDeniedError(
+                    "sitemap URL is not configured or discoverable"
+                )
+            _require_structured_url_in_scope(target, canonical)
         if not robots.allows(canonical):
             raise PublicWebPolicyDeniedError("robots.txt denied sitemap collection")
         response = self._client.get(
@@ -157,9 +164,14 @@ class PublicWebClient:
     ) -> PublicWebFetchResult:
         canonical = CanonicalUrl(feed_url).value
         explicit = canonical in target.feed_urls
-        if not explicit and not (discovered and target.discover_feeds):
-            raise PublicWebPolicyDeniedError("feed URL is not configured or discoverable")
-        _require_structured_url_in_scope(target, canonical)
+        if not explicit:
+            if not discovered:
+                raise PublicWebPolicyDeniedError("feed URL is not explicitly configured")
+            if not target.discover_feeds:
+                raise PublicWebPolicyDeniedError(
+                    "feed URL is not configured or discoverable"
+                )
+            _require_structured_url_in_scope(target, canonical)
         if not robots.allows(canonical):
             raise PublicWebPolicyDeniedError("robots.txt denied feed collection")
         response = self._client.get(
