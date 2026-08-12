@@ -2,15 +2,20 @@
 
 ## Status
 
-`IN_PROGRESS` until both the repository CI and the dedicated real-network live workflow pass on the exact final candidate SHA.
+`LIVE_TESTED` on the implementation candidate and awaiting the mandatory exact-head revalidation of this proof/documentation commit before merge.
 
-This increment must not be called complete, `live_tested`, or fully integrated before that proof exists.
+The first real production-path proof succeeded on implementation head `1fed10fe0fdcc1959b06cc6bd57b1678dcc03d51`:
+
+- SA-16 L01 Live Validation run `31588271537`: **PASS**;
+- normal CI run `31588271512` / CI #1921: **PASS**.
+
+Because recording this proof changes the PR head, repository rules require both gates to pass again on the new final SHA. Until that second pass completes, the PR remains draft and must not be merged.
 
 ## Objective
 
 Remove the developer-edited-YAML dependency between a resolved organization website and the first governed public-web collection.
 
-The intended runtime chain is:
+The implemented runtime chain is:
 
 ```text
 Organization.website_url
@@ -79,7 +84,7 @@ It intentionally does not guess that `/sitemap.xml` exists. Automatic robots/sit
 
 ## Deterministic validation
 
-Unit coverage must prove:
+Unit coverage proves:
 
 - a canonical website is mandatory;
 - target identity is deterministic;
@@ -107,6 +112,22 @@ Organization(Python Software Foundation, https://www.python.org/)
 -> non-empty RawObservation / PublicResource projection
 ```
 
+### First successful proof
+
+On implementation head `1fed10fe0fdcc1959b06cc6bd57b1678dcc03d51`, the dedicated real-network workflow reported:
+
+```text
+SA-16 L01 live validation passed:
+organization='Python Software Foundation'
+target=public-web-15712d0d905450b48a26e25d9ea1f509
+source=automatic-public-company-web
+observations=1
+projections=1
+homepage=https://www.python.org/
+```
+
+The live gate therefore proved that the production client and production collector can consume a target generated from a real organization website, fetch real public data, retain exact source provenance and stay inside the approved origin.
+
 The live gate fails unless:
 
 1. the generated homepage is checkpointed;
@@ -117,7 +138,7 @@ The live gate fails unless:
 
 ## Completion rule
 
-L01 becomes `IMPLEMENTED_VALIDATED` / `live_tested` only after:
+L01 is merge-valid only after:
 
 1. deterministic tests pass;
 2. Ruff passes;
@@ -128,6 +149,6 @@ L01 becomes `IMPLEMENTED_VALIDATED` / `live_tested` only after:
 7. frontend quality remains green;
 8. the SA-16 L01 real-network workflow passes using the production client and collector;
 9. the live proof is recorded in this document;
-10. the documentation/live-state commit is itself revalidated by both normal CI and the live workflow on the exact final SHA.
+10. this documentation/live-state commit itself passes both normal CI and the live workflow on the exact final SHA.
 
 A skipped live job, mocked HTTP response, documentation-only claim, or earlier SHA does not satisfy this gate.
