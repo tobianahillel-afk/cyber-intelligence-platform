@@ -10,7 +10,12 @@ _GOOGLE_SEARCH_URL = "https://www.google.com/search"
 def build_google_analyst_search_url(
     template: SearchQueryTemplate,
     organization: str,
+    *,
+    organization_domain: str | None = None,
 ) -> str:
     """Build an analyst-opened Google search URL without performing network I/O."""
-    query = template.render(organization)
+    query = template.render(
+        organization,
+        organization_domain=organization_domain,
+    )
     return f"{_GOOGLE_SEARCH_URL}?{urlencode({'q': query})}"
