@@ -31,3 +31,23 @@ jobs:
 
       - name: Controlled Internet Archive CDX production-adapter live validation
         run: python scripts/live_validate_sa15_cdx.py
+
+  live-common-crawl-normalized-discovery:
+    if: github.event.pull_request.head.ref == 'agent/sa15-c1-common-crawl-serp-bridge'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Set up Python
+        uses: actions/setup-python@42375524e23c412d93fb67b49958b491fce71c38 # v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install project
+        run: python -m pip install .
+
+      - name: Controlled Common Crawl normalized production live validation
+        run: python scripts/live_validate_sa15_common_crawl_bridge.py
