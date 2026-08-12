@@ -5,7 +5,7 @@ templates:
     version: 2
     enabled: false
     purpose: corporate-public-footprint-domain
-    query_pattern: 'site:{organization} (security OR cybersecurity OR technology OR architecture)'
+    query_pattern: 'site:{domain} (security OR cybersecurity OR technology OR architecture)'
 
   - id: q-filetype-documents
     version: 2
