@@ -156,7 +156,7 @@ def _resource(
     kind = _resource_kind(result, previous)
     return PublicResource(
         organization_id=target.organization_id,
-        source_id=target.id,
+        source_id=target.source_id or target.id,
         source_record_key=result.requested_url,
         canonical_url=result.fetched_url,
         source_url=discovery_source_url or result.requested_url,
@@ -236,7 +236,7 @@ def _observation(
     if not tombstoned and include_technology_category:
         categories.add(DataCategory.TECHNOLOGY_OBSERVATION)
     return RawObservation(
-        source_id=target.id,
+        source_id=target.source_id or target.id,
         adapter_id="public-web-sitemap",
         adapter_version="1",
         collection_job_id=collection_job_id,

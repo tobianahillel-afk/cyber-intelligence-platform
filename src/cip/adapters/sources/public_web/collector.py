@@ -79,8 +79,8 @@ def collect_public_web_target(
     checkpoint: PublicWebCheckpoint | None = None,
 ) -> PublicWebCollectionBatch:
     collected = require_aware_utc(collected_at, field_name="collected_at")
-    if entry.policy.id != target.id:
-        raise ValueError("public web source policy and target id must match")
+    if entry.policy.id != target.source_id:
+        raise ValueError("public web source policy and target source_id must match")
     if not target.executable_at(collected):
         raise PublicWebCollectionDeniedError("target_authorization_inactive")
     _authorize(entry, target.robots_url, now=collected)
@@ -147,6 +147,16 @@ def _discover_candidates(
     candidates: list[PublicWebDiscoveryCandidate] = []
     seen: set[str] = set()
     total_bytes = _checked_total_bytes(target, initial_bytes)
+    for seed_url in target.seed_urls:
+        _append_candidate(
+            candidates,
+            seen,
+            PublicWebDiscoveryCandidate(
+                url=seed_url,
+                discovery_method=DiscoveryMethod.DIRECT,
+            ),
+            max_pages=target.max_pages,
+        )
     if target.discover_security_txt:
         _append_candidate(
             candidates,
