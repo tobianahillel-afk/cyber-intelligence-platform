@@ -240,7 +240,7 @@ def _discover_recursive_links(
     remaining = target.max_pages - len(candidates)
     if (
         fetched.mime_type != "text/html"
-        or child_depth > target.max_depth
+        or child_depth > target.max_link_depth
         or remaining <= 0
     ):
         return
