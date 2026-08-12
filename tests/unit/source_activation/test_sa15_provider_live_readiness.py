@@ -2,8 +2,12 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from cip.adapters.sources.mojeek_search.registry import load_mojeek_search_entitlement
-from cip.adapters.sources.patentsview_patents.registry import load_patentsview_patent_targets
+from cip.adapters.sources.mojeek_search.registry import (
+    load_mojeek_search_entitlement,
+)
+from cip.adapters.sources.patentsview_patents.registry import (
+    load_patentsview_patent_targets,
+)
 from cip.modules.source_activation.domain.models import ActivationStage
 from cip.modules.source_activation.infrastructure import load_activation_inventory
 from cip.shared.config.settings import Settings
