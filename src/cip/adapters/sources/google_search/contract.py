@@ -37,6 +37,9 @@ class _BrowserRouteModel(BaseModel):
 
     enabled: bool
     provider_permission_evidence_id: str | None = Field(default=None, max_length=200)
+    provider_permission_verified: bool = False
+    provider_permission_issued_at: date | None = None
+    provider_permission_expires_at: date | None = None
     human_checkpoint_required: bool
     captcha_bypass_allowed: bool
     anti_bot_bypass_allowed: bool
@@ -92,6 +95,9 @@ class GoogleSearchContract:
     search_engine_id_secret_ref: str | None
     browser_enabled: bool
     browser_permission_evidence_id: str | None
+    browser_permission_verified: bool
+    browser_permission_issued_at: date | None
+    browser_permission_expires_at: date | None
     canonical_replacement_source_ids: tuple[str, ...]
     analyst_route_enabled: bool
 
@@ -110,6 +116,7 @@ class GoogleSearchContract:
 def load_google_search_contract(path: Path) -> GoogleSearchContract:
     payload = yaml.safe_load(path.read_text(encoding="utf-8"))
     parsed = _GoogleSearchRegistryModel.model_validate(payload).contract
+    browser = parsed.browser_route
     return GoogleSearchContract(
         reviewed_at=parsed.reviewed_at,
         status=parsed.status,
@@ -118,8 +125,11 @@ def load_google_search_contract(path: Path) -> GoogleSearchContract:
         entitlement_evidence_id=parsed.custom_search_api.entitlement_evidence_id,
         api_key_secret_ref=parsed.custom_search_api.api_key_secret_ref,
         search_engine_id_secret_ref=parsed.custom_search_api.search_engine_id_secret_ref,
-        browser_enabled=parsed.browser_route.enabled,
-        browser_permission_evidence_id=parsed.browser_route.provider_permission_evidence_id,
+        browser_enabled=browser.enabled,
+        browser_permission_evidence_id=browser.provider_permission_evidence_id,
+        browser_permission_verified=browser.provider_permission_verified,
+        browser_permission_issued_at=browser.provider_permission_issued_at,
+        browser_permission_expires_at=browser.provider_permission_expires_at,
         canonical_replacement_source_ids=parsed.canonical_replacement.approved_source_ids,
         analyst_route_enabled=parsed.analyst_route.enabled,
     )
@@ -159,10 +169,19 @@ def _validate_status_requirements(contract: _GoogleSearchContractModel) -> None:
         if not api.search_engine_id_secret_ref:
             raise ValueError("existing-customer API route requires a search-engine-id ref")
     elif contract.status is GoogleSearchContractStatus.PROVIDER_AUTHORIZED_BROWSER:
-        if not contract.browser_route.enabled:
+        browser = contract.browser_route
+        if not browser.enabled:
             raise ValueError(
                 "provider-authorized browser status requires the browser route enabled"
             )
+        if not browser.provider_permission_verified:
+            raise ValueError("provider-authorized browser requires verified provider permission")
+        if not browser.provider_permission_issued_at or not browser.provider_permission_expires_at:
+            raise ValueError("provider-authorized browser requires permission validity dates")
+        if browser.provider_permission_expires_at < browser.provider_permission_issued_at:
+            raise ValueError("provider browser permission expiry cannot precede issuance")
+        if browser.provider_permission_expires_at < contract.reviewed_at:
+            raise ValueError("provider browser permission is expired at contract review date")
     elif contract.status is GoogleSearchContractStatus.CANONICAL_REPLACEMENT:
         if not contract.canonical_replacement.approved_source_ids:
             raise ValueError("canonical replacement status requires at least one approved source")
