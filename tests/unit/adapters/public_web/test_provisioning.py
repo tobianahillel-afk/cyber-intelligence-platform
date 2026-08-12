@@ -61,7 +61,7 @@ def test_provisioning_creates_deterministic_governed_homepage_target() -> None:
     assert target.feed_urls == ()
     assert target.discover_security_txt is True
     assert target.security_txt_url == "https://www.python.org/.well-known/security.txt"
-    assert target.max_depth == 1
+    assert target.max_link_depth == 1
     assert target.crawl_scope.max_depth == 1
     assert target.executable_at(_NOW) is True
     assert provisioned.first_crawl_at == _NOW + timedelta(minutes=5)
@@ -126,12 +126,12 @@ def test_expired_target_fails_closed() -> None:
     assert provisioned.target.executable_at(_NOW + timedelta(hours=2)) is False
 
 
-def test_recursive_depth_must_stay_bounded() -> None:
-    with pytest.raises(ValueError, match="max_depth"):
-        _policy(max_depth=21)
+def test_recursive_link_depth_must_stay_bounded() -> None:
+    with pytest.raises(ValueError, match="max_link_depth"):
+        _policy(max_link_depth=21)
 
 
-def test_legacy_target_defaults_source_id_and_recursion_off() -> None:
+def test_legacy_target_keeps_structural_discovery_but_link_recursion_off() -> None:
     target = PublicWebTarget(
         id="legacy-source",
         organization_id=_ORG_ID,
@@ -146,4 +146,5 @@ def test_legacy_target_defaults_source_id_and_recursion_off() -> None:
     )
 
     assert target.source_id == "legacy-source"
-    assert target.max_depth == 0
+    assert target.max_link_depth == 0
+    assert target.crawl_scope.max_depth == 1
