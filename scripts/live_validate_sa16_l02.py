@@ -36,7 +36,7 @@ def main() -> None:
             reviewed_at=now,
             allowed_path_prefixes=("/",),
             refresh_interval_seconds=86_400,
-            max_depth=1,
+            max_link_depth=1,
             max_pages=_MAX_PAGES,
             max_total_bytes=4_000_000,
             max_resource_bytes=1_000_000,
@@ -86,7 +86,8 @@ def main() -> None:
         f"organization={organization.canonical_name!r} target={provisioned.target.id} "
         f"source={AUTOMATIC_PUBLIC_WEB_SOURCE_ID} observations={len(batch.observations)} "
         f"projections={len(batch.projections)} linked_children={len(linked)} "
-        f"checkpoint_pages={len(batch.checkpoint.pages)} max_depth={provisioned.target.max_depth}"
+        f"checkpoint_pages={len(batch.checkpoint.pages)} "
+        f"max_link_depth={provisioned.target.max_link_depth}"
     )
 
 
