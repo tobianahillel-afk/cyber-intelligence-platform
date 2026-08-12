@@ -58,12 +58,13 @@ class MarginaliaSearchClient:
             )
 
         try:
-            with httpx.Client(
-                timeout=self._timeout_seconds,
-                follow_redirects=False,
-                transport=self._transport,
-            ) as client:
-                with client.stream(
+            with (
+                httpx.Client(
+                    timeout=self._timeout_seconds,
+                    follow_redirects=False,
+                    transport=self._transport,
+                ) as client,
+                client.stream(
                     "GET",
                     _API_URL,
                     headers={
@@ -77,17 +78,18 @@ class MarginaliaSearchClient:
                         "dc": "3",
                         "nsfw": "1",
                     },
-                ) as response:
-                    response.raise_for_status()
-                    content_type = response.headers.get("content-type", "").casefold()
-                    if "json" not in content_type:
-                        raise MarginaliaSearchClientError(
-                            "Marginalia response is not JSON",
-                            code="unsafe_source_response",
-                            retryable=False,
-                        )
-                    content = _read_bounded_body(response)
-                    request_url = str(response.request.url)
+                ) as response,
+            ):
+                response.raise_for_status()
+                content_type = response.headers.get("content-type", "").casefold()
+                if "json" not in content_type:
+                    raise MarginaliaSearchClientError(
+                        "Marginalia response is not JSON",
+                        code="unsafe_source_response",
+                        retryable=False,
+                    )
+                content = _read_bounded_body(response)
+                request_url = str(response.request.url)
         except MarginaliaSearchClientError:
             raise
         except httpx.HTTPStatusError as exc:
