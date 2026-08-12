@@ -40,6 +40,7 @@ class PublicWebTarget:
     seed_urls: tuple[str, ...] = ()
     discover_security_txt: bool = False
     source_id: str | None = None
+    max_link_depth: int = 0
     max_pages: int = 100
     max_total_bytes: int = 10_000_000
     max_resource_bytes: int = 1_000_000
@@ -50,6 +51,8 @@ class PublicWebTarget:
         name = self.canonical_name.strip()
         if not identifier or not name:
             raise ValueError("public web target id and canonical_name are required")
+        if not 0 <= self.max_link_depth <= 20:
+            raise ValueError("max_link_depth must be between 0 and 20")
         base = CanonicalUrl(self.base_url)
         _validate_public_hostname(base.host)
         seeds = _same_origin_urls(base, self.seed_urls, label="seed")
@@ -78,7 +81,7 @@ class PublicWebTarget:
         scope = CrawlScope(
             allowed_hosts=frozenset({base.host}),
             allowed_path_prefixes=prefixes,
-            max_depth=1,
+            max_depth=max(1, self.max_link_depth),
             max_pages=self.max_pages,
             max_total_bytes=self.max_total_bytes,
             max_resource_bytes=self.max_resource_bytes,
@@ -114,7 +117,7 @@ class PublicWebTarget:
         return CrawlScope(
             allowed_hosts=frozenset({self.host}),
             allowed_path_prefixes=self.allowed_path_prefixes,
-            max_depth=1,
+            max_depth=max(1, self.max_link_depth),
             max_pages=self.max_pages,
             max_total_bytes=self.max_total_bytes,
             max_resource_bytes=self.max_resource_bytes,
@@ -191,6 +194,13 @@ def _parse_target(payload: dict[str, Any]) -> PublicWebTarget:
             "expires_at",
         ),
         terms_url=_optional_string(payload, "terms_url"),
+        max_link_depth=_optional_bounded_int(
+            limits,
+            "max_link_depth",
+            default=0,
+            minimum=0,
+            maximum=20,
+        ),
         max_pages=_bounded_int(limits, "max_pages", minimum=1, maximum=1_000),
         max_total_bytes=_bounded_int(
             limits,
@@ -307,6 +317,24 @@ def _bounded_int(
     maximum: int,
 ) -> int:
     value = payload.get(key)
+    if (
+        not isinstance(value, int)
+        or isinstance(value, bool)
+        or not minimum <= value <= maximum
+    ):
+        raise ValueError(f"{key} must be between {minimum} and {maximum}")
+    return value
+
+
+def _optional_bounded_int(
+    payload: dict[str, Any],
+    key: str,
+    *,
+    default: int,
+    minimum: int,
+    maximum: int,
+) -> int:
+    value = payload.get(key, default)
     if (
         not isinstance(value, int)
         or isinstance(value, bool)

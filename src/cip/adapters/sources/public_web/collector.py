@@ -10,6 +10,7 @@ from cip.adapters.sources.public_web.client import (
     RobotsRules,
 )
 from cip.adapters.sources.public_web.feed_parsing import parse_public_feed
+from cip.adapters.sources.public_web.link_discovery import extract_public_html_links
 from cip.adapters.sources.public_web.mapper import (
     MappedPublicPage,
     PreviousPageState,
@@ -25,6 +26,7 @@ from cip.modules.public_footprint.domain import (
     PublicResourceKind,
 )
 from cip.modules.public_footprint.domain.scope import CrawlUsage
+from cip.modules.public_footprint.domain.url_identity import same_origin
 from cip.modules.raw_observations.domain.entities import RawObservation
 from cip.modules.source_governance.domain.models import (
     CollectionRequest,
@@ -66,6 +68,7 @@ class PublicWebDiscoveryCandidate:
     discovery_method: DiscoveryMethod
     source_locator: str | None = None
     security_txt: bool = False
+    depth: int = 0
 
 
 def collect_public_web_target(
@@ -85,7 +88,7 @@ def collect_public_web_target(
         raise PublicWebCollectionDeniedError("target_authorization_inactive")
     _authorize(entry, target.robots_url, now=collected)
     robots = client.fetch_robots(target)
-    candidates, discovery_bytes = _discover_candidates(
+    initial_candidates, discovery_bytes = _discover_candidates(
         client,
         entry,
         target,
@@ -93,14 +96,27 @@ def collect_public_web_target(
         now=collected,
         initial_bytes=robots.bytes_fetched,
     )
+    candidates = list(initial_candidates)
+    seen = {candidate.url for candidate in candidates}
     usage = CrawlUsage(bytes_fetched=discovery_bytes)
     previous_pages = checkpoint.pages if checkpoint is not None else {}
     next_pages = dict(previous_pages)
     observations: list[RawObservation] = []
     projections: list[PublicFootprintProjection] = []
-    for candidate in candidates:
+    index = 0
+    while index < len(candidates):
+        candidate = candidates[index]
+        index += 1
+        if usage.pages_fetched >= target.max_pages:
+            break
         _authorize(entry, candidate.url, now=collected)
-        fetched = client.fetch_page(target, candidate.url, robots, usage=usage)
+        fetched = client.fetch_page(
+            target,
+            candidate.url,
+            robots,
+            usage=usage,
+            depth=candidate.depth,
+        )
         usage = CrawlUsage(
             pages_fetched=usage.pages_fetched + 1,
             bytes_fetched=usage.bytes_fetched + len(fetched.body),
@@ -126,6 +142,13 @@ def collect_public_web_target(
             version_id=checkpoint_version_id,
             canonical_url=fetched.fetched_url,
             resource_kind=mapped.projection.resource.kind,
+        )
+        _discover_recursive_links(
+            target,
+            candidate,
+            fetched,
+            candidates,
+            seen,
         )
     return PublicWebCollectionBatch(
         observations=tuple(observations),
@@ -206,6 +229,50 @@ def _discover_candidates(
     return tuple(candidates), total_bytes
 
 
+def _discover_recursive_links(
+    target: PublicWebTarget,
+    candidate: PublicWebDiscoveryCandidate,
+    fetched: PublicWebFetchResult,
+    candidates: list[PublicWebDiscoveryCandidate],
+    seen: set[str],
+) -> None:
+    child_depth = candidate.depth + 1
+    remaining = target.max_pages - len(candidates)
+    if (
+        fetched.mime_type != "text/html"
+        or child_depth > target.max_link_depth
+        or remaining <= 0
+    ):
+        return
+    links = extract_public_html_links(
+        fetched.body,
+        base_url=fetched.fetched_url,
+        max_links=remaining,
+    )
+    for link in links:
+        if not same_origin(target.base_url, link):
+            continue
+        decision = target.crawl_scope.evaluate_target(
+            link,
+            depth=child_depth,
+            redirects=0,
+            usage=CrawlUsage(),
+        )
+        if not decision.allowed:
+            continue
+        _append_candidate(
+            candidates,
+            seen,
+            PublicWebDiscoveryCandidate(
+                url=link,
+                discovery_method=DiscoveryMethod.LINK,
+                source_locator=fetched.fetched_url,
+                depth=child_depth,
+            ),
+            max_pages=target.max_pages,
+        )
+
+
 def _append_candidate(
     candidates: list[PublicWebDiscoveryCandidate],
     seen: set[str],
@@ -232,9 +299,7 @@ def _map_candidate(
     previous_state = _previous_state(previous)
     if candidate.security_txt:
         if fetched.mime_type != "text/plain":
-            raise PublicWebCollectionDeniedError(
-                "security.txt must be served as text/plain"
-            )
+            raise PublicWebCollectionDeniedError("security.txt must be served as text/plain")
         document = parse_security_txt(fetched.body, target)
         return map_security_txt(
             target,
