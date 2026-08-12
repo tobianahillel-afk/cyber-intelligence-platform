@@ -2,9 +2,11 @@
 
 ## Status
 
-`IMPLEMENTATION_IN_PROGRESS`.
+`IMPLEMENTED_FINAL_VALIDATION_PENDING`.
 
-L02 extends the automatic governed target delivered by SA16-L01 into bounded same-origin static link traversal. It does not introduce browser rendering, authenticated navigation, JavaScript execution, sitemap-index recursion or incremental recrawl; those remain later SA16 increments.
+L02 extends the automatic governed target delivered by SA16-L01 into bounded same-origin static link traversal. The implementation candidate immediately preceding this closeout document passed both complete repository CI and a real exact-head Python.org recursive crawl. Because this documentation change creates a new content head, **this final PR head must independently repeat both gates before merge**. No earlier successful run is substituted for the final gate.
+
+L02 does not introduce browser rendering, authenticated navigation, JavaScript execution, sitemap-index recursion or incremental recrawl; those remain later SA16 increments.
 
 ## Production path
 
@@ -76,13 +78,33 @@ Tests cover:
 - exact pull-request head checkout;
 - normal repository CI on the same final head.
 
-The first implementation candidate `30ecc5254b9628fe39cacdb56afaa48c0ad40bdc` produced a genuine intermediate real-network result of **2 observations / 2 projections / 1 linked child**, but it is not final proof because normal CI exposed the compatibility regression described above. The corrected final head must repeat both gates.
+### Rejected intermediate candidate
+
+`30ecc5254b9628fe39cacdb56afaa48c0ad40bdc` produced a genuine real-network result of **2 observations / 2 projections / 1 linked child**, but normal CI exposed the legacy feed compatibility regression described above. It is not accepted as final proof.
+
+### Corrected validated implementation candidate
+
+`1b4a98008f672f225cf295fea46f9171cb79c307` passed both gates after the compatibility fix:
+
+- **SA-16 L02 Live Validation #9** (`31636984136`): PASS on the exact PR head, with **2 observations, 2 projections, 1 linked child, 2 checkpointed pages, max_link_depth=1**;
+- **CI #2002** (`31636984113`): PASS;
+- dependency consistency: PASS;
+- Python dependency audit: no known vulnerabilities;
+- Ruff: PASS;
+- strict Mypy: PASS on **697 source files**;
+- architecture/release contracts: **36 passed**;
+- reversible migrations: PASS;
+- backend suite: **1500 passed**;
+- branch-aware coverage: **90.10%**;
+- frontend audit/typecheck/build: PASS.
+
+This proves the corrected implementation itself, but the **documentation head produced by this closeout must now repeat CI + SA-16 L02 live validation on its own exact SHA** before PR #139 may merge.
 
 A mocked response, skipped workflow, synthetic merge ref, intermediate successful live run or successful L01 run does not satisfy L02 final live proof.
 
 ## Exit gate
 
-L02 is complete only when the final PR head has:
+PR #139 may merge only when its final content head has:
 
 1. frontend audit/typecheck/build green;
 2. dependency consistency and Python audit green;
@@ -93,4 +115,6 @@ L02 is complete only when the final PR head has:
 7. complete backend tests/coverage green;
 8. the real SA-16 L02 production-path live workflow green on that exact head;
 9. zero unresolved review threads;
-10. merge content proven identical to the validated final tree.
+10. squash-merge content proven identical to the validated final Git tree.
+
+Once those conditions hold and the tree-identical squash is on `main`, L02 is complete without another content-changing documentation edit.
