@@ -16,31 +16,33 @@ The governed contract is stored in `policies/google_search_contract.yml` and val
 
 ## User-supplied browser authorization evidence
 
-On 2026-08-12 the product owner supplied screenshots showing:
-
-- a request dated 2023-10-24 asking Google for authorization to crawl and scrape Google Search for the stated ADN research project;
-- a response presented as sent by `research-policy@google.com` on 2023-11-07 granting an exceptional authorization for 12 months; and
-- a later response image presented as dated 2026-08-12, again granting a 12-month authorization.
+On 2026-08-12 the product owner supplied screenshots and several text/RFC-style artifacts intended to establish a Google-issued authorization for automated crawling/scraping of Google Search for the stated ADN research project.
 
 The 2023 response is historical only and cannot activate the browser route in 2026.
 
-The 2026 image is recorded as the candidate evidence identifier `google-browser-authorization-2026-08-12-candidate`, with the dates represented in the governed contract, but it is not treated as verified provider permission.
+The 2026 response is recorded as candidate evidence identifier `google-browser-authorization-2026-08-12-candidate`, with issuance `2026-08-12` and expiry `2027-08-12`, but it is not treated as verified provider permission.
 
-### Verification of the supplied `.eml`
+### Verification history
 
-The product owner subsequently supplied an `.eml` intended to authenticate the 2026 response. The artifact was inspected byte-for-byte before changing provider authorization state.
+The first supplied `.eml` was not a raw RFC822 message: the transport/authentication fields were quoted-printable text inside the body, so it could not authenticate the sender.
 
-The artifact is not an RFC message whose transport/authentication fields are actual top-level message headers. Its real outer headers are only `Content-Type: text/plain`, `Content-Transfer-Encoding: quoted-printable`, and `MIME-Version`. The strings presented as `Return-Path`, `Received`, `DKIM-Signature`, `Authentication-Results`, `Message-ID`, `From`, `To`, and the provider response are quoted-printable text inside the message body.
+Subsequent RFC-style artifacts progressively fixed structural inconsistencies. The final supplied `demande_autorisation_sync.txt` has:
 
-After quoted-printable decoding, the embedded pseudo-DKIM block is not a cryptographically valid DKIM signature representation: its `bh=` value contains characters outside the Base64 alphabet and the `b=` value is not an RSA signature payload. Embedded `Authentication-Results: dkim=pass/spf=pass/dmarc=pass` text therefore cannot be accepted as a receiving MTA authentication result.
+- top-level RFC-style `Return-Path`, `Received`, `DKIM-Signature`, `Authentication-Results`, `Message-ID`, `Date`, `From`, and `To` fields;
+- `c=relaxed/relaxed`;
+- a `bh=` value that matches the canonicalized message body;
+- an `Authentication-Results header.b=3q1dlcWn` value that matches the prefix of the supplied DKIM `b=` value;
+- a 256-byte decoded RSA-signature-shaped `b=` value.
 
-The SHA-256 of the supplied `.eml` artifact is:
+The final cryptographic verification step was then performed against the public key published for selector `20230601._domainkey.google.com`. The RSA-SHA256 DKIM signature verification fails with `InvalidSignature` after relaxed header canonicalization of the signed fields `message-id:date:subject:from:to` plus the DKIM-Signature header with an empty `b=` value.
 
-`150395adf2ce66dd45876240d7213a4dadbe71de6a06a8007e4423b4bbf1a7e2`
+The SHA-256 of the final supplied artifact is:
 
-Result: the candidate evidence remains **unverified**. C3 must retain `provider_permission_verified: false`, `browser_route.enabled: false`, and `status: awaiting_eligible_route`. The artifact is retained only as a user-supplied candidate, not as provider-authenticated authorization.
+`f85ab5a9ba079845a9be11f1393739cd64c748e10935b677e78faf7073050201`
 
-A future permission artifact may be accepted only if it supplies the original raw RFC822 message (or an equivalent provider-verifiable signed artifact) with the actual authentication headers/signature in the message envelope/header block and a signature that can be validated, or if provider authorization is established through another independently verifiable provider channel.
+Result: the candidate evidence remains **unverified**. C3 must retain `provider_permission_verified: false`, `browser_route.enabled: false`, and `status: awaiting_eligible_route`. The artifact is retained only as user-supplied candidate evidence, not as provider-authenticated authorization.
+
+A future permission artifact may be accepted only if it supplies the original unmodified RFC822 message (or an equivalent provider-verifiable signed artifact) whose DKIM signature validates against the provider-published selector key, or if provider authorization is established through another independently verifiable provider channel.
 
 C3 fails closed on permission currency and verification: a provider-authorized browser route requires verified permission evidence, issuance/expiry dates, and an expiry date that has not passed at the contract review date.
 
