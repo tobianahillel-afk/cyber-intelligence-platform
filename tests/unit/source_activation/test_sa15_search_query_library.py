@@ -1,0 +1,76 @@
+from __future__ import annotations
+
+from pathlib import Path
+from urllib.parse import parse_qs, urlparse
+
+from cip.modules.public_footprint.infrastructure.manual_search import (
+    build_google_analyst_search_url,
+)
+from cip.modules.public_footprint.infrastructure.search_registry import (
+    load_search_query_templates,
+)
+
+ROOT = Path(__file__).resolve().parents[3]
+REGISTRY_PATH = ROOT / "policies" / "search_query_templates.yml"
+
+EXPECTED_TEMPLATE_IDS = {
+    "q-site-company-research",
+    "q-filetype-documents",
+    "q-intitle-inurl-research",
+    "q-procurement-contracts",
+    "q-products-providers",
+    "q-soc-siem-mdr-xdr-soar",
+    "q-iam-pam-iga-zero-trust",
+    "q-cloud-kubernetes",
+    "q-appsec-devsecops-sast-dast-sca-sbom",
+    "q-pentest-red-purple",
+    "q-grc-compliance",
+    "q-incidents-ransomware-regulator",
+    "q-hiring-team-growth",
+    "q-architecture-migration-transformation",
+    "q-partners-customers-case-studies",
+    "q-reports-presentations-standards-publications",
+    "q-code-package-developer-evidence",
+}
+
+
+def test_sa15_dork_library_covers_every_required_family() -> None:
+    templates = load_search_query_templates(REGISTRY_PATH)
+
+    assert {template.id for template in templates} == EXPECTED_TEMPLATE_IDS
+    assert len(templates) == len(EXPECTED_TEMPLATE_IDS)
+    assert len({template.query_pattern for template in templates}) == len(templates)
+
+    combined = " ".join(template.query_pattern for template in templates).casefold()
+    for operator in ("site:", "filetype:", "intitle:", "inurl:"):
+        assert operator in combined
+    for term in ("procurement", "siem", "zero trust", "kubernetes", "sbom"):
+        assert term in combined
+
+
+def test_sa15_dork_library_is_versioned_and_disabled_by_default() -> None:
+    templates = load_search_query_templates(REGISTRY_PATH)
+
+    for template in templates:
+        assert template.version == 2
+        assert template.purpose.startswith("corporate-public-footprint")
+        assert template.enabled is False
+        assert template.query_pattern.count("{organization}") == 1
+        rendered = template.render("Example Corp")
+        assert "{organization}" not in rendered
+        assert "Example Corp" in rendered
+
+
+def test_sa15_google_route_builds_manual_link_without_network_io() -> None:
+    templates = load_search_query_templates(REGISTRY_PATH)
+    template = next(item for item in templates if item.id == "q-filetype-documents")
+
+    url = build_google_analyst_search_url(template, "Example Corp")
+    parsed = urlparse(url)
+
+    assert parsed.scheme == "https"
+    assert parsed.netloc == "www.google.com"
+    assert parsed.path == "/search"
+    query = parse_qs(parsed.query)["q"][0]
+    assert "Example Corp" in query
+    assert "filetype:pdf" in query

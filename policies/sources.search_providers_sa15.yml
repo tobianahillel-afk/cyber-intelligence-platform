@@ -1,0 +1,48 @@
+version: 1
+reviewed_at: 2026-08-12
+
+sources:
+  - id: marginalia-web-search-metadata
+    name: Marginalia Search API metadata
+    base_url: https://api2.marginalia-search.com/search
+    status: draft
+    source_type: search_provider
+    owner: Marginalia Search
+    terms_url: https://about.marginalia-search.com/article/api/
+    licence: Commercial API key and provider commercial-use terms required
+    allowed_data_categories: [public_result_metadata]
+    prohibited_data_categories:
+      - credential
+      - victim_file
+      - private_communication
+      - private_personal_data
+      - restricted_content
+    rate_limit_per_minute: null
+    retention_days: 90
+    attribution_required: false
+    raw_content_storage: false
+    human_review_required: false
+    authorization:
+      status: missing
+      document_reference: null
+      reviewed_at: null
+      expires_at: null
+      approved_hosts: []
+      approved_path_prefixes: []
+      approved_purposes: []
+      automated_collection_allowed: false
+      raw_storage_allowed: false
+    economics:
+      commercial_value: high
+      monthly_cost: 0
+      implementation_cost: low
+      maintenance_cost: low
+      expected_stability: medium
+    notes: >-
+      SA15-L06 production adapter is present for the current API2 contract. Execution remains
+      fail-closed until a legitimate commercial API key, commercial-use entitlement evidence,
+      exact approved host/path/purpose and Provider Onboarding secret reference are configured.
+      The provider's shared `public` development key is explicitly rejected by the production
+      client and must never be used as production or live-tested evidence. Search results remain
+      discovery metadata only; third-party page bodies are acquired separately through governed
+      public-web targets.
