@@ -2,7 +2,7 @@
 
 ## Status
 
-`IMPLEMENTED_VALIDATED` on the corrected production-wired path, subject only to repetition of the gates on the final documentation head before merge.
+`IMPLEMENTED_VALIDATED_MERGED` on the corrected production-wired path.
 
 Common Crawl already had a real production adapter and provider `live_tested` proof from SA-14. C1 then proved the real provider path through normalized discovery and governed routing on PR #130. That proof was genuine, but a post-merge review found an integration gap: the live runner manually composed the normalization/router after `CommonCrawlIndexAdapter.collect()`, while scheduled production collection itself stopped after the quarantined archive projections.
 
@@ -37,11 +37,11 @@ The bridge does not relabel Common Crawl as a general web-search engine. It pres
 
 ## Corrected production-integration proof
 
-The first corrected candidate was:
+The first corrected exact-head candidate was:
 
 `e508822ddeaf56594b6a48db9599a9bfae862087`
 
-SA-15 Live Validation run #49 (`31622886737`) checked out that exact PR head SHA rather than GitHub's synthetic merge ref and executed the real production `CommonCrawlIndexAdapter` against the public Common Crawl index. It passed with:
+SA-15 Live Validation run #76 (`31622886737`) checked out that exact PR head SHA rather than GitHub's synthetic merge ref and executed the real production `CommonCrawlIndexAdapter` against the public Common Crawl index. It passed with:
 
 - **43** real observations;
 - **43** quarantined archive projections;
@@ -52,7 +52,7 @@ SA-15 Live Validation run #49 (`31622886737`) checked out that exact PR head SHA
 - normalization/routing produced inside the production adapter and persisted in the `normalized_discovery` checkpoint;
 - no WARC body retrieval.
 
-Normal repository CI run #1974 (`31622886771`) also passed for the same candidate change against current `main` integration:
+Normal repository CI run #1974 (`31622886771`) also passed for that candidate:
 
 - dependency consistency: pass;
 - Python dependency audit: pass, no known vulnerabilities;
@@ -64,16 +64,28 @@ Normal repository CI run #1974 (`31622886771`) also passed for the same candidat
 - branch-aware coverage: **90.07%**;
 - frontend audit/typecheck/build: pass.
 
-This proves the production-wired C1 implementation itself, not merely a validation-only composition.
+## Final exact-head proof and merge
 
-## Final merge gate
+The final PR #133 documentation head was:
 
-This documentation update creates a new branch head, so the earlier candidate cannot be used as the final merge candidate. The exact final documentation head must independently repeat:
+`99cd19d03ae7c1a245822067f786805c787fee5a`
 
-1. complete repository CI;
-2. the real `live-common-crawl-normalized-discovery` job with an exact PR-head checkout;
-3. a non-empty production-adapter batch and `normalized_discovery` checkpoint;
-4. zero unsupported claims;
-5. zero unresolved review threads.
+That exact head independently repeated the required gates:
 
-A skipped workflow, mock, earlier SHA or manually recomposed bridge execution does not satisfy this final gate.
+- SA-15 Live Validation run #77 (`31623449815`) explicitly checked out `99cd19d03ae7c1a245822067f786805c787fee5a` and again passed the real production path with **43** observations, **23** normalized candidates and **23 / 23** automatic governed routes;
+- normal repository CI run #1975 (`31623449867`) completed successfully for frontend and backend, including Ruff, strict Mypy, architecture/release contracts, reversible migrations, tests and coverage;
+- PR #133 had zero unresolved review threads before merge.
+
+PR #133 was then squash-merged to `main` as:
+
+`c6e46b47e0714d7859ad36daec9ab4c21865bd03`
+
+The validated final PR head and the squash commit both point to the exact same Git tree:
+
+`bad38f578f20bc0d8343aa877c13a9dc0b6ede68`
+
+Therefore the content merged to `main` is exactly the content that passed the final exact-head CI and real Common Crawl live validation. The differing commit SHA is only the expected squash-history rewrite, not a content change.
+
+## Completion result
+
+C1 is complete. A skipped workflow, mock, earlier validation-only composition or synthetic merge-ref checkout does not count as its proof; the proof above is the real production adapter on the exact validated content tree.
