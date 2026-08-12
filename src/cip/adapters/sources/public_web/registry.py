@@ -39,8 +39,13 @@ class PublicWebTarget:
     feed_urls: tuple[str, ...] = ()
     seed_urls: tuple[str, ...] = ()
     discover_security_txt: bool = False
+    discover_sitemaps: bool = False
+    discover_feeds: bool = False
     source_id: str | None = None
     max_link_depth: int = 0
+    max_sitemap_depth: int = 0
+    max_sitemaps: int = 10
+    max_feeds: int = 5
     max_pages: int = 100
     max_total_bytes: int = 10_000_000
     max_resource_bytes: int = 1_000_000
@@ -53,12 +58,24 @@ class PublicWebTarget:
             raise ValueError("public web target id and canonical_name are required")
         if not 0 <= self.max_link_depth <= 20:
             raise ValueError("max_link_depth must be between 0 and 20")
+        if not 0 <= self.max_sitemap_depth <= 10:
+            raise ValueError("max_sitemap_depth must be between 0 and 10")
+        if not 1 <= self.max_sitemaps <= 100:
+            raise ValueError("max_sitemaps must be between 1 and 100")
+        if not 1 <= self.max_feeds <= 50:
+            raise ValueError("max_feeds must be between 1 and 50")
         base = CanonicalUrl(self.base_url)
         _validate_public_hostname(base.host)
         seeds = _same_origin_urls(base, self.seed_urls, label="seed")
         sitemaps = _same_origin_urls(base, self.sitemap_urls, label="sitemap")
         feeds = _same_origin_urls(base, self.feed_urls, label="feed")
-        if not seeds and not sitemaps and not feeds and not self.discover_security_txt:
+        if (
+            not seeds
+            and not sitemaps
+            and not feeds
+            and not self.discover_security_txt
+            and not self.discover_sitemaps
+        ):
             raise ValueError("public web target requires an explicit discovery path")
         reviewed_at = _optional_time(
             self.authorization_reviewed_at,
@@ -174,6 +191,8 @@ def _parse_target(payload: dict[str, Any]) -> PublicWebTarget:
         sitemap_urls=_string_tuple(payload, "sitemap_urls", minimum=0),
         feed_urls=_string_tuple(payload, "feed_urls", minimum=0),
         discover_security_txt=_optional_bool(payload, "discover_security_txt", default=False),
+        discover_sitemaps=_optional_bool(payload, "discover_sitemaps", default=False),
+        discover_feeds=_optional_bool(payload, "discover_feeds", default=False),
         source_id=_optional_string(payload, "source_id"),
         allowed_path_prefixes=_string_tuple(
             payload,
@@ -200,6 +219,27 @@ def _parse_target(payload: dict[str, Any]) -> PublicWebTarget:
             default=0,
             minimum=0,
             maximum=20,
+        ),
+        max_sitemap_depth=_optional_bounded_int(
+            limits,
+            "max_sitemap_depth",
+            default=0,
+            minimum=0,
+            maximum=10,
+        ),
+        max_sitemaps=_optional_bounded_int(
+            limits,
+            "max_sitemaps",
+            default=10,
+            minimum=1,
+            maximum=100,
+        ),
+        max_feeds=_optional_bounded_int(
+            limits,
+            "max_feeds",
+            default=5,
+            minimum=1,
+            maximum=50,
         ),
         max_pages=_bounded_int(limits, "max_pages", minimum=1, maximum=1_000),
         max_total_bytes=_bounded_int(
