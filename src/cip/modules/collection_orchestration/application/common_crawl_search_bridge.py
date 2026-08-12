@@ -3,7 +3,11 @@ from __future__ import annotations
 from datetime import datetime
 from uuid import UUID
 
+from cip.adapters.sources.public_web.registry import PublicWebTarget
 from cip.modules.collection_orchestration.application.ports import AdapterCollectionBatch
+from cip.modules.collection_orchestration.application.search_acquisition_router import (
+    route_search_discovery_candidates,
+)
 from cip.modules.public_footprint.domain.models import PublicFootprintProjection
 from cip.modules.public_footprint.domain.search import SearchResultLead
 from cip.modules.public_footprint.domain.search_core import (
@@ -80,6 +84,40 @@ def normalize_common_crawl_batch(
         executed_at=executed_at,
     )
     return normalize_search_executions(plan, (execution,))
+
+
+def build_common_crawl_routing_checkpoint(
+    target: PublicWebTarget,
+    batch: AdapterCollectionBatch,
+    *,
+    executed_at: datetime,
+) -> dict[str, object]:
+    plan = build_common_crawl_search_plan(
+        organization_id=target.organization_id,
+        organization_name=target.canonical_name,
+        target_base_url=target.base_url,
+        created_at=executed_at,
+    )
+    candidates = normalize_common_crawl_batch(plan, batch, executed_at=executed_at)
+    routes = route_search_discovery_candidates(
+        candidates,
+        (target,),
+        routed_at=executed_at,
+    )
+    return {
+        "provider_id": COMMON_CRAWL_PROVIDER_ID,
+        "candidate_count": len(candidates),
+        "public_web_route_count": sum(route.automatic for route in routes),
+        "source_review_route_count": sum(not route.automatic for route in routes),
+        "routes": [
+            {
+                "target_url": route.requested_url,
+                "route_kind": route.route_kind.value,
+                "public_web_target_id": route.public_web_target_id,
+            }
+            for route in routes
+        ],
+    }
 
 
 def _validate_plan(plan: SearchQueryPlan) -> None:
