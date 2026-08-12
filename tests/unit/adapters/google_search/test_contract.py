@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
-import pytest
 from cip.adapters.sources.google_search import contract as google_search_contract
+import pytest
 
 
 BASE = """version: 1
@@ -51,8 +51,14 @@ def _authorized_browser(content: str, *, expires_at: str = "2027-11-07") -> str:
             "provider_permission_evidence_id: google-provider-permission",
         )
         .replace("provider_permission_verified: false", "provider_permission_verified: true")
-        .replace("provider_permission_issued_at: null", "provider_permission_issued_at: 2026-11-07")
-        .replace("provider_permission_expires_at: null", f"provider_permission_expires_at: {expires_at}")
+        .replace(
+            "provider_permission_issued_at: null",
+            "provider_permission_issued_at: 2026-11-07",
+        )
+        .replace(
+            "provider_permission_expires_at: null",
+            f"provider_permission_expires_at: {expires_at}",
+        )
     )
 
 
@@ -172,7 +178,7 @@ def test_canonical_replacement_requires_approved_source(tmp_path: Path) -> None:
         google_search_contract.load_google_search_contract(_write(tmp_path, content))
 
 
-def test_canonical_replacement_can_be_enabled(tmp_path: Path) -> None:
+def test_canonical_replacement_without_live_proof_fails_closed(tmp_path: Path) -> None:
     content = BASE.replace(
         "status: awaiting_eligible_route",
         "status: canonical_replacement",
@@ -180,7 +186,39 @@ def test_canonical_replacement_can_be_enabled(tmp_path: Path) -> None:
     contract = google_search_contract.load_google_search_contract(_write(tmp_path, content))
 
     assert contract.canonical_replacement_source_ids == ("brave-search-api",)
+    assert contract.canonical_live_source_ids == ()
+    assert contract.automated_route_available is False
+    with pytest.raises(google_search_contract.GoogleSearchRouteUnavailable):
+        contract.require_automated_route()
+
+
+def test_canonical_replacement_requires_approved_live_source(tmp_path: Path) -> None:
+    content = BASE.replace(
+        "status: awaiting_eligible_route",
+        "status: canonical_replacement",
+    ).replace("approved_source_ids: []", "approved_source_ids: [brave-search-api]")
+    contract = google_search_contract.load_google_search_contract(
+        _write(tmp_path, content),
+        live_tested_source_ids={"mojeek-search"},
+    )
+
+    assert contract.canonical_live_source_ids == ()
+    assert contract.automated_route_available is False
+
+
+def test_canonical_replacement_can_use_approved_live_source(tmp_path: Path) -> None:
+    content = BASE.replace(
+        "status: awaiting_eligible_route",
+        "status: canonical_replacement",
+    ).replace("approved_source_ids: []", "approved_source_ids: [brave-search-api]")
+    contract = google_search_contract.load_google_search_contract(
+        _write(tmp_path, content),
+        live_tested_source_ids={"brave-search-api"},
+    )
+
+    assert contract.canonical_live_source_ids == ("brave-search-api",)
     assert contract.automated_route_available is True
+    contract.require_automated_route()
 
 
 def test_google_api_host_is_exact(tmp_path: Path) -> None:
