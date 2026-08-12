@@ -37,7 +37,7 @@ _MAX_RESULTS = 20
 
 class MarginaliaSearchAdapter:
     source_id = "marginalia-web-search-metadata"
-    adapter_id = "marginalia-search-api2"
+    adapter_id = "marginalia-web-search"
     adapter_version = "1"
     data_category = DataCategory.PUBLIC_RESULT_METADATA
 
