@@ -29,7 +29,23 @@ def test_checked_in_gdelt_contract_is_fail_closed() -> None:
         contract.require_adapter_contract()
 
 
-def test_stable_contract_requires_endpoint_version_and_schema(tmp_path: Path) -> None:
+def test_contract_requires_exact_gdelt5_generation(tmp_path: Path) -> None:
+    policy = tmp_path / "gdelt.yml"
+    policy.write_text(
+        _stable_contract_yaml(
+            api_base_url="https://api.gdeltproject.org/future-api",
+            product_generation="GDELT 4",
+        ),
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ValidationError, match="exactly GDELT 5"):
+        load_gdelt_api_contract(policy)
+
+
+def test_stable_contract_requires_endpoint_version_schema_and_storage_terms(
+    tmp_path: Path,
+) -> None:
     policy = tmp_path / "gdelt.yml"
     policy.write_text(
         """version: 1
@@ -51,10 +67,26 @@ contract:
         load_gdelt_api_contract(policy)
 
 
+def test_stable_contract_rejects_blank_api_version(tmp_path: Path) -> None:
+    policy = tmp_path / "gdelt.yml"
+    policy.write_text(
+        _stable_contract_yaml(
+            api_base_url="https://api.gdeltproject.org/future-api",
+            api_version="   ",
+        ),
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ValidationError, match="requires API base URL"):
+        load_gdelt_api_contract(policy)
+
+
 @pytest.mark.parametrize(
     "legacy_url",
     (
+        "https://api.gdeltproject.org/api/v1",
         "https://api.gdeltproject.org/api/v1/search",
+        "https://api.gdeltproject.org/api/v2",
         "https://api.gdeltproject.org/api/v2/doc/doc",
     ),
 )
@@ -91,6 +123,20 @@ def test_future_stable_contract_rejects_non_gdelt_lookalikes(
         load_gdelt_api_contract(policy)
 
 
+def test_stable_contract_rejects_untrusted_storage_terms_reference(tmp_path: Path) -> None:
+    policy = tmp_path / "gdelt.yml"
+    policy.write_text(
+        _stable_contract_yaml(
+            api_base_url="https://api.gdeltproject.org/future-api",
+            storage_terms_reference="https://example.com/terms",
+        ),
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ValidationError, match="official HTTPS GDELT host"):
+        load_gdelt_api_contract(policy)
+
+
 def test_complete_official_future_contract_opens_only_the_contract_gate(tmp_path: Path) -> None:
     policy = tmp_path / "gdelt.yml"
     policy.write_text(
@@ -105,16 +151,22 @@ def test_complete_official_future_contract_opens_only_the_contract_gate(tmp_path
     contract.require_adapter_contract()
 
 
-def _stable_contract_yaml(*, api_base_url: str) -> str:
+def _stable_contract_yaml(
+    *,
+    api_base_url: str,
+    product_generation: str = "GDELT 5",
+    api_version: str = "future-contract-version",
+    storage_terms_reference: str = "https://gdeltproject.org/future-storage-terms",
+) -> str:
     return f"""version: 1
 contract:
-  product_generation: GDELT 5
+  product_generation: {product_generation}
   status: stable_public_contract
   reviewed_at: 2026-08-12
   official_references:
     - https://blog.gdeltproject.org/2026/06/
   api_base_url: {api_base_url}
-  api_version: future-contract-version
+  api_version: "{api_version}"
   schema_reference: https://gdeltproject.org/future-schema
-  storage_terms_reference: https://gdeltproject.org/future-storage-terms
+  storage_terms_reference: {storage_terms_reference}
 """
