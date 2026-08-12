@@ -2,13 +2,15 @@
 
 ## Status
 
-`IN_PROGRESS` until the exact final candidate SHA passes both normal repository CI and the real Common Crawl production live workflow.
+`IMPLEMENTED_VALIDATED` / normalized integration `live_tested` candidate.
 
-Common Crawl already has a real production adapter and historical `live_tested` proof from SA-14. C1 closes the remaining SA-15 consolidation gap: Common Crawl archive-index discoveries must enter the same normalized discovery and governed acquisition path introduced by SA15-L01/L09.
+Common Crawl already had a real production adapter and provider `live_tested` proof from SA-14. C1 closes the remaining SA-15 consolidation gap: Common Crawl archive-index discoveries now enter the same normalized discovery and governed acquisition path introduced by SA15-L01/L09.
+
+The first complete candidate `d82297cbdd2fb22641a41f66bb2c001be46791cf` passed both the real Common Crawl live workflow and the complete repository CI. This documentation commit intentionally creates a new candidate SHA; C1 is mergeable only after that final documentation SHA independently repeats both gates successfully.
 
 ## Objective
 
-The required runtime chain is:
+The runtime chain is:
 
 ```text
 PublicWebTarget
@@ -68,32 +70,41 @@ Network-free tests cover:
 
 The C1 live runner uses the real production `CommonCrawlIndexAdapter` against Common Crawl's public index and the neutral Common Crawl Foundation website target.
 
-The exact live chain must produce:
+### First complete proof
 
-1. between 1 and 50 real Common Crawl observations;
-2. one quarantined archive projection per observation;
-3. zero claims;
-4. at least one normalized `SearchDiscoveryCandidate`;
-5. preserved provider identity `common-crawl-index` in every normalized hit;
-6. candidate count no greater than the underlying observation count after canonical deduplication;
-7. one SA15-L09 route per candidate;
-8. every controlled candidate routed through the executable governed `PublicWebTarget` rather than an unrestricted fetch.
+Candidate SHA:
 
-The runner performs real network I/O through the production Common Crawl client. A mock, skipped workflow, earlier SA-14 run, or documentation-only assertion does not satisfy the C1 completion gate.
+`d82297cbdd2fb22641a41f66bb2c001be46791cf`
 
-## Completion rule
+SA-15 Live Validation run #33 passed the production path with:
 
-C1 becomes `IMPLEMENTED_VALIDATED` only after:
+- **43** real Common Crawl observations;
+- **43** quarantined archive projections;
+- **0** automatic claims;
+- **23** canonical normalized `SearchDiscoveryCandidate` objects after URL deduplication;
+- provider provenance `common-crawl-index` preserved for every normalized hit;
+- **23 / 23** candidates routed automatically through SA15-L09 to the governed `PUBLIC_WEB` route;
+- no WARC body retrieval and no unrestricted HTTP fallback.
 
-1. deterministic tests pass;
-2. Ruff passes;
-3. strict Mypy passes;
-4. architecture/release contracts pass;
-5. reversible migration gates remain green;
-6. complete backend tests and coverage remain above repository thresholds;
-7. frontend gates remain green;
-8. the C1 real Common Crawl workflow succeeds;
-9. the exact live proof is recorded in this document;
-10. that documentation commit itself passes both CI and the C1 live workflow on the same final SHA.
+Normal repository CI #1928 also passed on the same candidate:
 
-Only after those ten conditions are met may the SA-15 audit mark the Common Crawl normalized-pipeline row green.
+- dependency consistency and dependency audit: pass;
+- Ruff: pass;
+- strict Mypy: pass;
+- architecture/release contracts: pass;
+- reversible migration validation: pass;
+- complete backend tests and coverage gate: pass;
+- frontend dependency audit, typecheck and production build: pass.
+
+The earlier C1 live attempt failed because the SA16-L01 `PublicWebTarget` model now requires an explicit discovery path. C1 was corrected by declaring the controlled homepage seed instead of weakening the target invariant. The subsequent production run is the proof recorded above.
+
+## Final completion rule
+
+C1 is finally mergeable only when the exact documentation head containing this proof itself passes:
+
+1. complete repository CI;
+2. the real SA-15 Common Crawl normalized live workflow;
+3. all live invariants again with a non-empty provider payload;
+4. zero unresolved review threads.
+
+A skipped job, mock, earlier SHA or successful run that does not execute the production adapter does not satisfy this gate.
