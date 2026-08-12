@@ -184,9 +184,10 @@ class Settings(BaseSettings):
     worker_poll_seconds: float = Field(default=2.0, gt=0, le=300)
     source_http_timeout_seconds: float = Field(default=30.0, gt=0, le=120)
     api_host: str = "127.0.0.1"
-    api_port: int = Field(default=8000, ge=1, le=65535)
+    api_port: int = Field(default=8000, ge=1, le=65_535)
+    api_reload: bool = False
 
 
-@lru_cache
+@lru_cache(maxsize=1)
 def get_settings() -> Settings:
     return Settings()
