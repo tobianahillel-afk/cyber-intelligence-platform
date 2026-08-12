@@ -66,11 +66,15 @@ CIP resolves Google search automation in this order:
 
 3. **Canonical replacement**
    - requires at least one approved independent search source whose equivalent capability has a production adapter and real live proof;
+   - configured `approved_source_ids` alone never makes the route available;
+   - the caller must supply the authoritative set of source IDs already proven `live_tested`; only the intersection with `approved_source_ids` becomes eligible;
    - the replacement feeds the same normalized SERP/discovery path and is not relabeled as Google data.
 
 4. **Analyst route**
    - remains available for a human analyst when no automated route is eligible;
    - analyst use is not counted as automated-provider live proof.
+
+This keeps the Google contract independent of activation-storage infrastructure while preventing a YAML-only declaration from being mistaken for production proof. In particular, Brave, Mojeek, or another search source cannot close C3 until its own authoritative activation state has real production live evidence.
 
 ## Account creation and terms checkpoint
 
