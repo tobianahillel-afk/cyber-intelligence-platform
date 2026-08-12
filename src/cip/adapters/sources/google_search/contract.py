@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections.abc import Collection
 from dataclasses import dataclass
 from datetime import date
 from enum import StrEnum
@@ -99,24 +100,37 @@ class GoogleSearchContract:
     browser_permission_issued_at: date | None
     browser_permission_expires_at: date | None
     canonical_replacement_source_ids: tuple[str, ...]
+    canonical_live_source_ids: tuple[str, ...]
     analyst_route_enabled: bool
 
     @property
     def automated_route_available(self) -> bool:
-        return self.status is not GoogleSearchContractStatus.AWAITING_ELIGIBLE_ROUTE
+        if self.status is GoogleSearchContractStatus.AWAITING_ELIGIBLE_ROUTE:
+            return False
+        if self.status is GoogleSearchContractStatus.CANONICAL_REPLACEMENT:
+            return bool(self.canonical_live_source_ids)
+        return True
 
     def require_automated_route(self) -> None:
         if not self.automated_route_available:
             raise GoogleSearchRouteUnavailable(
                 "Google automated search is unavailable until an eligible existing-customer API, "
-                "provider-authorized browser route, or approved canonical replacement is recorded"
+                "provider-authorized browser route, or approved live-tested canonical replacement "
+                "is recorded"
             )
 
 
-def load_google_search_contract(path: Path) -> GoogleSearchContract:
+def load_google_search_contract(
+    path: Path,
+    *,
+    live_tested_source_ids: Collection[str] = (),
+) -> GoogleSearchContract:
     payload = yaml.safe_load(path.read_text(encoding="utf-8"))
     parsed = _GoogleSearchRegistryModel.model_validate(payload).contract
     browser = parsed.browser_route
+    approved = parsed.canonical_replacement.approved_source_ids
+    live_ids = frozenset(live_tested_source_ids)
+    canonical_live = tuple(source_id for source_id in approved if source_id in live_ids)
     return GoogleSearchContract(
         reviewed_at=parsed.reviewed_at,
         status=parsed.status,
@@ -130,7 +144,8 @@ def load_google_search_contract(path: Path) -> GoogleSearchContract:
         browser_permission_verified=browser.provider_permission_verified,
         browser_permission_issued_at=browser.provider_permission_issued_at,
         browser_permission_expires_at=browser.provider_permission_expires_at,
-        canonical_replacement_source_ids=parsed.canonical_replacement.approved_source_ids,
+        canonical_replacement_source_ids=approved,
+        canonical_live_source_ids=canonical_live,
         analyst_route_enabled=parsed.analyst_route.enabled,
     )
 
