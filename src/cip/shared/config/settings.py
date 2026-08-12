@@ -76,6 +76,9 @@ class Settings(BaseSettings):
     search_archive_source_portfolio_path: Path = Path(
         "policies/source_portfolio.search_archives.yml"
     )
+    search_provider_source_portfolio_path: Path = Path(
+        "policies/source_portfolio.search_providers_sa15.yml"
+    )
     incident_source_portfolio_path: Path = Path(
         "policies/source_portfolio.incidents.yml"
     )
