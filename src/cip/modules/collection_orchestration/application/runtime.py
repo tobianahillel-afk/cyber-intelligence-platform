@@ -158,6 +158,7 @@ def _load_portfolio(settings: Settings) -> tuple[SourceCatalogEntry, ...]:
         settings.public_web_source_portfolio_path,
         settings.vulnerability_source_portfolio_path,
         settings.search_archive_source_portfolio_path,
+        settings.search_provider_source_portfolio_path,
         settings.incident_source_portfolio_path,
         settings.threat_telemetry_source_portfolio_path,
         settings.passive_exposure_source_portfolio_path,
