@@ -1,0 +1,27 @@
+version: 1
+contract:
+  reviewed_at: 2026-08-12
+  status: awaiting_eligible_route
+  official_references:
+    - https://developers.google.com/custom-search/v1/overview
+    - https://support.google.com/websearch/answer/86640
+  custom_search_api:
+    closed_to_new_customers: true
+    existing_customer_sunset: 2027-01-01
+    api_base_url: https://customsearch.googleapis.com/customsearch/v1
+    entitlement_evidence_id: null
+    api_key_secret_ref: null
+    search_engine_id_secret_ref: null
+  browser_route:
+    enabled: false
+    provider_permission_evidence_id: google-browser-authorization-2026-08-12-candidate
+    provider_permission_verified: false
+    provider_permission_issued_at: 2026-08-12
+    provider_permission_expires_at: 2027-08-12
+    human_checkpoint_required: true
+    captcha_bypass_allowed: false
+    anti_bot_bypass_allowed: false
+  canonical_replacement:
+    approved_source_ids: []
+  analyst_route:
+    enabled: true

@@ -34,3 +34,31 @@ sources:
       supports_retractions: false
       max_page_size: 20
       cost_per_request: 0
+
+  - source_id: google-search-governed-route
+    display_name: Google Search governed route resolution
+    canonical_url: https://customsearch.googleapis.com/customsearch/v1
+    category: corporate_public_footprint
+    status: candidate
+    freshness_max_age_seconds: 86400
+    commercial_use_cases: [public_evidence_map, organization_research]
+    candidate_origin: SA15-C3
+    monthly_cost_limit: 0
+    metadata:
+      executable: false
+      authorization_status: conditional
+      runtime_adapter_present: false
+      route_contract_present: true
+      existing_customer_entitlement_required: true
+      api_key_secret_required: true
+      search_engine_id_secret_required: true
+      browser_provider_permission_required: true
+      human_checkpoint_supported_by_contract: true
+      captcha_bypass_forbidden: true
+      anti_bot_bypass_forbidden: true
+      canonical_replacement_allowed: true
+      analyst_route_available: true
+      raw_response_storage: false
+      third_party_page_body_storage: false
+      search_result_is_evidence: false
+      automatic_opportunity: forbidden
