@@ -1,10 +1,12 @@
 from __future__ import annotations
 
-import importlib
 from pathlib import Path
 
 
-google_search_contract = importlib.import_module("cip.adapters.sources.google_search.contract")
+google_search_contract = __import__(
+    "cip.adapters.sources.google_search.contract",
+    fromlist=["*"],
+)
 
 
 BASE = """version: 1
@@ -60,7 +62,27 @@ def _assert_route_unavailable(contract: object) -> None:
     raise AssertionError("expected GoogleSearchRouteUnavailable")
 
 
-def _authorized_browser(content: str, *, expires_at: str = "2027-11-07") -> str:
+def _existing_api(content: str) -> str:
+    return (
+        content.replace("status: awaiting_eligible_route", "status: existing_customer_api")
+        .replace(
+            "entitlement_evidence_id: null",
+            "entitlement_evidence_id: google-existing-customer-approval-2026",
+        )
+        .replace("api_key_secret_ref: null", "api_key_secret_ref: secret://google/api-key")
+        .replace(
+            "search_engine_id_secret_ref: null",
+            "search_engine_id_secret_ref: secret://google/search-engine-id",
+        )
+    )
+
+
+def _authorized_browser(
+    content: str,
+    *,
+    issued_at: str = "2026-08-01",
+    expires_at: str = "2027-08-01",
+) -> str:
     return (
         content.replace("status: awaiting_eligible_route", "status: provider_authorized_browser")
         .replace("enabled: false", "enabled: true", 1)
@@ -71,7 +93,7 @@ def _authorized_browser(content: str, *, expires_at: str = "2027-11-07") -> str:
         .replace("provider_permission_verified: false", "provider_permission_verified: true")
         .replace(
             "provider_permission_issued_at: null",
-            "provider_permission_issued_at: 2026-11-07",
+            f"provider_permission_issued_at: {issued_at}",
         )
         .replace(
             "provider_permission_expires_at: null",
@@ -105,22 +127,18 @@ def test_existing_customer_api_requires_all_governed_refs(tmp_path: Path) -> Non
 
 
 def test_existing_customer_api_can_be_enabled_with_evidence(tmp_path: Path) -> None:
-    content = (
-        BASE.replace("status: awaiting_eligible_route", "status: existing_customer_api")
-        .replace(
-            "entitlement_evidence_id: null",
-            "entitlement_evidence_id: google-existing-customer-approval-2026",
-        )
-        .replace("api_key_secret_ref: null", "api_key_secret_ref: secret://google/api-key")
-        .replace(
-            "search_engine_id_secret_ref: null",
-            "search_engine_id_secret_ref: secret://google/search-engine-id",
-        )
+    contract = google_search_contract.load_google_search_contract(
+        _write(tmp_path, _existing_api(BASE))
     )
-    contract = google_search_contract.load_google_search_contract(_write(tmp_path, content))
 
     assert contract.automated_route_available is True
     contract.require_automated_route()
+
+
+def test_existing_customer_api_rejects_post_sunset_review(tmp_path: Path) -> None:
+    content = _existing_api(BASE).replace("reviewed_at: 2026-08-12", "reviewed_at: 2027-01-02")
+
+    _assert_load_value_error(tmp_path, content, "past provider sunset")
 
 
 def test_browser_route_requires_provider_permission_evidence(tmp_path: Path) -> None:
@@ -159,11 +177,14 @@ def test_authorized_browser_requires_verified_permission(tmp_path: Path) -> None
     _assert_load_value_error(tmp_path, content, "verified provider permission")
 
 
+def test_authorized_browser_rejects_future_issuance(tmp_path: Path) -> None:
+    content = _authorized_browser(BASE, issued_at="2026-08-13", expires_at="2027-08-13")
+
+    _assert_load_value_error(tmp_path, content, "issuance cannot be after contract review")
+
+
 def test_authorized_browser_rejects_expired_permission(tmp_path: Path) -> None:
-    content = _authorized_browser(BASE, expires_at="2024-11-07").replace(
-        "provider_permission_issued_at: 2026-11-07",
-        "provider_permission_issued_at: 2023-11-07",
-    )
+    content = _authorized_browser(BASE, issued_at="2023-11-07", expires_at="2024-11-07")
 
     _assert_load_value_error(tmp_path, content, "expired at contract review date")
 
