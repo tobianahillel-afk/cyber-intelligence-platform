@@ -160,7 +160,9 @@ def _validate_status_requirements(contract: _GoogleSearchContractModel) -> None:
             raise ValueError("existing-customer API route requires a search-engine-id ref")
     elif contract.status is GoogleSearchContractStatus.PROVIDER_AUTHORIZED_BROWSER:
         if not contract.browser_route.enabled:
-            raise ValueError("provider-authorized browser status requires the browser route enabled")
+            raise ValueError(
+                "provider-authorized browser status requires the browser route enabled"
+            )
     elif contract.status is GoogleSearchContractStatus.CANONICAL_REPLACEMENT:
         if not contract.canonical_replacement.approved_source_ids:
             raise ValueError("canonical replacement status requires at least one approved source")
