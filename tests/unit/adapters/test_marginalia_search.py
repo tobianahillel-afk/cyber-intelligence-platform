@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+from pathlib import Path
 
 import httpx
 import pytest
@@ -12,7 +13,20 @@ from cip.adapters.sources.marginalia_search.client import (
 from cip.adapters.sources.marginalia_search.registry import (
     MARGINALIA_API_HOST,
     MarginaliaSearchEntitlement,
+    load_marginalia_search_entitlement,
 )
+
+ENTITLEMENT_PATH = Path("policies/marginalia_search_entitlement.yml")
+
+
+def test_checked_in_marginalia_entitlement_is_fail_closed() -> None:
+    entitlement = load_marginalia_search_entitlement(ENTITLEMENT_PATH)
+
+    assert entitlement.api_host == MARGINALIA_API_HOST
+    assert entitlement.commercial_use_rights is False
+    assert entitlement.plan == "unprovisioned"
+    assert entitlement.evidence_reference is None
+    assert entitlement.api_key_secret_ref is None
 
 
 def test_marginalia_entitlement_fails_closed_without_commercial_rights() -> None:
@@ -22,8 +36,21 @@ def test_marginalia_entitlement_fails_closed_without_commercial_rights() -> None
         entitlement.assert_live_collection_ready()
 
 
+def test_marginalia_entitlement_requires_evidence_for_commercial_rights() -> None:
+    with pytest.raises(ValueError, match="evidence reference"):
+        MarginaliaSearchEntitlement(
+            commercial_use_rights=True,
+            api_key_secret_ref="secret://marginalia",
+            plan="commercial",
+        )
+
+
 def test_marginalia_entitlement_requires_secret_ref() -> None:
-    entitlement = MarginaliaSearchEntitlement(commercial_use_rights=True)
+    entitlement = MarginaliaSearchEntitlement(
+        commercial_use_rights=True,
+        plan="commercial",
+        evidence_reference="controlled-test-entitlement",
+    )
 
     with pytest.raises(PermissionError, match="API-key secret ref"):
         entitlement.assert_live_collection_ready()
@@ -152,4 +179,6 @@ def _ready_entitlement() -> MarginaliaSearchEntitlement:
         api_host=MARGINALIA_API_HOST,
         commercial_use_rights=True,
         api_key_secret_ref="secret://marginalia/commercial",
+        plan="commercial",
+        evidence_reference="controlled-test-entitlement",
     )
