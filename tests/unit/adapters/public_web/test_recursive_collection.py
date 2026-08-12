@@ -19,7 +19,7 @@ _NOW = datetime(2026, 8, 12, 12, 0, tzinfo=UTC)
 _ORG_ID = UUID("15712d0d-9054-50b4-8a26-e25d9ea1f509")
 
 
-def _provisioned(*, max_depth: int = 1, max_pages: int = 5):
+def _provisioned(*, max_link_depth: int = 1, max_pages: int = 5):
     organization = Organization(
         id=_ORG_ID,
         canonical_name="Example Research",
@@ -32,7 +32,7 @@ def _provisioned(*, max_depth: int = 1, max_pages: int = 5):
         AutomaticPublicWebPolicy(
             authorization_reference="sa16-l02-test",
             reviewed_at=_NOW,
-            max_depth=max_depth,
+            max_link_depth=max_link_depth,
             max_pages=max_pages,
             max_total_bytes=100_000,
             max_resource_bytes=20_000,
@@ -80,7 +80,7 @@ def _transport(requested: list[str]) -> httpx.MockTransport:
 
 
 def test_recursive_collection_is_same_origin_bounded_and_depth_aware() -> None:
-    target, entry = _provisioned(max_depth=1, max_pages=5)
+    target, entry = _provisioned(max_link_depth=1, max_pages=5)
     requested: list[str] = []
 
     with httpx.Client(transport=_transport(requested)) as http_client:
@@ -108,7 +108,7 @@ def test_recursive_collection_is_same_origin_bounded_and_depth_aware() -> None:
 
 
 def test_recursive_collection_rebuilds_frontier_and_replays_checkpoint_safely() -> None:
-    target, entry = _provisioned(max_depth=2, max_pages=3)
+    target, entry = _provisioned(max_link_depth=2, max_pages=3)
     first_requested: list[str] = []
     with httpx.Client(transport=_transport(first_requested)) as http_client:
         first = collect_public_web_target(
