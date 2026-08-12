@@ -186,8 +186,14 @@ def test_collection_traverses_robots_sitemap_index_and_discovered_feed() -> None
         "https://example.com/from-sitemap",
         "https://example.com/from-feed",
     }
-    assert resources["https://example.com/from-sitemap"].resource.discovery_method is DiscoveryMethod.SITEMAP
-    assert resources["https://example.com/from-feed"].resource.discovery_method is DiscoveryMethod.FEED
+    assert (
+        resources["https://example.com/from-sitemap"].resource.discovery_method
+        is DiscoveryMethod.SITEMAP
+    )
+    assert (
+        resources["https://example.com/from-feed"].resource.discovery_method
+        is DiscoveryMethod.FEED
+    )
     assert resources["https://example.com/from-sitemap"].version.source_locator == (
         "https://example.com/nested.xml"
     )
