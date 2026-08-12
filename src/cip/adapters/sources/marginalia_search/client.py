@@ -5,6 +5,7 @@ from dataclasses import dataclass
 import httpx
 from pydantic import ValidationError
 
+from cip.adapters.sources.marginalia_search.registry import MarginaliaSearchEntitlement
 from cip.adapters.sources.marginalia_search.schemas import MarginaliaSearchResponse
 
 _MAX_RESPONSE_BYTES = 2 * 1024 * 1024
@@ -32,16 +33,19 @@ class MarginaliaQueryResult:
 class MarginaliaSearchClient:
     def __init__(
         self,
+        entitlement: MarginaliaSearchEntitlement,
         *,
         timeout_seconds: float = 30.0,
         transport: httpx.BaseTransport | None = None,
     ) -> None:
         if timeout_seconds <= 0:
             raise ValueError("timeout_seconds must be positive")
+        self._entitlement = entitlement
         self._timeout_seconds = timeout_seconds
         self._transport = transport
 
     def search(self, *, query: str, api_key: str) -> MarginaliaQueryResult:
+        self._entitlement.assert_live_collection_ready()
         normalized_query = query.strip()
         normalized_key = api_key.strip()
         if not normalized_query:
@@ -59,7 +63,8 @@ class MarginaliaSearchClient:
                 follow_redirects=False,
                 transport=self._transport,
             ) as client:
-                response = client.get(
+                with client.stream(
+                    "GET",
                     _API_URL,
                     headers={
                         "Accept": "application/json",
@@ -72,8 +77,19 @@ class MarginaliaSearchClient:
                         "dc": "3",
                         "nsfw": "1",
                     },
-                )
-                response.raise_for_status()
+                ) as response:
+                    response.raise_for_status()
+                    content_type = response.headers.get("content-type", "").casefold()
+                    if "json" not in content_type:
+                        raise MarginaliaSearchClientError(
+                            "Marginalia response is not JSON",
+                            code="unsafe_source_response",
+                            retryable=False,
+                        )
+                    content = _read_bounded_body(response)
+                    request_url = str(response.request.url)
+        except MarginaliaSearchClientError:
+            raise
         except httpx.HTTPStatusError as exc:
             status = exc.response.status_code
             raise MarginaliaSearchClientError(
@@ -88,21 +104,8 @@ class MarginaliaSearchClient:
                 retryable=True,
             ) from exc
 
-        content_type = response.headers.get("content-type", "").casefold()
-        if "json" not in content_type:
-            raise MarginaliaSearchClientError(
-                "Marginalia response is not JSON",
-                code="unsafe_source_response",
-                retryable=False,
-            )
-        if len(response.content) > _MAX_RESPONSE_BYTES:
-            raise MarginaliaSearchClientError(
-                "Marginalia response exceeds size limit",
-                code="unsafe_source_response",
-                retryable=False,
-            )
         try:
-            parsed = MarginaliaSearchResponse.model_validate_json(response.content)
+            parsed = MarginaliaSearchResponse.model_validate_json(content)
         except ValidationError as exc:
             raise MarginaliaSearchClientError(
                 "Marginalia response schema changed",
@@ -111,5 +114,18 @@ class MarginaliaSearchClient:
             ) from exc
         return MarginaliaQueryResult(
             response=parsed,
-            request_url=str(response.request.url),
+            request_url=request_url,
         )
+
+
+def _read_bounded_body(response: httpx.Response) -> bytes:
+    body = bytearray()
+    for chunk in response.iter_bytes():
+        if len(body) + len(chunk) > _MAX_RESPONSE_BYTES:
+            raise MarginaliaSearchClientError(
+                "Marginalia response exceeds size limit",
+                code="unsafe_source_response",
+                retryable=False,
+            )
+        body.extend(chunk)
+    return bytes(body)
