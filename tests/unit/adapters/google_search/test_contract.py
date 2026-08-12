@@ -23,6 +23,9 @@ contract:
   browser_route:
     enabled: false
     provider_permission_evidence_id: null
+    provider_permission_verified: false
+    provider_permission_issued_at: null
+    provider_permission_expires_at: null
     human_checkpoint_required: true
     captcha_bypass_allowed: false
     anti_bot_bypass_allowed: false
@@ -37,6 +40,20 @@ def _write(tmp_path: Path, content: str) -> Path:
     path = tmp_path / "google.yml"
     path.write_text(content, encoding="utf-8")
     return path
+
+
+def _authorized_browser(content: str, *, expires_at: str = "2027-11-07") -> str:
+    return (
+        content.replace("status: awaiting_eligible_route", "status: provider_authorized_browser")
+        .replace("enabled: false", "enabled: true", 1)
+        .replace(
+            "provider_permission_evidence_id: null",
+            "provider_permission_evidence_id: google-provider-permission",
+        )
+        .replace("provider_permission_verified: false", "provider_permission_verified: true")
+        .replace("provider_permission_issued_at: null", "provider_permission_issued_at: 2026-11-07")
+        .replace("provider_permission_expires_at: null", f"provider_permission_expires_at: {expires_at}")
+    )
 
 
 def test_default_contract_fails_closed(tmp_path: Path) -> None:
@@ -113,6 +130,36 @@ def test_authorized_browser_status_requires_enabled_route(tmp_path: Path) -> Non
 
     with pytest.raises(ValueError, match="browser route enabled"):
         google_search_contract.load_google_search_contract(_write(tmp_path, content))
+
+
+def test_authorized_browser_requires_verified_permission(tmp_path: Path) -> None:
+    content = _authorized_browser(BASE).replace(
+        "provider_permission_verified: true",
+        "provider_permission_verified: false",
+    )
+
+    with pytest.raises(ValueError, match="verified provider permission"):
+        google_search_contract.load_google_search_contract(_write(tmp_path, content))
+
+
+def test_authorized_browser_rejects_expired_permission(tmp_path: Path) -> None:
+    content = _authorized_browser(BASE, expires_at="2024-11-07").replace(
+        "provider_permission_issued_at: 2026-11-07",
+        "provider_permission_issued_at: 2023-11-07",
+    )
+
+    with pytest.raises(ValueError, match="expired at contract review date"):
+        google_search_contract.load_google_search_contract(_write(tmp_path, content))
+
+
+def test_authorized_browser_accepts_current_permission(tmp_path: Path) -> None:
+    contract = google_search_contract.load_google_search_contract(
+        _write(tmp_path, _authorized_browser(BASE))
+    )
+
+    assert contract.automated_route_available is True
+    assert contract.browser_permission_verified is True
+    assert contract.browser_permission_expires_at is not None
 
 
 def test_canonical_replacement_requires_approved_source(tmp_path: Path) -> None:
