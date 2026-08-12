@@ -122,7 +122,12 @@ def _source_entry(
         source_type=SourceType.STATIC_HTTP,
         owner=target.canonical_name,
         licence="Deployment-approved bounded first-party public web research",
-        allowed_data_categories=frozenset({DataCategory.OFFICIAL_DOCUMENT_DISCOVERY}),
+        allowed_data_categories=frozenset(
+            {
+                DataCategory.OFFICIAL_DOCUMENT_DISCOVERY,
+                DataCategory.TECHNOLOGY_OBSERVATION,
+            }
+        ),
         prohibited_data_categories=_PROHIBITED_DATA,
         retention_days=365,
         attribution_required=True,
