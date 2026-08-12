@@ -1,10 +1,11 @@
 from __future__ import annotations
 
 from collections.abc import Callable
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 from cip.adapters.sources.crossref_publications.registry import CrossrefPublicationTarget
 from cip.adapters.sources.developer_ecosystem.registry import DeveloperEcosystemTarget
+from cip.adapters.sources.marginalia_search.registry import MarginaliaSearchEntitlement
 from cip.adapters.sources.mojeek_search.registry import MojeekSearchEntitlement
 from cip.adapters.sources.patentsview_patents.registry import PatentsViewPatentTarget
 from cip.adapters.sources.public_web.registry import PublicWebTarget
@@ -24,6 +25,9 @@ from cip.modules.collection_orchestration.application.crossref_publication_adapt
 from cip.modules.collection_orchestration.application.github_code_search_adapter import (
     GitHubCodeSearchAdapter,
 )
+from cip.modules.collection_orchestration.application.marginalia_search_adapter import (
+    MarginaliaSearchAdapter,
+)
 from cip.modules.collection_orchestration.application.mojeek_search_adapter import (
     MojeekSearchAdapter,
 )
@@ -36,6 +40,10 @@ from cip.modules.public_footprint.domain.search import SearchQueryTemplate
 from cip.modules.source_governance.infrastructure.registry import SourceRegistryEntry
 
 
+def _missing_secret() -> None:
+    return None
+
+
 @dataclass(frozen=True, slots=True)
 class SearchArchiveRegistrationInputs:
     public_web_targets: tuple[PublicWebTarget, ...]
@@ -46,6 +54,9 @@ class SearchArchiveRegistrationInputs:
     patentsview_patent_targets: tuple[PatentsViewPatentTarget, ...]
     w3c_affiliation_targets: tuple[W3cAffiliationTarget, ...]
     mojeek_entitlement: MojeekSearchEntitlement
+    marginalia_entitlement: MarginaliaSearchEntitlement = field(
+        default_factory=MarginaliaSearchEntitlement
+    )
 
 
 @dataclass(frozen=True, slots=True)
@@ -54,6 +65,7 @@ class SearchArchiveSecretProviders:
     github_code_search_token_provider: Callable[[], str | None]
     patentsview_api_key_provider: Callable[[], str | None]
     mojeek_api_key_provider: Callable[[], str | None]
+    marginalia_api_key_provider: Callable[[], str | None] = _missing_secret
 
 
 def register_search_archive_adapters(
@@ -87,6 +99,20 @@ def register_search_archive_adapters(
                 inputs.search_templates,
                 inputs.mojeek_entitlement,
                 token_provider=secrets.mojeek_api_key_provider,
+                timeout_seconds=timeout_seconds,
+            ),
+        )
+
+    marginalia_entry = entries_by_id.get(MarginaliaSearchAdapter.source_id)
+    if marginalia_entry is not None:
+        _register(
+            adapters,
+            MarginaliaSearchAdapter(
+                marginalia_entry,
+                inputs.public_web_targets,
+                inputs.search_templates,
+                inputs.marginalia_entitlement,
+                token_provider=secrets.marginalia_api_key_provider,
                 timeout_seconds=timeout_seconds,
             ),
         )
