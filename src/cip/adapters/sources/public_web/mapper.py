@@ -111,6 +111,7 @@ def map_public_page(
         indexable_text=indexable_text,
         extracted=extracted,
         tombstoned=tombstoned,
+        discovery_source_url=discovery_source_url,
     )
     claims = (
         ()
@@ -190,6 +191,7 @@ def _version(
     indexable_text: str,
     extracted: ExtractedPublicContent | None,
     tombstoned: bool,
+    discovery_source_url: str | None,
 ) -> PublicResourceVersion:
     excerpt = (
         f"HTTP {result.status_code} tombstone"
@@ -211,7 +213,7 @@ def _version(
             else None
         ),
         excerpt=excerpt,
-        source_locator=result.fetched_url,
+        source_locator=discovery_source_url or result.fetched_url,
         supersedes_version_id=_predecessor_id(
             previous,
             result.fetched_url,
