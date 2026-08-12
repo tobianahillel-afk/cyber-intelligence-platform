@@ -1,6 +1,24 @@
 version: 1
 
 templates:
+  - id: q-site-company-research
+    version: 2
+    enabled: false
+    purpose: corporate-public-footprint-domain
+    query_pattern: 'site:{organization} (security OR cybersecurity OR technology OR architecture)'
+
+  - id: q-filetype-documents
+    version: 2
+    enabled: false
+    purpose: corporate-public-footprint
+    query_pattern: '"{organization}" (filetype:pdf OR filetype:pptx OR filetype:docx) (security OR cybersecurity OR technology)'
+
+  - id: q-intitle-inurl-research
+    version: 2
+    enabled: false
+    purpose: corporate-public-footprint
+    query_pattern: '"{organization}" (intitle:security OR intitle:cybersecurity OR inurl:security OR inurl:cyber)'
+
   - id: q-procurement-contracts
     version: 2
     enabled: false
@@ -78,3 +96,9 @@ templates:
     enabled: false
     purpose: corporate-public-footprint
     query_pattern: '"{organization}" ("annual report" OR presentation OR standard OR specification OR "technical publication" OR whitepaper) (security OR cybersecurity OR technology)'
+
+  - id: q-code-package-developer-evidence
+    version: 2
+    enabled: false
+    purpose: corporate-public-footprint
+    query_pattern: '"{organization}" (GitHub OR GitLab OR repository OR package OR npm OR PyPI OR Maven OR NuGet OR crates.io OR SBOM)'
