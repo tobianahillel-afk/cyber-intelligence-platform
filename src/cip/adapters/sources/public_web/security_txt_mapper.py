@@ -41,9 +41,10 @@ def map_security_txt(
         and previous.canonical_url == result.fetched_url
     )
     excerpt = bounded_security_txt_excerpt(document)
+    source_id = target.source_id or target.id
     resource = PublicResource(
         organization_id=target.organization_id,
-        source_id=target.id,
+        source_id=source_id,
         source_record_key=result.requested_url,
         canonical_url=result.fetched_url,
         source_url=result.requested_url,
@@ -78,7 +79,7 @@ def map_security_txt(
     observation = None
     if not unchanged:
         observation = RawObservation(
-            source_id=target.id,
+            source_id=source_id,
             adapter_id="public-web-sitemap",
             adapter_version="1",
             collection_job_id=collection_job_id,
