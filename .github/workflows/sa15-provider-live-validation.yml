@@ -1,0 +1,80 @@
+name: SA-15 Credentialed Provider Live Validation
+
+on:
+  workflow_dispatch:
+    inputs:
+      provider:
+        description: Search provider to validate with its production adapter
+        required: true
+        type: choice
+        options:
+          - brave
+          - mojeek
+          - patentsview
+      organization_name:
+        description: Controlled organization name used by search validation
+        required: true
+        default: Internet Archive
+        type: string
+      organization_url:
+        description: Controlled public organization URL used by search validation
+        required: true
+        default: https://archive.org/
+        type: string
+      patentsview_assignee:
+        description: Exact PatentsView assignee_organization (required only for patentsview)
+        required: false
+        default: ""
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: sa15-provider-live-${{ inputs.provider }}-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  controlled-provider-live-validation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      BRAVE_SEARCH_API_TOKEN: ${{ secrets.BRAVE_SEARCH_API_TOKEN }}
+      MOJEEK_API_KEY: ${{ secrets.MOJEEK_API_KEY }}
+      PATENTSVIEW_API_KEY: ${{ secrets.PATENTSVIEW_API_KEY }}
+      SA15_SEARCH_ORGANIZATION: ${{ inputs.organization_name }}
+      SA15_SEARCH_ORGANIZATION_URL: ${{ inputs.organization_url }}
+      SA15_PATENTSVIEW_CANONICAL_NAME: ${{ inputs.organization_name }}
+      SA15_PATENTSVIEW_ASSIGNEE: ${{ inputs.patentsview_assignee }}
+    steps:
+      - name: Check out requested exact ref
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Set up Python
+        uses: actions/setup-python@42375524e23c412d93fb67b49958b491fce71c38 # v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install project
+        run: python -m pip install .
+
+      - name: Run selected production adapter against the real provider
+        shell: bash
+        run: |
+          set -euo pipefail
+          case "${{ inputs.provider }}" in
+            brave)
+              python scripts/live_validate_sa15_brave.py
+              ;;
+            mojeek)
+              python scripts/live_validate_sa15_mojeek.py
+              ;;
+            patentsview)
+              python scripts/live_validate_sa15_patentsview.py
+              ;;
+            *)
+              echo "Unsupported SA-15 provider" >&2
+              exit 2
+              ;;
+          esac
