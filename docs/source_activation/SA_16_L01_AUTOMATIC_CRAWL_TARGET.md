@@ -2,9 +2,9 @@
 
 ## Status
 
-`REVALIDATION_IN_PROGRESS` on the current `main` content tree.
+`IMPLEMENTED_VALIDATED_MERGED` for the SA16-L01 production capability.
 
-SA16-L01 is implemented and was originally live-tested before PR #128 merged, but the PR was squash-merged after `main` had advanced. The implementation-head proof remains genuine; this closeout deliberately re-runs both normal CI and the dedicated real-network SA-16 L01 workflow on the current repository content so the final status does not rely on an older branch tree.
+SA16-L01 was implemented in PR #128 and is already merged. Because that PR was squash-merged after `main` had advanced, this closeout also revalidates the capability from the current repository baseline rather than relying only on the older implementation branch tree.
 
 Historical final implementation/documentation head:
 
@@ -17,7 +17,18 @@ That exact head passed:
 
 PR #128 was then squash-merged as `74542d9ade125f4a07afd0f77a6c61f0bb907e94`.
 
-This document is now being revalidated from the current `main` baseline. L01 will be recorded `IMPLEMENTED_VALIDATED_MERGED` only after the final closeout head itself passes normal CI and the dedicated real production-path workflow.
+### Current-main revalidation
+
+The first current-main closeout head was:
+
+`1872ad71706f25eaf9951713f056fc9c93a49cae`
+
+That exact head passed:
+
+- normal CI #1989 (`31633779550`): **PASS**;
+- SA-16 L01 Live Validation run #59 (`31633779677`): **PASS** against the real Python.org production path.
+
+This documentation commit is the final PR #138 candidate. Because changing documentation changes the content tree, PR #138 may merge only after **this final head itself** independently repeats both normal CI and the SA-16 L01 live workflow, with zero unresolved review threads. No earlier run is substituted for that final gate.
 
 ## Objective
 
@@ -89,7 +100,7 @@ The workflow fails unless the generated homepage is checkpointed, real non-empty
 
 ## Completion rule
 
-L01 is finally closed only when the same final content head passes:
+The PR #138 final content head must pass:
 
 1. dependency consistency and audits;
 2. Ruff;
