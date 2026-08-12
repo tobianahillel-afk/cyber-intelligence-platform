@@ -9,7 +9,7 @@ import httpx
 from cip import __version__
 from cip.adapters.sources.public_web.registry import PublicWebTarget
 from cip.modules.public_footprint.domain.scope import CrawlUsage
-from cip.modules.public_footprint.domain.url_identity import CanonicalUrl
+from cip.modules.public_footprint.domain.url_identity import CanonicalUrl, same_origin
 
 _USER_AGENT = f"CyberIntelligencePlatform/{__version__} (+public-evidence-collector)"
 _REDIRECT_STATUSES = {
@@ -54,6 +54,7 @@ class RobotsRules:
     source_url: str
     missing: bool
     bytes_fetched: int
+    sitemap_urls: tuple[str, ...] = ()
 
     def allows(self, url: str) -> bool:
         return self.missing or self.parser.can_fetch(_USER_AGENT, url)
@@ -90,14 +91,16 @@ class PublicWebClient:
         if mime_type not in {"text/plain", "application/octet-stream"}:
             raise PublicWebResponseError("robots.txt returned an unexpected content type")
         body = _bounded_body(response, max_bytes=self.ROBOTS_MAX_BYTES)
+        lines = body.decode("utf-8", errors="replace").splitlines()
         parser = RobotFileParser()
         parser.set_url(target.robots_url)
-        parser.parse(body.decode("utf-8", errors="replace").splitlines())
+        parser.parse(lines)
         return RobotsRules(
             parser,
             target.robots_url,
             missing=False,
             bytes_fetched=len(body),
+            sitemap_urls=_robots_sitemaps(lines, target, max_sitemaps=target.max_sitemaps),
         )
 
     def fetch_sitemap(
@@ -105,10 +108,14 @@ class PublicWebClient:
         target: PublicWebTarget,
         sitemap_url: str,
         robots: RobotsRules,
+        *,
+        discovered: bool = False,
     ) -> PublicWebFetchResult:
         canonical = CanonicalUrl(sitemap_url).value
-        if canonical not in target.sitemap_urls:
-            raise PublicWebPolicyDeniedError("sitemap URL is not explicitly configured")
+        explicit = canonical in target.sitemap_urls
+        if not explicit and not (discovered and target.discover_sitemaps):
+            raise PublicWebPolicyDeniedError("sitemap URL is not configured or discoverable")
+        _require_structured_url_in_scope(target, canonical)
         if not robots.allows(canonical):
             raise PublicWebPolicyDeniedError("robots.txt denied sitemap collection")
         response = self._client.get(
@@ -145,10 +152,14 @@ class PublicWebClient:
         target: PublicWebTarget,
         feed_url: str,
         robots: RobotsRules,
+        *,
+        discovered: bool = False,
     ) -> PublicWebFetchResult:
         canonical = CanonicalUrl(feed_url).value
-        if canonical not in target.feed_urls:
-            raise PublicWebPolicyDeniedError("feed URL is not explicitly configured")
+        explicit = canonical in target.feed_urls
+        if not explicit and not (discovered and target.discover_feeds):
+            raise PublicWebPolicyDeniedError("feed URL is not configured or discoverable")
+        _require_structured_url_in_scope(target, canonical)
         if not robots.allows(canonical):
             raise PublicWebPolicyDeniedError("robots.txt denied feed collection")
         response = self._client.get(
@@ -248,6 +259,48 @@ class PublicWebClient:
                 redirects=redirects,
                 status_code=response.status_code,
             )
+
+
+def _robots_sitemaps(
+    lines: list[str],
+    target: PublicWebTarget,
+    *,
+    max_sitemaps: int,
+) -> tuple[str, ...]:
+    if not target.discover_sitemaps:
+        return ()
+    discovered: list[str] = []
+    seen: set[str] = set()
+    for line in lines:
+        key, separator, value = line.partition(":")
+        if not separator or key.strip().casefold() != "sitemap":
+            continue
+        try:
+            canonical = CanonicalUrl(value.strip()).value
+        except ValueError:
+            continue
+        if not same_origin(target.base_url, canonical) or canonical in seen:
+            continue
+        try:
+            _require_structured_url_in_scope(target, canonical)
+        except PublicWebPolicyDeniedError:
+            continue
+        seen.add(canonical)
+        discovered.append(canonical)
+        if len(discovered) >= max_sitemaps:
+            break
+    return tuple(discovered)
+
+
+def _require_structured_url_in_scope(target: PublicWebTarget, url: str) -> None:
+    decision = target.crawl_scope.evaluate_target(
+        url,
+        depth=0,
+        redirects=0,
+        usage=CrawlUsage(),
+    )
+    if not decision.allowed:
+        raise PublicWebPolicyDeniedError(decision.reason.value)
 
 
 def _header(response: httpx.Response, name: str) -> str | None:
