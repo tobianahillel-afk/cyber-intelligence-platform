@@ -1,8 +1,10 @@
 from __future__ import annotations
 
+import importlib
 from pathlib import Path
 
-from cip.adapters.sources.google_search import contract as google_search_contract
+
+google_search_contract = importlib.import_module("cip.adapters.sources.google_search.contract")
 
 
 BASE = """version: 1
@@ -50,9 +52,9 @@ def _assert_load_value_error(tmp_path: Path, content: str, message: str) -> None
         raise AssertionError(f"expected ValueError containing {message!r}")
 
 
-def _assert_route_unavailable(contract: google_search_contract.GoogleSearchContract) -> None:
+def _assert_route_unavailable(contract: object) -> None:
     try:
-        contract.require_automated_route()
+        contract.require_automated_route()  # type: ignore[attr-defined]
     except google_search_contract.GoogleSearchRouteUnavailable:
         return
     raise AssertionError("expected GoogleSearchRouteUnavailable")
