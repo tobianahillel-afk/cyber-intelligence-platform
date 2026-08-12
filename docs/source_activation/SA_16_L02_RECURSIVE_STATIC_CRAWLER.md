@@ -15,7 +15,7 @@ Organization.website_url
 -> PublicWebClient
 -> static HTML link extraction
 -> deterministic BFS frontier
--> same-origin + approved-path + max-depth admission
+-> same-origin + approved-path + max-link-depth admission
 -> PublicWebClient again for every child URL
 -> RawObservation + PublicResourceVersion + checkpoint
 ```
@@ -24,10 +24,11 @@ No recursive child fetch bypasses `PublicWebClient`. Each child therefore re-ent
 
 ## Implementation
 
-- `PublicWebTarget.max_depth` is now first-class.
-- Checked-in/legacy targets default to `max_depth=0`, preserving their previous non-recursive behavior unless explicitly enabled.
-- `AutomaticPublicWebPolicy` defaults to a conservative one-link-hop `max_depth=1` and provisions that value into automatic company targets.
-- `PublicWebClient.fetch_page()` receives the actual candidate depth rather than hard-coding depth zero.
+- `PublicWebTarget.max_link_depth` explicitly controls only HTML-anchor recursion.
+- Checked-in/legacy targets default to `max_link_depth=0`, preserving their previous non-recursive HTML behavior.
+- The underlying `CrawlScope` retains at least structural depth `1`, preserving the pre-L02 contract used by existing RSS/Atom and sitemap discovery. Link recursion and structural feed/sitemap discovery are therefore no longer conflated.
+- `AutomaticPublicWebPolicy` defaults to a conservative one-link-hop `max_link_depth=1` and provisions that value into automatic company targets.
+- `PublicWebClient.fetch_page()` receives the actual candidate depth rather than hard-coding depth zero, so depth admission is enforced by the existing crawl-scope gate before network I/O.
 - Static HTML anchors are canonicalized relative to the fetched parent URL, fragments are removed by canonical URL identity, query parameters are deterministically normalized and duplicates are discarded.
 - `rel=nofollow` anchors are not enqueued.
 - non-HTTP(S) links are rejected by canonical URL validation.
@@ -36,9 +37,15 @@ No recursive child fetch bypasses `PublicWebClient`. Each child therefore re-ent
 - the existing `max_pages`, `max_total_bytes`, `max_resource_bytes`, `max_redirects` and robots rules remain authoritative.
 - linked resources use `DiscoveryMethod.LINK` and retain the parent fetched URL in `PublicResourceVersion.source_locator`.
 
+## Compatibility correction found during validation
+
+The first L02 candidate set `PublicWebTarget` depth to zero by default. Normal CI correctly exposed that RSS/Atom parsing historically evaluates discovered entries at structural depth `1`; five existing feed tests failed even though the first real recursive Python.org live run succeeded.
+
+That candidate was rejected. L02 now separates `max_link_depth` from the structural crawl-scope depth instead of weakening or rewriting the existing feed tests. Legacy feeds/sitemaps keep their historical admission behavior while HTML-link recursion remains opt-in for legacy targets.
+
 ## Replay and checkpoint boundary
 
-L02 deliberately keeps the durable checkpoint format focused on resource/version state rather than persisting an arbitrary URL frontier. A collection run deterministically rebuilds its bounded BFS frontier from the governed seeds and the fetched HTML. This means retry/replay cannot expand beyond the same target depth/page/path/origin budgets, while unchanged page hashes reuse the existing checkpointed version ids.
+L02 deliberately keeps the durable checkpoint format focused on resource/version state rather than persisting an arbitrary URL frontier. A collection run deterministically rebuilds its bounded BFS frontier from the governed seeds and the fetched HTML. This means retry/replay cannot expand beyond the same target link-depth/page/path/origin budgets, while unchanged page hashes reuse the existing checkpointed version ids.
 
 Incremental frontier persistence, freshness prioritization, tombstone sweeps and recrawl scheduling are later SA16 work and are not claimed by L02.
 
@@ -50,9 +57,10 @@ Tests cover:
 - `rel=nofollow` exclusion;
 - bounded link extraction order;
 - same-origin confinement;
-- depth enforcement;
+- link-depth enforcement;
 - no duplicate child fetch;
-- automatic-target recursive default versus legacy non-recursive default;
+- automatic-target recursive default versus legacy HTML non-recursive default;
+- preservation of the historical structural depth needed by existing feed/sitemap discovery;
 - checkpoint replay rebuilding the frontier while producing no new observations/versions for unchanged content.
 
 ## Controlled real-network validation
@@ -68,7 +76,9 @@ Tests cover:
 - exact pull-request head checkout;
 - normal repository CI on the same final head.
 
-A mocked response, skipped workflow, synthetic merge ref or successful L01 run does not satisfy L02 live proof.
+The first implementation candidate `30ecc5254b9628fe39cacdb56afaa48c0ad40bdc` produced a genuine intermediate real-network result of **2 observations / 2 projections / 1 linked child**, but it is not final proof because normal CI exposed the compatibility regression described above. The corrected final head must repeat both gates.
+
+A mocked response, skipped workflow, synthetic merge ref, intermediate successful live run or successful L01 run does not satisfy L02 final live proof.
 
 ## Exit gate
 
