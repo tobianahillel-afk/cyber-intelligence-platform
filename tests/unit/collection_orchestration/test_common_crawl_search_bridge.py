@@ -151,6 +151,7 @@ def _target() -> PublicWebTarget:
         base_url="https://example.com",
         sitemap_urls=(),
         feed_urls=(),
+        seed_urls=("https://example.com/",),
         discover_security_txt=False,
         allowed_path_prefixes=("/public",),
         enabled=True,
