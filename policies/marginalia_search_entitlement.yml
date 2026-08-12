@@ -1,9 +1,7 @@
 version: 1
 entitlement:
-  commercial_use_authorized: false
+  api_host: api2.marginalia-search.com
+  commercial_use_rights: false
   plan: unprovisioned
-  api_key_secret_ref: null
   evidence_reference: null
-  prerequisite_owner: source-activation
-  target_microlot: SA15-L06
-  acceptance_test: controlled production-adapter search with a legitimate commercial API key
+  api_key_secret_ref: null
