@@ -1,0 +1,17 @@
+version: 1
+
+sources:
+  - source_id: marginalia-web-search-metadata
+    display_name: Marginalia Search API metadata
+    category: corporate_public_footprint
+    disposition: blocked
+    activation_wave: SA15-L06
+    requires_schedule: false
+    reason: >-
+      Production adapter and response contract are present, but a legitimate commercial API key,
+      commercial-use entitlement evidence, Provider Onboarding secret reference and exact
+      authorization record are not present. The shared public development key is not an acceptable
+      production credential or live-test proof. Recheck when those prerequisites are provisioned;
+      acceptance requires the production adapter to execute a controlled real-endpoint search and
+      then pass exact-head CI/live validation before adding live_tested.
+    stages: [catalogued, reviewed, mapped, adapter_present]
