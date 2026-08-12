@@ -20,11 +20,15 @@ from cip.modules.collection_orchestration.application.common_crawl_search_bridge
     common_crawl_batch_to_search_execution,
     normalize_common_crawl_batch,
 )
+from cip.modules.collection_orchestration.application.ports import AdapterCollectionBatch
 from cip.modules.public_footprint.domain.search_core import (
     SearchAcquisitionState,
     SearchQueryPlan,
 )
-from cip.modules.source_governance.infrastructure.registry import load_source_registry
+from cip.modules.source_governance.infrastructure.registry import (
+    SourceRegistryEntry,
+    load_source_registry,
+)
 
 NOW = datetime(2026, 8, 12, 11, 0, tzinfo=UTC)
 RETENTION = NOW + timedelta(days=365)
@@ -108,7 +112,7 @@ def test_common_crawl_bridge_rejects_cross_organization_projection() -> None:
         common_crawl_batch_to_search_execution(other_plan, _batch(), executed_at=NOW)
 
 
-def _batch():
+def _batch() -> AdapterCollectionBatch:
     adapter = CommonCrawlIndexAdapter(
         _entry(),
         (_target(),),
@@ -131,7 +135,7 @@ def _plan() -> SearchQueryPlan:
     )
 
 
-def _entry():
+def _entry() -> SourceRegistryEntry:
     return next(
         entry
         for entry in load_source_registry(POLICY_PATH)
