@@ -97,8 +97,12 @@ def _validate_official_references(references: tuple[str, ...]) -> None:
 def _validate_official_url(value: str) -> None:
     parsed = urlparse(value)
     host = (parsed.hostname or "").casefold()
-    if parsed.scheme != "https" or host not in {"gdeltproject.org", "blog.gdeltproject.org"}:
+    if parsed.scheme != "https" or not _is_official_gdelt_host(host):
         raise ValueError("GDELT contract references must use an official HTTPS GDELT host")
+
+
+def _is_official_gdelt_host(host: str) -> bool:
+    return host == "gdeltproject.org" or host.endswith(".gdeltproject.org")
 
 
 def _validate_current_endpoint(value: str) -> None:
