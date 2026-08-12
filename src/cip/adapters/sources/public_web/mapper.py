@@ -315,7 +315,9 @@ def _validate_not_modified(
     if state.canonical_url != result.fetched_url:
         raise PublicWebResponseError("304 response changed the canonical resource URL")
     if state.mime_type is None or state.byte_size is None:
-        raise PublicWebResponseError("304 response requires complete previous representation metadata")
+        raise PublicWebResponseError(
+            "304 response requires complete previous representation metadata"
+        )
 
 
 def _required_previous(previous: PreviousPageState | None) -> PreviousPageState:
@@ -350,7 +352,10 @@ def _resource_kind(
     result: PublicWebFetchResult,
     previous: PreviousPageState | None,
 ) -> PublicResourceKind:
-    if (result.status_code == _NOT_MODIFIED_STATUS or _is_tombstone(result)) and previous is not None:
+    unchanged_or_tombstoned = (
+        result.status_code == _NOT_MODIFIED_STATUS or _is_tombstone(result)
+    )
+    if unchanged_or_tombstoned and previous is not None:
         return previous.resource_kind
     if result.mime_type in {"application/pdf", "text/plain"}:
         return PublicResourceKind.DOCUMENT
