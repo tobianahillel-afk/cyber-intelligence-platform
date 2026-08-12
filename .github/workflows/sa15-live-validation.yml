@@ -33,7 +33,9 @@ jobs:
         run: python scripts/live_validate_sa15_cdx.py
 
   live-common-crawl-normalized-discovery:
-    if: github.event.pull_request.head.ref == 'agent/sa15-c1-common-crawl-serp-bridge'
+    if: >-
+      github.event.pull_request.head.ref == 'agent/sa15-c1-common-crawl-serp-bridge' ||
+      github.event.pull_request.head.ref == 'agent/sa15-internal-completion-pass'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
