@@ -4,6 +4,7 @@ from datetime import datetime
 from uuid import UUID
 
 from cip.modules.collection_orchestration.application.ports import AdapterCollectionBatch
+from cip.modules.public_footprint.domain.models import PublicFootprintProjection
 from cip.modules.public_footprint.domain.search import SearchResultLead
 from cip.modules.public_footprint.domain.search_core import (
     SearchDiscoveryCandidate,
@@ -92,7 +93,12 @@ def _validate_plan(plan: SearchQueryPlan) -> None:
         raise ValueError("Common Crawl bridge requires the Common Crawl provider only")
 
 
-def _search_result(plan: SearchQueryPlan, projection, *, rank: int) -> SearchResultLead:
+def _search_result(
+    plan: SearchQueryPlan,
+    projection: PublicFootprintProjection,
+    *,
+    rank: int,
+) -> SearchResultLead:
     resource = projection.resource
     version = projection.version
     if resource.organization_id != plan.organization_id:
