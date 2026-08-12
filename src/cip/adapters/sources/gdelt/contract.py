@@ -105,4 +105,6 @@ def _validate_current_endpoint(value: str) -> None:
     _validate_official_url(value)
     path = urlparse(value).path.casefold()
     if "/api/v1/" in path or "/api/v2/" in path:
-        raise ValueError("legacy GDELT API endpoints cannot satisfy the current GDELT contract gate")
+        raise ValueError(
+            "legacy GDELT API endpoints cannot satisfy the current GDELT contract gate"
+        )
