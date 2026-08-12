@@ -2,8 +2,6 @@ from __future__ import annotations
 
 from pathlib import Path
 
-import pytest
-
 from cip.adapters.sources.google_search import contract as google_search_contract
 
 
@@ -43,6 +41,23 @@ def _write(tmp_path: Path, content: str) -> Path:
     return path
 
 
+def _assert_load_value_error(tmp_path: Path, content: str, message: str) -> None:
+    try:
+        google_search_contract.load_google_search_contract(_write(tmp_path, content))
+    except ValueError as exc:
+        assert message in str(exc)
+    else:
+        raise AssertionError(f"expected ValueError containing {message!r}")
+
+
+def _assert_route_unavailable(contract: google_search_contract.GoogleSearchContract) -> None:
+    try:
+        contract.require_automated_route()
+    except google_search_contract.GoogleSearchRouteUnavailable:
+        return
+    raise AssertionError("expected GoogleSearchRouteUnavailable")
+
+
 def _authorized_browser(content: str, *, expires_at: str = "2027-11-07") -> str:
     return (
         content.replace("status: awaiting_eligible_route", "status: provider_authorized_browser")
@@ -72,8 +87,7 @@ def test_default_contract_fails_closed(tmp_path: Path) -> None:
     )
     assert contract.automated_route_available is False
     assert contract.analyst_route_enabled is True
-    with pytest.raises(google_search_contract.GoogleSearchRouteUnavailable):
-        contract.require_automated_route()
+    _assert_route_unavailable(contract)
 
 
 def test_existing_customer_api_requires_all_governed_refs(tmp_path: Path) -> None:
@@ -85,8 +99,7 @@ def test_existing_customer_api_requires_all_governed_refs(tmp_path: Path) -> Non
         "entitlement_evidence_id: google-existing-customer-approval-2026",
     )
 
-    with pytest.raises(ValueError, match="API-key refs"):
-        google_search_contract.load_google_search_contract(_write(tmp_path, content))
+    _assert_load_value_error(tmp_path, content, "API-key refs")
 
 
 def test_existing_customer_api_can_be_enabled_with_evidence(tmp_path: Path) -> None:
@@ -111,22 +124,19 @@ def test_existing_customer_api_can_be_enabled_with_evidence(tmp_path: Path) -> N
 def test_browser_route_requires_provider_permission_evidence(tmp_path: Path) -> None:
     content = BASE.replace("enabled: false", "enabled: true", 1)
 
-    with pytest.raises(ValueError, match="provider permission evidence"):
-        google_search_contract.load_google_search_contract(_write(tmp_path, content))
+    _assert_load_value_error(tmp_path, content, "provider permission evidence")
 
 
 def test_browser_route_rejects_captcha_bypass(tmp_path: Path) -> None:
     content = BASE.replace("captcha_bypass_allowed: false", "captcha_bypass_allowed: true")
 
-    with pytest.raises(ValueError, match="CAPTCHA or anti-bot bypass"):
-        google_search_contract.load_google_search_contract(_write(tmp_path, content))
+    _assert_load_value_error(tmp_path, content, "CAPTCHA or anti-bot bypass")
 
 
 def test_browser_route_rejects_antibot_bypass(tmp_path: Path) -> None:
     content = BASE.replace("anti_bot_bypass_allowed: false", "anti_bot_bypass_allowed: true")
 
-    with pytest.raises(ValueError, match="CAPTCHA or anti-bot bypass"):
-        google_search_contract.load_google_search_contract(_write(tmp_path, content))
+    _assert_load_value_error(tmp_path, content, "CAPTCHA or anti-bot bypass")
 
 
 def test_authorized_browser_status_requires_enabled_route(tmp_path: Path) -> None:
@@ -135,8 +145,7 @@ def test_authorized_browser_status_requires_enabled_route(tmp_path: Path) -> Non
         "status: provider_authorized_browser",
     )
 
-    with pytest.raises(ValueError, match="browser route enabled"):
-        google_search_contract.load_google_search_contract(_write(tmp_path, content))
+    _assert_load_value_error(tmp_path, content, "browser route enabled")
 
 
 def test_authorized_browser_requires_verified_permission(tmp_path: Path) -> None:
@@ -145,8 +154,7 @@ def test_authorized_browser_requires_verified_permission(tmp_path: Path) -> None
         "provider_permission_verified: false",
     )
 
-    with pytest.raises(ValueError, match="verified provider permission"):
-        google_search_contract.load_google_search_contract(_write(tmp_path, content))
+    _assert_load_value_error(tmp_path, content, "verified provider permission")
 
 
 def test_authorized_browser_rejects_expired_permission(tmp_path: Path) -> None:
@@ -155,8 +163,7 @@ def test_authorized_browser_rejects_expired_permission(tmp_path: Path) -> None:
         "provider_permission_issued_at: 2023-11-07",
     )
 
-    with pytest.raises(ValueError, match="expired at contract review date"):
-        google_search_contract.load_google_search_contract(_write(tmp_path, content))
+    _assert_load_value_error(tmp_path, content, "expired at contract review date")
 
 
 def test_authorized_browser_accepts_current_permission(tmp_path: Path) -> None:
@@ -175,8 +182,7 @@ def test_canonical_replacement_requires_approved_source(tmp_path: Path) -> None:
         "status: canonical_replacement",
     )
 
-    with pytest.raises(ValueError, match="at least one approved source"):
-        google_search_contract.load_google_search_contract(_write(tmp_path, content))
+    _assert_load_value_error(tmp_path, content, "at least one approved source")
 
 
 def test_canonical_replacement_without_live_proof_fails_closed(tmp_path: Path) -> None:
@@ -189,8 +195,7 @@ def test_canonical_replacement_without_live_proof_fails_closed(tmp_path: Path) -
     assert contract.canonical_replacement_source_ids == ("brave-search-api",)
     assert contract.canonical_live_source_ids == ()
     assert contract.automated_route_available is False
-    with pytest.raises(google_search_contract.GoogleSearchRouteUnavailable):
-        contract.require_automated_route()
+    _assert_route_unavailable(contract)
 
 
 def test_canonical_replacement_requires_approved_live_source(tmp_path: Path) -> None:
@@ -228,8 +233,7 @@ def test_google_api_host_is_exact(tmp_path: Path) -> None:
         "https://customsearch.googleapis.com.evil.example/customsearch/v1",
     )
 
-    with pytest.raises(ValueError, match="official HTTPS API host"):
-        google_search_contract.load_google_search_contract(_write(tmp_path, content))
+    _assert_load_value_error(tmp_path, content, "official HTTPS API host")
 
 
 def test_contract_reference_rejects_non_google_host(tmp_path: Path) -> None:
@@ -238,5 +242,4 @@ def test_contract_reference_rejects_non_google_host(tmp_path: Path) -> None:
         "https://developers.google.com.evil.example/custom-search/v1/overview",
     )
 
-    with pytest.raises(ValueError, match="approved official HTTPS hosts"):
-        google_search_contract.load_google_search_contract(_write(tmp_path, content))
+    _assert_load_value_error(tmp_path, content, "approved official HTTPS hosts")
