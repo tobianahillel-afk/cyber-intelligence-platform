@@ -2,7 +2,7 @@
 
 ## Status
 
-`IMPLEMENTED` / real provider live proof exists / production-integration revalidation pending on the current internal-completion candidate.
+`IMPLEMENTED_VALIDATED` on the corrected production-wired path, subject only to repetition of the gates on the final documentation head before merge.
 
 Common Crawl already had a real production adapter and provider `live_tested` proof from SA-14. C1 then proved the real provider path through normalized discovery and governed routing on PR #130. That proof was genuine, but a post-merge review found an integration gap: the live runner manually composed the normalization/router after `CommonCrawlIndexAdapter.collect()`, while scheduled production collection itself stopped after the quarantined archive projections.
 
@@ -35,20 +35,45 @@ The bridge does not relabel Common Crawl as a general web-search engine. It pres
 - off-origin/out-of-scope/budget-exhausted candidates require source review.
 - normalized provider execution timestamps are preserved for audit/replay.
 
-## Existing real live proof
+## Corrected production-integration proof
 
-PR #130 final head `71bf84001592e6d294f6f1db2a868e04eef3133a` passed SA-15 Live Validation run #34 against the real Common Crawl public index. The earlier proof demonstrated non-empty provider observations, normalization and governed routing. It remains valid proof that the provider/bridge combination works, but it is not by itself proof of the new production-wired implementation.
+The first corrected candidate was:
 
-## Current revalidation gate
+`e508822ddeaf56594b6a48db9599a9bfae862087`
 
-The internal-completion candidate must independently pass, on its exact final SHA:
+SA-15 Live Validation run #49 (`31622886737`) checked out that exact PR head SHA rather than GitHub's synthetic merge ref and executed the real production `CommonCrawlIndexAdapter` against the public Common Crawl index. It passed with:
+
+- **43** real observations;
+- **43** quarantined archive projections;
+- **0** automatic claims;
+- **23** canonical normalized discovery candidates;
+- **23 / 23** governed automatic `PUBLIC_WEB` routes;
+- **0** source-review routes on the controlled first-party target;
+- normalization/routing produced inside the production adapter and persisted in the `normalized_discovery` checkpoint;
+- no WARC body retrieval.
+
+Normal repository CI run #1974 (`31622886771`) also passed for the same candidate change against current `main` integration:
+
+- dependency consistency: pass;
+- Python dependency audit: pass, no known vulnerabilities;
+- Ruff: pass;
+- strict Mypy: pass on **695** source files;
+- architecture/release contracts: **36 passed**;
+- reversible Alembic migrations: pass;
+- complete backend suite: **1485 passed**;
+- branch-aware coverage: **90.07%**;
+- frontend audit/typecheck/build: pass.
+
+This proves the production-wired C1 implementation itself, not merely a validation-only composition.
+
+## Final merge gate
+
+This documentation update creates a new branch head, so the earlier candidate cannot be used as the final merge candidate. The exact final documentation head must independently repeat:
 
 1. complete repository CI;
-2. `live-common-crawl-normalized-discovery` using the real provider;
-3. a non-empty production-adapter batch;
-4. a non-empty `normalized_discovery` checkpoint produced by the adapter itself;
-5. all normalized candidates routed consistently with the controlled governed target;
-6. zero unsupported claims;
-7. zero unresolved review threads.
+2. the real `live-common-crawl-normalized-discovery` job with an exact PR-head checkout;
+3. a non-empty production-adapter batch and `normalized_discovery` checkpoint;
+4. zero unsupported claims;
+5. zero unresolved review threads.
 
-No skipped workflow, mock, prior SHA, or manually recomposed bridge execution satisfies this new integration gate.
+A skipped workflow, mock, earlier SHA or manually recomposed bridge execution does not satisfy this final gate.
