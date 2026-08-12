@@ -69,10 +69,21 @@ def test_legacy_api_cannot_satisfy_gdelt5_gate(tmp_path: Path, legacy_url: str) 
         load_gdelt_api_contract(policy)
 
 
-def test_future_stable_contract_must_stay_on_official_https_hosts(tmp_path: Path) -> None:
+@pytest.mark.parametrize(
+    "untrusted_url",
+    (
+        "https://example.com/future-api",
+        "https://evilgdeltproject.org/future-api",
+        "https://gdeltproject.org.example.com/future-api",
+    ),
+)
+def test_future_stable_contract_rejects_non_gdelt_lookalikes(
+    tmp_path: Path,
+    untrusted_url: str,
+) -> None:
     policy = tmp_path / "gdelt.yml"
     policy.write_text(
-        _stable_contract_yaml(api_base_url="https://example.com/future-api"),
+        _stable_contract_yaml(api_base_url=untrusted_url),
         encoding="utf-8",
     )
 
@@ -83,7 +94,7 @@ def test_future_stable_contract_must_stay_on_official_https_hosts(tmp_path: Path
 def test_complete_official_future_contract_opens_only_the_contract_gate(tmp_path: Path) -> None:
     policy = tmp_path / "gdelt.yml"
     policy.write_text(
-        _stable_contract_yaml(api_base_url="https://gdeltproject.org/future-api"),
+        _stable_contract_yaml(api_base_url="https://api.gdeltproject.org/future-api"),
         encoding="utf-8",
     )
 
