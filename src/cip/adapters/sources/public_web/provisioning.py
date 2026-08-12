@@ -37,6 +37,7 @@ class AutomaticPublicWebPolicy:
     expires_at: datetime | None = None
     allowed_path_prefixes: tuple[str, ...] = ("/",)
     refresh_interval_seconds: int = 86_400
+    max_depth: int = 1
     max_pages: int = 100
     max_total_bytes: int = 10_000_000
     max_resource_bytes: int = 1_000_000
@@ -58,6 +59,8 @@ class AutomaticPublicWebPolicy:
             raise ValueError("allowed_path_prefixes must contain absolute paths")
         if self.refresh_interval_seconds < 60:
             raise ValueError("refresh_interval_seconds must be at least 60")
+        if not 0 <= self.max_depth <= 20:
+            raise ValueError("max_depth must be between 0 and 20")
         object.__setattr__(self, "authorization_reference", reference)
         object.__setattr__(self, "reviewed_at", reviewed)
         object.__setattr__(self, "expires_at", expires)
@@ -97,6 +100,7 @@ def provision_public_web_target(
         authorization_reference=policy.authorization_reference,
         authorization_reviewed_at=policy.reviewed_at,
         authorization_expires_at=policy.expires_at,
+        max_depth=policy.max_depth,
         max_pages=policy.max_pages,
         max_total_bytes=policy.max_total_bytes,
         max_resource_bytes=policy.max_resource_bytes,
