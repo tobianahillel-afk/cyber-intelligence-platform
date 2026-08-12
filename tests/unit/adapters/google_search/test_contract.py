@@ -2,9 +2,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
-import pytest
-
 import cip.adapters.sources.google_search.contract as google_search_contract
+import pytest
 
 
 BASE = """version: 1
