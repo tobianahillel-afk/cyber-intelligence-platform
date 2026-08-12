@@ -1,7 +1,7 @@
 from __future__ import annotations
 
+import importlib
 from pathlib import Path
-from types import ModuleType
 
 import pytest
 
@@ -33,10 +33,8 @@ contract:
 """
 
 
-def _google_search_contract() -> ModuleType:
-    from cip.adapters.sources.google_search import contract
-
-    return contract
+def _google_search_contract():
+    return importlib.import_module("cip.adapters.sources.google_search.contract")
 
 
 def _write(tmp_path: Path, content: str) -> Path:
