@@ -36,6 +36,9 @@ class Settings(BaseSettings):
     search_archive_source_registry_path: Path = Path(
         "policies/sources.search_archives.yml"
     )
+    search_provider_source_registry_path: Path = Path(
+        "policies/sources.search_providers_sa15.yml"
+    )
     incident_source_registry_path: Path = Path("policies/sources.incidents.yml")
     threat_telemetry_source_registry_path: Path = Path(
         "policies/sources.threat_telemetry.yml"
@@ -72,6 +75,9 @@ class Settings(BaseSettings):
     )
     search_archive_source_portfolio_path: Path = Path(
         "policies/source_portfolio.search_archives.yml"
+    )
+    search_provider_source_portfolio_path: Path = Path(
+        "policies/source_portfolio.search_providers_sa15.yml"
     )
     incident_source_portfolio_path: Path = Path(
         "policies/source_portfolio.incidents.yml"
@@ -131,6 +137,9 @@ class Settings(BaseSettings):
     )
     mojeek_search_entitlement_registry_path: Path = Path(
         "policies/mojeek_search_entitlement.yml"
+    )
+    marginalia_search_entitlement_registry_path: Path = Path(
+        "policies/marginalia_search_entitlement.yml"
     )
     vulnerability_query_target_registry_path: Path = Path(
         "policies/vulnerability_query_targets.yml"

@@ -38,6 +38,11 @@ def build_runtime_secret_providers(
                 source_id="mojeek-web-search-metadata",
                 secret_name="api_key",
             ),
+            marginalia_api_key_provider=connected_secret_supplier(
+                factory,
+                source_id="marginalia-web-search-metadata",
+                secret_name="api_key",
+            ),
         ),
         certspotter_token_provider=connected_secret_supplier(
             factory,

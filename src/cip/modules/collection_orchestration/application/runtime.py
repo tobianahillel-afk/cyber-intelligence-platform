@@ -21,6 +21,9 @@ from cip.adapters.sources.github_code_search.registry import (
 from cip.adapters.sources.greenhouse.registry import load_greenhouse_boards
 from cip.adapters.sources.incident_catalogs.sec_registry import load_sec_incident_targets
 from cip.adapters.sources.lever.registry import load_lever_sites
+from cip.adapters.sources.marginalia_search.registry import (
+    load_marginalia_search_entitlement,
+)
 from cip.adapters.sources.mojeek_search.registry import load_mojeek_search_entitlement
 from cip.adapters.sources.organization_identity.registry import load_organization_identity_targets
 from cip.adapters.sources.passive_infrastructure.rdap_registry import load_rdap_targets
@@ -133,6 +136,7 @@ def _load_source_entries(settings: Settings) -> tuple[SourceRegistryEntry, ...]:
         settings.public_web_source_registry_path,
         settings.vulnerability_source_registry_path,
         settings.search_archive_source_registry_path,
+        settings.search_provider_source_registry_path,
         settings.incident_source_registry_path,
         settings.threat_telemetry_source_registry_path,
         settings.passive_exposure_source_registry_path,
@@ -154,6 +158,7 @@ def _load_portfolio(settings: Settings) -> tuple[SourceCatalogEntry, ...]:
         settings.public_web_source_portfolio_path,
         settings.vulnerability_source_portfolio_path,
         settings.search_archive_source_portfolio_path,
+        settings.search_provider_source_portfolio_path,
         settings.incident_source_portfolio_path,
         settings.threat_telemetry_source_portfolio_path,
         settings.passive_exposure_source_portfolio_path,
@@ -206,6 +211,9 @@ def _load_adapter_inputs(
         ),
         mojeek_entitlement=load_mojeek_search_entitlement(
             settings.mojeek_search_entitlement_registry_path
+        ),
+        marginalia_entitlement=load_marginalia_search_entitlement(
+            settings.marginalia_search_entitlement_registry_path
         ),
         vulnerability_targets=load_vulnerability_query_targets(
             settings.vulnerability_query_target_registry_path
