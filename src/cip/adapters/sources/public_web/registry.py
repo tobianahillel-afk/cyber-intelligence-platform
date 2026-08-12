@@ -40,7 +40,7 @@ class PublicWebTarget:
     seed_urls: tuple[str, ...] = ()
     discover_security_txt: bool = False
     source_id: str | None = None
-    max_depth: int = 0
+    max_link_depth: int = 0
     max_pages: int = 100
     max_total_bytes: int = 10_000_000
     max_resource_bytes: int = 1_000_000
@@ -51,6 +51,8 @@ class PublicWebTarget:
         name = self.canonical_name.strip()
         if not identifier or not name:
             raise ValueError("public web target id and canonical_name are required")
+        if not 0 <= self.max_link_depth <= 20:
+            raise ValueError("max_link_depth must be between 0 and 20")
         base = CanonicalUrl(self.base_url)
         _validate_public_hostname(base.host)
         seeds = _same_origin_urls(base, self.seed_urls, label="seed")
@@ -79,7 +81,7 @@ class PublicWebTarget:
         scope = CrawlScope(
             allowed_hosts=frozenset({base.host}),
             allowed_path_prefixes=prefixes,
-            max_depth=self.max_depth,
+            max_depth=max(1, self.max_link_depth),
             max_pages=self.max_pages,
             max_total_bytes=self.max_total_bytes,
             max_resource_bytes=self.max_resource_bytes,
@@ -115,7 +117,7 @@ class PublicWebTarget:
         return CrawlScope(
             allowed_hosts=frozenset({self.host}),
             allowed_path_prefixes=self.allowed_path_prefixes,
-            max_depth=self.max_depth,
+            max_depth=max(1, self.max_link_depth),
             max_pages=self.max_pages,
             max_total_bytes=self.max_total_bytes,
             max_resource_bytes=self.max_resource_bytes,
@@ -192,9 +194,9 @@ def _parse_target(payload: dict[str, Any]) -> PublicWebTarget:
             "expires_at",
         ),
         terms_url=_optional_string(payload, "terms_url"),
-        max_depth=_optional_bounded_int(
+        max_link_depth=_optional_bounded_int(
             limits,
-            "max_depth",
+            "max_link_depth",
             default=0,
             minimum=0,
             maximum=20,
