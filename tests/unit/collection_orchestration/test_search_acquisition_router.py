@@ -10,6 +10,7 @@ from cip.modules.collection_orchestration.application.search_acquisition_router 
     SearchAcquisitionRouteKind,
     route_search_discovery_candidates,
 )
+from cip.modules.public_footprint.domain.scope import CrawlUsage
 from cip.modules.public_footprint.domain.search_core import (
     SearchAcquisitionState,
     SearchDiscoveryCandidate,
@@ -99,6 +100,26 @@ def test_automatic_routes_sort_before_source_review_routes() -> None:
     ]
 
 
+def test_router_consumes_page_budget_across_candidates_and_existing_usage() -> None:
+    target = _target(max_pages=2)
+    routes = route_search_discovery_candidates(
+        (
+            _candidate("https://example.com/security/one"),
+            _candidate("https://example.com/security/two"),
+        ),
+        (target,),
+        routed_at=NOW,
+        target_usage={target.id: CrawlUsage(pages_fetched=1)},
+    )
+
+    assert [route.route_kind for route in routes] == [
+        SearchAcquisitionRouteKind.PUBLIC_WEB,
+        SearchAcquisitionRouteKind.SOURCE_REVIEW,
+    ]
+    assert routes[0].requested_url == "https://example.com/security/one"
+    assert routes[1].requested_url == "https://example.com/security/two"
+
+
 def _candidate(url: str) -> SearchDiscoveryCandidate:
     return SearchDiscoveryCandidate(
         organization_id=ORGANIZATION_ID,
@@ -112,6 +133,7 @@ def _candidate(url: str) -> SearchDiscoveryCandidate:
                 source_record_key=f"record:{url}",
                 rank=1,
                 observed_at=NOW,
+                executed_at=NOW,
                 title="Search discovery",
                 snippet="Provider metadata only",
                 rendered_query='"Example Corp" cybersecurity',
@@ -127,6 +149,7 @@ def _target(
     target_id: str = "example-company",
     allowed_path_prefixes: tuple[str, ...] = ("/",),
     authorization_expires_at: datetime | None = None,
+    max_pages: int = 100,
 ) -> PublicWebTarget:
     return PublicWebTarget(
         id=target_id,
@@ -139,4 +162,5 @@ def _target(
         authorization_reference="sa15-router-test",
         authorization_reviewed_at=NOW - timedelta(days=1),
         authorization_expires_at=authorization_expires_at,
+        max_pages=max_pages,
     )
