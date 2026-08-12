@@ -2,12 +2,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from cip.adapters.sources.mojeek_search.registry import (
-    load_mojeek_search_entitlement,
-)
-from cip.adapters.sources.patentsview_patents.registry import (
-    load_patentsview_patent_targets,
-)
+import yaml
+
 from cip.modules.source_activation.domain.models import ActivationStage
 from cip.modules.source_activation.infrastructure import load_activation_inventory
 from cip.shared.config.settings import Settings
@@ -35,18 +31,23 @@ def test_credentialed_sa15_providers_are_executable_but_not_falsely_live() -> No
         assert record.is_fully_integrated is False
 
 
-def test_mojeek_live_runner_remains_blocked_by_checked_in_storage_entitlement() -> None:
-    entitlement = load_mojeek_search_entitlement(Path("policies/mojeek_search_entitlement.yml"))
+def test_mojeek_checked_in_storage_entitlement_remains_fail_closed() -> None:
+    payload = yaml.safe_load(
+        Path("policies/mojeek_search_entitlement.yml").read_text(encoding="utf-8")
+    )
+    entitlement = payload["entitlement"]
 
-    assert entitlement.durable_storage_authorized is False
-    assert entitlement.plan == "unprovisioned"
-    assert entitlement.evidence_reference is None
+    assert entitlement["durable_storage_authorized"] is False
+    assert entitlement["plan"] == "unprovisioned"
+    assert entitlement["evidence_reference"] is None
 
 
 def test_patentsview_has_no_checked_in_production_target() -> None:
-    targets = load_patentsview_patent_targets(Path("policies/patentsview_patent_targets.yml"))
+    payload = yaml.safe_load(
+        Path("policies/patentsview_patent_targets.yml").read_text(encoding="utf-8")
+    )
 
-    assert targets == ()
+    assert payload["targets"] == []
 
 
 def test_manual_live_workflow_references_only_production_runners_and_secret_names() -> None:
