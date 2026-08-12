@@ -42,8 +42,13 @@ def test_marginalia_checked_in_entitlement_and_governance_remain_fail_closed() -
         "  - source_id: marginalia-web-search-metadata", 1
     )[1].split("  - source_id: google-search-governed-route", 1)[0]
     assert "disposition: blocked" in marginalia_activation
-    assert "stages: [catalogued, reviewed, mapped, adapter_present]" in marginalia_activation
-    assert "live_tested" not in marginalia_activation
+    stages_line = next(
+        line.strip()
+        for line in marginalia_activation.splitlines()
+        if line.strip().startswith("stages:")
+    )
+    assert stages_line == "stages: [catalogued, reviewed, mapped, adapter_present]"
+    assert "live_tested" not in stages_line
 
     marginalia_portfolio = portfolio.split(
         "  - source_id: marginalia-web-search-metadata", 1
