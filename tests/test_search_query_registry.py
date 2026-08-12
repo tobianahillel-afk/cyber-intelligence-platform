@@ -17,9 +17,17 @@ def test_repository_search_query_templates_are_versioned_and_disabled() -> None:
     assert all(not template.enabled for template in templates)
     assert len({(template.id, template.version) for template in templates}) == len(templates)
     for template in templates:
-        rendered = template.render("Example Corp")
-        assert "{organization}" not in rendered
-        assert "Example Corp" in rendered
+        if template.requires_domain:
+            rendered = template.render(
+                "Example Corp",
+                organization_domain="example.com",
+            )
+            assert "{domain}" not in rendered
+            assert "example.com" in rendered
+        else:
+            rendered = template.render("Example Corp")
+            assert "{organization}" not in rendered
+            assert "Example Corp" in rendered
 
 
 def test_search_query_registry_rejects_duplicate_versions(tmp_path: Path) -> None:
