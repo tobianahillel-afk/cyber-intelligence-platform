@@ -7,7 +7,10 @@ from uuid import UUID, uuid4
 
 from cip.adapters.sources.mojeek_search.registry import load_mojeek_search_entitlement
 from cip.adapters.sources.public_web.registry import PublicWebTarget
-from cip.modules.collection_orchestration.application.mojeek_search_adapter import MojeekSearchAdapter
+from cip.modules.collection_orchestration.application.mojeek_search_adapter import (
+    MojeekSearchAdapter,
+)
+from cip.modules.collection_orchestration.application.ports import AdapterCollectionBatch
 from cip.modules.public_footprint.domain.models import PublicResourceKind, ResourceRetrievalState
 from cip.modules.public_footprint.domain.search import SearchQueryTemplate
 from cip.modules.source_governance.infrastructure.registry import load_source_registry
@@ -87,9 +90,9 @@ def _controlled_target() -> PublicWebTarget:
     )
 
 
-def _validate_batch(batch: object) -> None:
-    observations = getattr(batch, "observations")
-    projections = getattr(batch, "public_footprint_projections")
+def _validate_batch(batch: AdapterCollectionBatch) -> None:
+    observations = batch.observations
+    projections = batch.public_footprint_projections
     if not 1 <= len(observations) <= _MAX_RESULTS or len(projections) != len(observations):
         raise RuntimeError("Mojeek live validation returned invalid result counts")
     if any(observation.source_id != "mojeek-web-search-metadata" for observation in observations):
@@ -102,7 +105,7 @@ def _validate_batch(batch: object) -> None:
         for projection in projections
     ):
         raise RuntimeError("Mojeek search results escaped discovery quarantine")
-    if getattr(batch, "checkpoint_payload") != {"pair_index": 0}:
+    if batch.checkpoint_payload != {"pair_index": 0}:
         raise RuntimeError("Mojeek live validation checkpoint did not converge")
 
 
