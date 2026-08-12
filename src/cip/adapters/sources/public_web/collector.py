@@ -4,41 +4,30 @@ from dataclasses import dataclass
 from datetime import datetime
 from uuid import UUID
 
-from cip.adapters.sources.public_web.client import (
-    PublicWebClient,
-    PublicWebFetchResult,
-    RobotsRules,
+from cip.adapters.sources.public_web.client import PublicWebClient, PublicWebFetchResult
+from cip.adapters.sources.public_web.collection_policy import (
+    PublicWebCollectionDeniedError,
+    authorize_public_web_url,
 )
-from cip.adapters.sources.public_web.feed_parsing import parse_public_feed
-from cip.adapters.sources.public_web.link_discovery import extract_public_html_links
+from cip.adapters.sources.public_web.discovery import (
+    PublicWebDiscoveryCandidate,
+    discover_html_feeds,
+    discover_initial_candidates,
+    discover_recursive_links,
+)
 from cip.adapters.sources.public_web.mapper import (
     MappedPublicPage,
     PreviousPageState,
     map_public_page,
 )
-from cip.adapters.sources.public_web.parsing import parse_sitemap
 from cip.adapters.sources.public_web.registry import PublicWebTarget
 from cip.adapters.sources.public_web.security_txt import parse_security_txt
 from cip.adapters.sources.public_web.security_txt_mapper import map_security_txt
-from cip.modules.public_footprint.domain import (
-    DiscoveryMethod,
-    PublicFootprintProjection,
-    PublicResourceKind,
-)
+from cip.modules.public_footprint.domain import PublicFootprintProjection, PublicResourceKind
 from cip.modules.public_footprint.domain.scope import CrawlUsage
-from cip.modules.public_footprint.domain.url_identity import same_origin
 from cip.modules.raw_observations.domain.entities import RawObservation
-from cip.modules.source_governance.domain.models import (
-    CollectionRequest,
-    DataCategory,
-    SourceRuntimeState,
-)
 from cip.modules.source_governance.infrastructure.registry import SourceRegistryEntry
 from cip.shared.kernel.time import require_aware_utc
-
-
-class PublicWebCollectionDeniedError(RuntimeError):
-    """Source or target governance denied public-web collection."""
 
 
 @dataclass(frozen=True, slots=True)
@@ -62,15 +51,6 @@ class PublicWebCollectionBatch:
     not_modified: bool
 
 
-@dataclass(frozen=True, slots=True)
-class PublicWebDiscoveryCandidate:
-    url: str
-    discovery_method: DiscoveryMethod
-    source_locator: str | None = None
-    security_txt: bool = False
-    depth: int = 0
-
-
 def collect_public_web_target(
     client: PublicWebClient,
     entry: SourceRegistryEntry,
@@ -86,9 +66,9 @@ def collect_public_web_target(
         raise ValueError("public web source policy and target source_id must match")
     if not target.executable_at(collected):
         raise PublicWebCollectionDeniedError("target_authorization_inactive")
-    _authorize(entry, target.robots_url, now=collected)
+    authorize_public_web_url(entry, target.robots_url, now=collected)
     robots = client.fetch_robots(target)
-    initial_candidates, discovery_bytes = _discover_candidates(
+    initial_candidates, discovery_bytes, seen_feeds = discover_initial_candidates(
         client,
         entry,
         target,
@@ -109,7 +89,7 @@ def collect_public_web_target(
         index += 1
         if usage.pages_fetched >= target.max_pages:
             break
-        _authorize(entry, candidate.url, now=collected)
+        authorize_public_web_url(entry, candidate.url, now=collected)
         fetched = client.fetch_page(
             target,
             candidate.url,
@@ -136,154 +116,31 @@ def collect_public_web_target(
         if mapped.observation is not None:
             observations.append(mapped.observation)
         projections.append(mapped.projection)
-        checkpoint_version_id = _checkpoint_version_id(previous, mapped, fetched)
         next_pages[candidate.url] = PageCheckpoint(
             content_hash_sha256=mapped.content_hash_sha256,
-            version_id=checkpoint_version_id,
+            version_id=_checkpoint_version_id(previous, mapped, fetched),
             canonical_url=fetched.fetched_url,
             resource_kind=mapped.projection.resource.kind,
         )
-        _discover_recursive_links(
+        usage = discover_html_feeds(
+            client,
+            entry,
             target,
-            candidate,
+            robots,
             fetched,
             candidates,
             seen,
+            seen_feeds,
+            usage=usage,
+            now=collected,
         )
+        discover_recursive_links(target, candidate, fetched, candidates, seen)
     return PublicWebCollectionBatch(
         observations=tuple(observations),
         projections=tuple(projections),
         checkpoint=PublicWebCheckpoint(next_pages),
         not_modified=not observations,
     )
-
-
-def _discover_candidates(
-    client: PublicWebClient,
-    entry: SourceRegistryEntry,
-    target: PublicWebTarget,
-    robots: RobotsRules,
-    *,
-    now: datetime,
-    initial_bytes: int,
-) -> tuple[tuple[PublicWebDiscoveryCandidate, ...], int]:
-    candidates: list[PublicWebDiscoveryCandidate] = []
-    seen: set[str] = set()
-    total_bytes = _checked_total_bytes(target, initial_bytes)
-    for seed_url in target.seed_urls:
-        _append_candidate(
-            candidates,
-            seen,
-            PublicWebDiscoveryCandidate(
-                url=seed_url,
-                discovery_method=DiscoveryMethod.DIRECT,
-            ),
-            max_pages=target.max_pages,
-        )
-    if target.discover_security_txt:
-        _append_candidate(
-            candidates,
-            seen,
-            PublicWebDiscoveryCandidate(
-                url=target.security_txt_url,
-                discovery_method=DiscoveryMethod.DIRECT,
-                security_txt=True,
-            ),
-            max_pages=target.max_pages,
-        )
-    for sitemap_url in target.sitemap_urls:
-        if len(candidates) >= target.max_pages:
-            break
-        _authorize(entry, sitemap_url, now=now)
-        sitemap = client.fetch_sitemap(target, sitemap_url, robots)
-        total_bytes = _checked_total_bytes(target, total_bytes + len(sitemap.body))
-        remaining = target.max_pages - len(candidates)
-        for sitemap_entry in parse_sitemap(sitemap.body, target, max_entries=remaining):
-            _append_candidate(
-                candidates,
-                seen,
-                PublicWebDiscoveryCandidate(
-                    url=sitemap_entry.url,
-                    discovery_method=DiscoveryMethod.SITEMAP,
-                ),
-                max_pages=target.max_pages,
-            )
-    for feed_url in target.feed_urls:
-        if len(candidates) >= target.max_pages:
-            break
-        _authorize(entry, feed_url, now=now)
-        feed = client.fetch_feed(target, feed_url, robots)
-        total_bytes = _checked_total_bytes(target, total_bytes + len(feed.body))
-        remaining = target.max_pages - len(candidates)
-        for feed_entry in parse_public_feed(feed.body, target, max_entries=remaining):
-            _append_candidate(
-                candidates,
-                seen,
-                PublicWebDiscoveryCandidate(
-                    url=feed_entry.url,
-                    discovery_method=DiscoveryMethod.FEED,
-                    source_locator=feed_url,
-                ),
-                max_pages=target.max_pages,
-            )
-    return tuple(candidates), total_bytes
-
-
-def _discover_recursive_links(
-    target: PublicWebTarget,
-    candidate: PublicWebDiscoveryCandidate,
-    fetched: PublicWebFetchResult,
-    candidates: list[PublicWebDiscoveryCandidate],
-    seen: set[str],
-) -> None:
-    child_depth = candidate.depth + 1
-    remaining = target.max_pages - len(candidates)
-    if (
-        fetched.mime_type != "text/html"
-        or child_depth > target.max_link_depth
-        or remaining <= 0
-    ):
-        return
-    links = extract_public_html_links(
-        fetched.body,
-        base_url=fetched.fetched_url,
-        max_links=remaining,
-    )
-    for link in links:
-        if not same_origin(target.base_url, link):
-            continue
-        decision = target.crawl_scope.evaluate_target(
-            link,
-            depth=child_depth,
-            redirects=0,
-            usage=CrawlUsage(),
-        )
-        if not decision.allowed:
-            continue
-        _append_candidate(
-            candidates,
-            seen,
-            PublicWebDiscoveryCandidate(
-                url=link,
-                discovery_method=DiscoveryMethod.LINK,
-                source_locator=fetched.fetched_url,
-                depth=child_depth,
-            ),
-            max_pages=target.max_pages,
-        )
-
-
-def _append_candidate(
-    candidates: list[PublicWebDiscoveryCandidate],
-    seen: set[str],
-    candidate: PublicWebDiscoveryCandidate,
-    *,
-    max_pages: int,
-) -> None:
-    if len(candidates) >= max_pages or candidate.url in seen:
-        return
-    seen.add(candidate.url)
-    candidates.append(candidate)
 
 
 def _map_candidate(
@@ -347,27 +204,3 @@ def _checkpoint_version_id(
     if unchanged and previous is not None:
         return previous.version_id
     return mapped.projection.version.id
-
-
-def _checked_total_bytes(target: PublicWebTarget, value: int) -> int:
-    if value > target.max_total_bytes:
-        raise PublicWebCollectionDeniedError("total_byte_budget_exceeded")
-    return value
-
-
-def _authorize(entry: SourceRegistryEntry, target_url: str, *, now: datetime) -> None:
-    decision = entry.policy.evaluate(
-        CollectionRequest(
-            data_category=DataCategory.OFFICIAL_DOCUMENT_DISCOVERY,
-            target_url=target_url,
-            purpose="corporate-public-footprint",
-            automated=True,
-            store_raw_content=False,
-            human_review_completed=False,
-        ),
-        entry.authorization,
-        SourceRuntimeState(remaining_requests=1),
-        now=now,
-    )
-    if not decision.allowed:
-        raise PublicWebCollectionDeniedError(decision.reason.value)

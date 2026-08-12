@@ -7,8 +7,21 @@ from pathlib import Path
 from typing import Any
 from uuid import UUID
 
-import yaml
-
+from cip.adapters.sources.public_web.registry_values import (
+    bounded_int,
+    load_yaml_mapping,
+    optional_bool,
+    optional_bounded_int,
+    optional_datetime,
+    optional_string,
+    optional_text,
+    optional_time,
+    positive_int,
+    required_bool,
+    required_mapping,
+    required_string,
+    string_tuple,
+)
 from cip.modules.public_footprint.domain.scope import CrawlScope
 from cip.modules.public_footprint.domain.url_identity import CanonicalUrl, same_origin
 from cip.shared.kernel.time import require_aware_utc
@@ -39,8 +52,13 @@ class PublicWebTarget:
     feed_urls: tuple[str, ...] = ()
     seed_urls: tuple[str, ...] = ()
     discover_security_txt: bool = False
+    discover_sitemaps: bool = False
+    discover_feeds: bool = False
     source_id: str | None = None
     max_link_depth: int = 0
+    max_sitemap_depth: int = 0
+    max_sitemaps: int = 10
+    max_feeds: int = 5
     max_pages: int = 100
     max_total_bytes: int = 10_000_000
     max_resource_bytes: int = 1_000_000
@@ -53,27 +71,39 @@ class PublicWebTarget:
             raise ValueError("public web target id and canonical_name are required")
         if not 0 <= self.max_link_depth <= 20:
             raise ValueError("max_link_depth must be between 0 and 20")
+        if not 0 <= self.max_sitemap_depth <= 10:
+            raise ValueError("max_sitemap_depth must be between 0 and 10")
+        if not 1 <= self.max_sitemaps <= 100:
+            raise ValueError("max_sitemaps must be between 1 and 100")
+        if not 1 <= self.max_feeds <= 50:
+            raise ValueError("max_feeds must be between 1 and 50")
         base = CanonicalUrl(self.base_url)
         _validate_public_hostname(base.host)
         seeds = _same_origin_urls(base, self.seed_urls, label="seed")
         sitemaps = _same_origin_urls(base, self.sitemap_urls, label="sitemap")
         feeds = _same_origin_urls(base, self.feed_urls, label="feed")
-        if not seeds and not sitemaps and not feeds and not self.discover_security_txt:
+        if (
+            not seeds
+            and not sitemaps
+            and not feeds
+            and not self.discover_security_txt
+            and not self.discover_sitemaps
+        ):
             raise ValueError("public web target requires an explicit discovery path")
-        reviewed_at = _optional_time(
+        reviewed_at = optional_time(
             self.authorization_reviewed_at,
             field_name="authorization_reviewed_at",
         )
-        expires_at = _optional_time(
+        expires_at = optional_time(
             self.authorization_expires_at,
             field_name="authorization_expires_at",
         )
         if reviewed_at is not None and expires_at is not None and expires_at <= reviewed_at:
             raise ValueError("authorization expiry must follow its review time")
-        reference = _optional_text(self.authorization_reference)
+        reference = optional_text(self.authorization_reference)
         if self.enabled and (reference is None or reviewed_at is None):
             raise ValueError("enabled public web target requires reviewed authorization")
-        source_id = _optional_text(self.source_id) or identifier
+        source_id = optional_text(self.source_id) or identifier
         terms_url = CanonicalUrl(self.terms_url).value if self.terms_url else None
         prefixes = self.allowed_path_prefixes
         if self.discover_security_txt and _SECURITY_TXT_PATH not in prefixes:
@@ -138,8 +168,8 @@ class PublicWebTarget:
 
 
 def load_public_web_targets(path: Path) -> tuple[PublicWebTarget, ...]:
-    payload = _load_yaml_mapping(path)
-    if _positive_int(payload, "version") != 1:
+    payload = load_yaml_mapping(path)
+    if positive_int(payload, "version") != 1:
         raise ValueError("unsupported public web target registry version")
     raw_targets = payload.get("targets")
     if not isinstance(raw_targets, list):
@@ -163,58 +193,46 @@ def load_public_web_targets(path: Path) -> tuple[PublicWebTarget, ...]:
 
 
 def _parse_target(payload: dict[str, Any]) -> PublicWebTarget:
-    authorization = _required_mapping(payload, "authorization")
-    limits = _required_mapping(payload, "limits")
+    authorization = required_mapping(payload, "authorization")
+    limits = required_mapping(payload, "limits")
     return PublicWebTarget(
-        id=_required_string(payload, "id"),
-        organization_id=UUID(_required_string(payload, "organization_id")),
-        canonical_name=_required_string(payload, "canonical_name"),
-        base_url=_required_string(payload, "base_url"),
-        seed_urls=_string_tuple(payload, "seed_urls", minimum=0),
-        sitemap_urls=_string_tuple(payload, "sitemap_urls", minimum=0),
-        feed_urls=_string_tuple(payload, "feed_urls", minimum=0),
-        discover_security_txt=_optional_bool(payload, "discover_security_txt", default=False),
-        source_id=_optional_string(payload, "source_id"),
-        allowed_path_prefixes=_string_tuple(
-            payload,
-            "allowed_path_prefixes",
-            minimum=1,
+        id=required_string(payload, "id"),
+        organization_id=UUID(required_string(payload, "organization_id")),
+        canonical_name=required_string(payload, "canonical_name"),
+        base_url=required_string(payload, "base_url"),
+        seed_urls=string_tuple(payload, "seed_urls", minimum=0),
+        sitemap_urls=string_tuple(payload, "sitemap_urls", minimum=0),
+        feed_urls=string_tuple(payload, "feed_urls", minimum=0),
+        discover_security_txt=optional_bool(payload, "discover_security_txt", default=False),
+        discover_sitemaps=optional_bool(payload, "discover_sitemaps", default=False),
+        discover_feeds=optional_bool(payload, "discover_feeds", default=False),
+        source_id=optional_string(payload, "source_id"),
+        allowed_path_prefixes=string_tuple(payload, "allowed_path_prefixes", minimum=1),
+        enabled=required_bool(payload, "enabled"),
+        authorization_reference=optional_string(authorization, "document_reference"),
+        authorization_reviewed_at=optional_datetime(authorization, "reviewed_at"),
+        authorization_expires_at=optional_datetime(authorization, "expires_at"),
+        terms_url=optional_string(payload, "terms_url"),
+        max_link_depth=optional_bounded_int(
+            limits, "max_link_depth", default=0, minimum=0, maximum=20
         ),
-        enabled=_required_bool(payload, "enabled"),
-        authorization_reference=_optional_string(
-            authorization,
-            "document_reference",
+        max_sitemap_depth=optional_bounded_int(
+            limits, "max_sitemap_depth", default=0, minimum=0, maximum=10
         ),
-        authorization_reviewed_at=_optional_datetime(
-            authorization,
-            "reviewed_at",
+        max_sitemaps=optional_bounded_int(
+            limits, "max_sitemaps", default=10, minimum=1, maximum=100
         ),
-        authorization_expires_at=_optional_datetime(
-            authorization,
-            "expires_at",
+        max_feeds=optional_bounded_int(
+            limits, "max_feeds", default=5, minimum=1, maximum=50
         ),
-        terms_url=_optional_string(payload, "terms_url"),
-        max_link_depth=_optional_bounded_int(
-            limits,
-            "max_link_depth",
-            default=0,
-            minimum=0,
-            maximum=20,
+        max_pages=bounded_int(limits, "max_pages", minimum=1, maximum=1_000),
+        max_total_bytes=bounded_int(
+            limits, "max_total_bytes", minimum=1, maximum=100_000_000
         ),
-        max_pages=_bounded_int(limits, "max_pages", minimum=1, maximum=1_000),
-        max_total_bytes=_bounded_int(
-            limits,
-            "max_total_bytes",
-            minimum=1,
-            maximum=100_000_000,
+        max_resource_bytes=bounded_int(
+            limits, "max_resource_bytes", minimum=1, maximum=20_000_000
         ),
-        max_resource_bytes=_bounded_int(
-            limits,
-            "max_resource_bytes",
-            minimum=1,
-            maximum=20_000_000,
-        ),
-        max_redirects=_bounded_int(limits, "max_redirects", minimum=0, maximum=10),
+        max_redirects=bounded_int(limits, "max_redirects", minimum=0, maximum=10),
     )
 
 
@@ -244,133 +262,3 @@ def _validate_public_hostname(host: str) -> None:
         raise ValueError("public web target host must not be an IP literal")
     if "." not in normalized:
         raise ValueError("public web target host must be a public DNS name")
-
-
-def _load_yaml_mapping(path: Path) -> dict[str, Any]:
-    if not path.is_file():
-        raise FileNotFoundError(path)
-    loaded = yaml.safe_load(path.read_text(encoding="utf-8"))
-    if not isinstance(loaded, dict):
-        raise ValueError("public web target registry root must be a mapping")
-    return loaded
-
-
-def _required_mapping(payload: dict[str, Any], key: str) -> dict[str, Any]:
-    value = payload.get(key)
-    if not isinstance(value, dict):
-        raise ValueError(f"{key} must be a mapping")
-    return value
-
-
-def _required_string(payload: dict[str, Any], key: str) -> str:
-    value = payload.get(key)
-    if not isinstance(value, str) or not value.strip():
-        raise ValueError(f"{key} must be a non-empty string")
-    return value
-
-
-def _optional_string(payload: dict[str, Any], key: str) -> str | None:
-    value = payload.get(key)
-    if value is None:
-        return None
-    if not isinstance(value, str):
-        raise ValueError(f"{key} must be a string or null")
-    return _optional_text(value)
-
-
-def _required_bool(payload: dict[str, Any], key: str) -> bool:
-    value = payload.get(key)
-    if not isinstance(value, bool):
-        raise ValueError(f"{key} must be a boolean")
-    return value
-
-
-def _optional_bool(payload: dict[str, Any], key: str, *, default: bool) -> bool:
-    value = payload.get(key, default)
-    if not isinstance(value, bool):
-        raise ValueError(f"{key} must be a boolean")
-    return value
-
-
-def _string_tuple(
-    payload: dict[str, Any],
-    key: str,
-    *,
-    minimum: int,
-) -> tuple[str, ...]:
-    value = payload.get(key, [])
-    if not isinstance(value, list) or len(value) < minimum:
-        raise ValueError(f"{key} must contain at least {minimum} item(s)")
-    result: list[str] = []
-    for item in value:
-        if not isinstance(item, str) or not item.strip():
-            raise ValueError(f"{key} items must be non-empty strings")
-        result.append(item)
-    return tuple(result)
-
-
-def _bounded_int(
-    payload: dict[str, Any],
-    key: str,
-    *,
-    minimum: int,
-    maximum: int,
-) -> int:
-    value = payload.get(key)
-    if (
-        not isinstance(value, int)
-        or isinstance(value, bool)
-        or not minimum <= value <= maximum
-    ):
-        raise ValueError(f"{key} must be between {minimum} and {maximum}")
-    return value
-
-
-def _optional_bounded_int(
-    payload: dict[str, Any],
-    key: str,
-    *,
-    default: int,
-    minimum: int,
-    maximum: int,
-) -> int:
-    value = payload.get(key, default)
-    if (
-        not isinstance(value, int)
-        or isinstance(value, bool)
-        or not minimum <= value <= maximum
-    ):
-        raise ValueError(f"{key} must be between {minimum} and {maximum}")
-    return value
-
-
-def _positive_int(payload: dict[str, Any], key: str) -> int:
-    return _bounded_int(payload, key, minimum=1, maximum=2_147_483_647)
-
-
-def _optional_datetime(payload: dict[str, Any], key: str) -> datetime | None:
-    value = payload.get(key)
-    if value is None:
-        return None
-    if isinstance(value, datetime):
-        return require_aware_utc(value, field_name=key)
-    if not isinstance(value, str):
-        raise ValueError(f"{key} must be an ISO datetime or null")
-    try:
-        parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
-    except ValueError as exc:
-        raise ValueError(f"{key} must be an ISO datetime or null") from exc
-    return require_aware_utc(parsed, field_name=key)
-
-
-def _optional_time(value: datetime | None, *, field_name: str) -> datetime | None:
-    if value is None:
-        return None
-    return require_aware_utc(value, field_name=field_name)
-
-
-def _optional_text(value: str | None) -> str | None:
-    if value is None:
-        return None
-    normalized = value.strip()
-    return normalized or None

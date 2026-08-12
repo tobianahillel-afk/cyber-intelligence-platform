@@ -11,10 +11,10 @@ from cip.adapters.sources.public_web.client import (
     PublicWebPolicyDeniedError,
     PublicWebResponseError,
 )
+from cip.adapters.sources.public_web.collection_policy import PublicWebCollectionDeniedError
 from cip.adapters.sources.public_web.collector import (
     PageCheckpoint,
     PublicWebCheckpoint,
-    PublicWebCollectionDeniedError,
     collect_public_web_target,
 )
 from cip.adapters.sources.public_web.parsing import PublicWebParseError
