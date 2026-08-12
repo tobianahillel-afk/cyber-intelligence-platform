@@ -14,7 +14,10 @@ contract:
     search_engine_id_secret_ref: null
   browser_route:
     enabled: false
-    provider_permission_evidence_id: null
+    provider_permission_evidence_id: google-browser-authorization-2023-11-07-historical
+    provider_permission_verified: false
+    provider_permission_issued_at: 2023-11-07
+    provider_permission_expires_at: 2024-11-07
     human_checkpoint_required: true
     captcha_bypass_allowed: false
     anti_bot_bypass_allowed: false
