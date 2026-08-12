@@ -78,10 +78,7 @@ def main() -> None:
         for projection in batch.projections
     ):
         raise RuntimeError("SA16-L02 recursive crawl escaped the approved origin")
-    if any(
-        projection.resource.source_url == homepage
-        for projection in linked
-    ):
+    if any(projection.version.source_locator is None for projection in linked):
         raise RuntimeError("SA16-L02 linked child lost its discovery source locator")
 
     print(
