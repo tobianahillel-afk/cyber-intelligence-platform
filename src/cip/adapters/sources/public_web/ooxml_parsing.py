@@ -22,6 +22,11 @@ _MAX_ENTRY_BYTES = 2_000_000
 _MAX_COMPRESSION_RATIO = 100
 _MAX_EXTRACTED_CHARS = 100_000
 _MAX_TITLE_CHARS = 1_000
+_FORBIDDEN_XML_DECLARATION_MARKERS = tuple(
+    marker.encode(encoding)
+    for marker in ("<!doctype", "<!entity")
+    for encoding in ("ascii", "utf-16-le", "utf-16-be", "utf-32-le", "utf-32-be")
+)
 
 
 @dataclass(frozen=True, slots=True)
@@ -194,18 +199,14 @@ def _extract_package_text(
     entries: dict[str, ZipInfo],
     spec: _PackageSpec,
 ) -> str:
+    main_root = _read_xml(archive, entries[spec.main_part])
     if spec.mime_type == DOCX_MIME:
-        values = _docx_values(archive, entries)
+        values = _paragraph_values(main_root)
     elif spec.mime_type == XLSX_MIME:
         values = _xlsx_values(archive, entries)
     else:
         values = _pptx_values(archive, entries)
     return _bounded_text(values)
-
-
-def _docx_values(archive: ZipFile, entries: dict[str, ZipInfo]) -> list[str]:
-    root = _read_xml(archive, entries["word/document.xml"])
-    return _text_nodes(root)
 
 
 def _pptx_values(archive: ZipFile, entries: dict[str, ZipInfo]) -> list[str]:
@@ -216,7 +217,7 @@ def _pptx_values(archive: ZipFile, entries: dict[str, ZipInfo]) -> list[str]:
         if name.startswith("ppt/slides/slide") and name.endswith(".xml")
     )
     for name in names:
-        values.extend(_text_nodes(_read_xml(archive, entries[name])))
+        values.extend(_paragraph_values(_read_xml(archive, entries[name])))
     return values
 
 
@@ -248,14 +249,14 @@ def _shared_strings(archive: ZipFile, entries: dict[str, ZipInfo]) -> tuple[str,
     for item in root.iter():
         if _local_name(item.tag) != "si":
             continue
-        strings.append(" ".join(_text_nodes(item)))
+        strings.append(_joined_text_nodes(item))
     return tuple(strings)
 
 
 def _xlsx_cell_value(cell: ElementTree.Element, shared: tuple[str, ...]) -> str | None:
     cell_type = cell.attrib.get("t", "")
     if cell_type == "inlineStr":
-        value = " ".join(_text_nodes(cell))
+        value = _joined_text_nodes(cell)
         return value or None
     raw = _first_child_text(cell, "v")
     if raw is None:
@@ -281,15 +282,27 @@ def _first_child_text(parent: ElementTree.Element, local_name: str) -> str | Non
     return None
 
 
-def _text_nodes(root: ElementTree.Element) -> list[str]:
+def _paragraph_values(root: ElementTree.Element) -> list[str]:
     values: list[str] = []
     for node in root.iter():
-        if _local_name(node.tag) != "t" or node.text is None:
+        if _local_name(node.tag) != "p":
             continue
-        normalized = " ".join(node.text.split())
-        if normalized:
-            values.append(normalized)
-    return values
+        value = _joined_text_nodes(node)
+        if value:
+            values.append(value)
+    if values:
+        return values
+    fallback = _joined_text_nodes(root)
+    return [fallback] if fallback else []
+
+
+def _joined_text_nodes(root: ElementTree.Element) -> str:
+    raw = "".join(
+        node.text
+        for node in root.iter()
+        if _local_name(node.tag) == "t" and node.text is not None
+    )
+    return " ".join(raw.split())
 
 
 def _read_xml(archive: ZipFile, info: ZipInfo) -> ElementTree.Element:
@@ -300,7 +313,7 @@ def _read_xml(archive: ZipFile, info: ZipInfo) -> ElementTree.Element:
     if len(data) > _MAX_ENTRY_BYTES:
         raise PublicDocumentParseError("Office Open XML XML part exceeds the parser byte limit")
     lowered = data.lower()
-    if b"<!doctype" in lowered or b"<!entity" in lowered:
+    if any(marker in lowered for marker in _FORBIDDEN_XML_DECLARATION_MARKERS):
         raise PublicDocumentParseError("Office Open XML XML declarations are not permitted")
     try:
         return ElementTree.fromstring(data)
