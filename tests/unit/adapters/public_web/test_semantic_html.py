@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from datetime import UTC, datetime, timedelta
 from uuid import UUID, uuid4
 
@@ -66,6 +67,61 @@ def test_malformed_or_irrelevant_json_does_not_break_semantic_extraction() -> No
     assert extracted.semantic_text == "Public description"
     assert extracted.structured_text == ""
     assert extracted.structured_record_count == 0
+
+
+def test_json_lists_supply_timestamp_fallbacks_and_twitter_title() -> None:
+    body = b"""
+    <meta name="twitter:title" content="Fallback title">
+    <meta name="description" content="   ">
+    <meta property="article:published_time" content="not-a-date">
+    <script type="application/json">
+    [
+      {
+        "datePublished": "2026-08-05",
+        "dateModified": "2026-08-06T07:08:09",
+        "keywords": ["Kubernetes", 7, true, ""]
+      },
+      {"name": "Kubernetes", "ignored": "not evidence"}
+    ]
+    </script>
+    """
+
+    extracted = extract_semantic_html(body)
+
+    assert extracted.preferred_title == "Fallback title"
+    assert extracted.published_at == datetime(2026, 8, 5, tzinfo=UTC)
+    assert extracted.source_updated_at == datetime(2026, 8, 6, 7, 8, 9, tzinfo=UTC)
+    assert extracted.structured_text.count("Kubernetes") == 1
+    assert "7" in extracted.structured_text
+    assert "True" in extracted.structured_text
+    assert "not evidence" not in extracted.structured_text
+    assert extracted.structured_record_count == 1
+
+
+def test_structured_script_count_and_depth_are_bounded() -> None:
+    scripts = "".join(
+        f'<script type="application/json">{{"name":"record-{index}"}}</script>'
+        for index in range(9)
+    )
+    nested: object = "too deep"
+    for _ in range(14):
+        nested = {"about": nested}
+    body = (
+        '<meta name="unknown" content="ignored">'
+        '<meta name="author">'
+        '<script type="application/json"></script>'
+        f"{scripts}"
+        f'<script type="application/ld+json">{json.dumps(nested)}</script>'
+    ).encode()
+
+    extracted = extract_semantic_html(body)
+
+    assert extracted.structured_record_count == 8
+    for index in range(8):
+        assert f"record-{index}" in extracted.structured_text
+    assert "record-8" not in extracted.structured_text
+    assert "too deep" not in extracted.structured_text
+    assert "ignored" not in extracted.semantic_text
 
 
 def test_mapper_keeps_structured_claim_basis_and_semantic_source_timestamps() -> None:
