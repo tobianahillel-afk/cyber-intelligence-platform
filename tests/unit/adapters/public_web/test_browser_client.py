@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from datetime import UTC, datetime
+from urllib.robotparser import RobotFileParser
 from uuid import uuid4
 
 import httpx
@@ -37,7 +38,7 @@ _NOW = datetime(2026, 8, 13, 12, tzinfo=UTC)
 def test_browser_client_rejects_robots_denied_page() -> None:
     with httpx.Client(transport=httpx.MockTransport(_unused_transport)) as http_client:
         client = BrowserPublicWebClient(http_client, _entry(), collected_at=_NOW)
-        robots = RobotsRules.from_text("User-agent: *\nDisallow: /private\n")
+        robots = _robots_rules("User-agent: *\nDisallow: /private\n")
 
         with pytest.raises(PublicWebPolicyDeniedError, match="robots.txt denied"):
             client.fetch_page(
@@ -71,7 +72,7 @@ def test_browser_client_maps_runtime_errors(
             client.fetch_page(
                 _target(),
                 "https://example.com/app",
-                RobotsRules.allow_all(),
+                _robots_rules(),
                 usage=CrawlUsage(),
             )
 
@@ -116,7 +117,7 @@ def test_browser_client_authorization_callback_uses_source_policy(
         result = client.fetch_page(
             _target(),
             "https://example.com/app",
-            RobotsRules.allow_all(),
+            _robots_rules(),
             usage=CrawlUsage(),
             etag='"ignored"',
             last_modified="ignored",
@@ -124,6 +125,18 @@ def test_browser_client_authorization_callback_uses_source_policy(
 
     assert result.body == b"<html><body>Rendered</body></html>"
     assert authorized == [("https://example.com/app", _NOW)]
+
+
+def _robots_rules(text: str = "User-agent: *\nAllow: /\n") -> RobotsRules:
+    parser = RobotFileParser()
+    parser.set_url("https://example.com/robots.txt")
+    parser.parse(text.splitlines())
+    return RobotsRules(
+        parser=parser,
+        source_url="https://example.com/robots.txt",
+        missing=False,
+        bytes_fetched=len(text.encode("utf-8")),
+    )
 
 
 def _unused_transport(request: httpx.Request) -> httpx.Response:
