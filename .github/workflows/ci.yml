@@ -47,6 +47,11 @@ jobs:
       - name: Install project
         run: python -m pip install -e '.[dev]'
 
+      - name: Verify standard runtime imports without browser bindings
+        run: >-
+          python -c
+          "import cip.modules.collection_orchestration.application.adapter_composition"
+
       - name: Install isolated browser bindings for static analysis and unit tests
         run: python -m pip install playwright==1.61.0
 
