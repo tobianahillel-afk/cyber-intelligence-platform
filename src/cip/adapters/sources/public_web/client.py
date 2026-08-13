@@ -1,12 +1,18 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from urllib.parse import urljoin
+from urllib.parse import urljoin, urlsplit
 from urllib.robotparser import RobotFileParser
 
 import httpx
 
 from cip import __version__
+from cip.adapters.sources.public_web.ooxml_parsing import (
+    DOCX_MIME,
+    PPTX_MIME,
+    XLSX_MIME,
+    detect_ooxml_mime,
+)
 from cip.adapters.sources.public_web.registry import PublicWebTarget
 from cip.modules.public_footprint.domain.scope import CrawlUsage
 from cip.modules.public_footprint.domain.url_identity import CanonicalUrl, same_origin
@@ -27,6 +33,7 @@ _FEED_MIME_TYPES = {
     "text/xml",
 }
 _NOT_MODIFIED_MIME_TYPE = "application/x-public-resource-not-modified"
+_OCTET_STREAM_MIME_TYPE = "application/octet-stream"
 
 
 class PublicWebResponseError(RuntimeError):
@@ -89,7 +96,7 @@ class PublicWebClient:
             raise PublicWebResponseError("robots.txt redirects are not followed")
         response.raise_for_status()
         mime_type = _content_type(response)
-        if mime_type not in {"text/plain", "application/octet-stream"}:
+        if mime_type not in {"text/plain", _OCTET_STREAM_MIME_TYPE}:
             raise PublicWebResponseError("robots.txt returned an unexpected content type")
         body = _bounded_body(response, max_bytes=self.ROBOTS_MAX_BYTES)
         lines = body.decode("utf-8", errors="replace").splitlines()
@@ -141,7 +148,7 @@ class PublicWebClient:
         if mime_type not in {
             "application/xml",
             "text/xml",
-            "application/octet-stream",
+            _OCTET_STREAM_MIME_TYPE,
         }:
             raise PublicWebResponseError("sitemap returned an unexpected content type")
         return PublicWebFetchResult(
@@ -274,6 +281,7 @@ class PublicWebClient:
             response.raise_for_status()
             mime_type = _content_type(response)
             body = _bounded_body(response, max_bytes=target.max_resource_bytes)
+            mime_type = _normalized_page_mime(current, mime_type, body)
             response_decision = target.crawl_scope.evaluate_response(
                 mime_type=mime_type,
                 resource_bytes=len(body),
@@ -300,7 +308,10 @@ def _page_headers(
     last_modified: str | None,
 ) -> dict[str, str]:
     headers = {
-        "Accept": "text/html,application/pdf,text/plain;q=0.9,*/*;q=0.1",
+        "Accept": (
+            "text/html,application/pdf,text/plain,"
+            f"{DOCX_MIME},{XLSX_MIME},{PPTX_MIME};q=0.9,*/*;q=0.1"
+        ),
         "User-Agent": _USER_AGENT,
     }
     if include_validators and etag is not None:
@@ -308,6 +319,13 @@ def _page_headers(
     if include_validators and last_modified is not None:
         headers["If-Modified-Since"] = last_modified
     return headers
+
+
+def _normalized_page_mime(url: str, mime_type: str, body: bytes) -> str:
+    if mime_type != _OCTET_STREAM_MIME_TYPE:
+        return mime_type
+    detected = detect_ooxml_mime(body, url_path=urlsplit(url).path)
+    return detected or mime_type
 
 
 def _robots_sitemaps(
