@@ -29,6 +29,7 @@ class _PackageSpec:
     mime_type: str
     main_part: str
     main_content_type: str
+    extension: str
 
 
 _SPECS = {
@@ -38,6 +39,7 @@ _SPECS = {
         main_content_type=(
             "application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"
         ),
+        extension=".docx",
     ),
     XLSX_MIME: _PackageSpec(
         mime_type=XLSX_MIME,
@@ -45,6 +47,7 @@ _SPECS = {
         main_content_type=(
             "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"
         ),
+        extension=".xlsx",
     ),
     PPTX_MIME: _PackageSpec(
         mime_type=PPTX_MIME,
@@ -52,8 +55,28 @@ _SPECS = {
         main_content_type=(
             "application/vnd.openxmlformats-officedocument.presentationml.presentation.main+xml"
         ),
+        extension=".pptx",
     ),
 }
+
+
+def detect_ooxml_mime(body: bytes, *, url_path: str) -> str | None:
+    if not body or len(body) > _MAX_PACKAGE_BYTES or not body.startswith(b"PK"):
+        return None
+    try:
+        with ZipFile(BytesIO(body), mode="r", allowZip64=False) as archive:
+            entries = _validate_archive(archive)
+            matches = [
+                spec
+                for spec in _SPECS.values()
+                if url_path.casefold().endswith(spec.extension)
+                and _matches_content_type(archive, entries, spec)
+            ]
+    except (PublicDocumentParseError, BadZipFile, LargeZipFile, OSError, RuntimeError):
+        return None
+    if len(matches) != 1:
+        return None
+    return matches[0].mime_type
 
 
 def extract_ooxml_text(body: bytes, *, mime_type: str) -> ExtractedDocument:
@@ -124,13 +147,13 @@ def _compression_ratio(info: ZipInfo) -> int:
     return (info.file_size + info.compress_size - 1) // info.compress_size
 
 
-def _validate_content_types(
+def _matches_content_type(
     archive: ZipFile,
     entries: dict[str, ZipInfo],
     spec: _PackageSpec,
-) -> None:
+) -> bool:
     if "[Content_Types].xml" not in entries or spec.main_part not in entries:
-        raise PublicDocumentParseError("Office Open XML package is missing required parts")
+        return False
     root = _read_xml(archive, entries["[Content_Types].xml"])
     expected_part = f"/{spec.main_part}"
     for node in root.iter():
@@ -139,8 +162,17 @@ def _validate_content_types(
         if node.attrib.get("PartName") != expected_part:
             continue
         actual = node.attrib.get("ContentType", "").casefold()
-        if actual == spec.main_content_type.casefold():
-            return
+        return actual == spec.main_content_type.casefold()
+    return False
+
+
+def _validate_content_types(
+    archive: ZipFile,
+    entries: dict[str, ZipInfo],
+    spec: _PackageSpec,
+) -> None:
+    if _matches_content_type(archive, entries, spec):
+        return
     raise PublicDocumentParseError("Office Open XML package type does not match the response MIME")
 
 
