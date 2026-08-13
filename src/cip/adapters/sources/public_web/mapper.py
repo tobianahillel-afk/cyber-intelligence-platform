@@ -38,6 +38,7 @@ from cip.modules.source_governance.domain.models import DataCategory
 __all__ = ("MappedPublicPage", "PreviousPageState", "map_public_page")
 
 _NOT_MODIFIED_STATUS = 304
+_DEFAULT_ADAPTER_ID = "public-web-sitemap"
 _TECHNOLOGY_TERMS = (
     "amazon web services",
     "aws",
@@ -79,6 +80,7 @@ def map_public_page(
     discovery_method: DiscoveryMethod = DiscoveryMethod.SITEMAP,
     discovery_source_url: str | None = None,
     allow_claims: bool = True,
+    adapter_id: str = _DEFAULT_ADAPTER_ID,
 ) -> MappedPublicPage:
     not_modified = result.status_code == _NOT_MODIFIED_STATUS
     if not_modified:
@@ -147,6 +149,7 @@ def map_public_page(
             extracted=extracted,
             tombstoned=tombstoned,
             include_technology_category=allow_claims,
+            adapter_id=adapter_id,
         )
     )
     return MappedPublicPage(
@@ -205,13 +208,14 @@ def _observation(
     extracted: ExtractedPublicContent | None,
     tombstoned: bool,
     include_technology_category: bool,
+    adapter_id: str,
 ) -> RawObservation:
     categories = {DataCategory.OFFICIAL_DOCUMENT_DISCOVERY}
     if not tombstoned and include_technology_category:
         categories.add(DataCategory.TECHNOLOGY_OBSERVATION)
     return RawObservation(
         source_id=target.source_id or target.id,
-        adapter_id="public-web-sitemap",
+        adapter_id=adapter_id,
         adapter_version="1",
         collection_job_id=collection_job_id,
         source_record_type=(
