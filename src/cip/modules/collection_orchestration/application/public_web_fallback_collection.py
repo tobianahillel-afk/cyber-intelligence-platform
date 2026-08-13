@@ -1,8 +1,5 @@
 from __future__ import annotations
 
-from datetime import datetime
-from uuid import UUID
-
 import httpx
 
 from cip.adapters.sources.public_web.browser_fallback import (
@@ -15,6 +12,9 @@ from cip.adapters.sources.public_web.collector import (
     collect_public_web_target,
 )
 from cip.adapters.sources.public_web.registry import PublicWebTarget
+from cip.modules.collection_orchestration.application.public_web_fallback_context import (
+    PublicWebFallbackRunContext,
+)
 from cip.modules.source_governance.infrastructure.registry import SourceRegistryEntry
 
 
@@ -24,32 +24,27 @@ def collect_with_browser_fallback(
     target: PublicWebTarget,
     *,
     policy: BrowserFallbackPolicy,
-    collection_job_id: UUID,
-    collected_at: datetime,
-    retention_until: datetime,
     checkpoint: PublicWebCheckpoint | None,
-    timeout_seconds: float,
-    transport: httpx.BaseTransport | None,
-    adapter_id: str,
+    run: PublicWebFallbackRunContext,
 ) -> PublicWebCollectionBatch:
     with httpx.Client(
-        timeout=timeout_seconds,
+        timeout=run.timeout_seconds,
         follow_redirects=False,
-        transport=transport,
+        transport=run.transport,
     ) as http_client:
         client = FallbackPublicWebClient(
             http_client,
             browser_entry,
-            collected_at=collected_at,
+            collected_at=run.collected_at,
             policy=policy,
         )
         return collect_public_web_target(
             client,
             static_entry,
             target,
-            collection_job_id=collection_job_id,
-            collected_at=collected_at,
-            retention_until=retention_until,
+            collection_job_id=run.collection_job_id,
+            collected_at=run.collected_at,
+            retention_until=run.retention_until,
             checkpoint=checkpoint,
-            adapter_id=adapter_id,
+            adapter_id=run.adapter_id,
         )
