@@ -98,7 +98,7 @@ def main() -> None:
         ):
             raise RuntimeError(f"SA16-L08 lost observation provenance: {target.base_url}")
         if any(
-            not projection.resource.canonical_url.startswith(target.origin)
+            not projection.resource.canonical_url.startswith(target.base_url)
             for projection in batch.public_footprint_projections
         ):
             raise RuntimeError(f"SA16-L08 escaped approved origin: {target.base_url}")
