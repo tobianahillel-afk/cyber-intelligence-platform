@@ -198,7 +198,7 @@ def _entry() -> SourceRegistryEntry:
             status=SourceStatus.ENABLED,
             source_type=SourceType.STATIC_HTTP,
             owner="Example",
-            terms_url=None,
+            terms_url="https://example.com/terms",
             allowed_data_categories=frozenset(
                 {
                     DataCategory.OFFICIAL_DOCUMENT_DISCOVERY,
