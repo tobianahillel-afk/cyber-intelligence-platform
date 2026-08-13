@@ -45,7 +45,9 @@ from cip.modules.collection_orchestration.application.ports import CollectionAda
 from cip.modules.collection_orchestration.application.procurement_funding_registration import (
     register_procurement_funding_adapters,
 )
-from cip.modules.collection_orchestration.application.public_web_adapter import PublicWebAdapter
+from cip.modules.collection_orchestration.application.public_web_registration import (
+    register_public_web_adapters,
+)
 from cip.modules.collection_orchestration.application.reference_adapter import (
     ReferencePortfolioAdapter,
 )
@@ -132,7 +134,7 @@ def build_runtime_adapters(
         inputs.identity_targets,
         timeout_seconds=timeout_seconds,
     )
-    _register_public_web_adapters(
+    register_public_web_adapters(
         adapters,
         entries_by_id,
         inputs.public_web_targets,
@@ -245,27 +247,6 @@ def _register_if_present(
     entry = entries_by_id.get(adapter_type.source_id)
     if entry is not None:
         _register(adapters, adapter_type(entry, timeout_seconds=timeout_seconds))
-
-
-def _register_public_web_adapters(
-    adapters: dict[tuple[str, str], CollectionAdapter],
-    entries_by_id: dict[str, SourceRegistryEntry],
-    targets: tuple[PublicWebTarget, ...],
-    *,
-    timeout_seconds: float,
-) -> None:
-    for target in targets:
-        if not target.enabled:
-            continue
-        entry = entries_by_id.get(target.id)
-        if entry is None:
-            raise ValueError(
-                f"enabled public web target has no source policy: {target.id}"
-            )
-        _register(
-            adapters,
-            PublicWebAdapter(entry, target, timeout_seconds=timeout_seconds),
-        )
 
 
 def _register(
