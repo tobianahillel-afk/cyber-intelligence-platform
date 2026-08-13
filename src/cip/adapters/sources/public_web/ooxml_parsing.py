@@ -73,7 +73,9 @@ def extract_ooxml_text(body: bytes, *, mime_type: str) -> ExtractedDocument:
     except PublicDocumentParseError:
         raise
     except (BadZipFile, LargeZipFile, OSError, RuntimeError) as exc:
-        raise PublicDocumentParseError("Office Open XML package could not be parsed safely") from exc
+        raise PublicDocumentParseError(
+            "Office Open XML package could not be parsed safely"
+        ) from exc
     return ExtractedDocument(title=title, language=None, text=text)
 
 
@@ -90,14 +92,18 @@ def _validate_archive(archive: ZipFile) -> dict[str, ZipInfo]:
         if info.flag_bits & 0x1:
             raise PublicDocumentParseError("encrypted Office Open XML entries are not processed")
         if name.casefold().endswith("vbaproject.bin"):
-            raise PublicDocumentParseError("macro-bearing Office Open XML packages are not processed")
+            raise PublicDocumentParseError(
+                "macro-bearing Office Open XML packages are not processed"
+            )
         if info.file_size < 0 or info.file_size > _MAX_ENTRY_BYTES:
             raise PublicDocumentParseError("Office Open XML entry exceeds the parser byte limit")
         total_uncompressed += info.file_size
         if total_uncompressed > _MAX_TOTAL_UNCOMPRESSED_BYTES:
             raise PublicDocumentParseError("Office Open XML package exceeds the expansion limit")
         if _compression_ratio(info) > _MAX_COMPRESSION_RATIO:
-            raise PublicDocumentParseError("Office Open XML entry exceeds the compression-ratio limit")
+            raise PublicDocumentParseError(
+                "Office Open XML entry exceeds the compression-ratio limit"
+            )
         entries[name] = info
     return entries
 
