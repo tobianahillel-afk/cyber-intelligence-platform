@@ -8,8 +8,9 @@ import httpx
 
 from cip.adapters.sources.public_web.browser_fallback import BrowserFallbackPolicy
 from cip.adapters.sources.public_web.registry import PublicWebTarget
-from cip.modules.collection_orchestration.application.ports import (
-    AdapterCollectionBatch,
+from cip.modules.collection_orchestration.application.ports import AdapterCollectionBatch
+from cip.modules.collection_orchestration.application.public_web_fallback_context import (
+    PublicWebFallbackRunContext,
 )
 from cip.modules.collection_orchestration.application.public_web_fallback_execution import (
     execute_public_web_fallback,
@@ -54,16 +55,19 @@ class PublicWebFallbackAdapter:
         collected_at: datetime,
         retention_until: datetime,
     ) -> AdapterCollectionBatch:
+        run = PublicWebFallbackRunContext(
+            collection_job_id,
+            collected_at,
+            retention_until,
+            self._timeout_seconds,
+            self._transport,
+            self.adapter_id,
+        )
         return execute_public_web_fallback(
             self._static_entry,
             self._browser_entry,
             self._target,
             policy=self._fallback_policy,
-            collection_job_id=collection_job_id,
             checkpoint_payload=checkpoint_payload,
-            collected_at=collected_at,
-            retention_until=retention_until,
-            timeout_seconds=self._timeout_seconds,
-            transport=self._transport,
-            adapter_id=self.adapter_id,
+            run=run,
         )
