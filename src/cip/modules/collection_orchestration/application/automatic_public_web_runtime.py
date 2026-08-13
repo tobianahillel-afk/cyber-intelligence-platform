@@ -16,6 +16,7 @@ from cip.modules.collection_orchestration.application.public_web_adapter import 
 from cip.modules.collection_orchestration.domain.models import SourceSchedule
 from cip.modules.organizations.domain.entities import Organization
 from cip.modules.organizations.infrastructure.models import OrganizationRecord
+from cip.shared.config.settings import Settings
 from cip.shared.kernel.time import require_aware_utc
 
 
@@ -52,6 +53,22 @@ class AutomaticPublicWebRuntimeConfig:
             max_total_bytes=self.max_total_bytes,
             max_resource_bytes=self.max_resource_bytes,
             max_redirects=self.max_redirects,
+        )
+
+    @classmethod
+    def from_settings(cls, settings: Settings) -> AutomaticPublicWebRuntimeConfig:
+        return cls(
+            enabled=settings.automatic_public_web_enabled,
+            organization_ids=settings.automatic_public_web_organization_ids,
+            authorization_reference=settings.automatic_public_web_authorization_reference,
+            reviewed_at=settings.automatic_public_web_reviewed_at,
+            expires_at=settings.automatic_public_web_expires_at,
+            refresh_interval_seconds=settings.automatic_public_web_refresh_interval_seconds,
+            max_link_depth=settings.automatic_public_web_max_link_depth,
+            max_pages=settings.automatic_public_web_max_pages,
+            max_total_bytes=settings.automatic_public_web_max_total_bytes,
+            max_resource_bytes=settings.automatic_public_web_max_resource_bytes,
+            max_redirects=settings.automatic_public_web_max_redirects,
         )
 
 
