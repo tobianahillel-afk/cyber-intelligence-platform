@@ -215,7 +215,11 @@ def test_browser_render_uses_sandbox_and_isolated_context(monkeypatch: pytest.Mo
     }
     assert browser.chromium.browser.context.closed
     assert browser.chromium.browser.closed
-    assert authorized == ["https://example.com/app", "https://example.com/app"]
+    assert authorized == [
+        "https://example.com/app",
+        "https://example.com/app",
+        "https://example.com/app",
+    ]
 
 
 def test_browser_blocks_cross_origin_subresource_without_leaving_scope(
