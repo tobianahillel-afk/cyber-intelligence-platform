@@ -19,15 +19,14 @@ from cip.modules.public_footprint.domain import ClaimEvidenceBasis
 _ORG_ID = UUID("77777777-7777-7777-7777-777777777777")
 _PUBLISHED_AT = datetime(2026, 8, 13, 8, 0, tzinfo=UTC)
 _UPDATED_AT = datetime(2026, 8, 13, 8, 30, tzinfo=UTC)
-_HTML = b"""<html lang="en"><head>
-<meta property="og:title" content="SA16 L05 Semantic Live">
-<meta name="description" content="Zero Trust public semantic evidence">
-<meta property="article:published_time" content="2026-08-13T08:00:00Z">
-<meta property="article:modified_time" content="2026-08-13T08:30:00Z">
-<script type="application/ld+json">
-{"@type":"TechArticle","description":"Kubernetes structured live evidence"}
-</script>
-</head><body>Controlled public-web extraction proof.</body></html>"""
+_HTML = (
+    b'<meta property="og:title" content="SA16 L05 Semantic Live">'
+    b'<meta name="description" content="Zero Trust">'
+    b'<meta property="article:published_time" content="2026-08-13T08:00:00Z">'
+    b'<script type="application/ld+json">'
+    b'{"description":"Kubernetes","dateModified":"2026-08-13T08:30:00Z"}'
+    b"</script>"
+)
 
 
 def main() -> None:
