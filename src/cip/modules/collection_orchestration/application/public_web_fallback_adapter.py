@@ -6,27 +6,10 @@ from uuid import UUID
 
 import httpx
 
-from cip.adapters.sources.public_web.browser_fallback import (
-    BrowserFallbackPolicy,
-    FallbackPublicWebClient,
-)
-from cip.adapters.sources.public_web.checkpoint import (
-    PublicWebCheckpointError,
-    dump_checkpoint,
-    load_checkpoint,
-)
-from cip.adapters.sources.public_web.client import (
-    PublicWebPolicyDeniedError,
-    PublicWebResponseError,
-)
-from cip.adapters.sources.public_web.collection_policy import PublicWebCollectionDeniedError
-from cip.adapters.sources.public_web.collector import collect_public_web_target
-from cip.adapters.sources.public_web.parsing import PublicWebParseError
+from cip.adapters.sources.public_web.browser_fallback import BrowserFallbackPolicy
 from cip.adapters.sources.public_web.registry import PublicWebTarget
-from cip.modules.collection_orchestration.application.ports import (
-    AdapterCollectionBatch,
-    AdapterExecutionError,
-)
+from cip.modules.collection_orchestration.application.ports import AdapterCollectionBatch
+from cip.modules.collection_orchestration.application.public_web_fallback_execution import execute_public_web_fallback
 from cip.modules.source_governance.domain.models import DataCategory, SourceType
 from cip.modules.source_governance.infrastructure.registry import SourceRegistryEntry
 
@@ -43,6 +26,7 @@ class PublicWebFallbackAdapter:
         *,
         fallback_policy: BrowserFallbackPolicy,
         timeout_seconds: float = 30.0,
+        transport: httpx.BaseTransport | None = None,
     ) -> None:
         if static_entry.policy.id != target.source_id:
             raise ValueError("fallback adapter requires matching static source identity")
@@ -56,3 +40,26 @@ class PublicWebFallbackAdapter:
         self._target = target
         self._fallback_policy = fallback_policy
         self._timeout_seconds = timeout_seconds
+        self._transport = transport
+
+    def collect(
+        self,
+        *,
+        collection_job_id: UUID,
+        checkpoint_payload: Mapping[str, object] | None,
+        collected_at: datetime,
+        retention_until: datetime,
+    ) -> AdapterCollectionBatch:
+        return execute_public_web_fallback(
+            self._static_entry,
+            self._browser_entry,
+            self._target,
+            policy=self._fallback_policy,
+            collection_job_id=collection_job_id,
+            checkpoint_payload=checkpoint_payload,
+            collected_at=collected_at,
+            retention_until=retention_until,
+            timeout_seconds=self._timeout_seconds,
+            transport=self._transport,
+            adapter_id=self.adapter_id,
+        )
