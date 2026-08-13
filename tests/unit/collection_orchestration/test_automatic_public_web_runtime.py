@@ -107,6 +107,50 @@ def test_automatic_public_web_runtime_builds_distinct_target_jobs(tmp_path) -> N
     }
 
 
+def test_automatic_public_web_runtime_rejects_missing_approved_org(tmp_path) -> None:
+    missing = uuid4()
+    factory = _factory(tmp_path)
+    config = AutomaticPublicWebRuntimeConfig(
+        enabled=True,
+        organization_ids=(missing,),
+        authorization_reference="sa16-l08-approved-runtime-targets",
+        reviewed_at=_NOW,
+    )
+    with (
+        session_scope(factory) as session,
+        pytest.raises(ValueError, match="organization not found"),
+    ):
+        build_automatic_public_web_runtime(
+            session,
+            config,
+            now=_NOW,
+            timeout_seconds=5.0,
+        )
+
+
+def test_automatic_public_web_runtime_rejects_org_without_website(tmp_path) -> None:
+    organization_id = uuid4()
+    factory = _factory(tmp_path)
+    with session_scope(factory) as session:
+        session.add(_record(organization_id, "No Website", None))
+    config = AutomaticPublicWebRuntimeConfig(
+        enabled=True,
+        organization_ids=(organization_id,),
+        authorization_reference="sa16-l08-approved-runtime-targets",
+        reviewed_at=_NOW,
+    )
+    with (
+        session_scope(factory) as session,
+        pytest.raises(ValueError, match="has no website"),
+    ):
+        build_automatic_public_web_runtime(
+            session,
+            config,
+            now=_NOW,
+            timeout_seconds=5.0,
+        )
+
+
 def _factory(tmp_path):
     engine = create_database_engine(f"sqlite+pysqlite:///{tmp_path / 'automatic-web.db'}")
     get_metadata().create_all(engine)
