@@ -133,9 +133,7 @@ def test_execution_returns_canonical_batch(monkeypatch: pytest.MonkeyPatch) -> N
         "dump_checkpoint",
         lambda checkpoint: {"dumped": True},
     )
-
     batch = _execute()
-
     assert batch.observations == ()
     assert batch.not_modified is True
     assert batch.checkpoint_payload == {"dumped": True}
@@ -147,7 +145,6 @@ def test_execution_maps_invalid_checkpoint(monkeypatch: pytest.MonkeyPatch) -> N
         raise PublicWebCheckpointError("bad checkpoint")
 
     monkeypatch.setattr(public_web_fallback_execution, "load_checkpoint", bad_checkpoint)
-
     error = _raised_execution_error()
     assert error.error_code == "invalid_checkpoint"
     assert error.retryable is False
@@ -170,7 +167,6 @@ def test_execution_maps_source_errors(
     retryable: bool,
 ) -> None:
     _raise_from_collection(monkeypatch, source_error)
-
     error = _raised_execution_error()
     assert error.error_code == error_code
     assert error.retryable is retryable
@@ -188,7 +184,6 @@ def test_execution_maps_http_status(
         monkeypatch,
         httpx.HTTPStatusError("status", request=request, response=response),
     )
-
     error = _raised_execution_error()
     assert error.error_code == f"http_{status}"
     assert error.retryable is retryable
@@ -205,11 +200,21 @@ def test_collection_helper_uses_fallback_client_and_collector(
     seen: dict[str, object] = {}
 
     class FakeFallbackClient:
-        def __init__(self, client: httpx.Client, entry: SourceRegistryEntry, **kwargs: object) -> None:
+        def __init__(
+            self,
+            client: httpx.Client,
+            entry: SourceRegistryEntry,
+            **kwargs: object,
+        ) -> None:
             seen["entry"] = entry
             seen["client"] = client
 
-    def fake_collect(client: object, entry: object, actual_target: object, **kwargs: object):
+    def fake_collect(
+        client: object,
+        entry: object,
+        actual_target: object,
+        **kwargs: object,
+    ):
         seen["adapter_id"] = kwargs["adapter_id"]
         seen["target"] = actual_target
         return sentinel
@@ -224,7 +229,6 @@ def test_collection_helper_uses_fallback_client_and_collector(
         "collect_public_web_target",
         fake_collect,
     )
-
     result = public_web_fallback_collection.collect_with_browser_fallback(
         static_entry,
         browser_entry,
@@ -233,7 +237,6 @@ def test_collection_helper_uses_fallback_client_and_collector(
         checkpoint=None,
         run=run,
     )
-
     assert result is sentinel
     assert seen["entry"] is browser_entry
     assert seen["target"] is target
