@@ -12,6 +12,7 @@ from cip.adapters.sources.public_web.ooxml_parsing import (
     DOCX_MIME,
     PPTX_MIME,
     XLSX_MIME,
+    detect_ooxml_mime,
     extract_ooxml_text,
 )
 from cip.adapters.sources.public_web.page_representation import resource_kind
@@ -35,6 +36,32 @@ def test_extracts_docx_text_and_core_title() -> None:
 
     assert extracted.title == "Security architecture"
     assert extracted.text == "Zero Trust Kubernetes"
+
+
+def test_strictly_detects_docx_octet_stream_by_extension_and_package_type() -> None:
+    body = _package(
+        main_part="word/document.xml",
+        main_content_type=(
+            "application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"
+        ),
+        parts={"word/document.xml": _word_xml("Kubernetes")},
+    )
+
+    assert detect_ooxml_mime(body, url_path="/downloads/report.DOCX") == DOCX_MIME
+    assert detect_ooxml_mime(body, url_path="/downloads/report.bin") is None
+    assert detect_ooxml_mime(b"not-a-zip", url_path="/downloads/report.docx") is None
+
+
+def test_detect_ooxml_mime_rejects_extension_package_mismatch() -> None:
+    body = _package(
+        main_part="word/document.xml",
+        main_content_type=(
+            "application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"
+        ),
+        parts={"word/document.xml": _word_xml("Kubernetes")},
+    )
+
+    assert detect_ooxml_mime(body, url_path="/downloads/report.xlsx") is None
 
 
 def test_extracts_xlsx_shared_inline_and_string_cells() -> None:
