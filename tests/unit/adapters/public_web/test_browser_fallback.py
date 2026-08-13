@@ -29,9 +29,11 @@ _NOW = datetime(2026, 8, 13, 18, tzinfo=UTC)
 
 def test_policy_requires_low_text_html_with_script() -> None:
     policy = BrowserFallbackPolicy(min_static_text_chars=20, max_browser_pages=2)
+    scripted = _fetch(b"<html><script></script><p>x</p></html>")
+    enough = _fetch(b"<html><p>enough visible static text here</p></html>")
 
-    assert policy.should_render(_fetch(b"<html><script></script><p>x</p></html>")) is True
-    assert policy.should_render(_fetch(b"<html><p>enough visible static text here</p></html>")) is False
+    assert policy.should_render(scripted) is True
+    assert policy.should_render(enough) is False
     assert policy.should_render(_fetch(b"<html><p>x</p></html>")) is False
     assert policy.should_render(_fetch(b"{}", mime_type="application/json")) is False
     assert policy.should_render(_fetch(b"<script></script>", status_code=304)) is False
@@ -51,7 +53,9 @@ def test_policy_rejects_unbounded_values(kwargs: dict[str, int]) -> None:
         BrowserFallbackPolicy(**kwargs)
 
 
-def test_client_uses_browser_and_accounts_static_bytes(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_client_uses_browser_and_accounts_static_bytes(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     static_body = b"<html><script>boot()</script><div id='app'></div></html>"
     rendered_body = b"<html><body>Rendered application content</body></html>"
     seen_usage: list[CrawlUsage] = []
@@ -60,7 +64,18 @@ def test_client_uses_browser_and_accounts_static_bytes(monkeypatch: pytest.Monke
         def __init__(self, *args: object, **kwargs: object) -> None:
             pass
 
-        def fetch_page(self, target, url, robots, *, usage, depth=0, **kwargs):
+        def fetch_page(
+            self,
+            target: PublicWebTarget,
+            url: str,
+            robots: RobotsRules,
+            *,
+            usage: CrawlUsage,
+            depth: int = 0,
+            etag: str | None = None,
+            last_modified: str | None = None,
+        ) -> PublicWebFetchResult:
+            del target, robots, depth, etag, last_modified
             seen_usage.append(usage)
             return _fetch(rendered_body, url=url)
 
@@ -81,7 +96,10 @@ def test_client_uses_browser_and_accounts_static_bytes(monkeypatch: pytest.Monke
             http_client,
             _entry(SourceType.BROWSER, "browser-source"),
             collected_at=_NOW,
-            policy=BrowserFallbackPolicy(min_static_text_chars=100, max_browser_pages=1),
+            policy=BrowserFallbackPolicy(
+                min_static_text_chars=100,
+                max_browser_pages=1,
+            ),
         )
         result = client.fetch_page(
             target,
@@ -163,7 +181,9 @@ def _entry(source_type: SourceType, source_id: str) -> SourceRegistryEntry:
             source_type=source_type,
             owner="tests",
             licence="Controlled test source",
-            allowed_data_categories=frozenset({DataCategory.OFFICIAL_DOCUMENT_DISCOVERY}),
+            allowed_data_categories=frozenset(
+                {DataCategory.OFFICIAL_DOCUMENT_DISCOVERY}
+            ),
             retention_days=30,
             raw_content_storage=False,
             human_review_required=False,
