@@ -42,6 +42,7 @@ def discover_initial_candidates(
     *,
     now: datetime,
     initial_bytes: int,
+    known_feed_urls: tuple[str, ...] = (),
 ) -> tuple[tuple[PublicWebDiscoveryCandidate, ...], int, set[str]]:
     candidates: list[PublicWebDiscoveryCandidate] = []
     seen: set[str] = set()
@@ -93,6 +94,37 @@ def discover_initial_candidates(
             total_bytes=total_bytes,
             discovered=False,
         )
+    if target.discover_feeds:
+        for feed_url in known_feed_urls:
+            if (
+                feed_url in seen_feeds
+                or len(seen_feeds) >= target.max_feeds
+                or len(candidates) >= target.max_pages
+            ):
+                continue
+            if not same_origin(target.base_url, feed_url):
+                continue
+            decision = target.crawl_scope.evaluate_target(
+                feed_url,
+                depth=0,
+                redirects=0,
+                usage=CrawlUsage(),
+            )
+            if not decision.allowed:
+                continue
+            seen_feeds.add(feed_url)
+            total_bytes = _consume_feed(
+                client,
+                entry,
+                target,
+                robots,
+                feed_url,
+                candidates,
+                seen,
+                now=now,
+                total_bytes=total_bytes,
+                discovered=True,
+            )
     return tuple(candidates), total_bytes, seen_feeds
 
 

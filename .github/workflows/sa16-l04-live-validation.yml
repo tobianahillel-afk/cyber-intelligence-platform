@@ -1,0 +1,35 @@
+name: SA-16 L04 Live Validation
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: sa16-l04-live-${{ github.event.pull_request.head.sha }}
+  cancel-in-progress: true
+
+jobs:
+  live-incremental-public-web-recrawl:
+    if: github.event.pull_request.head.ref == 'agent/sa16-l04-incremental-recrawl'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out exact pull-request head
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - name: Set up Python
+        uses: actions/setup-python@42375524e23c412d93fb67b49958b491fce71c38 # v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install project
+        run: python -m pip install .
+
+      - name: Controlled real HTTP conditional recrawl validation
+        run: python scripts/live_validate_sa16_l04.py

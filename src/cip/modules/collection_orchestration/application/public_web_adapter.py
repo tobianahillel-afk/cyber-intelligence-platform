@@ -6,24 +6,24 @@ from uuid import UUID
 
 import httpx
 
+from cip.adapters.sources.public_web.checkpoint import (
+    PublicWebCheckpointError,
+    dump_checkpoint,
+    load_checkpoint,
+)
 from cip.adapters.sources.public_web.client import (
     PublicWebClient,
     PublicWebPolicyDeniedError,
     PublicWebResponseError,
 )
 from cip.adapters.sources.public_web.collection_policy import PublicWebCollectionDeniedError
-from cip.adapters.sources.public_web.collector import (
-    PageCheckpoint,
-    PublicWebCheckpoint,
-    collect_public_web_target,
-)
+from cip.adapters.sources.public_web.collector import collect_public_web_target
 from cip.adapters.sources.public_web.parsing import PublicWebParseError
 from cip.adapters.sources.public_web.registry import PublicWebTarget
 from cip.modules.collection_orchestration.application.ports import (
     AdapterCollectionBatch,
     AdapterExecutionError,
 )
-from cip.modules.public_footprint.domain import PublicResourceKind
 from cip.modules.source_governance.domain.models import DataCategory
 from cip.modules.source_governance.infrastructure.registry import SourceRegistryEntry
 
@@ -58,7 +58,10 @@ class PublicWebAdapter:
         collected_at: datetime,
         retention_until: datetime,
     ) -> AdapterCollectionBatch:
-        checkpoint = _checkpoint_from_payload(checkpoint_payload)
+        try:
+            checkpoint = load_checkpoint(checkpoint_payload)
+        except PublicWebCheckpointError as exc:
+            raise _execution_error(exc, "invalid_checkpoint", retryable=False) from exc
         try:
             with httpx.Client(
                 timeout=self._timeout_seconds,
@@ -91,75 +94,10 @@ class PublicWebAdapter:
             raise _execution_error(exc, "source_transport_error", retryable=True) from exc
         return AdapterCollectionBatch(
             observations=batch.observations,
-            checkpoint_payload=_checkpoint_payload(batch.checkpoint),
+            checkpoint_payload=dump_checkpoint(batch.checkpoint),
             not_modified=batch.not_modified,
             public_footprint_projections=batch.projections,
         )
-
-
-def _checkpoint_from_payload(
-    payload: Mapping[str, object] | None,
-) -> PublicWebCheckpoint | None:
-    if payload is None:
-        return None
-    raw_pages = payload.get("pages")
-    if not isinstance(raw_pages, dict):
-        raise AdapterExecutionError(
-            "public web checkpoint pages must be a mapping",
-            error_code="invalid_checkpoint",
-            retryable=False,
-        )
-    pages: dict[str, PageCheckpoint] = {}
-    for raw_url, raw_state in raw_pages.items():
-        if not isinstance(raw_url, str) or not isinstance(raw_state, dict):
-            raise AdapterExecutionError(
-                "public web checkpoint page entries are invalid",
-                error_code="invalid_checkpoint",
-                retryable=False,
-            )
-        content_hash = raw_state.get("content_hash_sha256")
-        version_id = raw_state.get("version_id")
-        canonical_url = raw_state.get("canonical_url")
-        resource_kind = raw_state.get("resource_kind", PublicResourceKind.WEB_PAGE.value)
-        if (
-            not isinstance(content_hash, str)
-            or not isinstance(version_id, str)
-            or not isinstance(canonical_url, str)
-            or not isinstance(resource_kind, str)
-        ):
-            raise AdapterExecutionError(
-                "public web checkpoint page state is invalid",
-                error_code="invalid_checkpoint",
-                retryable=False,
-            )
-        try:
-            pages[raw_url] = PageCheckpoint(
-                content_hash_sha256=content_hash,
-                version_id=UUID(version_id),
-                canonical_url=canonical_url,
-                resource_kind=PublicResourceKind(resource_kind),
-            )
-        except ValueError as exc:
-            raise AdapterExecutionError(
-                "public web checkpoint page state is invalid",
-                error_code="invalid_checkpoint",
-                retryable=False,
-            ) from exc
-    return PublicWebCheckpoint(pages)
-
-
-def _checkpoint_payload(checkpoint: PublicWebCheckpoint) -> dict[str, object]:
-    return {
-        "pages": {
-            url: {
-                "content_hash_sha256": state.content_hash_sha256,
-                "version_id": str(state.version_id),
-                "canonical_url": state.canonical_url,
-                "resource_kind": state.resource_kind.value,
-            }
-            for url, state in sorted(checkpoint.pages.items())
-        }
-    }
 
 
 def _execution_error(
