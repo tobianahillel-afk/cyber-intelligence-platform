@@ -16,22 +16,22 @@ from cip.modules.organizations.domain.entities import Organization
 from cip.modules.public_footprint.domain import ResourceRetrievalState
 
 _ORG_ID = UUID("c26cffc5-02bc-5b72-850d-b20c6c88b4c5")
-_ETAG_URL = "https://httpbin.org/etag/sa16-l04"
+_ETAG_URL = "https://httpbingo.org/etag/sa16-l04"
 
 
 def main() -> None:
     now = datetime.now(UTC)
     organization = Organization(
         id=_ORG_ID,
-        canonical_name="HTTPBin conditional request test surface",
-        website_url="https://httpbin.org/",
+        canonical_name="HTTPBingo conditional request test surface",
+        website_url="https://httpbingo.org/",
         created_at=now,
         updated_at=now,
     )
     provisioned = provision_public_web_target(
         organization,
         AutomaticPublicWebPolicy(
-            authorization_reference="sa16-l04-controlled-httpbin-etag",
+            authorization_reference="sa16-l04-controlled-httpbingo-etag",
             reviewed_at=now,
             allowed_path_prefixes=("/",),
             max_link_depth=0,
