@@ -37,6 +37,8 @@ from cip.shared.kernel.time import require_aware_utc
 _NOT_MODIFIED_STATUS = 304
 _TOMBSTONE_MIME_TYPE = "application/x-public-resource-tombstone"
 _MAX_VALIDATOR_LENGTH = 2_000
+_CURRENT_EXTRACTION_PROFILE = 2
+_LEGACY_EXTRACTION_PROFILE = 1
 
 
 @dataclass(frozen=True, slots=True)
@@ -53,6 +55,7 @@ class PageCheckpoint:
     source_locator: str | None = None
     depth: int | None = None
     security_txt: bool = False
+    extraction_profile: int = _LEGACY_EXTRACTION_PROFILE
 
 
 @dataclass(frozen=True, slots=True)
@@ -222,9 +225,17 @@ def _conditional_validators(
         or previous.canonical_url != candidate.url
         or previous.mime_type in {None, _TOMBSTONE_MIME_TYPE}
         or previous.byte_size is None
+        or _requires_html_reprocessing(previous)
     ):
         return None, None
     return previous.etag, previous.last_modified
+
+
+def _requires_html_reprocessing(previous: PageCheckpoint) -> bool:
+    return bool(
+        previous.mime_type == "text/html"
+        and previous.extraction_profile != _CURRENT_EXTRACTION_PROFILE
+    )
 
 
 def _next_page_checkpoint(
@@ -249,6 +260,7 @@ def _next_page_checkpoint(
         source_locator=candidate.source_locator,
         depth=candidate.depth,
         security_txt=candidate.security_txt,
+        extraction_profile=_CURRENT_EXTRACTION_PROFILE,
     )
 
 

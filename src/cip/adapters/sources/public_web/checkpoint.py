@@ -9,6 +9,7 @@ from cip.modules.public_footprint.domain.url_identity import CanonicalUrl
 
 _MAX_TEXT = 2_000
 _MAX_FEEDS = 100
+_MAX_EXTRACTION_PROFILE = 100
 
 
 class PublicWebCheckpointError(ValueError):
@@ -52,6 +53,7 @@ def dump_checkpoint(checkpoint: PublicWebCheckpoint) -> dict[str, object]:
                 "source_locator": state.source_locator,
                 "depth": state.depth,
                 "security_txt": state.security_txt,
+                "extraction_profile": state.extraction_profile,
             }
             for url, state in sorted(checkpoint.pages.items())
         },
@@ -85,6 +87,7 @@ def _page_state(raw: Mapping[object, object]) -> PageCheckpoint:
             source_locator=_text(raw, "source_locator"),
             depth=_depth(raw),
             security_txt=_boolean(raw, "security_txt", default=False),
+            extraction_profile=_extraction_profile(raw),
         )
     except (TypeError, ValueError) as exc:
         raise PublicWebCheckpointError("checkpoint page state is invalid") from exc
@@ -134,6 +137,15 @@ def _depth(raw: Mapping[object, object]) -> int | None:
     value = _non_negative_int(raw, "depth")
     if value is not None and value > 20:
         raise PublicWebCheckpointError("checkpoint depth is invalid")
+    return value
+
+
+def _extraction_profile(raw: Mapping[object, object]) -> int:
+    value = raw.get("extraction_profile", 1)
+    if isinstance(value, bool) or not isinstance(value, int):
+        raise PublicWebCheckpointError("checkpoint extraction_profile is invalid")
+    if not 1 <= value <= _MAX_EXTRACTION_PROFILE:
+        raise PublicWebCheckpointError("checkpoint extraction_profile is invalid")
     return value
 
 

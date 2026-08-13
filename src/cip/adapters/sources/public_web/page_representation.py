@@ -116,6 +116,12 @@ def build_version(
             if context.not_modified
             else uuid4()
         ),
+        published_at=(
+            context.extracted.published_at if context.extracted is not None else None
+        ),
+        source_updated_at=(
+            context.extracted.source_updated_at if context.extracted is not None else None
+        ),
         title=(
             context.extracted.title if context.extracted is not None else None
         ),

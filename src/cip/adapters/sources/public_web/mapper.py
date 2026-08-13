@@ -131,7 +131,7 @@ def map_public_page(
     claims = (
         ()
         if tombstoned or not_modified or not allow_claims
-        else _claims(target, resource, version, indexable_text)
+        else _claims(target, resource, version, extracted)
     )
     projection = PublicFootprintProjection(resource=resource, version=version, claims=claims)
     observation = (
@@ -247,7 +247,15 @@ def _is_unchanged(
 def _indexable_text(extracted: ExtractedPublicContent | None) -> str:
     if extracted is None or extracted.noindex:
         return ""
-    return extracted.text
+    return " ".join(
+        part
+        for part in (
+            extracted.text,
+            extracted.semantic_text,
+            extracted.structured_text,
+        )
+        if part
+    )
 
 
 def _retrieval_state(
@@ -272,7 +280,38 @@ def _claims(
     target: PublicWebTarget,
     resource: PublicResource,
     version: PublicResourceVersion,
+    extracted: ExtractedPublicContent | None,
+) -> tuple[PublicClaim, ...]:
+    if extracted is None or extracted.noindex:
+        return ()
+    claims = list(
+        _claims_for_text(
+            target,
+            resource,
+            version,
+            " ".join(part for part in (extracted.text, extracted.semantic_text) if part),
+            evidence_basis=ClaimEvidenceBasis.TARGET_CONTENT,
+        )
+    )
+    claims.extend(
+        _claims_for_text(
+            target,
+            resource,
+            version,
+            extracted.structured_text,
+            evidence_basis=ClaimEvidenceBasis.STRUCTURED_DATA,
+        )
+    )
+    return tuple(claims)
+
+
+def _claims_for_text(
+    target: PublicWebTarget,
+    resource: PublicResource,
+    version: PublicResourceVersion,
     text: str,
+    *,
+    evidence_basis: ClaimEvidenceBasis,
 ) -> tuple[PublicClaim, ...]:
     normalized = text.casefold()
     claims: list[PublicClaim] = []
@@ -286,6 +325,7 @@ def _claims(
                     PublicClaimType.TECHNOLOGY_OR_ARCHITECTURE,
                     f"{target.canonical_name} publicly mentions {term}.",
                     term,
+                    evidence_basis=evidence_basis,
                 )
             )
     for term in _SECURITY_OBJECTIVE_TERMS:
@@ -298,6 +338,7 @@ def _claims(
                     PublicClaimType.SECURITY_OR_COMPLIANCE_OBJECTIVE,
                     f"{target.canonical_name} publicly mentions {term}.",
                     term,
+                    evidence_basis=evidence_basis,
                 )
             )
     return tuple(claims)
@@ -310,13 +351,15 @@ def _claim(
     claim_type: PublicClaimType,
     statement: str,
     matched_term: str,
+    *,
+    evidence_basis: ClaimEvidenceBasis,
 ) -> PublicClaim:
     return PublicClaim(
         organization_id=target.organization_id,
         resource_version_id=version.id,
         claim_type=claim_type,
         statement=statement,
-        evidence_basis=ClaimEvidenceBasis.TARGET_CONTENT,
+        evidence_basis=evidence_basis,
         resolution_status=ClaimResolutionStatus.OBSERVED,
         confidence=1.0,
         corroboration_group_key=resource.corroboration_group_key,
