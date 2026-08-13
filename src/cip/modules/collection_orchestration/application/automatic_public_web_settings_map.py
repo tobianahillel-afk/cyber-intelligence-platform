@@ -1,12 +1,21 @@
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from cip.shared.config.public_web_browser_settings import (
     PublicWebBrowserFallbackSettings,
 )
 from cip.shared.config.settings import Settings
 
+if TYPE_CHECKING:
+    from cip.modules.collection_orchestration.application.automatic_public_web_config import (
+        AutomaticPublicWebRuntimeConfig,
+    )
 
-def automatic_public_web_config_from_settings(settings: Settings):
+
+def automatic_public_web_config_from_settings(
+    settings: Settings,
+) -> AutomaticPublicWebRuntimeConfig:
     from cip.modules.collection_orchestration.application.automatic_public_web_config import (
         AutomaticPublicWebRuntimeConfig,
     )
