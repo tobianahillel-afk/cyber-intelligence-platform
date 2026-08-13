@@ -243,7 +243,7 @@ def _walk_json(
         return
     if normalized_key not in _STRUCTURED_KEYS:
         return
-    if isinstance(value, (str, int, float, bool)):
+    if isinstance(value, str | int | float | bool):
         normalized = _normalize_value(str(value))
         if normalized is None:
             return
