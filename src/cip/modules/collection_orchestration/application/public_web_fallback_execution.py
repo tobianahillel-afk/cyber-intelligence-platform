@@ -1,8 +1,6 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
-from datetime import datetime
-from uuid import UUID
 
 import httpx
 
@@ -28,6 +26,9 @@ from cip.modules.collection_orchestration.application.ports import (
 from cip.modules.collection_orchestration.application.public_web_fallback_collection import (
     collect_with_browser_fallback,
 )
+from cip.modules.collection_orchestration.application.public_web_fallback_context import (
+    PublicWebFallbackRunContext,
+)
 from cip.modules.source_governance.infrastructure.registry import SourceRegistryEntry
 
 
@@ -37,13 +38,8 @@ def execute_public_web_fallback(
     target: PublicWebTarget,
     *,
     policy: BrowserFallbackPolicy,
-    collection_job_id: UUID,
     checkpoint_payload: Mapping[str, object] | None,
-    collected_at: datetime,
-    retention_until: datetime,
-    timeout_seconds: float,
-    transport: httpx.BaseTransport | None,
-    adapter_id: str,
+    run: PublicWebFallbackRunContext,
 ) -> AdapterCollectionBatch:
     try:
         checkpoint = load_checkpoint(checkpoint_payload)
@@ -52,13 +48,8 @@ def execute_public_web_fallback(
             browser_entry,
             target,
             policy=policy,
-            collection_job_id=collection_job_id,
-            collected_at=collected_at,
-            retention_until=retention_until,
             checkpoint=checkpoint,
-            timeout_seconds=timeout_seconds,
-            transport=transport,
-            adapter_id=adapter_id,
+            run=run,
         )
     except PublicWebCheckpointError as exc:
         raise _error(exc, "invalid_checkpoint", False) from exc
