@@ -29,11 +29,11 @@ def register_public_web_adapters(
                 timeout_seconds=timeout_seconds,
             )
         elif entry.policy.source_type is SourceType.BROWSER:
-            from cip.modules.collection_orchestration.application.public_web_browser_adapter import (
-                PublicWebBrowserAdapter,
+            from cip.modules.collection_orchestration.application import (
+                public_web_browser_adapter,
             )
 
-            adapter = PublicWebBrowserAdapter(
+            adapter = public_web_browser_adapter.PublicWebBrowserAdapter(
                 entry,
                 target,
                 timeout_seconds=timeout_seconds,
