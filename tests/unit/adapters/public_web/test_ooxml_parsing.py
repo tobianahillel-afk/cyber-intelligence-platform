@@ -27,7 +27,7 @@ def test_extracts_docx_text_and_core_title() -> None:
             "application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"
         ),
         parts={
-            "word/document.xml": _word_xml("Zero Trust", "Kubernetes"),
+            "word/document.xml": _word_xml("Zero Trust ", "Kubernetes"),
             "docProps/core.xml": _core_xml("Security architecture"),
         },
     )
