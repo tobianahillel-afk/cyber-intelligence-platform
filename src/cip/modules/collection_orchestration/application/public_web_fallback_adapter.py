@@ -8,8 +8,12 @@ import httpx
 
 from cip.adapters.sources.public_web.browser_fallback import BrowserFallbackPolicy
 from cip.adapters.sources.public_web.registry import PublicWebTarget
-from cip.modules.collection_orchestration.application.ports import AdapterCollectionBatch
-from cip.modules.collection_orchestration.application.public_web_fallback_execution import execute_public_web_fallback
+from cip.modules.collection_orchestration.application.ports import (
+    AdapterCollectionBatch,
+)
+from cip.modules.collection_orchestration.application.public_web_fallback_execution import (
+    execute_public_web_fallback,
+)
 from cip.modules.source_governance.domain.models import DataCategory, SourceType
 from cip.modules.source_governance.infrastructure.registry import SourceRegistryEntry
 
