@@ -14,6 +14,8 @@ from cip.adapters.sources.public_web.ooxml_parsing import (
     XLSX_MIME,
     extract_ooxml_text,
 )
+from cip.adapters.sources.public_web.page_representation import resource_kind
+from cip.modules.public_footprint.domain import PublicResourceKind
 from cip.modules.public_footprint.domain.scope import CrawlScope
 
 
@@ -175,6 +177,7 @@ def test_public_content_routes_docx_through_document_projection() -> None:
     assert extracted.title == "Architecture note"
     assert extracted.text == "Kubernetes architecture"
     assert extracted.excerpt == "Kubernetes architecture"
+    assert resource_kind(result, None) is PublicResourceKind.DOCUMENT
 
 
 def test_default_crawl_scope_allows_ooxml_mime_types() -> None:
