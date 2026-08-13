@@ -47,6 +47,9 @@ jobs:
       - name: Install project
         run: python -m pip install -e '.[dev]'
 
+      - name: Install isolated browser bindings for static analysis and unit tests
+        run: python -m pip install playwright==1.61.0
+
       - name: Verify dependency consistency
         run: python -m pip check
 
