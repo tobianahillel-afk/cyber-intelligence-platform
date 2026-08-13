@@ -39,6 +39,10 @@ from cip.modules.collection_orchestration.application.adapter_composition import
     AdapterCompositionInputs,
     build_runtime_adapters,
 )
+from cip.modules.collection_orchestration.application.automatic_public_web_runtime import (
+    AutomaticPublicWebRuntimeConfig,
+    build_automatic_public_web_runtime,
+)
 from cip.modules.collection_orchestration.application.ports import CollectionAdapter
 from cip.modules.collection_orchestration.application.runtime_secret_providers import (
     build_runtime_secret_providers,
@@ -105,6 +109,12 @@ def build_collection_runtime(settings: Settings) -> CollectionRuntime:
         sync_source_registry(session, entries)
         sync_provider_profiles(session, profiles, now=synchronized_at)
         sync_source_portfolio(session, portfolio, now=synchronized_at)
+        automatic_public_web = build_automatic_public_web_runtime(
+            session,
+            AutomaticPublicWebRuntimeConfig.from_settings(settings),
+            now=synchronized_at,
+            timeout_seconds=settings.source_http_timeout_seconds,
+        )
     adapters = build_runtime_adapters(
         adapter_inputs,
         build_runtime_secret_providers(factory),
@@ -112,10 +122,14 @@ def build_collection_runtime(settings: Settings) -> CollectionRuntime:
         phishtank_user_agent=settings.phishtank_user_agent,
         timeout_seconds=settings.source_http_timeout_seconds,
     )
+    duplicates = set(adapters).intersection(automatic_public_web.adapters)
+    if duplicates:
+        raise ValueError(f"duplicate runtime adapters: {sorted(duplicates)}")
+    adapters.update(automatic_public_web.adapters)
     with session_scope(factory) as session:
         reconcile_runtime_adapters(session, adapters.keys(), now=utc_now())
     _validate_portfolio_adapters(portfolio, adapters)
-    schedules = _load_schedules(settings)
+    schedules = (*_load_schedules(settings), *automatic_public_web.schedules)
     _validate_registered_schedules(schedules, adapters, portfolio)
     return CollectionRuntime(
         factory=factory,

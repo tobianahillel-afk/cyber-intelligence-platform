@@ -41,8 +41,8 @@ class PublicWebBrowserAdapter:
         timeout_seconds: float = 30.0,
         browser_limits: BrowserRenderLimits | None = None,
     ) -> None:
-        if entry.policy.id != target.id:
-            raise ValueError("browser public web adapter requires matching source and target ids")
+        if entry.policy.id != target.source_id:
+            raise ValueError("browser public web adapter requires matching source identities")
         if entry.policy.source_type is not SourceType.BROWSER:
             raise ValueError("browser public web adapter requires a browser source policy")
         if timeout_seconds <= 0:

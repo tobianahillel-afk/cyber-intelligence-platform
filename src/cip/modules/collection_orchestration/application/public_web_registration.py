@@ -17,10 +17,11 @@ def register_public_web_adapters(
     for target in targets:
         if not target.enabled:
             continue
-        entry = entries_by_id.get(target.id)
+        source_id = target.source_id or target.id
+        entry = entries_by_id.get(source_id)
         if entry is None:
             raise ValueError(
-                f"enabled public web target has no source policy: {target.id}"
+                f"enabled public web target has no source policy: {source_id}"
             )
         if entry.policy.source_type is SourceType.STATIC_HTTP:
             adapter: CollectionAdapter = PublicWebAdapter(

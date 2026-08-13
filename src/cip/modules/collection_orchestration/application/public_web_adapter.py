@@ -40,8 +40,8 @@ class PublicWebAdapter:
         timeout_seconds: float = 30.0,
         transport: httpx.BaseTransport | None = None,
     ) -> None:
-        if entry.policy.id != target.id:
-            raise ValueError("public web adapter requires matching source and target ids")
+        if entry.policy.id != target.source_id:
+            raise ValueError("public web adapter requires matching source identities")
         if timeout_seconds <= 0:
             raise ValueError("timeout_seconds must be positive")
         self.source_id = target.id

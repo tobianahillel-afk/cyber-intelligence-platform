@@ -1,8 +1,10 @@
 from __future__ import annotations
 
+from datetime import datetime
 from functools import lru_cache
 from pathlib import Path
 from typing import Literal
+from uuid import UUID
 
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -176,6 +178,32 @@ class Settings(BaseSettings):
     ats_collection_schedule_path: Path = Path(
         "policies/collection_schedules.ats_expansion.yml"
     )
+    automatic_public_web_enabled: bool = False
+    automatic_public_web_organization_ids: tuple[UUID, ...] = ()
+    automatic_public_web_authorization_reference: str | None = Field(
+        default=None,
+        max_length=500,
+    )
+    automatic_public_web_reviewed_at: datetime | None = None
+    automatic_public_web_expires_at: datetime | None = None
+    automatic_public_web_refresh_interval_seconds: int = Field(
+        default=86_400,
+        ge=60,
+        le=31_536_000,
+    )
+    automatic_public_web_max_link_depth: int = Field(default=1, ge=0, le=20)
+    automatic_public_web_max_pages: int = Field(default=100, ge=1, le=1_000)
+    automatic_public_web_max_total_bytes: int = Field(
+        default=10_000_000,
+        ge=1,
+        le=1_000_000_000,
+    )
+    automatic_public_web_max_resource_bytes: int = Field(
+        default=1_000_000,
+        ge=1,
+        le=100_000_000,
+    )
+    automatic_public_web_max_redirects: int = Field(default=3, ge=0, le=10)
     sec_edgar_user_agent: str | None = Field(default=None, max_length=300)
     phishtank_user_agent: str | None = Field(default=None, max_length=300)
     control_plane_token: str = Field(
