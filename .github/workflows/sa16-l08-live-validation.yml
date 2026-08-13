@@ -1,0 +1,38 @@
+name: SA-16 L08 Live Validation
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: sa16-l08-live-${{ github.event.pull_request.head.sha }}
+  cancel-in-progress: true
+
+jobs:
+  live-automatic-public-web-runtime:
+    if: github.event.pull_request.head.ref == 'agent/sa16-l08-automatic-runtime-wiring'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Check out exact pull-request head
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - name: Set up Python
+        uses: actions/setup-python@42375524e23c412d93fb67b49958b491fce71c38 # v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install project
+        run: python -m pip install .
+
+      - name: Verify dependency consistency
+        run: python -m pip check
+
+      - name: Controlled 20-target automatic runtime validation
+        run: python scripts/sa16_l08_automatic_runtime_live.py
