@@ -30,7 +30,7 @@ _TARGETS = (
     ("Kubernetes", "https://kubernetes.io/"),
     ("PostgreSQL", "https://www.postgresql.org/"),
     ("SQLite", "https://sqlite.org/"),
-    ("GNU", "https://www.gnu.org/"),
+    ("Linux Kernel", "https://www.kernel.org/"),
     ("W3C", "https://www.w3.org/"),
     ("IETF", "https://www.ietf.org/"),
     ("RFC Editor", "https://www.rfc-editor.org/"),
