@@ -70,6 +70,8 @@ def extract_ooxml_text(body: bytes, *, mime_type: str) -> ExtractedDocument:
             _validate_content_types(archive, entries, spec)
             title = _core_title(archive, entries)
             text = _extract_package_text(archive, entries, spec)
+    except PublicDocumentParseError:
+        raise
     except (BadZipFile, LargeZipFile, OSError, RuntimeError) as exc:
         raise PublicDocumentParseError("Office Open XML package could not be parsed safely") from exc
     return ExtractedDocument(title=title, language=None, text=text)
@@ -83,6 +85,8 @@ def _validate_archive(archive: ZipFile) -> dict[str, ZipInfo]:
     entries: dict[str, ZipInfo] = {}
     for info in infos:
         name = _validate_entry_name(info.filename)
+        if name in entries:
+            raise PublicDocumentParseError("Office Open XML package contains duplicate entries")
         if info.flag_bits & 0x1:
             raise PublicDocumentParseError("encrypted Office Open XML entries are not processed")
         if name.casefold().endswith("vbaproject.bin"):
@@ -101,7 +105,7 @@ def _validate_archive(archive: ZipFile) -> dict[str, ZipInfo]:
 def _validate_entry_name(value: str) -> str:
     normalized = value.replace("\\", "/")
     path = PurePosixPath(normalized)
-    if path.is_absolute() or ".." in path.parts or normalized.startswith("/"):
+    if not normalized or path.is_absolute() or ".." in path.parts or normalized.startswith("/"):
         raise PublicDocumentParseError("Office Open XML package contains an unsafe entry path")
     return normalized
 
@@ -128,7 +132,8 @@ def _validate_content_types(
             continue
         if node.attrib.get("PartName") != expected_part:
             continue
-        if node.attrib.get("ContentType", "").casefold() == spec.main_content_type.casefold():
+        actual = node.attrib.get("ContentType", "").casefold()
+        if actual == spec.main_content_type.casefold():
             return
     raise PublicDocumentParseError("Office Open XML package type does not match the response MIME")
 
@@ -167,7 +172,11 @@ def _docx_values(archive: ZipFile, entries: dict[str, ZipInfo]) -> list[str]:
 
 def _pptx_values(archive: ZipFile, entries: dict[str, ZipInfo]) -> list[str]:
     values: list[str] = []
-    names = sorted(name for name in entries if name.startswith("ppt/slides/slide") and name.endswith(".xml"))
+    names = sorted(
+        name
+        for name in entries
+        if name.startswith("ppt/slides/slide") and name.endswith(".xml")
+    )
     for name in names:
         values.extend(_text_nodes(_read_xml(archive, entries[name])))
     return values
@@ -252,7 +261,7 @@ def _read_xml(archive: ZipFile, info: ZipInfo) -> ElementTree.Element:
         data = stream.read(_MAX_ENTRY_BYTES + 1)
     if len(data) > _MAX_ENTRY_BYTES:
         raise PublicDocumentParseError("Office Open XML XML part exceeds the parser byte limit")
-    lowered = data[:4096].casefold()
+    lowered = data.casefold()
     if b"<!doctype" in lowered or b"<!entity" in lowered:
         raise PublicDocumentParseError("Office Open XML XML declarations are not permitted")
     try:
