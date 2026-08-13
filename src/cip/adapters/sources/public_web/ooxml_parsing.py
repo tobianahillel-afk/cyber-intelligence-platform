@@ -299,7 +299,7 @@ def _read_xml(archive: ZipFile, info: ZipInfo) -> ElementTree.Element:
         data = stream.read(_MAX_ENTRY_BYTES + 1)
     if len(data) > _MAX_ENTRY_BYTES:
         raise PublicDocumentParseError("Office Open XML XML part exceeds the parser byte limit")
-    lowered = data.casefold()
+    lowered = data.lower()
     if b"<!doctype" in lowered or b"<!entity" in lowered:
         raise PublicDocumentParseError("Office Open XML XML declarations are not permitted")
     try:
