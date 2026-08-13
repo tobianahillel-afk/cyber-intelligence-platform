@@ -17,17 +17,17 @@ from cip.modules.organizations.domain.entities import Organization
 from cip.modules.public_footprint.domain import PublicResourceKind
 
 _DOCX_URL = (
-    "https://www.herts-pcc.gov.uk/SysSiteAssets/media/downloads/foi/2026/"
-    "foi0326-cyber-security-governance-8-january-2026.docx"
+    "https://raw.githubusercontent.com/OfficeDev/Word-Add-in-MarkdownConversion/"
+    "master/TestWordDocument.docx"
 )
-_BASE_URL = "https://www.herts-pcc.gov.uk/"
+_BASE_URL = "https://raw.githubusercontent.com/"
 
 
 def main() -> None:
     now = datetime.now(UTC)
     organization = Organization(
         id=uuid5(NAMESPACE_URL, _BASE_URL),
-        canonical_name="Hertfordshire PCC public FOI disclosure documents",
+        canonical_name="Microsoft OfficeDev public Word sample document",
         website_url=_BASE_URL,
         created_at=now,
         updated_at=now,
@@ -35,11 +35,11 @@ def main() -> None:
     provisioned = provision_public_web_target(
         organization,
         AutomaticPublicWebPolicy(
-            authorization_reference="sa16-l06-controlled-herts-pcc-public-docx",
+            authorization_reference="sa16-l06-controlled-officedev-public-docx",
             reviewed_at=now,
             allowed_path_prefixes=(
                 "/robots.txt",
-                "/SysSiteAssets/media/downloads/foi/2026",
+                "/OfficeDev/Word-Add-in-MarkdownConversion/master",
             ),
             max_link_depth=0,
             discover_sitemaps=False,
