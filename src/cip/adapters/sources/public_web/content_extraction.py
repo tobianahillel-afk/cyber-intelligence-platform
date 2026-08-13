@@ -9,6 +9,12 @@ from cip.adapters.sources.public_web.document_parsing import (
     extract_pdf_text,
     extract_plain_text,
 )
+from cip.adapters.sources.public_web.ooxml_parsing import (
+    DOCX_MIME,
+    PPTX_MIME,
+    XLSX_MIME,
+    extract_ooxml_text,
+)
 from cip.adapters.sources.public_web.parsing import ExtractedHtml, extract_html
 from cip.adapters.sources.public_web.semantic_html import (
     ExtractedSemanticHtml,
@@ -46,6 +52,10 @@ def extract_public_content(
         return _from_document(extract_pdf_text(result.body))
     if result.mime_type == "text/plain":
         return _from_document(extract_plain_text(result.body))
+    if result.mime_type in {DOCX_MIME, XLSX_MIME, PPTX_MIME}:
+        return _from_document(
+            extract_ooxml_text(result.body, mime_type=result.mime_type)
+        )
     return None
 
 
