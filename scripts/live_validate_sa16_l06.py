@@ -17,17 +17,17 @@ from cip.modules.organizations.domain.entities import Organization
 from cip.modules.public_footprint.domain import PublicResourceKind
 
 _DOCX_URL = (
-    "https://dm-publicapi.eesc.europa.eu/v1/documents/"
-    "EESC-2020-05749-00-00-AC-TRA-EN.docx/content"
+    "https://officeprotocoldocs-f5hpbjgea6b8gneq.b02.azurefd.net/files/MS-DOC/"
+    "%5BMS-DOC%5D-260217.docx"
 )
-_BASE_URL = "https://dm-publicapi.eesc.europa.eu/"
+_BASE_URL = "https://officeprotocoldocs-f5hpbjgea6b8gneq.b02.azurefd.net/"
 
 
 def main() -> None:
     now = datetime.now(UTC)
     organization = Organization(
         id=uuid5(NAMESPACE_URL, _BASE_URL),
-        canonical_name="European Economic and Social Committee public documents",
+        canonical_name="Microsoft Open Specifications public protocol documents",
         website_url=_BASE_URL,
         created_at=now,
         updated_at=now,
@@ -35,9 +35,9 @@ def main() -> None:
     provisioned = provision_public_web_target(
         organization,
         AutomaticPublicWebPolicy(
-            authorization_reference="sa16-l06-controlled-eesc-public-docx",
+            authorization_reference="sa16-l06-controlled-microsoft-public-docx",
             reviewed_at=now,
-            allowed_path_prefixes=("/robots.txt", "/v1/documents"),
+            allowed_path_prefixes=("/robots.txt", "/files/MS-DOC"),
             max_link_depth=0,
             discover_sitemaps=False,
             discover_feeds=False,
