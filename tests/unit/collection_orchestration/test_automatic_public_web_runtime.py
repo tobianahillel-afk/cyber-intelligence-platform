@@ -52,14 +52,16 @@ def test_automatic_public_web_runtime_requires_explicit_approval(
     config: AutomaticPublicWebRuntimeConfig,
 ) -> None:
     factory = _factory(tmp_path)
-    with session_scope(factory) as session:
-        with pytest.raises(ValueError, match="automatic public web requires"):
-            build_automatic_public_web_runtime(
-                session,
-                config,
-                now=_NOW,
-                timeout_seconds=5.0,
-            )
+    with (
+        session_scope(factory) as session,
+        pytest.raises(ValueError, match="automatic public web requires"),
+    ):
+        build_automatic_public_web_runtime(
+            session,
+            config,
+            now=_NOW,
+            timeout_seconds=5.0,
+        )
 
 
 def test_automatic_public_web_runtime_builds_distinct_target_jobs(tmp_path) -> None:
