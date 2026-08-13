@@ -19,6 +19,7 @@ from cip.adapters.sources.public_web.provisioning import (
     AutomaticPublicWebPolicy,
     provision_public_web_target,
 )
+from cip.adapters.sources.public_web.registry import PublicWebTarget
 from cip.modules.collection_orchestration.application.automatic_public_web_runtime import (
     AutomaticPublicWebRuntimeConfig,
     build_automatic_public_web_runtime,
@@ -29,6 +30,7 @@ from cip.modules.collection_orchestration.application.public_web_fallback_adapte
 from cip.modules.organizations.domain.entities import Organization
 from cip.modules.organizations.infrastructure.models import OrganizationRecord
 from cip.modules.public_footprint.domain.scope import CrawlUsage
+from cip.modules.source_governance.infrastructure.registry import SourceRegistryEntry
 from cip.shared.persistence.metadata import get_metadata
 from cip.shared.persistence.session import (
     create_database_engine,
@@ -218,7 +220,12 @@ def _validate_forced_browser_fallback(now: datetime) -> None:
     )
 
 
-def _assert_direct_fallback(target, browser_entry, browser_policy, now: datetime) -> None:
+def _assert_direct_fallback(
+    target: PublicWebTarget,
+    browser_entry: SourceRegistryEntry,
+    browser_policy: AutomaticBrowserFallbackPolicy,
+    now: datetime,
+) -> None:
     with httpx.Client(timeout=30.0, follow_redirects=False) as http_client:
         client = FallbackPublicWebClient(
             http_client,
