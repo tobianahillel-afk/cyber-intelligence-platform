@@ -24,7 +24,7 @@ _TARGETS = (
     ("Python Docs", "https://docs.python.org/"),
     ("PyPI", "https://pypi.org/"),
     ("Django", "https://www.djangoproject.com/"),
-    ("Rust", "https://www.rust-lang.org/"),
+    ("FreeBSD", "https://www.freebsd.org/"),
     ("Go", "https://go.dev/"),
     ("Node.js", "https://nodejs.org/"),
     ("Kubernetes", "https://kubernetes.io/"),
