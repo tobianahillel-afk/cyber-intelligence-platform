@@ -10,6 +10,7 @@ from cip.adapters.sources.public_web.client import (
     PublicWebResponseError,
 )
 from cip.adapters.sources.public_web.content_extraction import ExtractedPublicContent
+from cip.adapters.sources.public_web.ooxml_parsing import DOCX_MIME, PPTX_MIME, XLSX_MIME
 from cip.modules.public_footprint.domain import (
     PublicResource,
     PublicResourceKind,
@@ -18,6 +19,13 @@ from cip.modules.public_footprint.domain import (
 
 _TOMBSTONE_MIME_TYPE = "application/x-public-resource-tombstone"
 _NOT_MODIFIED_STATUS = 304
+_DOCUMENT_MIME_TYPES = {
+    "application/pdf",
+    "text/plain",
+    DOCX_MIME,
+    XLSX_MIME,
+    PPTX_MIME,
+}
 
 
 @dataclass(frozen=True, slots=True)
@@ -76,7 +84,7 @@ def resource_kind(
     )
     if unchanged_or_tombstoned and previous is not None:
         return previous.resource_kind
-    if result.mime_type in {"application/pdf", "text/plain"}:
+    if result.mime_type in _DOCUMENT_MIME_TYPES:
         return PublicResourceKind.DOCUMENT
     return PublicResourceKind.WEB_PAGE
 
