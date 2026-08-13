@@ -40,7 +40,8 @@ def test_malformed_zip_is_wrapped_as_safe_parse_error() -> None:
 def test_rejects_duplicate_zip_entries() -> None:
     buffer = BytesIO()
     with ZipFile(buffer, mode="w", compression=ZIP_STORED) as archive:
-        archive.writestr("[Content_Types].xml", _content_types("word/document.xml", _DOCX_MAIN_TYPE))
+        content_types = _content_types("word/document.xml", _DOCX_MAIN_TYPE)
+        archive.writestr("[Content_Types].xml", content_types)
         archive.writestr("word/document.xml", _word_xml("first"))
         archive.writestr("word/document.xml", _word_xml("second"))
 
@@ -62,10 +63,15 @@ def test_rejects_missing_required_main_or_content_type_parts() -> None:
 
 def test_missing_or_blank_core_title_is_not_fabricated() -> None:
     no_core = _docx({"word/document.xml": _word_xml("Kubernetes")})
+    blank_core_xml = (
+        '<cp:coreProperties xmlns:cp="urn:cp" xmlns:dc="urn:dc">'
+        "<dc:title>   </dc:title>"
+        "</cp:coreProperties>"
+    )
     blank_core = _docx(
         {
             "word/document.xml": _word_xml("Kubernetes"),
-            "docProps/core.xml": '<cp:coreProperties xmlns:cp="urn:cp" xmlns:dc="urn:dc"><dc:title>   </dc:title></cp:coreProperties>',
+            "docProps/core.xml": blank_core_xml,
         }
     )
 
