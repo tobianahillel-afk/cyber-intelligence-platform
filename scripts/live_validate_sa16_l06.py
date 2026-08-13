@@ -17,17 +17,17 @@ from cip.modules.organizations.domain.entities import Organization
 from cip.modules.public_footprint.domain import PublicResourceKind
 
 _DOCX_URL = (
-    "https://officeprotocoldocs-f5hpbjgea6b8gneq.b02.azurefd.net/files/MS-DOC/"
-    "%5BMS-DOC%5D-260217.docx"
+    "https://www.herts-pcc.gov.uk/SysSiteAssets/media/downloads/foi/2026/"
+    "foi0326-cyber-security-governance-8-january-2026.docx"
 )
-_BASE_URL = "https://officeprotocoldocs-f5hpbjgea6b8gneq.b02.azurefd.net/"
+_BASE_URL = "https://www.herts-pcc.gov.uk/"
 
 
 def main() -> None:
     now = datetime.now(UTC)
     organization = Organization(
         id=uuid5(NAMESPACE_URL, _BASE_URL),
-        canonical_name="Microsoft Open Specifications public protocol documents",
+        canonical_name="Hertfordshire PCC public FOI disclosure documents",
         website_url=_BASE_URL,
         created_at=now,
         updated_at=now,
@@ -35,9 +35,12 @@ def main() -> None:
     provisioned = provision_public_web_target(
         organization,
         AutomaticPublicWebPolicy(
-            authorization_reference="sa16-l06-controlled-microsoft-public-docx",
+            authorization_reference="sa16-l06-controlled-herts-pcc-public-docx",
             reviewed_at=now,
-            allowed_path_prefixes=("/robots.txt", "/files/MS-DOC"),
+            allowed_path_prefixes=(
+                "/robots.txt",
+                "/SysSiteAssets/media/downloads/foi/2026",
+            ),
             max_link_depth=0,
             discover_sitemaps=False,
             discover_feeds=False,
