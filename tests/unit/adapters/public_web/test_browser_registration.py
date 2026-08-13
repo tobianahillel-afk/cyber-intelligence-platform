@@ -6,6 +6,7 @@ from uuid import uuid4
 import pytest
 
 from cip.adapters.sources.public_web.registry import PublicWebTarget
+from cip.modules.collection_orchestration.application.ports import CollectionAdapter
 from cip.modules.collection_orchestration.application.public_web_adapter import PublicWebAdapter
 from cip.modules.collection_orchestration.application.public_web_browser_adapter import (
     PublicWebBrowserAdapter,
@@ -13,7 +14,6 @@ from cip.modules.collection_orchestration.application.public_web_browser_adapter
 from cip.modules.collection_orchestration.application.public_web_registration import (
     register_public_web_adapters,
 )
-from cip.modules.collection_orchestration.application.ports import CollectionAdapter
 from cip.modules.source_governance.domain.models import (
     AuthorizationStatus,
     DataCategory,
@@ -36,7 +36,7 @@ _NOW = datetime(2026, 8, 13, 12, tzinfo=UTC)
 )
 def test_registration_dispatches_public_web_source_type(
     source_type: SourceType,
-    adapter_type: type[CollectionAdapter],
+    adapter_type: type[PublicWebAdapter] | type[PublicWebBrowserAdapter],
     adapter_id: str,
 ) -> None:
     target = _target()
