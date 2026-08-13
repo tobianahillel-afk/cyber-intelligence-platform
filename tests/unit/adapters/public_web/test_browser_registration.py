@@ -39,18 +39,33 @@ def test_registration_dispatches_public_web_source_type(
     adapter_type: type[PublicWebAdapter] | type[PublicWebBrowserAdapter],
     adapter_id: str,
 ) -> None:
-    target = _target()
+    target = _target(source_id="governed-source")
     adapters: dict[tuple[str, str], CollectionAdapter] = {}
 
     register_public_web_adapters(
         adapters,
-        {target.id: _entry(source_type)},
+        {target.source_id: _entry(source_type, source_id=target.source_id)},
         (target,),
         timeout_seconds=10.0,
     )
 
     registered = adapters[(target.id, adapter_id)]
     assert isinstance(registered, adapter_type)
+    assert registered.source_id == target.id
+
+
+def test_registration_preserves_legacy_matching_identity() -> None:
+    target = _target()
+    adapters: dict[tuple[str, str], CollectionAdapter] = {}
+
+    register_public_web_adapters(
+        adapters,
+        {target.source_id: _entry(SourceType.STATIC_HTTP)},
+        (target,),
+        timeout_seconds=10.0,
+    )
+
+    assert (target.id, "public-web-sitemap") in adapters
 
 
 def test_registration_skips_disabled_target() -> None:
@@ -68,25 +83,30 @@ def test_registration_skips_disabled_target() -> None:
 
 
 def test_registration_rejects_missing_policy() -> None:
-    target = _target()
-    with pytest.raises(ValueError, match="has no source policy"):
+    target = _target(source_id="governed-source")
+    with pytest.raises(ValueError, match="governed-source"):
         register_public_web_adapters({}, {}, (target,), timeout_seconds=10.0)
 
 
 def test_registration_rejects_unsupported_source_type() -> None:
-    target = _target()
+    target = _target(source_id="governed-source")
     with pytest.raises(ValueError, match="unsupported source type"):
         register_public_web_adapters(
             {},
-            {target.id: _entry(SourceType.API)},
+            {target.source_id: _entry(SourceType.API, source_id=target.source_id)},
             (target,),
             timeout_seconds=10.0,
         )
 
 
-def _target(*, enabled: bool = True) -> PublicWebTarget:
+def _target(
+    *,
+    enabled: bool = True,
+    source_id: str | None = None,
+) -> PublicWebTarget:
     return PublicWebTarget(
         id="registration-test",
+        source_id=source_id,
         organization_id=uuid4(),
         canonical_name="Registration Test",
         base_url="https://example.com/",
@@ -108,10 +128,14 @@ def _target(*, enabled: bool = True) -> PublicWebTarget:
     )
 
 
-def _entry(source_type: SourceType) -> SourceRegistryEntry:
+def _entry(
+    source_type: SourceType,
+    *,
+    source_id: str = "registration-test",
+) -> SourceRegistryEntry:
     return SourceRegistryEntry(
         policy=SourcePolicy(
-            id="registration-test",
+            id=source_id,
             name="Registration Test",
             base_url="https://example.com/",
             status=SourceStatus.ENABLED,
