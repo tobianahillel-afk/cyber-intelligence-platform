@@ -39,6 +39,7 @@ _TOMBSTONE_MIME_TYPE = "application/x-public-resource-tombstone"
 _MAX_VALIDATOR_LENGTH = 2_000
 _CURRENT_EXTRACTION_PROFILE = 2
 _LEGACY_EXTRACTION_PROFILE = 1
+_DEFAULT_ADAPTER_ID = "public-web-sitemap"
 
 
 @dataclass(frozen=True, slots=True)
@@ -81,6 +82,7 @@ def collect_public_web_target(
     collected_at: datetime,
     retention_until: datetime,
     checkpoint: PublicWebCheckpoint | None = None,
+    adapter_id: str = _DEFAULT_ADAPTER_ID,
 ) -> PublicWebCollectionBatch:
     collected = require_aware_utc(collected_at, field_name="collected_at")
     if entry.policy.id != target.source_id:
@@ -139,6 +141,7 @@ def collect_public_web_target(
             collected_at=collected,
             retention_until=retention_until,
             previous=previous,
+            adapter_id=adapter_id,
         )
         if mapped.observation is not None:
             observations.append(mapped.observation)
@@ -279,16 +282,16 @@ def _map_candidate(
     collected_at: datetime,
     retention_until: datetime,
     previous: PageCheckpoint | None,
+    adapter_id: str,
 ) -> MappedPublicPage:
     previous_state = _previous_state(previous)
     if candidate.security_txt:
         if fetched.mime_type != "text/plain":
             raise PublicWebCollectionDeniedError("security.txt must be served as text/plain")
-        document = parse_security_txt(fetched.body, target)
         return map_security_txt(
             target,
             fetched,
-            document,
+            parse_security_txt(fetched.body, target),
             collection_job_id=collection_job_id,
             collected_at=collected_at,
             retention_until=retention_until,
@@ -304,6 +307,7 @@ def _map_candidate(
         discovery_method=candidate.discovery_method,
         discovery_source_url=candidate.source_locator,
         allow_claims=True,
+        adapter_id=adapter_id,
     )
 
 
