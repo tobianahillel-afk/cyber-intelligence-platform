@@ -77,7 +77,10 @@ def test_legacy_html_checkpoint_is_reprocessed_once_before_etag_recrawl() -> Non
             checkpoint=legacy,
         )
         assert second.checkpoint.pages[_PAGE_URL].extraction_profile == 2
-        assert second.checkpoint.pages[_PAGE_URL].version_id == first.checkpoint.pages[_PAGE_URL].version_id
+        assert (
+            second.checkpoint.pages[_PAGE_URL].version_id
+            == first.checkpoint.pages[_PAGE_URL].version_id
+        )
         assert any(claim.excerpt == "kubernetes" for claim in second.projections[0].claims)
 
         third = collect_public_web_target(
