@@ -37,7 +37,7 @@ def main() -> None:
         AutomaticPublicWebPolicy(
             authorization_reference="sa16-l06-controlled-eesc-public-docx",
             reviewed_at=now,
-            allowed_path_prefixes=("/v1/documents",),
+            allowed_path_prefixes=("/robots.txt", "/v1/documents"),
             max_link_depth=0,
             discover_sitemaps=False,
             discover_feeds=False,
