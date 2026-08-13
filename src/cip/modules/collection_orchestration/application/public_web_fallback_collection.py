@@ -5,8 +5,15 @@ from uuid import UUID
 
 import httpx
 
-from cip.adapters.sources.public_web.browser_fallback import BrowserFallbackPolicy, FallbackPublicWebClient
-from cip.adapters.sources.public_web.collector import PublicWebCheckpoint, PublicWebCollectionBatch, collect_public_web_target
+from cip.adapters.sources.public_web.browser_fallback import (
+    BrowserFallbackPolicy,
+    FallbackPublicWebClient,
+)
+from cip.adapters.sources.public_web.collector import (
+    PublicWebCheckpoint,
+    PublicWebCollectionBatch,
+    collect_public_web_target,
+)
 from cip.adapters.sources.public_web.registry import PublicWebTarget
 from cip.modules.source_governance.infrastructure.registry import SourceRegistryEntry
 
