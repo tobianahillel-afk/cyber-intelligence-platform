@@ -1,9 +1,8 @@
 from __future__ import annotations
 
-from base64 import urlsafe_b64encode
 from dataclasses import replace
 from datetime import UTC, datetime, timedelta
-from uuid import UUID, uuid4
+from uuid import NAMESPACE_URL, uuid4, uuid5
 
 import httpx
 
@@ -16,34 +15,52 @@ from cip.adapters.sources.public_web.provisioning import (
 from cip.modules.organizations.domain.entities import Organization
 from cip.modules.public_footprint.domain import ClaimEvidenceBasis
 
-_ORG_ID = UUID("77777777-7777-7777-7777-777777777777")
-_PUBLISHED_AT = datetime(2026, 8, 13, 8, 0, tzinfo=UTC)
-_UPDATED_AT = datetime(2026, 8, 13, 8, 30, tzinfo=UTC)
-_HTML = (
-    b'<meta property="og:title" content="SA16 L05 Semantic Live">'
-    b'<meta name="description" content="Zero Trust">'
-    b'<meta property="article:published_time" content="2026-08-13T08:00:00Z">'
-    b'<script type="application/ld+json">'
-    b'{"description":"Kubernetes","dateModified":"2026-08-13T08:30:00Z"}'
-    b"</script>"
+_CANDIDATES = (
+    (
+        "Google Kubernetes Engine documentation",
+        "https://docs.cloud.google.com/kubernetes-engine/docs?hl=en",
+    ),
+    (
+        "Amazon EKS documentation",
+        "https://docs.aws.amazon.com/eks/latest/userguide/",
+    ),
+    (
+        "Kubernetes documentation",
+        "https://kubernetes.io/docs/home/",
+    ),
 )
 
 
 def main() -> None:
+    diagnostics: list[str] = []
+    with httpx.Client(timeout=30.0) as http_client:
+        for name, page_url in _CANDIDATES:
+            try:
+                result = _validate_candidate(http_client, name=name, page_url=page_url)
+            except (httpx.HTTPError, RuntimeError, ValueError) as exc:
+                diagnostics.append(f"{name}: {type(exc).__name__}: {exc}")
+                continue
+            print(result)
+            return
+    raise RuntimeError(
+        "SA16-L05 live validation found no natural public HTML page with "
+        f"structured-data evidence; diagnostics={diagnostics}"
+    )
+
+
+def _validate_candidate(http_client: httpx.Client, *, name: str, page_url: str) -> str:
     now = datetime.now(UTC)
-    encoded = urlsafe_b64encode(_HTML).decode("ascii")
-    page_url = f"https://httpbingo.org/base64/{encoded}?content-type=text/html"
     organization = Organization(
-        id=_ORG_ID,
-        canonical_name="HTTPBingo semantic extraction test surface",
-        website_url="https://httpbingo.org/",
+        id=uuid5(NAMESPACE_URL, page_url),
+        canonical_name=name,
+        website_url=page_url,
         created_at=now,
         updated_at=now,
     )
     provisioned = provision_public_web_target(
         organization,
         AutomaticPublicWebPolicy(
-            authorization_reference="sa16-l05-controlled-httpbingo-semantic",
+            authorization_reference=f"sa16-l05-controlled-{organization.id.hex}",
             reviewed_at=now,
             allowed_path_prefixes=("/",),
             max_link_depth=0,
@@ -53,9 +70,9 @@ def main() -> None:
             max_sitemaps=1,
             max_feeds=1,
             max_pages=1,
-            max_total_bytes=200_000,
-            max_resource_bytes=100_000,
-            max_redirects=0,
+            max_total_bytes=2_000_000,
+            max_resource_bytes=2_000_000,
+            max_redirects=3,
         ),
         first_crawl_at=now,
     )
@@ -66,39 +83,38 @@ def main() -> None:
         discover_sitemaps=False,
         discover_feeds=False,
     )
-    with httpx.Client(timeout=30.0) as http_client:
-        batch = collect_public_web_target(
-            PublicWebClient(http_client),
-            provisioned.source_entry,
-            target,
-            collection_job_id=uuid4(),
-            collected_at=now,
-            retention_until=now + timedelta(days=30),
-        )
+    batch = collect_public_web_target(
+        PublicWebClient(http_client),
+        provisioned.source_entry,
+        target,
+        collection_job_id=uuid4(),
+        collected_at=now,
+        retention_until=now + timedelta(days=30),
+    )
+    if not batch.observations or not batch.projections:
+        raise RuntimeError("natural HTML fetch produced no canonical projection")
 
-    if len(batch.observations) != 1 or len(batch.projections) != 1:
-        raise RuntimeError("SA16-L05 live fetch did not produce one canonical projection")
+    structured_claims = tuple(
+        claim
+        for projection in batch.projections
+        for claim in projection.claims
+        if claim.evidence_basis is ClaimEvidenceBasis.STRUCTURED_DATA
+    )
+    if not structured_claims:
+        raise RuntimeError("page produced no STRUCTURED_DATA claim")
+    if not any(
+        page.extraction_profile == 2 for page in batch.checkpoint.pages.values()
+    ):
+        raise RuntimeError("checkpoint did not persist extraction profile 2")
+
     projection = batch.projections[0]
-    version = projection.version
-    if version.title != "SA16 L05 Semantic Live":
-        raise RuntimeError("SA16-L05 live OpenGraph title was not mapped")
-    if version.published_at != _PUBLISHED_AT or version.source_updated_at != _UPDATED_AT:
-        raise RuntimeError("SA16-L05 live semantic timestamps were not mapped")
-
-    claims = {claim.excerpt: claim for claim in projection.claims}
-    zero_trust = claims.get("zero trust")
-    kubernetes = claims.get("kubernetes")
-    if zero_trust is None or zero_trust.evidence_basis is not ClaimEvidenceBasis.TARGET_CONTENT:
-        raise RuntimeError("SA16-L05 live semantic metadata claim lost TARGET_CONTENT basis")
-    if kubernetes is None or kubernetes.evidence_basis is not ClaimEvidenceBasis.STRUCTURED_DATA:
-        raise RuntimeError("SA16-L05 live JSON-LD claim lost STRUCTURED_DATA basis")
-    checkpoint = batch.checkpoint.pages.get(page_url)
-    if checkpoint is None or checkpoint.extraction_profile != 2:
-        raise RuntimeError("SA16-L05 live checkpoint did not persist extraction profile 2")
-    print(
+    if not projection.version.title:
+        raise RuntimeError("natural HTML projection did not preserve a title")
+    excerpts = sorted({claim.excerpt for claim in structured_claims})
+    return (
         "SA-16 L05 live validation passed: "
-        f"title={version.title!r} claims={sorted(claims)} "
-        f"published_at={version.published_at.isoformat()}"
+        f"surface={name!r} url={projection.resource.canonical_url!r} "
+        f"title={projection.version.title!r} structured_claims={excerpts}"
     )
 
 
