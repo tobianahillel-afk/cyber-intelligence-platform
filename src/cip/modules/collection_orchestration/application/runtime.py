@@ -111,7 +111,7 @@ def build_collection_runtime(settings: Settings) -> CollectionRuntime:
         sync_source_portfolio(session, portfolio, now=synchronized_at)
         automatic_public_web = build_automatic_public_web_runtime(
             session,
-            _automatic_public_web_config(settings),
+            AutomaticPublicWebRuntimeConfig.from_settings(settings),
             now=synchronized_at,
             timeout_seconds=settings.source_http_timeout_seconds,
         )
@@ -137,22 +137,6 @@ def build_collection_runtime(settings: Settings) -> CollectionRuntime:
         adapters=adapters,
         retention_policy=load_retention_policy(settings.retention_policy_path),
         portfolio=portfolio,
-    )
-
-
-def _automatic_public_web_config(settings: Settings) -> AutomaticPublicWebRuntimeConfig:
-    return AutomaticPublicWebRuntimeConfig(
-        enabled=settings.automatic_public_web_enabled,
-        organization_ids=settings.automatic_public_web_organization_ids,
-        authorization_reference=settings.automatic_public_web_authorization_reference,
-        reviewed_at=settings.automatic_public_web_reviewed_at,
-        expires_at=settings.automatic_public_web_expires_at,
-        refresh_interval_seconds=settings.automatic_public_web_refresh_interval_seconds,
-        max_link_depth=settings.automatic_public_web_max_link_depth,
-        max_pages=settings.automatic_public_web_max_pages,
-        max_total_bytes=settings.automatic_public_web_max_total_bytes,
-        max_resource_bytes=settings.automatic_public_web_max_resource_bytes,
-        max_redirects=settings.automatic_public_web_max_redirects,
     )
 
 
