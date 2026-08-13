@@ -7,13 +7,27 @@ from uuid import UUID
 import httpx
 
 from cip.adapters.sources.public_web.browser_fallback import BrowserFallbackPolicy
-from cip.adapters.sources.public_web.checkpoint import PublicWebCheckpointError, dump_checkpoint, load_checkpoint
-from cip.adapters.sources.public_web.client import PublicWebPolicyDeniedError, PublicWebResponseError
-from cip.adapters.sources.public_web.collection_policy import PublicWebCollectionDeniedError
+from cip.adapters.sources.public_web.checkpoint import (
+    PublicWebCheckpointError,
+    dump_checkpoint,
+    load_checkpoint,
+)
+from cip.adapters.sources.public_web.client import (
+    PublicWebPolicyDeniedError,
+    PublicWebResponseError,
+)
+from cip.adapters.sources.public_web.collection_policy import (
+    PublicWebCollectionDeniedError,
+)
 from cip.adapters.sources.public_web.parsing import PublicWebParseError
 from cip.adapters.sources.public_web.registry import PublicWebTarget
-from cip.modules.collection_orchestration.application.ports import AdapterCollectionBatch, AdapterExecutionError
-from cip.modules.collection_orchestration.application.public_web_fallback_collection import collect_with_browser_fallback
+from cip.modules.collection_orchestration.application.ports import (
+    AdapterCollectionBatch,
+    AdapterExecutionError,
+)
+from cip.modules.collection_orchestration.application.public_web_fallback_collection import (
+    collect_with_browser_fallback,
+)
 from cip.modules.source_governance.infrastructure.registry import SourceRegistryEntry
 
 
