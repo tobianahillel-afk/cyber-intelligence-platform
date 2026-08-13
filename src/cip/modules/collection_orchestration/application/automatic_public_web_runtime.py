@@ -6,6 +6,10 @@ from uuid import UUID
 
 from sqlalchemy.orm import Session
 
+from cip.adapters.sources.public_web.browser_fallback_governance import (
+    AutomaticBrowserFallbackPolicy,
+    build_browser_fallback_entry,
+)
 from cip.adapters.sources.public_web.provisioning import (
     AutomaticPublicWebPolicy,
     provision_public_web_target,
@@ -13,9 +17,11 @@ from cip.adapters.sources.public_web.provisioning import (
 from cip.adapters.sources.public_web.registry import PublicWebTarget
 from cip.modules.collection_orchestration.application.ports import CollectionAdapter
 from cip.modules.collection_orchestration.application.public_web_adapter import PublicWebAdapter
+from cip.modules.collection_orchestration.application.public_web_fallback_adapter import PublicWebFallbackAdapter
 from cip.modules.collection_orchestration.domain.models import SourceSchedule
 from cip.modules.organizations.domain.entities import Organization
 from cip.modules.organizations.infrastructure.models import OrganizationRecord
+from cip.shared.config.public_web_browser_settings import PublicWebBrowserFallbackSettings
 from cip.shared.config.settings import Settings
 from cip.shared.kernel.time import require_aware_utc
 
@@ -33,6 +39,12 @@ class AutomaticPublicWebRuntimeConfig:
     max_total_bytes: int = 10_000_000
     max_resource_bytes: int = 1_000_000
     max_redirects: int = 3
+    browser_fallback_enabled: bool = False
+    browser_authorization_reference: str | None = None
+    browser_reviewed_at: datetime | None = None
+    browser_expires_at: datetime | None = None
+    browser_min_static_text_chars: int = 200
+    browser_max_pages: int = 3
 
     def policy(self) -> AutomaticPublicWebPolicy | None:
         if not self.enabled:
@@ -55,8 +67,24 @@ class AutomaticPublicWebRuntimeConfig:
             max_redirects=self.max_redirects,
         )
 
+    def browser_policy(self) -> AutomaticBrowserFallbackPolicy | None:
+        if not self.browser_fallback_enabled:
+            return None
+        if self.browser_authorization_reference is None:
+            raise ValueError("browser fallback requires an authorization reference")
+        if self.browser_reviewed_at is None:
+            raise ValueError("browser fallback requires an authorization review time")
+        return AutomaticBrowserFallbackPolicy(
+            authorization_reference=self.browser_authorization_reference,
+            reviewed_at=self.browser_reviewed_at,
+            expires_at=self.browser_expires_at,
+            min_static_text_chars=self.browser_min_static_text_chars,
+            max_browser_pages=self.browser_max_pages,
+        )
+
     @classmethod
     def from_settings(cls, settings: Settings) -> AutomaticPublicWebRuntimeConfig:
+        browser = PublicWebBrowserFallbackSettings()
         return cls(
             enabled=settings.automatic_public_web_enabled,
             organization_ids=settings.automatic_public_web_organization_ids,
@@ -69,6 +97,12 @@ class AutomaticPublicWebRuntimeConfig:
             max_total_bytes=settings.automatic_public_web_max_total_bytes,
             max_resource_bytes=settings.automatic_public_web_max_resource_bytes,
             max_redirects=settings.automatic_public_web_max_redirects,
+            browser_fallback_enabled=browser.enabled,
+            browser_authorization_reference=browser.authorization_reference,
+            browser_reviewed_at=browser.reviewed_at,
+            browser_expires_at=browser.expires_at,
+            browser_min_static_text_chars=browser.min_static_text_chars,
+            browser_max_pages=browser.max_pages,
         )
 
 
@@ -90,6 +124,7 @@ def build_automatic_public_web_runtime(
     policy = config.policy()
     if policy is None:
         return AutomaticPublicWebRuntimeBundle({}, (), ())
+    browser_policy = config.browser_policy()
     adapters: dict[tuple[str, str], CollectionAdapter] = {}
     schedules: list[SourceSchedule] = []
     targets: list[PublicWebTarget] = []
@@ -100,11 +135,25 @@ def build_automatic_public_web_runtime(
             policy,
             first_crawl_at=current,
         )
-        adapter = PublicWebAdapter(
-            provisioned.source_entry,
-            provisioned.target,
-            timeout_seconds=timeout_seconds,
-        )
+        if browser_policy is None:
+            adapter: CollectionAdapter = PublicWebAdapter(
+                provisioned.source_entry,
+                provisioned.target,
+                timeout_seconds=timeout_seconds,
+            )
+        else:
+            browser_entry = build_browser_fallback_entry(
+                provisioned.source_entry,
+                provisioned.target,
+                browser_policy,
+            )
+            adapter = PublicWebFallbackAdapter(
+                provisioned.source_entry,
+                browser_entry,
+                provisioned.target,
+                fallback_policy=browser_policy.fallback_policy(),
+                timeout_seconds=timeout_seconds,
+            )
         identity = (adapter.source_id, adapter.adapter_id)
         if identity in adapters:
             raise ValueError(f"duplicate automatic public web adapter: {identity}")
