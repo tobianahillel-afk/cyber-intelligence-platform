@@ -31,7 +31,7 @@ _HTML = (
 
 def main() -> None:
     now = datetime.now(UTC)
-    encoded = urlsafe_b64encode(_HTML).decode("ascii").rstrip("=")
+    encoded = urlsafe_b64encode(_HTML).decode("ascii")
     page_url = f"https://httpbingo.org/base64/{encoded}?content-type=text/html"
     organization = Organization(
         id=_ORG_ID,
