@@ -3,9 +3,6 @@ from __future__ import annotations
 from cip.adapters.sources.public_web.registry import PublicWebTarget
 from cip.modules.collection_orchestration.application.ports import CollectionAdapter
 from cip.modules.collection_orchestration.application.public_web_adapter import PublicWebAdapter
-from cip.modules.collection_orchestration.application.public_web_browser_adapter import (
-    PublicWebBrowserAdapter,
-)
 from cip.modules.source_governance.domain.models import SourceType
 from cip.modules.source_governance.infrastructure.registry import SourceRegistryEntry
 
@@ -32,6 +29,10 @@ def register_public_web_adapters(
                 timeout_seconds=timeout_seconds,
             )
         elif entry.policy.source_type is SourceType.BROWSER:
+            from cip.modules.collection_orchestration.application.public_web_browser_adapter import (
+                PublicWebBrowserAdapter,
+            )
+
             adapter = PublicWebBrowserAdapter(
                 entry,
                 target,
