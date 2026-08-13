@@ -14,7 +14,7 @@ concurrency:
 jobs:
   live-public-browser-rendering:
     if: github.event.pull_request.head.ref == 'agent/sa16-l07-bounded-browser-rendering'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     timeout-minutes: 15
     steps:
       - name: Check out exact pull-request head
@@ -28,8 +28,13 @@ jobs:
           python-version: "3.12"
           cache: pip
 
-      - name: Install browser worker dependencies
-        run: python -m pip install '.[browser]'
+      - name: Install project and isolated browser bindings
+        run: |
+          python -m pip install .
+          python -m pip install playwright==1.61.0
+
+      - name: Verify browser worker dependency consistency
+        run: python -m pip check
 
       - name: Install bounded Chromium runtime
         run: python -m playwright install --with-deps chromium
