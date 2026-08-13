@@ -35,7 +35,7 @@ _TARGETS = (
     ("IETF", "https://www.ietf.org/"),
     ("RFC Editor", "https://www.rfc-editor.org/"),
     ("curl", "https://curl.se/"),
-    ("OpenSSL", "https://www.openssl.org/"),
+    ("Debian", "https://www.debian.org/"),
     ("Apache HTTP Server", "https://httpd.apache.org/"),
 )
 
@@ -77,6 +77,7 @@ def main() -> None:
         target = targets_by_id.get(schedule.source_id)
         if adapter is None or target is None:
             raise RuntimeError(f"SA16-L08 missing runtime binding: {identity}")
+        print(f"SA16-L08 testing: {target.base_url}", flush=True)
         if target.source_id != AUTOMATIC_PUBLIC_WEB_SOURCE_ID:
             raise RuntimeError("SA16-L08 target lost governed source provenance")
         if target.id == target.source_id:
@@ -107,7 +108,8 @@ def main() -> None:
             "SA16-L08 target passed: "
             f"target={target.id} source={target.source_id} url={target.base_url} "
             f"observations={len(batch.observations)} "
-            f"projections={len(batch.public_footprint_projections)}"
+            f"projections={len(batch.public_footprint_projections)}",
+            flush=True,
         )
     if successes != len(_TARGETS):
         raise RuntimeError("SA16-L08 did not validate every controlled target")
