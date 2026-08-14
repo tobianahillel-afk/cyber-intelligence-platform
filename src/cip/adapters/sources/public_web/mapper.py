@@ -20,6 +20,9 @@ from cip.adapters.sources.public_web.page_representation import (
 )
 from cip.adapters.sources.public_web.parsing import contains_credential_marker
 from cip.adapters.sources.public_web.registry import PublicWebTarget
+from cip.adapters.sources.public_web.surface_extraction import (
+    extract_public_surface_references,
+)
 from cip.modules.public_footprint.domain import (
     ClaimEvidenceBasis,
     ClaimResolutionStatus,
@@ -135,7 +138,21 @@ def map_public_page(
         if tombstoned or not_modified or not allow_claims
         else _claims(target, resource, version, extracted)
     )
-    projection = PublicFootprintProjection(resource=resource, version=version, claims=claims)
+    surfaces = (
+        ()
+        if tombstoned or unchanged or quarantined
+        else extract_public_surface_references(
+            result,
+            organization_id=target.organization_id,
+            resource_version_id=version.id,
+        )
+    )
+    projection = PublicFootprintProjection(
+        resource=resource,
+        version=version,
+        claims=claims,
+        surfaces=surfaces,
+    )
     observation = (
         None
         if unchanged
