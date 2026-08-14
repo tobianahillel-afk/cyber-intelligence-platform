@@ -63,6 +63,8 @@ class PublicWebTarget:
     max_total_bytes: int = 10_000_000
     max_resource_bytes: int = 1_000_000
     max_redirects: int = 3
+    crawl_deadline_seconds: int = 300
+    max_crawl_concurrency: int = 1
 
     def __post_init__(self) -> None:
         identifier = self.id.strip()
@@ -77,6 +79,10 @@ class PublicWebTarget:
             raise ValueError("max_sitemaps must be between 1 and 100")
         if not 1 <= self.max_feeds <= 50:
             raise ValueError("max_feeds must be between 1 and 50")
+        if not 1 <= self.crawl_deadline_seconds <= 3_600:
+            raise ValueError("crawl_deadline_seconds must be between 1 and 3600")
+        if not 1 <= self.max_crawl_concurrency <= 16:
+            raise ValueError("max_crawl_concurrency must be between 1 and 16")
         base = CanonicalUrl(self.base_url)
         _validate_public_hostname(base.host)
         seeds = _same_origin_urls(base, self.seed_urls, label="seed")
@@ -233,6 +239,12 @@ def _parse_target(payload: dict[str, Any]) -> PublicWebTarget:
             limits, "max_resource_bytes", minimum=1, maximum=20_000_000
         ),
         max_redirects=bounded_int(limits, "max_redirects", minimum=0, maximum=10),
+        crawl_deadline_seconds=optional_bounded_int(
+            limits, "crawl_deadline_seconds", default=300, minimum=1, maximum=3_600
+        ),
+        max_crawl_concurrency=optional_bounded_int(
+            limits, "max_crawl_concurrency", default=1, minimum=1, maximum=16
+        ),
     )
 
 
