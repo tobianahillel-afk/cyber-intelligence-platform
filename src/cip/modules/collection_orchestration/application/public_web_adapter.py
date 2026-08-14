@@ -13,6 +13,7 @@ from cip.adapters.sources.public_web.checkpoint import (
 )
 from cip.adapters.sources.public_web.client import (
     PublicWebClient,
+    PublicWebDeadlineExceededError,
     PublicWebPolicyDeniedError,
     PublicWebResponseError,
 )
@@ -69,7 +70,10 @@ class PublicWebAdapter:
                 transport=self._transport,
             ) as http_client:
                 batch = collect_public_web_target(
-                    PublicWebClient(http_client),
+                    PublicWebClient(
+                        http_client,
+                        request_timeout_seconds=self._timeout_seconds,
+                    ),
                     self._entry,
                     self._target,
                     collection_job_id=collection_job_id,
@@ -77,6 +81,8 @@ class PublicWebAdapter:
                     retention_until=retention_until,
                     checkpoint=checkpoint,
                 )
+        except PublicWebDeadlineExceededError as exc:
+            raise _execution_error(exc, "crawl_deadline_exceeded", retryable=True) from exc
         except (PublicWebCollectionDeniedError, PublicWebPolicyDeniedError) as exc:
             raise _execution_error(exc, "source_policy_denied", retryable=False) from exc
         except PublicWebParseError as exc:
