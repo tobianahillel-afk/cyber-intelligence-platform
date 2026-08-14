@@ -119,11 +119,7 @@ def build_version(
         fetched_at=context.collected_at,
         mime_type=mime_type,
         byte_size=byte_size,
-        id=(
-            required_previous(previous).version_id
-            if context.not_modified
-            else uuid4()
-        ),
+        id=(required_previous(previous).version_id if context.unchanged else uuid4()),
         published_at=(
             context.extracted.published_at if context.extracted is not None else None
         ),
