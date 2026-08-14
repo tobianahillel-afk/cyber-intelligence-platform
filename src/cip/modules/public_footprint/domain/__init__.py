@@ -31,6 +31,10 @@ from cip.modules.public_footprint.domain.search_core import (
     SearchQueryPlan,
     normalize_search_executions,
 )
+from cip.modules.public_footprint.domain.surfaces import (
+    PublicSurfaceKind,
+    PublicSurfaceReference,
+)
 from cip.modules.public_footprint.domain.url_identity import (
     CanonicalUrl,
     canonicalize_url,
@@ -52,6 +56,8 @@ __all__ = [
     "PublicResource",
     "PublicResourceKind",
     "PublicResourceVersion",
+    "PublicSurfaceKind",
+    "PublicSurfaceReference",
     "ResourceAccessState",
     "ResourceRetrievalState",
     "SearchAcquisitionState",
