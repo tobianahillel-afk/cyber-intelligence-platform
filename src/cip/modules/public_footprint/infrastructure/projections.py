@@ -18,6 +18,9 @@ from cip.modules.public_footprint.infrastructure.models import (
     PublicResourceRecord,
     PublicResourceVersionRecord,
 )
+from cip.modules.public_footprint.infrastructure.structured_state_persistence import (
+    persist_structured_states,
+)
 from cip.modules.public_footprint.infrastructure.surface_persistence import (
     persist_surface_references,
 )
@@ -39,6 +42,12 @@ def persist_public_footprint_projections(
         persist_surface_references(
             session,
             projection.surfaces,
+            resource_version_id=version.id,
+            now=persisted_at,
+        )
+        persist_structured_states(
+            session,
+            projection.structured_states,
             resource_version_id=version.id,
             now=persisted_at,
         )
