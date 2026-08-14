@@ -97,9 +97,11 @@ def test_budget_rejects_double_commit_and_oversized_acceptance() -> None:
     with pytest.raises(ValueError, match="exceeds"):
         budget.commit(reservation, accepted_bytes=51)
 
-    # Invalid accounting consumes no global allowance, but the reservation is no longer active.
     assert budget.pages_used == 0
     assert budget.bytes_used == 0
+    assert budget.active_reservations == 1
+    budget.release(reservation)
+    assert budget.active_reservations == 0
     with pytest.raises(ValueError, match="not active"):
         budget.release(reservation)
 
