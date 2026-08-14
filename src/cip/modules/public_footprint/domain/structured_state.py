@@ -73,8 +73,11 @@ class PublicStructuredState:
 
     @property
     def identity_key(self) -> str:
+        return self.identity_key_for_version(self.resource_version_id)
+
+    def identity_key_for_version(self, resource_version_id: UUID) -> str:
         material = (
-            f"{self.organization_id}\0{self.resource_version_id}\0{self.kind.value}\0"
+            f"{self.organization_id}\0{resource_version_id}\0{self.kind.value}\0"
             f"{self.source_url or ''}\0{self.source_locator}\0{self.payload_hash_sha256}"
         )
         return sha256(material.encode("utf-8")).hexdigest()
