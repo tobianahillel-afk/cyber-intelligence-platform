@@ -3,7 +3,6 @@ from __future__ import annotations
 from collections.abc import Callable, Iterable
 
 _MAX_HEADER_VALUE_LENGTH = 2_000
-_MAX_HEADERS = 32
 _EVIDENCE_HEADER_NAMES = frozenset(
     {
         "content-language",
@@ -36,8 +35,6 @@ def bounded_evidence_headers(
         if not value:
             continue
         selected[name] = value[:_MAX_HEADER_VALUE_LENGTH]
-        if len(selected) >= _MAX_HEADERS:
-            break
     return tuple(sorted(selected.items()))
 
 
