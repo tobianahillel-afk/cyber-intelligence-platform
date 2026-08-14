@@ -33,6 +33,8 @@ def automatic_public_web_config_from_settings(
         max_total_bytes=settings.automatic_public_web_max_total_bytes,
         max_resource_bytes=settings.automatic_public_web_max_resource_bytes,
         max_redirects=settings.automatic_public_web_max_redirects,
+        crawl_deadline_seconds=settings.automatic_public_web_crawl_deadline_seconds,
+        max_crawl_concurrency=settings.automatic_public_web_max_crawl_concurrency,
         browser_fallback_enabled=browser.enabled,
         browser_authorization_reference=browser.authorization_reference,
         browser_reviewed_at=browser.reviewed_at,
