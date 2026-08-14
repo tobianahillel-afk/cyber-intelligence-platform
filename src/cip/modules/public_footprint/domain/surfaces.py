@@ -61,10 +61,13 @@ class PublicSurfaceReference:
 
     @property
     def identity_key(self) -> str:
+        return self.identity_key_for_version(self.resource_version_id)
+
+    def identity_key_for_version(self, resource_version_id: UUID) -> str:
         material = "\0".join(
             (
                 str(self.organization_id),
-                str(self.resource_version_id),
+                str(resource_version_id),
                 self.kind.value,
                 self.source_locator,
                 self.target_url or "",
