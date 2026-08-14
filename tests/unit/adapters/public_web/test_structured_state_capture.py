@@ -13,7 +13,7 @@ from cip.modules.public_footprint.domain import PublicStructuredStateKind
 
 
 def test_network_json_is_canonical_and_sensitive_keys_are_removed() -> None:
-    capture = StructuredStateCapture(StructuredStateCaptureLimits(max_string_chars=8))
+    capture = StructuredStateCapture(StructuredStateCaptureLimits(max_string_chars=16))
 
     record = capture.capture_network_json(
         source_url="https://example.com/api/state",
@@ -21,7 +21,7 @@ def test_network_json_is_canonical_and_sensitive_keys_are_removed() -> None:
         media_type="application/json; charset=utf-8",
         body=json.dumps(
             {
-                "name": "public-value",
+                "name": "abcdefghijklmnopqrstuv",
                 "accessToken": "never-store",
                 "nested": {"cookie": "no", "vendor": "Splunk"},
             }
@@ -32,7 +32,7 @@ def test_network_json_is_canonical_and_sensitive_keys_are_removed() -> None:
     assert record.kind is PublicStructuredStateKind.NETWORK_JSON
     assert record.media_type == "application/json"
     assert json.loads(record.payload_json) == {
-        "name": "public-v",
+        "name": "abcdefghijklmnop",
         "nested": {"vendor": "Splunk"},
     }
     assert capture.json_responses == 1
@@ -76,7 +76,7 @@ def test_network_json_rejects_malformed_oversized_and_aggregate_overflow() -> No
     limits = StructuredStateCaptureLimits(
         max_json_responses=3,
         max_response_bytes=256,
-        max_total_json_bytes=300,
+        max_total_json_bytes=270,
     )
     capture = StructuredStateCapture(limits)
 
@@ -115,6 +115,26 @@ def test_network_json_rejects_malformed_oversized_and_aggregate_overflow() -> No
         )
         is None
     )
+
+
+def test_network_json_rejects_invalid_utf8_scalar_and_sensitive_only_payloads() -> None:
+    capture = StructuredStateCapture(StructuredStateCaptureLimits())
+
+    for body in (
+        b"\xff\xfe",
+        b"42",
+        b'"text"',
+        b'{"accessToken":"drop","sessionId":"drop"}',
+    ):
+        assert (
+            capture.capture_network_json(
+                source_url="https://example.com/api/state",
+                status=200,
+                media_type="application/json",
+                body=body,
+            )
+            is None
+        )
 
 
 def test_network_json_count_depth_scalar_and_key_bounds_are_deterministic() -> None:
@@ -179,7 +199,7 @@ def test_script_state_uses_only_fixed_public_globals_and_sanitizes() -> None:
 def test_script_state_count_and_total_byte_budgets_are_enforced() -> None:
     capture = StructuredStateCapture(
         StructuredStateCaptureLimits(
-            max_script_states=1,
+            max_script_states=2,
             max_total_script_bytes=256,
         )
     )
@@ -187,12 +207,50 @@ def test_script_state_count_and_total_byte_budgets_are_enforced() -> None:
     records = capture.capture_script_states(
         {
             "__NEXT_DATA__": {"name": "first"},
-            "__NUXT__": {"name": "second"},
+            "__NUXT__": {"value": "x" * 300},
+            "__APOLLO_STATE__": {"name": "third"},
+        }
+    )
+
+    assert [record.source_locator for record in records] == [
+        "window.__NEXT_DATA__",
+        "window.__APOLLO_STATE__",
+    ]
+
+
+def test_script_state_rejects_non_mapping_empty_and_unsupported_values() -> None:
+    capture = StructuredStateCapture(StructuredStateCaptureLimits())
+
+    assert capture.capture_script_states([{"value": "not-a-map"}]) == ()
+    assert (
+        capture.capture_script_states(
+            {
+                "__NEXT_DATA__": {"accessToken": "drop"},
+                "__NUXT__": object(),
+            }
+        )
+        == ()
+    )
+
+
+def test_script_state_handles_lists_non_string_keys_and_depth_bounds() -> None:
+    capture = StructuredStateCapture(
+        StructuredStateCaptureLimits(max_depth=2, max_key_chars=16, max_scalars=3)
+    )
+
+    records = capture.capture_script_states(
+        {
+            "__INITIAL_STATE__": {
+                "items": [1, 2, 3, 4],
+                7: "drop-non-string-key",
+                "this-key-is-far-too-long": "drop-long-key",
+                "deep": {"nested": {"value": "drop-too-deep"}},
+            }
         }
     )
 
     assert len(records) == 1
-    assert records[0].source_locator == "window.__NEXT_DATA__"
+    assert json.loads(records[0].payload_json) == {"items": [1, 2, 3]}
 
 
 @pytest.mark.parametrize(
