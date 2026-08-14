@@ -48,13 +48,18 @@ class FallbackPublicWebClient(PublicWebClient):
         *,
         collected_at: datetime,
         policy: BrowserFallbackPolicy,
+        request_timeout_seconds: float | None = None,
     ) -> None:
-        super().__init__(client)
+        super().__init__(client, request_timeout_seconds=request_timeout_seconds)
         self._browser_entry = browser_entry
         self._collected_at = require_aware_utc(collected_at, field_name="collected_at")
         self._policy = policy
         self._extra_bytes = 0
         self._fallback_urls: list[str] = []
+
+    @property
+    def supports_concurrent_fetches(self) -> bool:
+        return False
 
     @property
     def fallback_urls(self) -> tuple[str, ...]:
@@ -93,6 +98,8 @@ class FallbackPublicWebClient(PublicWebClient):
             self._browser_entry,
             collected_at=self._collected_at,
         )
+        if self.deadline is not None:
+            browser.bind_deadline(self.deadline)
         browser_usage = CrawlUsage(
             pages_fetched=effective.pages_fetched,
             bytes_fetched=effective.bytes_fetched + len(static.body),
