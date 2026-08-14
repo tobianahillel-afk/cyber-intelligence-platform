@@ -3,11 +3,13 @@ from __future__ import annotations
 import json
 from typing import cast
 
+from playwright.sync_api import Error as PlaywrightError
 from playwright.sync_api import Page, Request, Response
 
 from cip.adapters.sources.public_web.browser_structured_state import (
     capture_finished_request,
     capture_reviewed_script_state,
+    install_network_state_capture,
 )
 from cip.adapters.sources.public_web.structured_state_capture import (
     CapturedStructuredState,
@@ -46,6 +48,12 @@ class _Response:
         return self.body_bytes
 
 
+class _ExplodingBodyResponse(_Response):
+    def body(self) -> bytes:
+        self.body_called = True
+        raise ValueError("body unavailable")
+
+
 class _Request:
     def __init__(self, response: _Response, body_size: int) -> None:
         self._response = response
@@ -63,9 +71,19 @@ class _Request:
         }
 
 
+class _NoResponseRequest(_Request):
+    def response(self) -> None:
+        return None
+
+
 class _BrokenRequest(_Request):
     def sizes(self) -> dict[str, int]:
         return {}
+
+
+class _ErrorRequest(_Request):
+    def response(self) -> Response:
+        raise PlaywrightError("response lookup failed")
 
 
 class _Page:
@@ -78,6 +96,30 @@ class _Page:
         self.expressions.append(expression)
         self.arguments.append(argument)
         return self.raw
+
+
+class _ErrorPage(_Page):
+    def evaluate(self, expression: str, argument: object = None) -> object:
+        del expression, argument
+        raise PlaywrightError("script extraction failed")
+
+
+class _NoEvaluatePage:
+    evaluate = None
+
+
+class _ListenerPage:
+    def __init__(self) -> None:
+        self.event: str | None = None
+        self.callback: object | None = None
+
+    def on(self, event: str, callback: object) -> None:
+        self.event = event
+        self.callback = callback
+
+
+class _NoListenerPage:
+    on = None
 
 
 def test_browser_captures_authorized_finished_same_origin_json_and_sanitizes() -> None:
@@ -113,7 +155,67 @@ def test_browser_captures_authorized_finished_same_origin_json_and_sanitizes() -
     }
 
 
-def test_browser_does_not_read_off_origin_non_json_or_oversized_response_body() -> None:
+def test_browser_installs_finished_request_listener_and_listener_captures() -> None:
+    capture = StructuredStateCapture(StructuredStateCaptureLimits())
+    states: list[CapturedStructuredState] = []
+    page = _ListenerPage()
+    response = _Response(
+        url="https://example.com/api/state",
+        body=b'{"provider":"listener"}',
+    )
+
+    install_network_state_capture(
+        cast(Page, page),
+        capture=capture,
+        authorize_url=_authorize_example_origin,
+        sink=states.append,
+    )
+
+    assert page.event == "requestfinished"
+    assert callable(page.callback)
+    page.callback(cast(Request, _Request(response, len(response.body_bytes))))
+    assert len(states) == 1
+
+
+def test_browser_listener_and_script_capture_fail_closed_when_api_missing() -> None:
+    capture = StructuredStateCapture(StructuredStateCaptureLimits())
+    states: list[CapturedStructuredState] = []
+
+    install_network_state_capture(
+        cast(Page, _NoListenerPage()),
+        capture=capture,
+        authorize_url=_authorize_example_origin,
+        sink=states.append,
+    )
+
+    assert states == []
+    assert capture_reviewed_script_state(cast(Page, _NoEvaluatePage()), capture) == ()
+
+
+def test_browser_finished_request_without_response_or_with_playwright_error_fails_closed() -> None:
+    response = _Response(
+        url="https://example.com/api/state",
+        body=b'{"value":"unused"}',
+    )
+    capture = StructuredStateCapture(StructuredStateCaptureLimits())
+    states: list[CapturedStructuredState] = []
+
+    for request in (
+        _NoResponseRequest(response, 0),
+        _ErrorRequest(response, 0),
+    ):
+        capture_finished_request(
+            cast(Request, request),
+            capture=capture,
+            authorize_url=_authorize_example_origin,
+            sink=states.append,
+        )
+
+    assert states == []
+    assert not response.body_called
+
+
+def test_browser_does_not_read_off_origin_non_json_status_or_oversized_body() -> None:
     capture = StructuredStateCapture(StructuredStateCaptureLimits())
     states: list[CapturedStructuredState] = []
     responses_and_sizes = (
@@ -131,6 +233,14 @@ def test_browser_does_not_read_off_origin_non_json_or_oversized_response_body() 
                 content_type="text/plain",
             ),
             27,
+        ),
+        (
+            _Response(
+                url="https://example.com/api/error",
+                body=b'{"value":"wrong status"}',
+                status=503,
+            ),
+            28,
         ),
         (
             _Response(
@@ -153,6 +263,47 @@ def test_browser_does_not_read_off_origin_non_json_or_oversized_response_body() 
     assert all(not response.body_called for response, _ in responses_and_sizes)
 
 
+def test_browser_content_length_gate_is_fail_closed_before_body_materialization() -> None:
+    capture = StructuredStateCapture(StructuredStateCaptureLimits())
+    states: list[CapturedStructuredState] = []
+    response = _Response(
+        url="https://example.com/api/large-header",
+        body=b'{"value":"small-real-body"}',
+        content_length=str(capture.limits.max_response_bytes + 1),
+    )
+
+    capture_finished_request(
+        cast(Request, _Request(response, len(response.body_bytes))),
+        capture=capture,
+        authorize_url=_authorize_example_origin,
+        sink=states.append,
+    )
+
+    assert states == []
+    assert not response.body_called
+
+
+def test_browser_invalid_or_negative_content_length_uses_measured_body_size() -> None:
+    for raw_length in ("invalid", "-1"):
+        capture = StructuredStateCapture(StructuredStateCaptureLimits())
+        states: list[CapturedStructuredState] = []
+        response = _Response(
+            url="https://example.com/api/state",
+            body=b'{"value":"measured"}',
+            content_length=raw_length,
+        )
+
+        capture_finished_request(
+            cast(Request, _Request(response, len(response.body_bytes))),
+            capture=capture,
+            authorize_url=_authorize_example_origin,
+            sink=states.append,
+        )
+
+        assert response.body_called
+        assert len(states) == 1
+
+
 def test_browser_finished_request_without_size_metadata_fails_closed() -> None:
     response = _Response(
         url="https://example.com/api/state",
@@ -169,6 +320,25 @@ def test_browser_finished_request_without_size_metadata_fails_closed() -> None:
     )
 
     assert not response.body_called
+    assert states == []
+
+
+def test_browser_body_read_error_does_not_promote_partial_state() -> None:
+    response = _ExplodingBodyResponse(
+        url="https://example.com/api/state",
+        body=b'{"value":"unavailable"}',
+    )
+    capture = StructuredStateCapture(StructuredStateCaptureLimits())
+    states: list[CapturedStructuredState] = []
+
+    capture_finished_request(
+        cast(Request, _Request(response, len(response.body_bytes))),
+        capture=capture,
+        authorize_url=_authorize_example_origin,
+        sink=states.append,
+    )
+
+    assert response.body_called
     assert states == []
 
 
@@ -194,6 +364,12 @@ def test_browser_fixed_script_extractor_only_promotes_reviewed_sanitized_state()
     assert captured[0].kind is PublicStructuredStateKind.SCRIPT_STATE
     assert captured[0].source_locator == "window.__INITIAL_STATE__"
     assert json.loads(captured[0].payload_json) == {"company": "Example"}
+
+
+def test_browser_script_extractor_playwright_error_fails_closed() -> None:
+    capture = StructuredStateCapture(StructuredStateCaptureLimits())
+
+    assert capture_reviewed_script_state(cast(Page, _ErrorPage({})), capture) == ()
 
 
 def _record_authorized(url: str, authorized: list[str]) -> str:
