@@ -117,6 +117,27 @@ def test_network_json_rejects_malformed_oversized_and_aggregate_overflow() -> No
     )
 
 
+def test_network_json_count_admission_can_reject_before_materialization() -> None:
+    capture = StructuredStateCapture(
+        StructuredStateCaptureLimits(
+            max_json_responses=1,
+            max_response_bytes=256,
+            max_total_json_bytes=256,
+        )
+    )
+
+    assert capture.admits_network_body(16)
+    assert capture.capture_network_json(
+        source_url="https://example.com/api/one",
+        status=200,
+        media_type="application/json",
+        body=b'{"ok":true}',
+    )
+    assert not capture.admits_network_body(16)
+    assert not capture.admits_network_body(257)
+    assert not capture.admits_network_body(-1)
+
+
 def test_network_json_rejects_invalid_utf8_scalar_and_sensitive_only_payloads() -> None:
     capture = StructuredStateCapture(StructuredStateCaptureLimits())
 
@@ -180,11 +201,13 @@ def test_script_state_uses_only_fixed_public_globals_and_sanitizes() -> None:
 
     records = capture.capture_script_states(
         {
-            "__INITIAL_STATE__": {
-                "company": "Example",
-                "sessionId": "never-store",
-            },
-            "unsupportedGlobal": {"value": "ignored"},
+            "__INITIAL_STATE__": json.dumps(
+                {
+                    "company": "Example",
+                    "sessionId": "never-store",
+                }
+            ),
+            "unsupportedGlobal": json.dumps({"value": "ignored"}),
         }
     )
 
@@ -196,19 +219,20 @@ def test_script_state_uses_only_fixed_public_globals_and_sanitizes() -> None:
     assert json.loads(record.payload_json) == {"company": "Example"}
 
 
-def test_script_state_count_and_total_byte_budgets_are_enforced() -> None:
+def test_script_state_count_per_state_and_total_byte_budgets_are_enforced() -> None:
     capture = StructuredStateCapture(
         StructuredStateCaptureLimits(
             max_script_states=2,
+            max_script_state_bytes=256,
             max_total_script_bytes=256,
         )
     )
 
     records = capture.capture_script_states(
         {
-            "__NEXT_DATA__": {"name": "first"},
-            "__NUXT__": {"value": "x" * 300},
-            "__APOLLO_STATE__": {"name": "third"},
+            "__NEXT_DATA__": json.dumps({"name": "first"}),
+            "__NUXT__": json.dumps({"value": "x" * 300}),
+            "__APOLLO_STATE__": json.dumps({"name": "third"}),
         }
     )
 
@@ -216,6 +240,25 @@ def test_script_state_count_and_total_byte_budgets_are_enforced() -> None:
         "window.__NEXT_DATA__",
         "window.__APOLLO_STATE__",
     ]
+    assert capture.script_extractor_arguments() == {
+        "maxStates": 2,
+        "maxStateBytes": 256,
+        "maxTotalBytes": 256,
+    }
+
+
+def test_script_state_rejects_invalid_serialized_state_without_promotion() -> None:
+    capture = StructuredStateCapture(StructuredStateCaptureLimits())
+
+    assert (
+        capture.capture_script_states(
+            {
+                "__NEXT_DATA__": "{bad",
+                "__NUXT__": json.dumps({"accessToken": "drop"}),
+            }
+        )
+        == ()
+    )
 
 
 def test_script_state_rejects_non_mapping_empty_and_unsupported_values() -> None:
@@ -264,6 +307,7 @@ def test_script_state_handles_lists_non_string_keys_and_depth_bounds() -> None:
         ("max_key_chars", 15),
         ("max_string_chars", 15),
         ("max_script_states", 0),
+        ("max_script_state_bytes", 255),
         ("max_total_script_bytes", 255),
     ],
 )
