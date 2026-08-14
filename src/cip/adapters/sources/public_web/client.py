@@ -14,6 +14,7 @@ from cip.adapters.sources.public_web.ooxml_parsing import (
     detect_ooxml_mime,
 )
 from cip.adapters.sources.public_web.registry import PublicWebTarget
+from cip.adapters.sources.public_web.response_headers import bounded_evidence_headers
 from cip.modules.public_footprint.domain.scope import CrawlUsage
 from cip.modules.public_footprint.domain.url_identity import CanonicalUrl, same_origin
 
@@ -54,6 +55,7 @@ class PublicWebFetchResult:
     last_modified: str | None
     redirects: int
     status_code: int = 200
+    response_headers: tuple[tuple[str, str], ...] = ()
 
 
 @dataclass(frozen=True, slots=True)
@@ -298,6 +300,7 @@ class PublicWebClient:
                 last_modified=_header(response, "last-modified"),
                 redirects=redirects,
                 status_code=response.status_code,
+                response_headers=bounded_evidence_headers(response.headers.multi_items()),
             )
 
 
