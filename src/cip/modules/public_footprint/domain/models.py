@@ -6,6 +6,7 @@ from enum import StrEnum
 from hashlib import sha256
 from uuid import UUID, uuid4
 
+from cip.modules.public_footprint.domain.structured_state import PublicStructuredState
 from cip.modules.public_footprint.domain.surfaces import PublicSurfaceReference
 from cip.modules.public_footprint.domain.url_identity import CanonicalUrl
 from cip.shared.kernel.time import require_aware_utc
@@ -262,6 +263,7 @@ class PublicFootprintProjection:
     version: PublicResourceVersion
     claims: tuple[PublicClaim, ...] = ()
     surfaces: tuple[PublicSurfaceReference, ...] = ()
+    structured_states: tuple[PublicStructuredState, ...] = ()
 
     def __post_init__(self) -> None:
         if self.version.resource_key != self.resource.identity_key:
@@ -282,8 +284,18 @@ class PublicFootprintProjection:
             if surface.resource_version_id != self.version.id:
                 raise ValueError("surface version must match projected resource version")
             unique_surfaces[surface.identity_key] = surface
+        unique_states: dict[str, PublicStructuredState] = {}
+        for state in self.structured_states:
+            if state.organization_id != self.resource.organization_id:
+                raise ValueError("structured state organization must match projected resource")
+            if state.resource_version_id != self.version.id:
+                raise ValueError("structured state version must match projected resource version")
+            if state.page_url != self.resource.canonical_url:
+                raise ValueError("structured state page URL must match projected resource")
+            unique_states[state.identity_key] = state
         object.__setattr__(self, "claims", tuple(unique_claims.values()))
         object.__setattr__(self, "surfaces", tuple(unique_surfaces.values()))
+        object.__setattr__(self, "structured_states", tuple(unique_states.values()))
 
 
 def _required_hash(value: str, *, field_name: str) -> str:

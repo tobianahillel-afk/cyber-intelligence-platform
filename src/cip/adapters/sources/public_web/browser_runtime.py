@@ -1,15 +1,27 @@
 from __future__ import annotations
 
 from collections.abc import Callable
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 from playwright.sync_api import Error as PlaywrightError
 from playwright.sync_api import Page, Request, Response, Route, sync_playwright
 
+from cip.adapters.sources.public_web.browser_structured_state import (
+    capture_reviewed_script_state,
+    install_network_state_capture,
+)
 from cip.adapters.sources.public_web.client import PublicWebFetchResult
 from cip.adapters.sources.public_web.registry import PublicWebTarget
 from cip.adapters.sources.public_web.response_headers import (
     bounded_evidence_header_lookup,
+)
+from cip.adapters.sources.public_web.structured_fetch_result import (
+    StructuredPublicWebFetchResult,
+)
+from cip.adapters.sources.public_web.structured_state_capture import (
+    CapturedStructuredState,
+    StructuredStateCapture,
+    StructuredStateCaptureLimits,
 )
 from cip.modules.public_footprint.domain.scope import CrawlUsage
 from cip.modules.public_footprint.domain.url_identity import CanonicalUrl, same_origin
@@ -31,6 +43,9 @@ class BrowserRenderLimits:
     max_requests: int = 64
     navigation_timeout_ms: int = 15_000
     settle_timeout_ms: int = 250
+    structured_state: StructuredStateCaptureLimits = field(
+        default_factory=StructuredStateCaptureLimits
+    )
 
     def __post_init__(self) -> None:
         if not 1 <= self.max_requests <= 1_000:
@@ -50,10 +65,14 @@ class BrowserRenderResult:
 
 @dataclass(slots=True)
 class _BrowserState:
+    structured: StructuredStateCapture = field(
+        default_factory=lambda: StructuredStateCapture(StructuredStateCaptureLimits())
+    )
     requests_seen: int = 0
     requests_blocked: int = 0
     main_navigations: int = 0
     denial: str | None = None
+    captured_states: list[CapturedStructuredState] = field(default_factory=list)
 
 
 def render_public_web_page(
@@ -73,7 +92,7 @@ def render_public_web_page(
         depth=depth,
         authorize_url=authorize_url,
     )
-    state = _BrowserState()
+    state = _BrowserState(structured=StructuredStateCapture(bounded.structured_state))
     try:
         with sync_playwright() as playwright:
             browser = playwright.chromium.launch(headless=True, chromium_sandbox=True)
@@ -88,6 +107,14 @@ def render_public_web_page(
                 try:
                     page = context.new_page()
                     page.set_default_navigation_timeout(bounded.navigation_timeout_ms)
+                    _install_structured_capture(
+                        page,
+                        target,
+                        usage,
+                        depth,
+                        authorize_url,
+                        state,
+                    )
                     page.route(
                         "**/*",
                         lambda route: _handle_route(
@@ -129,6 +156,28 @@ def render_public_web_page(
         raise BrowserRenderError("browser_navigation_failed") from exc
 
 
+def _install_structured_capture(
+    page: Page,
+    target: PublicWebTarget,
+    usage: CrawlUsage,
+    depth: int,
+    authorize_url: AuthorizeUrl,
+    state: _BrowserState,
+) -> None:
+    install_network_state_capture(
+        page,
+        capture=state.structured,
+        authorize_url=lambda response_url: _authorized_request_url(
+            target,
+            response_url,
+            usage=usage,
+            depth=depth,
+            authorize_url=authorize_url,
+        ),
+        sink=state.captured_states.append,
+    )
+
+
 def _render_result(
     page: Page,
     response: Response | None,
@@ -158,6 +207,9 @@ def _render_result(
         depth=depth,
         authorize_url=authorize_url,
     )
+    state.captured_states.extend(
+        capture_reviewed_script_state(page, state.structured)
+    )
     body = page.content().encode("utf-8")
     decision = target.crawl_scope.evaluate_response(
         mime_type="text/html",
@@ -170,7 +222,7 @@ def _render_result(
     if redirects > target.max_redirects:
         raise BrowserPolicyDeniedError("redirect_limit_exceeded")
     return BrowserRenderResult(
-        fetch_result=PublicWebFetchResult(
+        fetch_result=StructuredPublicWebFetchResult(
             requested_url=requested,
             fetched_url=final_url,
             body=body,
@@ -180,6 +232,7 @@ def _render_result(
             redirects=redirects,
             status_code=response.status,
             response_headers=bounded_evidence_header_lookup(response.header_value),
+            structured_states=tuple(state.captured_states),
         ),
         requests_seen=state.requests_seen,
         requests_blocked=state.requests_blocked,

@@ -20,6 +20,7 @@ from cip.adapters.sources.public_web.page_representation import (
 )
 from cip.adapters.sources.public_web.parsing import contains_credential_marker
 from cip.adapters.sources.public_web.registry import PublicWebTarget
+from cip.adapters.sources.public_web.structured_state_mapping import map_structured_states
 from cip.adapters.sources.public_web.surface_extraction import (
     extract_public_surface_references,
 )
@@ -147,11 +148,21 @@ def map_public_page(
             resource_version_id=version.id,
         )
     )
+    structured_states = (
+        ()
+        if tombstoned or unchanged or quarantined
+        else map_structured_states(
+            result,
+            organization_id=target.organization_id,
+            resource_version_id=version.id,
+        )
+    )
     projection = PublicFootprintProjection(
         resource=resource,
         version=version,
         claims=claims,
         surfaces=surfaces,
+        structured_states=structured_states,
     )
     observation = (
         None

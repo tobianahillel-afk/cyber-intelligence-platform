@@ -31,6 +31,10 @@ from cip.modules.public_footprint.domain.search_core import (
     SearchQueryPlan,
     normalize_search_executions,
 )
+from cip.modules.public_footprint.domain.structured_state import (
+    PublicStructuredState,
+    PublicStructuredStateKind,
+)
 from cip.modules.public_footprint.domain.surfaces import (
     PublicSurfaceKind,
     PublicSurfaceReference,
@@ -56,6 +60,8 @@ __all__ = [
     "PublicResource",
     "PublicResourceKind",
     "PublicResourceVersion",
+    "PublicStructuredState",
+    "PublicStructuredStateKind",
     "PublicSurfaceKind",
     "PublicSurfaceReference",
     "ResourceAccessState",
