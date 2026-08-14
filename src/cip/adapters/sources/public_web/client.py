@@ -7,6 +7,7 @@ from urllib.robotparser import RobotFileParser
 import httpx
 
 from cip import __version__
+from cip.adapters.sources.public_web.crawl_runtime import CrawlDeadline
 from cip.adapters.sources.public_web.ooxml_parsing import (
     DOCX_MIME,
     PPTX_MIME,
@@ -45,6 +46,10 @@ class PublicWebPolicyDeniedError(RuntimeError):
     """Robots or target scope denied a public-web request."""
 
 
+class PublicWebDeadlineExceededError(RuntimeError):
+    """The configured whole-crawl wall-clock deadline expired."""
+
+
 @dataclass(frozen=True, slots=True)
 class PublicWebFetchResult:
     requested_url: str
@@ -75,11 +80,25 @@ class PublicWebClient:
     SITEMAP_MAX_BYTES = 1_000_000
     FEED_MAX_BYTES = 1_000_000
 
-    def __init__(self, client: httpx.Client) -> None:
+    def __init__(
+        self,
+        client: httpx.Client,
+        *,
+        request_timeout_seconds: float | None = None,
+    ) -> None:
+        if request_timeout_seconds is not None and request_timeout_seconds <= 0:
+            raise ValueError("request_timeout_seconds must be positive")
         self._client = client
+        self._request_timeout_seconds = request_timeout_seconds
+        self._deadline: CrawlDeadline | None = None
+
+    def bind_deadline(self, deadline: CrawlDeadline) -> None:
+        if self._deadline is not None and self._deadline is not deadline:
+            raise ValueError("public web client is already bound to another crawl deadline")
+        self._deadline = deadline
 
     def fetch_robots(self, target: PublicWebTarget) -> RobotsRules:
-        response = self._client.get(
+        response = self._get(
             target.robots_url,
             headers={"Accept": "text/plain", "User-Agent": _USER_AGENT},
             follow_redirects=False,
@@ -135,7 +154,7 @@ class PublicWebClient:
             _require_structured_url_in_scope(target, canonical)
         if not robots.allows(canonical):
             raise PublicWebPolicyDeniedError("robots.txt denied sitemap collection")
-        response = self._client.get(
+        response = self._get(
             canonical,
             headers={
                 "Accept": "application/xml,text/xml;q=0.9,*/*;q=0.1",
@@ -184,7 +203,7 @@ class PublicWebClient:
             _require_structured_url_in_scope(target, canonical)
         if not robots.allows(canonical):
             raise PublicWebPolicyDeniedError("robots.txt denied feed collection")
-        response = self._client.get(
+        response = self._get(
             canonical,
             headers={
                 "Accept": (
@@ -238,7 +257,7 @@ class PublicWebClient:
                 raise PublicWebPolicyDeniedError(decision.reason.value)
             if not robots.allows(current):
                 raise PublicWebPolicyDeniedError("robots.txt denied page collection")
-            response = self._client.get(
+            response = self._get(
                 current,
                 headers=_page_headers(
                     include_validators=current == requested,
@@ -302,6 +321,41 @@ class PublicWebClient:
                 status_code=response.status_code,
                 response_headers=bounded_evidence_headers(response.headers.multi_items()),
             )
+
+    def _get(
+        self,
+        url: str,
+        *,
+        headers: dict[str, str],
+        follow_redirects: bool,
+    ) -> httpx.Response:
+        timeout: float | None = self._request_timeout_seconds
+        if self._deadline is not None:
+            remaining = self._deadline.remaining_seconds
+            if remaining <= 0:
+                raise PublicWebDeadlineExceededError("whole-crawl deadline exceeded")
+            timeout = remaining if timeout is None else min(timeout, remaining)
+        try:
+            if timeout is None:
+                response = self._client.get(
+                    url,
+                    headers=headers,
+                    follow_redirects=follow_redirects,
+                )
+            else:
+                response = self._client.get(
+                    url,
+                    headers=headers,
+                    follow_redirects=follow_redirects,
+                    timeout=timeout,
+                )
+        except httpx.TimeoutException as exc:
+            if self._deadline is not None and self._deadline.exceeded:
+                raise PublicWebDeadlineExceededError("whole-crawl deadline exceeded") from exc
+            raise
+        if self._deadline is not None and self._deadline.exceeded:
+            raise PublicWebDeadlineExceededError("whole-crawl deadline exceeded")
+        return response
 
 
 def _page_headers(
