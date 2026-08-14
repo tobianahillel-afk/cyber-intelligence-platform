@@ -67,12 +67,22 @@ class StructuredStateCaptureLimits:
     def __post_init__(self) -> None:
         _bounded(self.max_json_responses, 1, 64, "max_json_responses")
         _bounded(self.max_response_bytes, 256, 262_144, "max_response_bytes")
-        _bounded(self.max_total_json_bytes, self.max_response_bytes, 1_048_576, "max_total_json_bytes")
+        _bounded(
+            self.max_total_json_bytes,
+            self.max_response_bytes,
+            1_048_576,
+            "max_total_json_bytes",
+        )
         _bounded(self.max_depth, 1, 32, "max_depth")
         _bounded(self.max_scalars, 1, 4_096, "max_scalars")
         _bounded(self.max_key_chars, 16, 1_000, "max_key_chars")
         _bounded(self.max_string_chars, 16, 8_000, "max_string_chars")
-        _bounded(self.max_script_states, 1, len(PUBLIC_SCRIPT_STATE_GLOBALS), "max_script_states")
+        _bounded(
+            self.max_script_states,
+            1,
+            len(PUBLIC_SCRIPT_STATE_GLOBALS),
+            "max_script_states",
+        )
         _bounded(self.max_total_script_bytes, 256, 262_144, "max_total_script_bytes")
 
 
@@ -160,7 +170,10 @@ def _load_and_sanitize(body: bytes, limits: StructuredStateCaptureLimits) -> str
     return _sanitize_value_to_json(raw, limits)
 
 
-def _sanitize_value_to_json(raw: object, limits: StructuredStateCaptureLimits) -> str | None:
+def _sanitize_value_to_json(
+    raw: object,
+    limits: StructuredStateCaptureLimits,
+) -> str | None:
     budget = _ScalarBudget(limits.max_scalars)
     try:
         sanitized = _sanitize(raw, limits=limits, budget=budget, depth=0, key=None)
@@ -168,7 +181,12 @@ def _sanitize_value_to_json(raw: object, limits: StructuredStateCaptureLimits) -
         return None
     if sanitized is _DROP or not isinstance(sanitized, dict | list) or not sanitized:
         return None
-    encoded = json.dumps(sanitized, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
+    encoded = json.dumps(
+        sanitized,
+        sort_keys=True,
+        separators=(",", ":"),
+        ensure_ascii=False,
+    )
     if len(encoded) > 32_768:
         return None
     return encoded
