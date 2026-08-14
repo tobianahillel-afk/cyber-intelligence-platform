@@ -150,21 +150,23 @@ class CrawlBudgetCoordinator:
         return reservation
 
     def commit(self, reservation: CrawlReservation, *, accepted_bytes: int) -> None:
-        current = self._pop_active(reservation)
+        current = self._require_active(reservation)
         if not 0 <= accepted_bytes <= current.byte_allowance:
             raise ValueError("accepted_bytes exceeds the reserved crawl allowance")
+        self._active.pop(reservation.sequence)
         self._reserved_pages -= 1
         self._reserved_bytes -= current.byte_allowance
         self._used_pages += 1
         self._used_bytes += accepted_bytes
 
     def release(self, reservation: CrawlReservation) -> None:
-        current = self._pop_active(reservation)
+        current = self._require_active(reservation)
+        self._active.pop(reservation.sequence)
         self._reserved_pages -= 1
         self._reserved_bytes -= current.byte_allowance
 
-    def _pop_active(self, reservation: CrawlReservation) -> CrawlReservation:
-        current = self._active.pop(reservation.sequence, None)
+    def _require_active(self, reservation: CrawlReservation) -> CrawlReservation:
+        current = self._active.get(reservation.sequence)
         if current != reservation:
             raise ValueError("crawl reservation is not active")
         return current
