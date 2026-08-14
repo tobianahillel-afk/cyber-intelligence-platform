@@ -28,7 +28,7 @@ Candidate evidence:
 - standard runtime import without browser bindings: **PASS**;
 - frontend audit, typecheck and production build: **PASS**.
 
-This documentation commit changes the pull-request tree. Complete CI and the dedicated L10 live workflow must repeat on the documentation head itself before merge.
+The closeout and canonical remaining-lot roadmap are now part of the PR tree. Complete CI and the dedicated L10 live workflow must repeat on the resulting documentation head before merge. Historical candidate evidence above remains supporting evidence only; the final merge gate is the exact current PR head.
 
 ## Capability
 
