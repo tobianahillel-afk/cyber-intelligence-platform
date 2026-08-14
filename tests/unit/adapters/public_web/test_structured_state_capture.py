@@ -196,6 +196,29 @@ def test_network_json_count_depth_scalar_and_key_bounds_are_deterministic() -> N
     )
 
 
+def test_network_json_rejects_canonical_payload_over_promotion_ceiling() -> None:
+    capture = StructuredStateCapture(
+        StructuredStateCaptureLimits(
+            max_response_bytes=262_144,
+            max_total_json_bytes=262_144,
+            max_scalars=16,
+            max_string_chars=8_000,
+        )
+    )
+    body = json.dumps({f"field{i}": "x" * 8_000 for i in range(5)}).encode()
+
+    assert len(body) < capture.limits.max_response_bytes
+    assert (
+        capture.capture_network_json(
+            source_url="https://example.com/api/large-canonical",
+            status=200,
+            media_type="application/json",
+            body=body,
+        )
+        is None
+    )
+
+
 def test_script_state_uses_only_fixed_public_globals_and_sanitizes() -> None:
     capture = StructuredStateCapture(StructuredStateCaptureLimits())
 
@@ -247,6 +270,56 @@ def test_script_state_count_per_state_and_total_byte_budgets_are_enforced() -> N
     }
 
 
+def test_script_state_rejects_payload_that_exceeds_per_state_after_sanitization() -> None:
+    capture = StructuredStateCapture(
+        StructuredStateCaptureLimits(
+            max_script_state_bytes=256,
+            max_total_script_bytes=1_024,
+            max_string_chars=1_000,
+        )
+    )
+
+    assert (
+        capture.capture_script_states(
+            {"__NEXT_DATA__": {"value": "x" * 300}}
+        )
+        == ()
+    )
+
+
+def test_script_state_rejects_aggregate_overflow_and_stops_at_count_limit() -> None:
+    aggregate_capture = StructuredStateCapture(
+        StructuredStateCaptureLimits(
+            max_script_states=5,
+            max_script_state_bytes=256,
+            max_total_script_bytes=256,
+            max_string_chars=200,
+        )
+    )
+    aggregate_records = aggregate_capture.capture_script_states(
+        {
+            "__NEXT_DATA__": {"value": "a" * 150},
+            "__NUXT__": {"value": "b" * 150},
+        }
+    )
+    assert [record.source_locator for record in aggregate_records] == [
+        "window.__NEXT_DATA__"
+    ]
+
+    count_capture = StructuredStateCapture(
+        StructuredStateCaptureLimits(max_script_states=1)
+    )
+    count_records = count_capture.capture_script_states(
+        {
+            "__NEXT_DATA__": {"value": "first"},
+            "__NUXT__": {"value": "second"},
+        }
+    )
+    assert [record.source_locator for record in count_records] == [
+        "window.__NEXT_DATA__"
+    ]
+
+
 def test_script_state_rejects_invalid_serialized_state_without_promotion() -> None:
     capture = StructuredStateCapture(StructuredStateCaptureLimits())
 
@@ -294,6 +367,29 @@ def test_script_state_handles_lists_non_string_keys_and_depth_bounds() -> None:
 
     assert len(records) == 1
     assert json.loads(records[0].payload_json) == {"items": [1, 2, 3]}
+
+
+def test_script_state_preserves_supported_json_scalars_in_containers() -> None:
+    capture = StructuredStateCapture(StructuredStateCaptureLimits())
+
+    records = capture.capture_script_states(
+        {
+            "__INITIAL_STATE__": {
+                "none": None,
+                "boolean": True,
+                "integer": 4,
+                "float": 1.5,
+            }
+        }
+    )
+
+    assert len(records) == 1
+    assert json.loads(records[0].payload_json) == {
+        "boolean": True,
+        "float": 1.5,
+        "integer": 4,
+        "none": None,
+    }
 
 
 @pytest.mark.parametrize(
