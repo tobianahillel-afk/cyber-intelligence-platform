@@ -39,5 +39,8 @@ jobs:
       - name: Install bounded Chromium runtime
         run: python -m playwright install --with-deps chromium
 
+      - name: Configure controlled first-party fixture hostname
+        run: echo '127.0.0.1 sa16-l11-fixture.example' | sudo tee -a /etc/hosts
+
       - name: Controlled rendered JSON and script-state validation
         run: python scripts/sa16_l11_rendered_structured_state_live.py
