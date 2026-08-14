@@ -42,7 +42,7 @@ from cip.shared.persistence.session import (
     session_scope,
 )
 
-_ORIGIN = "https://httpbin.org/"
+_ORIGIN = "https://httpbin.io/"
 _OFF_ORIGIN_HOST = "example.com"
 _SECRET_MARKERS = ("accesstoken", "sessionid", "must-drop", "password", "cookie")
 
