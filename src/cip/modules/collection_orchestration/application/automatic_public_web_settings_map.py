@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING
 from cip.shared.config.public_web_browser_settings import (
     PublicWebBrowserFallbackSettings,
 )
+from cip.shared.config.public_web_crawl_settings import PublicWebCrawlRuntimeSettings
 from cip.shared.config.settings import Settings
 
 if TYPE_CHECKING:
@@ -21,6 +22,7 @@ def automatic_public_web_config_from_settings(
     )
 
     browser = PublicWebBrowserFallbackSettings()
+    crawl = PublicWebCrawlRuntimeSettings()
     return AutomaticPublicWebRuntimeConfig(
         enabled=settings.automatic_public_web_enabled,
         organization_ids=settings.automatic_public_web_organization_ids,
@@ -33,8 +35,8 @@ def automatic_public_web_config_from_settings(
         max_total_bytes=settings.automatic_public_web_max_total_bytes,
         max_resource_bytes=settings.automatic_public_web_max_resource_bytes,
         max_redirects=settings.automatic_public_web_max_redirects,
-        crawl_deadline_seconds=settings.automatic_public_web_crawl_deadline_seconds,
-        max_crawl_concurrency=settings.automatic_public_web_max_crawl_concurrency,
+        crawl_deadline_seconds=crawl.crawl_deadline_seconds,
+        max_crawl_concurrency=crawl.max_crawl_concurrency,
         browser_fallback_enabled=browser.enabled,
         browser_authorization_reference=browser.authorization_reference,
         browser_reviewed_at=browser.reviewed_at,
