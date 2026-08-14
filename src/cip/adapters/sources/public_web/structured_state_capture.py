@@ -32,21 +32,32 @@ PUBLIC_SCRIPT_STATE_GLOBALS = (
     "__INITIAL_STATE__",
     "__PRELOADED_STATE__",
 )
-PUBLIC_SCRIPT_STATE_JS = """() => {
+PUBLIC_SCRIPT_STATE_JS = """(limits) => {
   const names = [
     "__NEXT_DATA__", "__NUXT__", "__APOLLO_STATE__",
     "__INITIAL_STATE__", "__PRELOADED_STATE__"
   ];
+  const encoder = new TextEncoder();
   const result = {};
+  let totalBytes = 0;
+  let states = 0;
   for (const name of names) {
+    if (states >= limits.maxStates) break;
     const value = window[name];
     if (value === undefined || value === null) continue;
+    let serialized;
     try {
-      JSON.stringify(value);
-      result[name] = value;
+      serialized = JSON.stringify(value);
     } catch (_) {
       continue;
     }
+    if (typeof serialized !== "string") continue;
+    const bytes = encoder.encode(serialized).byteLength;
+    if (bytes > limits.maxStateBytes) continue;
+    if (totalBytes + bytes > limits.maxTotalBytes) continue;
+    result[name] = serialized;
+    totalBytes += bytes;
+    states += 1;
   }
   return result;
 }"""
@@ -62,6 +73,7 @@ class StructuredStateCaptureLimits:
     max_key_chars: int = 200
     max_string_chars: int = 1_000
     max_script_states: int = 5
+    max_script_state_bytes: int = 32_768
     max_total_script_bytes: int = 65_536
 
     def __post_init__(self) -> None:
@@ -82,6 +94,12 @@ class StructuredStateCaptureLimits:
             1,
             len(PUBLIC_SCRIPT_STATE_GLOBALS),
             "max_script_states",
+        )
+        _bounded(
+            self.max_script_state_bytes,
+            256,
+            262_144,
+            "max_script_state_bytes",
         )
         _bounded(self.max_total_script_bytes, 256, 262_144, "max_total_script_bytes")
 
@@ -105,6 +123,21 @@ class StructuredStateCapture:
     script_states: int = 0
     script_bytes: int = 0
 
+    def admits_network_body(self, body_size: int) -> bool:
+        return (
+            body_size >= 0
+            and self.json_responses < self.limits.max_json_responses
+            and body_size <= self.limits.max_response_bytes
+            and self.json_bytes + body_size <= self.limits.max_total_json_bytes
+        )
+
+    def script_extractor_arguments(self) -> dict[str, int]:
+        return {
+            "maxStates": self.limits.max_script_states,
+            "maxStateBytes": self.limits.max_script_state_bytes,
+            "maxTotalBytes": self.limits.max_total_script_bytes,
+        }
+
     def capture_network_json(
         self,
         *,
@@ -116,11 +149,7 @@ class StructuredStateCapture:
         normalized_mime = media_type.split(";", 1)[0].strip().casefold()
         if not 200 <= status <= 299 or not _is_json_mime(normalized_mime):
             return None
-        if self.json_responses >= self.limits.max_json_responses:
-            return None
-        if len(body) > self.limits.max_response_bytes:
-            return None
-        if self.json_bytes + len(body) > self.limits.max_total_json_bytes:
+        if not self.admits_network_body(len(body)):
             return None
         payload = _load_and_sanitize(body, self.limits)
         if payload is None:
@@ -143,10 +172,15 @@ class StructuredStateCapture:
         for name in PUBLIC_SCRIPT_STATE_GLOBALS:
             if name not in raw or self.script_states >= self.limits.max_script_states:
                 continue
-            payload = _sanitize_value_to_json(raw[name], self.limits)
+            value = _decode_script_state(raw[name], self.limits)
+            if value is _DROP:
+                continue
+            payload = _sanitize_value_to_json(value, self.limits)
             if payload is None:
                 continue
             payload_bytes = len(payload.encode("utf-8"))
+            if payload_bytes > self.limits.max_script_state_bytes:
+                continue
             if self.script_bytes + payload_bytes > self.limits.max_total_script_bytes:
                 continue
             self.script_states += 1
@@ -160,6 +194,18 @@ class StructuredStateCapture:
                 )
             )
         return tuple(result)
+
+
+def _decode_script_state(value: object, limits: StructuredStateCaptureLimits) -> object:
+    if not isinstance(value, str):
+        return value
+    encoded = value.encode("utf-8")
+    if len(encoded) > limits.max_script_state_bytes:
+        return _DROP
+    try:
+        return json.loads(value)
+    except (json.JSONDecodeError, RecursionError, ValueError):
+        return _DROP
 
 
 def _load_and_sanitize(body: bytes, limits: StructuredStateCaptureLimits) -> str | None:
@@ -187,7 +233,7 @@ def _sanitize_value_to_json(
         separators=(",", ":"),
         ensure_ascii=False,
     )
-    if len(encoded) > 32_768:
+    if len(encoded.encode("utf-8")) > 32_768:
         return None
     return encoded
 
