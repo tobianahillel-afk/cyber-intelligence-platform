@@ -18,6 +18,9 @@ from cip.modules.public_footprint.infrastructure.models import (
     PublicResourceRecord,
     PublicResourceVersionRecord,
 )
+from cip.modules.public_footprint.infrastructure.surface_persistence import (
+    persist_surface_references,
+)
 from cip.shared.kernel.time import require_aware_utc
 
 
@@ -33,6 +36,7 @@ def persist_public_footprint_projections(
         version = _insert_version(session, resource.id, projection.version, now=persisted_at)
         for claim in projection.claims:
             _upsert_claim(session, version, claim, now=persisted_at)
+        persist_surface_references(session, projection.surfaces, now=persisted_at)
 
 
 def _upsert_resource(
