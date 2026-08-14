@@ -62,9 +62,13 @@ def test_extracts_typed_html_surfaces_and_headers() -> None:
     assert PublicSurfaceKind.FORM_ENDPOINT in kinds
     assert PublicSurfaceKind.DOCUMENT_LINK in kinds
     assert PublicSurfaceKind.MEDIA_LINK in kinds
-    assert all(surface.target_url != "https://example.com/feed.xml" for surface in surfaces)
+    assert all(
+        surface.target_url != "https://example.com/feed.xml" for surface in surfaces
+    )
 
-    form = next(surface for surface in surfaces if surface.kind is PublicSurfaceKind.FORM_ENDPOINT)
+    form = next(
+        surface for surface in surfaces if surface.kind is PublicSurfaceKind.FORM_ENDPOINT
+    )
     assert form.target_url == "https://example.com/search"
     assert form.http_method == "POST"
     assert form.media_type == "application/x-www-form-urlencoded"
@@ -91,7 +95,11 @@ def test_deduplicates_and_skips_invalid_url_schemes() -> None:
         resource_version_id=uuid4(),
     )
 
-    canonical = [surface for surface in surfaces if surface.kind is PublicSurfaceKind.CANONICAL_LINK]
+    canonical = [
+        surface
+        for surface in surfaces
+        if surface.kind is PublicSurfaceKind.CANONICAL_LINK
+    ]
     assert len(canonical) == 1
     assert not any(surface.kind is PublicSurfaceKind.SCRIPT for surface in surfaces)
     assert not any(surface.kind is PublicSurfaceKind.MEDIA_LINK for surface in surfaces)
@@ -106,7 +114,9 @@ def test_caps_surface_inventory() -> None:
     )
 
     assert len(surfaces) == 256
-    assert sum(surface.kind is PublicSurfaceKind.RESPONSE_HEADER for surface in surfaces) == 2
+    assert sum(
+        surface.kind is PublicSurfaceKind.RESPONSE_HEADER for surface in surfaces
+    ) == 2
 
 
 def test_non_html_only_emits_approved_response_headers() -> None:
