@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from collections.abc import Iterable
+from collections.abc import Callable, Iterable
 
 _MAX_HEADER_VALUE_LENGTH = 2_000
 _MAX_HEADERS = 32
@@ -39,3 +39,13 @@ def bounded_evidence_headers(
         if len(selected) >= _MAX_HEADERS:
             break
     return tuple(sorted(selected.items()))
+
+
+def bounded_evidence_header_lookup(
+    header_value: Callable[[str], str | None],
+) -> tuple[tuple[str, str], ...]:
+    return bounded_evidence_headers(
+        (name, value)
+        for name in sorted(_EVIDENCE_HEADER_NAMES)
+        if (value := header_value(name)) is not None
+    )
