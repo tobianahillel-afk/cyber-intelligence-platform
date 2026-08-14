@@ -6,6 +6,7 @@ from enum import StrEnum
 from hashlib import sha256
 from uuid import UUID, uuid4
 
+from cip.modules.public_footprint.domain.surfaces import PublicSurfaceReference
 from cip.modules.public_footprint.domain.url_identity import CanonicalUrl
 from cip.shared.kernel.time import require_aware_utc
 
@@ -260,6 +261,7 @@ class PublicFootprintProjection:
     resource: PublicResource
     version: PublicResourceVersion
     claims: tuple[PublicClaim, ...] = ()
+    surfaces: tuple[PublicSurfaceReference, ...] = ()
 
     def __post_init__(self) -> None:
         if self.version.resource_key != self.resource.identity_key:
@@ -273,7 +275,15 @@ class PublicFootprintProjection:
             if claim.corroboration_group_key != self.resource.corroboration_group_key:
                 raise ValueError("claim corroboration group must match resource target")
             unique_claims[claim.identity_key] = claim
+        unique_surfaces: dict[str, PublicSurfaceReference] = {}
+        for surface in self.surfaces:
+            if surface.organization_id != self.resource.organization_id:
+                raise ValueError("surface organization must match projected resource")
+            if surface.resource_version_id != self.version.id:
+                raise ValueError("surface version must match projected resource version")
+            unique_surfaces[surface.identity_key] = surface
         object.__setattr__(self, "claims", tuple(unique_claims.values()))
+        object.__setattr__(self, "surfaces", tuple(unique_surfaces.values()))
 
 
 def _required_hash(value: str, *, field_name: str) -> str:
