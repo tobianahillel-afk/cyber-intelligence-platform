@@ -85,6 +85,26 @@ def test_failed_reservation_releases_page_and_byte_allowance() -> None:
     assert retry.byte_allowance == 100
 
 
+def test_external_bytes_require_no_active_reservations() -> None:
+    budget = CrawlBudgetCoordinator(
+        max_pages=2,
+        max_total_bytes=100,
+        max_resource_bytes=50,
+        initial_bytes=10,
+    )
+    budget.consume_bytes(20)
+    assert budget.bytes_used == 30
+
+    reservation = budget.reserve()
+    assert reservation is not None
+    with pytest.raises(ValueError, match="reservations are active"):
+        budget.consume_bytes(1)
+    budget.release(reservation)
+
+    with pytest.raises(ValueError, match="total crawl budget"):
+        budget.consume_bytes(71)
+
+
 def test_budget_rejects_double_commit_and_oversized_acceptance() -> None:
     budget = CrawlBudgetCoordinator(
         max_pages=2,
@@ -106,9 +126,19 @@ def test_budget_rejects_double_commit_and_oversized_acceptance() -> None:
         budget.release(reservation)
 
 
-def test_telemetry_is_bounded_by_configured_concurrency() -> None:
-    telemetry = CrawlTelemetry(configured_concurrency=2, max_concurrency_used=2)
+def test_telemetry_is_bounded_by_effective_concurrency() -> None:
+    telemetry = CrawlTelemetry(
+        configured_concurrency=4,
+        effective_concurrency=2,
+        max_concurrency_used=2,
+    )
     assert replace(telemetry, fetched_pages=1).fetched_pages == 1
 
-    with pytest.raises(ValueError, match="cannot exceed"):
-        CrawlTelemetry(configured_concurrency=1, max_concurrency_used=2)
+    with pytest.raises(ValueError, match="effective_concurrency"):
+        CrawlTelemetry(configured_concurrency=1, effective_concurrency=2)
+    with pytest.raises(ValueError, match="cannot exceed effective"):
+        CrawlTelemetry(
+            configured_concurrency=2,
+            effective_concurrency=1,
+            max_concurrency_used=2,
+        )
