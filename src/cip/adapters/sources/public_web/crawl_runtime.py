@@ -24,6 +24,7 @@ class CrawlTelemetry:
     deadline_exceeded: bool = False
     cancelled: bool = False
     configured_concurrency: int = 1
+    effective_concurrency: int = 1
     max_concurrency_used: int = 0
 
     def __post_init__(self) -> None:
@@ -50,8 +51,10 @@ class CrawlTelemetry:
             raise ValueError("elapsed_seconds cannot be negative")
         if self.configured_concurrency < 1:
             raise ValueError("configured_concurrency must be positive")
-        if self.max_concurrency_used > self.configured_concurrency:
-            raise ValueError("max_concurrency_used cannot exceed configured_concurrency")
+        if not 1 <= self.effective_concurrency <= self.configured_concurrency:
+            raise ValueError("effective_concurrency must fit configured_concurrency")
+        if self.max_concurrency_used > self.effective_concurrency:
+            raise ValueError("max_concurrency_used cannot exceed effective_concurrency")
 
 
 @dataclass(frozen=True, slots=True)
@@ -164,6 +167,15 @@ class CrawlBudgetCoordinator:
         self._active.pop(reservation.sequence)
         self._reserved_pages -= 1
         self._reserved_bytes -= current.byte_allowance
+
+    def consume_bytes(self, amount: int) -> None:
+        if amount < 0:
+            raise ValueError("consumed byte amount cannot be negative")
+        if self._active:
+            raise ValueError("cannot consume unreserved bytes while reservations are active")
+        if self._used_bytes + amount > self._max_total_bytes:
+            raise ValueError("consumed bytes exceed the total crawl budget")
+        self._used_bytes += amount
 
     def _require_active(self, reservation: CrawlReservation) -> CrawlReservation:
         current = self._active.get(reservation.sequence)
