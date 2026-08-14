@@ -34,6 +34,21 @@ def test_network_structured_state_canonicalizes_payload_and_identity() -> None:
     assert state.identity_key_for_version(uuid4()) != state.identity_key
 
 
+def test_script_state_accepts_array_payload_and_normalizes_extractor() -> None:
+    state = PublicStructuredState(
+        organization_id=uuid4(),
+        resource_version_id=uuid4(),
+        kind=PublicStructuredStateKind.SCRIPT_STATE,
+        page_url="https://example.com/app",
+        source_locator="window.__NEXT_DATA__",
+        extractor_id="  public-known-globals-v1  ",
+        payload_json='[{"b":2,"a":1}]',
+    )
+
+    assert state.extractor_id == "public-known-globals-v1"
+    assert state.payload_json == '[{"a":1,"b":2}]'
+
+
 def test_script_state_requires_extractor_and_forbids_http_metadata() -> None:
     common = dict(
         organization_id=uuid4(),
@@ -46,6 +61,8 @@ def test_script_state_requires_extractor_and_forbids_http_metadata() -> None:
 
     with pytest.raises(ValueError, match="requires extractor_id"):
         PublicStructuredState(**common)
+    with pytest.raises(ValueError, match="requires extractor_id"):
+        PublicStructuredState(**common, extractor_id="   ")
     with pytest.raises(ValueError, match="cannot carry HTTP"):
         PublicStructuredState(
             **common,
@@ -89,4 +106,58 @@ def test_structured_state_requires_object_or_array_json(payload: str) -> None:
             source_locator="window.__INITIAL_STATE__",
             extractor_id="public-known-globals-v1",
             payload_json=payload,
+        )
+
+
+def test_structured_state_rejects_oversized_payload_and_locator() -> None:
+    common = dict(
+        organization_id=uuid4(),
+        resource_version_id=uuid4(),
+        kind=PublicStructuredStateKind.SCRIPT_STATE,
+        page_url="https://example.com/app",
+        extractor_id="public-known-globals-v1",
+    )
+
+    with pytest.raises(ValueError, match="source_locator is required"):
+        PublicStructuredState(
+            **common,
+            source_locator="   ",
+            payload_json='{"ok":true}',
+        )
+    with pytest.raises(ValueError, match="source_locator cannot exceed"):
+        PublicStructuredState(
+            **common,
+            source_locator="x" * 2_049,
+            payload_json='{"ok":true}',
+        )
+    with pytest.raises(ValueError, match="payload_json cannot exceed"):
+        PublicStructuredState(
+            **common,
+            source_locator="window.__INITIAL_STATE__",
+            payload_json='{"value":"' + ("x" * 32_768) + '"}',
+        )
+
+
+def test_structured_state_rejects_invalid_media_type_and_long_extractor() -> None:
+    with pytest.raises(ValueError, match="media_type must be"):
+        PublicStructuredState(
+            organization_id=uuid4(),
+            resource_version_id=uuid4(),
+            kind=PublicStructuredStateKind.NETWORK_JSON,
+            page_url="https://example.com/app",
+            source_locator="https://example.com/api/state",
+            source_url="https://example.com/api/state",
+            http_status=200,
+            media_type="json",
+            payload_json='{"ok":true}',
+        )
+    with pytest.raises(ValueError, match="extractor_id cannot exceed"):
+        PublicStructuredState(
+            organization_id=uuid4(),
+            resource_version_id=uuid4(),
+            kind=PublicStructuredStateKind.SCRIPT_STATE,
+            page_url="https://example.com/app",
+            source_locator="window.__INITIAL_STATE__",
+            extractor_id="x" * 101,
+            payload_json='{"ok":true}',
         )
