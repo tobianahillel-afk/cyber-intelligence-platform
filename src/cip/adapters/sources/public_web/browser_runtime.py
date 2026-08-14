@@ -257,7 +257,8 @@ def _capture_response(
             authorize_url=authorize_url,
         )
         content_length = _content_length(response)
-        if content_length is not None and content_length > state.structured.limits.max_response_bytes:
+        max_bytes = state.structured.limits.max_response_bytes
+        if content_length is not None and content_length > max_bytes:
             return
         captured = state.structured.capture_network_json(
             source_url=source_url,
