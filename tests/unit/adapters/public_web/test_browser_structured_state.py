@@ -1,9 +1,7 @@
 from __future__ import annotations
 
 import json
-from datetime import UTC, datetime, timedelta
 from typing import cast
-from uuid import uuid4
 
 from playwright.sync_api import Page, Request, Response
 
@@ -11,14 +9,12 @@ from cip.adapters.sources.public_web.browser_structured_state import (
     capture_finished_request,
     capture_reviewed_script_state,
 )
-from cip.adapters.sources.public_web.registry import PublicWebTarget
 from cip.adapters.sources.public_web.structured_state_capture import (
+    CapturedStructuredState,
     StructuredStateCapture,
     StructuredStateCaptureLimits,
 )
 from cip.modules.public_footprint.domain import PublicStructuredStateKind
-
-_NOW = datetime(2026, 8, 14, 13, tzinfo=UTC)
 
 
 class _Response:
@@ -86,7 +82,7 @@ class _Page:
 
 def test_browser_captures_authorized_finished_same_origin_json_and_sanitizes() -> None:
     capture = StructuredStateCapture(StructuredStateCaptureLimits())
-    states = []
+    states: list[CapturedStructuredState] = []
     response = _Response(
         url="https://example.com/api/state",
         body=json.dumps(
@@ -119,7 +115,7 @@ def test_browser_captures_authorized_finished_same_origin_json_and_sanitizes() -
 
 def test_browser_does_not_read_off_origin_non_json_or_oversized_response_body() -> None:
     capture = StructuredStateCapture(StructuredStateCaptureLimits())
-    states = []
+    states: list[CapturedStructuredState] = []
     responses_and_sizes = (
         (
             _Response(
@@ -163,7 +159,7 @@ def test_browser_finished_request_without_size_metadata_fails_closed() -> None:
         body=b'{"value":"must-not-materialize"}',
     )
     capture = StructuredStateCapture(StructuredStateCaptureLimits())
-    states = []
+    states: list[CapturedStructuredState] = []
 
     capture_finished_request(
         cast(Request, _BrokenRequest(response, 0)),
@@ -209,28 +205,3 @@ def _authorize_example_origin(url: str) -> str:
     if not url.startswith("https://example.com/"):
         raise RuntimeError("off-origin")
     return url
-
-
-def _target() -> PublicWebTarget:
-    return PublicWebTarget(
-        id="browser-structured-state-test",
-        organization_id=uuid4(),
-        canonical_name="Example",
-        base_url="https://example.com/",
-        seed_urls=("https://example.com/app",),
-        sitemap_urls=(),
-        feed_urls=(),
-        discover_security_txt=False,
-        discover_sitemaps=False,
-        discover_feeds=False,
-        allowed_path_prefixes=("/",),
-        enabled=True,
-        authorization_reference="approval:test",
-        authorization_reviewed_at=_NOW - timedelta(days=1),
-        authorization_expires_at=_NOW + timedelta(days=30),
-        max_link_depth=0,
-        max_pages=2,
-        max_total_bytes=100_000,
-        max_resource_bytes=50_000,
-        max_redirects=1,
-    )
