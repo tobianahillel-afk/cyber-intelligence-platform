@@ -6,6 +6,10 @@ from dataclasses import dataclass, field
 from playwright.sync_api import Error as PlaywrightError
 from playwright.sync_api import Page, Request, Response, Route, sync_playwright
 
+from cip.adapters.sources.public_web.browser_structured_state import (
+    capture_reviewed_script_state,
+    install_network_state_capture,
+)
 from cip.adapters.sources.public_web.client import PublicWebFetchResult
 from cip.adapters.sources.public_web.registry import PublicWebTarget
 from cip.adapters.sources.public_web.response_headers import (
@@ -15,7 +19,6 @@ from cip.adapters.sources.public_web.structured_fetch_result import (
     StructuredPublicWebFetchResult,
 )
 from cip.adapters.sources.public_web.structured_state_capture import (
-    PUBLIC_SCRIPT_STATE_JS,
     CapturedStructuredState,
     StructuredStateCapture,
     StructuredStateCaptureLimits,
@@ -104,7 +107,7 @@ def render_public_web_page(
                 try:
                     page = context.new_page()
                     page.set_default_navigation_timeout(bounded.navigation_timeout_ms)
-                    _install_response_capture(
+                    _install_structured_capture(
                         page,
                         target,
                         usage,
@@ -153,7 +156,7 @@ def render_public_web_page(
         raise BrowserRenderError("browser_navigation_failed") from exc
 
 
-def _install_response_capture(
+def _install_structured_capture(
     page: Page,
     target: PublicWebTarget,
     usage: CrawlUsage,
@@ -161,19 +164,17 @@ def _install_response_capture(
     authorize_url: AuthorizeUrl,
     state: _BrowserState,
 ) -> None:
-    listener = getattr(page, "on", None)
-    if not callable(listener):
-        return
-    listener(
-        "requestfinished",
-        lambda request: _capture_finished_request(
-            request,
+    install_network_state_capture(
+        page,
+        capture=state.structured,
+        authorize_url=lambda response_url: _authorized_request_url(
             target,
-            usage,
-            depth,
-            authorize_url,
-            state,
+            response_url,
+            usage=usage,
+            depth=depth,
+            authorize_url=authorize_url,
         ),
+        sink=state.captured_states.append,
     )
 
 
@@ -206,7 +207,9 @@ def _render_result(
         depth=depth,
         authorize_url=authorize_url,
     )
-    state.captured_states.extend(_capture_script_state(page, state))
+    state.captured_states.extend(
+        capture_reviewed_script_state(page, state.structured)
+    )
     body = page.content().encode("utf-8")
     decision = target.crawl_scope.evaluate_response(
         mime_type="text/html",
@@ -234,109 +237,6 @@ def _render_result(
         requests_seen=state.requests_seen,
         requests_blocked=state.requests_blocked,
     )
-
-
-def _capture_finished_request(
-    request: Request,
-    target: PublicWebTarget,
-    usage: CrawlUsage,
-    depth: int,
-    authorize_url: AuthorizeUrl,
-    state: _BrowserState,
-) -> None:
-    try:
-        response = request.response()
-        if response is None:
-            return
-        sizes = request.sizes()
-        body_size = int(sizes["responseBodySize"])
-    except (PlaywrightError, KeyError, TypeError, ValueError):
-        return
-    _capture_response(
-        response,
-        target,
-        usage,
-        depth,
-        authorize_url,
-        state,
-        body_size=body_size,
-    )
-
-
-def _capture_response(
-    response: Response,
-    target: PublicWebTarget,
-    usage: CrawlUsage,
-    depth: int,
-    authorize_url: AuthorizeUrl,
-    state: _BrowserState,
-    *,
-    body_size: int,
-) -> None:
-    try:
-        content_type = response.header_value("content-type") or ""
-        mime_type = content_type.split(";", 1)[0].strip().casefold()
-        if not _json_response_candidate(response.status, mime_type):
-            return
-        source_url = _authorized_request_url(
-            target,
-            response.url,
-            usage=usage,
-            depth=depth,
-            authorize_url=authorize_url,
-        )
-        if not state.structured.admits_network_body(body_size):
-            return
-        content_length = _content_length(response)
-        if (
-            content_length is not None
-            and content_length > state.structured.limits.max_response_bytes
-        ):
-            return
-        captured = state.structured.capture_network_json(
-            source_url=source_url,
-            status=response.status,
-            media_type=mime_type,
-            body=response.body(),
-        )
-    except (BrowserPolicyDeniedError, PlaywrightError, ValueError):
-        return
-    if captured is not None:
-        state.captured_states.append(captured)
-
-
-def _capture_script_state(
-    page: Page,
-    state: _BrowserState,
-) -> tuple[CapturedStructuredState, ...]:
-    evaluator = getattr(page, "evaluate", None)
-    if not callable(evaluator):
-        return ()
-    try:
-        raw = evaluator(
-            PUBLIC_SCRIPT_STATE_JS,
-            state.structured.script_extractor_arguments(),
-        )
-    except PlaywrightError:
-        return ()
-    return state.structured.capture_script_states(raw)
-
-
-def _json_response_candidate(status: int, mime_type: str) -> bool:
-    return 200 <= status <= 299 and (
-        mime_type in {"application/json", "text/json"} or mime_type.endswith("+json")
-    )
-
-
-def _content_length(response: Response) -> int | None:
-    raw = response.header_value("content-length")
-    if raw is None:
-        return None
-    try:
-        parsed = int(raw)
-    except ValueError:
-        return None
-    return parsed if parsed >= 0 else None
 
 
 def _handle_route(
