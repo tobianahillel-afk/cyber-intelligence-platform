@@ -124,3 +124,40 @@ class PublicClaimRecord(Base):
     excerpt: Mapped[str | None] = mapped_column(String(1_000), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)
+
+
+class PublicSurfaceReferenceRecord(Base):
+    __tablename__ = "public_surface_references"
+    __table_args__ = (
+        UniqueConstraint("surface_key", name="uq_public_surface_identity"),
+        Index(
+            "ix_public_surface_organization_kind",
+            "organization_id",
+            "kind",
+        ),
+        Index(
+            "ix_public_surface_version_kind",
+            "resource_version_id",
+            "kind",
+        ),
+    )
+
+    id: Mapped[UUID] = mapped_column(primary_key=True)
+    surface_key: Mapped[str] = mapped_column(String(64))
+    organization_id: Mapped[UUID] = mapped_column(
+        ForeignKey("organizations.id", ondelete="RESTRICT"),
+        index=True,
+    )
+    resource_version_id: Mapped[UUID] = mapped_column(
+        ForeignKey("public_resource_versions.id", ondelete="CASCADE"),
+        index=True,
+    )
+    kind: Mapped[str] = mapped_column(String(40), index=True)
+    source_locator: Mapped[str] = mapped_column(String(500))
+    target_url: Mapped[str | None] = mapped_column(String(2_048), nullable=True)
+    relation: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    http_method: Mapped[str | None] = mapped_column(String(16), nullable=True)
+    media_type: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    name: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    value: Mapped[str | None] = mapped_column(String(2_000), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
