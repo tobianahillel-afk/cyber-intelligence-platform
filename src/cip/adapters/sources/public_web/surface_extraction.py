@@ -83,14 +83,16 @@ class _SurfaceParser(HTMLParser):
         normalized_tag = tag.casefold()
         if normalized_tag == "link":
             self._link(attributes)
-        elif normalized_tag == "script":
+            return
+        if normalized_tag == "script":
             self._url_surface(
                 PublicSurfaceKind.SCRIPT,
                 attributes.get("src"),
                 "html:script[src]",
                 media_type=attributes.get("type"),
             )
-        elif normalized_tag == "form":
+            return
+        if normalized_tag == "form":
             self._url_surface(
                 PublicSurfaceKind.FORM_ENDPOINT,
                 attributes.get("action") or self.base_url,
@@ -98,24 +100,29 @@ class _SurfaceParser(HTMLParser):
                 http_method=(attributes.get("method") or "GET"),
                 media_type=attributes.get("enctype"),
             )
-        elif normalized_tag == "a":
+            return
+        if normalized_tag == "a":
             self._anchor(attributes)
-        elif normalized_tag in {"img", "video", "audio", "source"}:
+            return
+        if normalized_tag in {"img", "video", "audio", "source"}:
             self._media(normalized_tag, attributes)
-        elif normalized_tag == "iframe":
+            return
+        if normalized_tag == "iframe":
             self._url_surface(
                 PublicSurfaceKind.RESOURCE_REFERENCE,
                 attributes.get("src"),
                 "html:iframe[src]",
             )
-        elif normalized_tag == "object":
+            return
+        if normalized_tag == "object":
             self._url_surface(
                 PublicSurfaceKind.RESOURCE_REFERENCE,
                 attributes.get("data"),
                 "html:object[data]",
                 media_type=attributes.get("type"),
             )
-        elif normalized_tag == "embed":
+            return
+        if normalized_tag == "embed":
             self._url_surface(
                 PublicSurfaceKind.RESOURCE_REFERENCE,
                 attributes.get("src"),
