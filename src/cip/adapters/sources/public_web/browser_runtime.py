@@ -62,7 +62,9 @@ class BrowserRenderResult:
 
 @dataclass(slots=True)
 class _BrowserState:
-    structured: StructuredStateCapture
+    structured: StructuredStateCapture = field(
+        default_factory=lambda: StructuredStateCapture(StructuredStateCaptureLimits())
+    )
     requests_seen: int = 0
     requests_blocked: int = 0
     main_navigations: int = 0
@@ -102,16 +104,13 @@ def render_public_web_page(
                 try:
                     page = context.new_page()
                     page.set_default_navigation_timeout(bounded.navigation_timeout_ms)
-                    page.on(
-                        "response",
-                        lambda response: _capture_response(
-                            response,
-                            target,
-                            usage,
-                            depth,
-                            authorize_url,
-                            state,
-                        ),
+                    _install_response_capture(
+                        page,
+                        target,
+                        usage,
+                        depth,
+                        authorize_url,
+                        state,
                     )
                     page.route(
                         "**/*",
@@ -152,6 +151,30 @@ def render_public_web_page(
         if state.denial is not None:
             raise BrowserPolicyDeniedError(state.denial) from exc
         raise BrowserRenderError("browser_navigation_failed") from exc
+
+
+def _install_response_capture(
+    page: Page,
+    target: PublicWebTarget,
+    usage: CrawlUsage,
+    depth: int,
+    authorize_url: AuthorizeUrl,
+    state: _BrowserState,
+) -> None:
+    listener = getattr(page, "on", None)
+    if not callable(listener):
+        return
+    listener(
+        "response",
+        lambda response: _capture_response(
+            response,
+            target,
+            usage,
+            depth,
+            authorize_url,
+            state,
+        ),
+    )
 
 
 def _render_result(
@@ -252,8 +275,11 @@ def _capture_script_state(
     page: Page,
     state: _BrowserState,
 ) -> tuple[CapturedStructuredState, ...]:
+    evaluator = getattr(page, "evaluate", None)
+    if not callable(evaluator):
+        return ()
     try:
-        raw = page.evaluate(PUBLIC_SCRIPT_STATE_JS)
+        raw = evaluator(PUBLIC_SCRIPT_STATE_JS)
     except PlaywrightError:
         return ()
     return state.structured.capture_script_states(raw)
