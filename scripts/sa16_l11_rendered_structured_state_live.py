@@ -1,12 +1,12 @@
 from __future__ import annotations
 
 import json
+from collections.abc import Iterator
 from contextlib import contextmanager
 from dataclasses import replace
 from datetime import UTC, datetime, timedelta
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from threading import Thread
-from typing import Iterator
 from urllib.parse import urlsplit
 from uuid import NAMESPACE_URL, uuid4, uuid5
 
@@ -69,7 +69,7 @@ fetch("https://example.com/off-origin.json").catch(() => {});
 class _FixtureHandler(BaseHTTPRequestHandler):
     protocol_version = "HTTP/1.1"
 
-    def do_GET(self) -> None:  # noqa: N802 - stdlib handler contract
+    def do_GET(self) -> None:
         path = urlsplit(self.path).path
         if path == "/robots.txt":
             self._send(
