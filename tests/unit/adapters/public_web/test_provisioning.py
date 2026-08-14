@@ -63,6 +63,8 @@ def test_provisioning_creates_deterministic_governed_homepage_target() -> None:
     assert target.security_txt_url == "https://www.python.org/.well-known/security.txt"
     assert target.max_link_depth == 1
     assert target.crawl_scope.max_depth == 1
+    assert target.crawl_deadline_seconds == 300
+    assert target.max_crawl_concurrency == 1
     assert target.executable_at(_NOW) is True
     assert provisioned.first_crawl_at == _NOW + timedelta(minutes=5)
     assert provisioned.refresh_interval_seconds == 86_400
@@ -131,6 +133,24 @@ def test_recursive_link_depth_must_stay_bounded() -> None:
         _policy(max_link_depth=21)
 
 
+def test_crawl_runtime_limits_must_stay_bounded() -> None:
+    with pytest.raises(ValueError, match="crawl_deadline_seconds"):
+        _policy(crawl_deadline_seconds=0)
+    with pytest.raises(ValueError, match="max_crawl_concurrency"):
+        _policy(max_crawl_concurrency=17)
+
+
+def test_provisioning_propagates_explicit_crawl_runtime_limits() -> None:
+    provisioned = provision_public_web_target(
+        _organization(),
+        _policy(crawl_deadline_seconds=45, max_crawl_concurrency=4),
+        first_crawl_at=_NOW,
+    )
+
+    assert provisioned.target.crawl_deadline_seconds == 45
+    assert provisioned.target.max_crawl_concurrency == 4
+
+
 def test_legacy_target_keeps_structural_discovery_but_link_recursion_off() -> None:
     target = PublicWebTarget(
         id="legacy-source",
@@ -148,3 +168,5 @@ def test_legacy_target_keeps_structural_discovery_but_link_recursion_off() -> No
     assert target.source_id == "legacy-source"
     assert target.max_link_depth == 0
     assert target.crawl_scope.max_depth == 1
+    assert target.crawl_deadline_seconds == 300
+    assert target.max_crawl_concurrency == 1
