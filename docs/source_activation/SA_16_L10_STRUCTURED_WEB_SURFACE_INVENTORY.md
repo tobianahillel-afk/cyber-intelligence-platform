@@ -205,6 +205,20 @@ L10 does not add:
 - login (L16);
 - OAuth/SSO or human MFA/CAPTCHA resume (L17).
 
+## Continuation reference
+
+The canonical remaining implementation plan is:
+
+- `docs/source_activation/SA_16_EXECUTION_ROADMAP_L10_L18.md`.
+
+The status/gap matrix remains:
+
+- `docs/source_activation/SA_16_COMPLETION_AUDIT_AND_REMAINING_LOTS.md`.
+
+After L10 is exact-head validated and merged, the next mandatory implementation lot is **SA16-L11 — Rendered public JSON and script-state capture**. A future session should re-read the normative SA-16 documents, the completion audit, the execution roadmap, this L10 closeout and the current `main` before creating the L11 branch.
+
+The execution roadmap owns the detailed L11-L18 sequencing, dependencies, invariants, tests, live-proof requirements and the normative traceability matrix. It may make implementation details more precise but may not weaken the normative SA-16 scope.
+
 ## Completion rule
 
 L10 may be closed only when the documentation head itself repeats:
