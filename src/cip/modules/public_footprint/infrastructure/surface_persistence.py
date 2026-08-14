@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime
+from uuid import UUID
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -13,23 +14,25 @@ def persist_surface_references(
     session: Session,
     surfaces: tuple[PublicSurfaceReference, ...],
     *,
+    resource_version_id: UUID,
     now: datetime,
 ) -> None:
     for surface in surfaces:
+        surface_key = surface.identity_key_for_version(resource_version_id)
         record = session.scalar(
             select(PublicSurfaceReferenceRecord).where(
-                PublicSurfaceReferenceRecord.surface_key == surface.identity_key
+                PublicSurfaceReferenceRecord.surface_key == surface_key
             )
         )
         if record is not None:
-            _validate_existing(record, surface)
+            _validate_existing(record, surface, resource_version_id=resource_version_id)
             continue
         session.add(
             PublicSurfaceReferenceRecord(
                 id=surface.id,
-                surface_key=surface.identity_key,
+                surface_key=surface_key,
                 organization_id=surface.organization_id,
-                resource_version_id=surface.resource_version_id,
+                resource_version_id=resource_version_id,
                 kind=surface.kind.value,
                 source_locator=surface.source_locator,
                 target_url=surface.target_url,
@@ -47,10 +50,12 @@ def persist_surface_references(
 def _validate_existing(
     record: PublicSurfaceReferenceRecord,
     surface: PublicSurfaceReference,
+    *,
+    resource_version_id: UUID,
 ) -> None:
     expected = (
         surface.organization_id,
-        surface.resource_version_id,
+        resource_version_id,
         surface.kind.value,
         surface.source_locator,
         surface.target_url,
