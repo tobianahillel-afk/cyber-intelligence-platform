@@ -62,6 +62,7 @@ class PublicWebFetchResult:
     redirects: int
     status_code: int = 200
     response_headers: tuple[tuple[str, str], ...] = ()
+    bytes_received: int = 0
 
 
 @dataclass(frozen=True, slots=True)
@@ -96,6 +97,10 @@ class PublicWebClient:
     @property
     def deadline(self) -> CrawlDeadline | None:
         return self._deadline
+
+    @property
+    def supports_concurrent_fetches(self) -> bool:
+        return True
 
     def bind_deadline(self, deadline: CrawlDeadline) -> None:
         if self._deadline is not None and self._deadline is not deadline:
@@ -179,15 +184,17 @@ class PublicWebClient:
             _OCTET_STREAM_MIME_TYPE,
         }:
             raise PublicWebResponseError("sitemap returned an unexpected content type")
+        body = _bounded_body(response, max_bytes=self.SITEMAP_MAX_BYTES)
         return PublicWebFetchResult(
             requested_url=canonical,
             fetched_url=canonical,
-            body=_bounded_body(response, max_bytes=self.SITEMAP_MAX_BYTES),
+            body=body,
             mime_type=mime_type,
             etag=_header(response, "etag"),
             last_modified=_header(response, "last-modified"),
             redirects=0,
             status_code=response.status_code,
+            bytes_received=len(body),
         )
 
     def fetch_feed(
@@ -228,15 +235,17 @@ class PublicWebClient:
         mime_type = _content_type(response)
         if mime_type not in _FEED_MIME_TYPES:
             raise PublicWebResponseError("feed returned an unexpected content type")
+        body = _bounded_body(response, max_bytes=self.FEED_MAX_BYTES)
         return PublicWebFetchResult(
             requested_url=canonical,
             fetched_url=canonical,
-            body=_bounded_body(response, max_bytes=self.FEED_MAX_BYTES),
+            body=body,
             mime_type=mime_type,
             etag=_header(response, "etag"),
             last_modified=_header(response, "last-modified"),
             redirects=0,
             status_code=response.status_code,
+            bytes_received=len(body),
         )
 
     def fetch_page(
@@ -253,6 +262,7 @@ class PublicWebClient:
         requested = CanonicalUrl(url).value
         current = requested
         redirects = 0
+        bytes_received = 0
         conditional_request = etag is not None or last_modified is not None
         while True:
             decision = target.crawl_scope.evaluate_target(
@@ -265,6 +275,11 @@ class PublicWebClient:
                 raise PublicWebPolicyDeniedError(decision.reason.value)
             if not robots.allows(current):
                 raise PublicWebPolicyDeniedError("robots.txt denied page collection")
+            remaining_fetch_bytes = (
+                target.max_total_bytes - usage.bytes_fetched - bytes_received
+            )
+            if remaining_fetch_bytes <= 0:
+                raise PublicWebPolicyDeniedError("total_byte_budget_exceeded")
             response = self._get(
                 current,
                 headers=_page_headers(
@@ -273,8 +288,9 @@ class PublicWebClient:
                     last_modified=last_modified,
                 ),
                 follow_redirects=False,
-                max_bytes=target.max_resource_bytes,
+                max_bytes=min(target.max_resource_bytes, remaining_fetch_bytes),
             )
+            bytes_received += len(response.content)
             if response.status_code in _REDIRECT_STATUSES:
                 location = _header(response, "location")
                 if not location:
@@ -296,6 +312,7 @@ class PublicWebClient:
                     last_modified=_header(response, "last-modified") or last_modified,
                     redirects=redirects,
                     status_code=response.status_code,
+                    bytes_received=bytes_received,
                 )
             if response.status_code in _TOMBSTONE_STATUSES:
                 return PublicWebFetchResult(
@@ -307,6 +324,7 @@ class PublicWebClient:
                     last_modified=_header(response, "last-modified"),
                     redirects=redirects,
                     status_code=response.status_code,
+                    bytes_received=bytes_received,
                 )
             response.raise_for_status()
             mime_type = _content_type(response)
@@ -329,6 +347,7 @@ class PublicWebClient:
                 redirects=redirects,
                 status_code=response.status_code,
                 response_headers=bounded_evidence_headers(response.headers.multi_items()),
+                bytes_received=bytes_received,
             )
 
     def _get(
