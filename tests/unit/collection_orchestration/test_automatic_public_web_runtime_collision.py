@@ -5,7 +5,7 @@ from uuid import uuid4
 
 import pytest
 
-from cip.modules.collection_orchestration.application import automatic_public_web_runtime
+from cip.modules.collection_orchestration.application import automatic_public_web_builder
 from cip.modules.collection_orchestration.application.automatic_public_web_runtime import (
     AutomaticPublicWebRuntimeConfig,
     build_automatic_public_web_runtime,
@@ -46,7 +46,7 @@ def test_automatic_runtime_rejects_adapter_identity_collision(
             pass
 
     monkeypatch.setattr(
-        automatic_public_web_runtime,
+        automatic_public_web_builder,
         "PublicWebAdapter",
         DuplicateIdentityAdapter,
     )
