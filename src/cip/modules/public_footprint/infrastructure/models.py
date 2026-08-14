@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import datetime
 from uuid import UUID
 
-from sqlalchemy import DateTime, Float, ForeignKey, Index, Integer, String, UniqueConstraint
+from sqlalchemy import DateTime, Float, ForeignKey, Index, Integer, String, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column
 
 from cip.shared.persistence.base import Base
@@ -160,4 +160,42 @@ class PublicSurfaceReferenceRecord(Base):
     media_type: Mapped[str | None] = mapped_column(String(200), nullable=True)
     name: Mapped[str | None] = mapped_column(String(100), nullable=True)
     value: Mapped[str | None] = mapped_column(String(2_000), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+
+
+class PublicStructuredStateRecord(Base):
+    __tablename__ = "public_structured_states"
+    __table_args__ = (
+        UniqueConstraint("state_key", name="uq_public_structured_state_identity"),
+        Index(
+            "ix_public_structured_state_organization_kind",
+            "organization_id",
+            "kind",
+        ),
+        Index(
+            "ix_public_structured_state_version_kind",
+            "resource_version_id",
+            "kind",
+        ),
+    )
+
+    id: Mapped[UUID] = mapped_column(primary_key=True)
+    state_key: Mapped[str] = mapped_column(String(64))
+    organization_id: Mapped[UUID] = mapped_column(
+        ForeignKey("organizations.id", ondelete="RESTRICT"),
+        index=True,
+    )
+    resource_version_id: Mapped[UUID] = mapped_column(
+        ForeignKey("public_resource_versions.id", ondelete="CASCADE"),
+        index=True,
+    )
+    kind: Mapped[str] = mapped_column(String(40), index=True)
+    page_url: Mapped[str] = mapped_column(String(2_048))
+    source_locator: Mapped[str] = mapped_column(String(2_048))
+    source_url: Mapped[str | None] = mapped_column(String(2_048), nullable=True)
+    http_status: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    media_type: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    extractor_id: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    payload_hash_sha256: Mapped[str] = mapped_column(String(64), index=True)
+    payload_json: Mapped[str] = mapped_column(Text)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
