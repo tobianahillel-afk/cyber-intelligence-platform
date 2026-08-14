@@ -7,14 +7,16 @@ from uuid import uuid4
 
 from playwright.sync_api import Page, Request, Response
 
-from cip.adapters.sources.public_web.browser_runtime import (
-    _BrowserState,
-    _capture_finished_request,
-    _capture_script_state,
+from cip.adapters.sources.public_web.browser_structured_state import (
+    capture_finished_request,
+    capture_reviewed_script_state,
 )
 from cip.adapters.sources.public_web.registry import PublicWebTarget
+from cip.adapters.sources.public_web.structured_state_capture import (
+    StructuredStateCapture,
+    StructuredStateCaptureLimits,
+)
 from cip.modules.public_footprint.domain import PublicStructuredStateKind
-from cip.modules.public_footprint.domain.scope import CrawlUsage
 
 _NOW = datetime(2026, 8, 14, 13, tzinfo=UTC)
 
@@ -31,7 +33,7 @@ class _Response:
     ) -> None:
         self.url = url
         self.status = status
-        self._body = body
+        self.body_bytes = body
         self._content_type = content_type
         self._content_length = content_length
         self.body_called = False
@@ -45,7 +47,7 @@ class _Response:
 
     def body(self) -> bytes:
         self.body_called = True
-        return self._body
+        return self.body_bytes
 
 
 class _Request:
@@ -83,7 +85,8 @@ class _Page:
 
 
 def test_browser_captures_authorized_finished_same_origin_json_and_sanitizes() -> None:
-    state = _BrowserState()
+    capture = StructuredStateCapture(StructuredStateCaptureLimits())
+    states = []
     response = _Response(
         url="https://example.com/api/state",
         body=json.dumps(
@@ -96,19 +99,17 @@ def test_browser_captures_authorized_finished_same_origin_json_and_sanitizes() -
     )
     authorized: list[str] = []
 
-    _capture_finished_request(
-        cast(Request, _Request(response, len(response._body))),
-        _target(),
-        CrawlUsage(),
-        0,
-        authorized.append,
-        state,
+    capture_finished_request(
+        cast(Request, _Request(response, len(response.body_bytes))),
+        capture=capture,
+        authorize_url=lambda url: _record_authorized(url, authorized),
+        sink=states.append,
     )
 
     assert response.body_called
     assert authorized == ["https://example.com/api/state"]
-    assert len(state.captured_states) == 1
-    captured = state.captured_states[0]
+    assert len(states) == 1
+    captured = states[0]
     assert captured.kind is PublicStructuredStateKind.NETWORK_JSON
     assert json.loads(captured.payload_json) == {
         "nested": {"region": "eu"},
@@ -117,8 +118,8 @@ def test_browser_captures_authorized_finished_same_origin_json_and_sanitizes() -
 
 
 def test_browser_does_not_read_off_origin_non_json_or_oversized_response_body() -> None:
-    target = _target()
-    state = _BrowserState()
+    capture = StructuredStateCapture(StructuredStateCaptureLimits())
+    states = []
     responses_and_sizes = (
         (
             _Response(
@@ -140,21 +141,19 @@ def test_browser_does_not_read_off_origin_non_json_or_oversized_response_body() 
                 url="https://example.com/api/large",
                 body=b'{"value":"large"}',
             ),
-            state.structured.limits.max_response_bytes + 1,
+            capture.limits.max_response_bytes + 1,
         ),
     )
 
     for response, body_size in responses_and_sizes:
-        _capture_finished_request(
+        capture_finished_request(
             cast(Request, _Request(response, body_size)),
-            target,
-            CrawlUsage(),
-            0,
-            lambda _url: None,
-            state,
+            capture=capture,
+            authorize_url=_authorize_example_origin,
+            sink=states.append,
         )
 
-    assert state.captured_states == []
+    assert states == []
     assert all(not response.body_called for response, _ in responses_and_sizes)
 
 
@@ -163,23 +162,22 @@ def test_browser_finished_request_without_size_metadata_fails_closed() -> None:
         url="https://example.com/api/state",
         body=b'{"value":"must-not-materialize"}',
     )
-    state = _BrowserState()
+    capture = StructuredStateCapture(StructuredStateCaptureLimits())
+    states = []
 
-    _capture_finished_request(
+    capture_finished_request(
         cast(Request, _BrokenRequest(response, 0)),
-        _target(),
-        CrawlUsage(),
-        0,
-        lambda _url: None,
-        state,
+        capture=capture,
+        authorize_url=_authorize_example_origin,
+        sink=states.append,
     )
 
     assert not response.body_called
-    assert state.captured_states == []
+    assert states == []
 
 
 def test_browser_fixed_script_extractor_only_promotes_reviewed_sanitized_state() -> None:
-    state = _BrowserState()
+    capture = StructuredStateCapture(StructuredStateCaptureLimits())
     page = _Page(
         {
             "__INITIAL_STATE__": json.dumps(
@@ -192,14 +190,25 @@ def test_browser_fixed_script_extractor_only_promotes_reviewed_sanitized_state()
         }
     )
 
-    captured = _capture_script_state(cast(Page, page), state)
+    captured = capture_reviewed_script_state(cast(Page, page), capture)
 
     assert len(page.expressions) == 1
-    assert page.arguments == [state.structured.script_extractor_arguments()]
+    assert page.arguments == [capture.script_extractor_arguments()]
     assert len(captured) == 1
     assert captured[0].kind is PublicStructuredStateKind.SCRIPT_STATE
     assert captured[0].source_locator == "window.__INITIAL_STATE__"
     assert json.loads(captured[0].payload_json) == {"company": "Example"}
+
+
+def _record_authorized(url: str, authorized: list[str]) -> str:
+    authorized.append(url)
+    return url
+
+
+def _authorize_example_origin(url: str) -> str:
+    if not url.startswith("https://example.com/"):
+        raise RuntimeError("off-origin")
+    return url
 
 
 def _target() -> PublicWebTarget:
