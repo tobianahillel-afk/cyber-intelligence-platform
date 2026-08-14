@@ -1,7 +1,10 @@
 from uuid import uuid4
 
 from cip.adapters.sources.public_web.client import PublicWebFetchResult
-from cip.adapters.sources.public_web.response_headers import bounded_evidence_headers
+from cip.adapters.sources.public_web.response_headers import (
+    bounded_evidence_header_lookup,
+    bounded_evidence_headers,
+)
 from cip.adapters.sources.public_web.surface_extraction import (
     extract_public_surface_references,
 )
@@ -119,6 +122,51 @@ def test_caps_surface_inventory() -> None:
     ) == 2
 
 
+def test_cap_can_be_reached_inside_multi_surface_tag() -> None:
+    images = "".join(f'<img src="/media/{index}.png">' for index in range(253))
+    html = images + '<video src="/media/final.mp4" poster="/media/ignored.jpg"></video>'
+
+    surfaces = extract_public_surface_references(
+        _result(html),
+        organization_id=uuid4(),
+        resource_version_id=uuid4(),
+    )
+
+    assert len(surfaces) == 256
+    assert any(surface.target_url == "https://example.com/media/final.mp4" for surface in surfaces)
+    assert all(
+        surface.target_url != "https://example.com/media/ignored.jpg" for surface in surfaces
+    )
+
+
+def test_missing_urls_and_document_mime_are_handled_without_network_actions() -> None:
+    surfaces = extract_public_surface_references(
+        _result(
+            """
+            <script></script>
+            <a>ordinary link without href</a>
+            <a type="application/pdf">typed document without href</a>
+            <a href="/download" type="application/pdf">typed document</a>
+            <script src="/empty-type.js" type=""></script>
+            """
+        ),
+        organization_id=uuid4(),
+        resource_version_id=uuid4(),
+    )
+
+    assert any(
+        surface.kind is PublicSurfaceKind.DOCUMENT_LINK
+        and surface.target_url == "https://example.com/download"
+        for surface in surfaces
+    )
+    assert any(
+        surface.kind is PublicSurfaceKind.SCRIPT
+        and surface.target_url == "https://example.com/empty-type.js"
+        and surface.media_type is None
+        for surface in surfaces
+    )
+
+
 def test_non_html_only_emits_approved_response_headers() -> None:
     surfaces = extract_public_surface_references(
         _result("not html", mime_type="text/plain"),
@@ -136,6 +184,7 @@ def test_header_allowlist_excludes_sensitive_and_normalizes_values() -> None:
             ("Authorization", "Bearer secret"),
             ("Server", "  nginx   1.27  "),
             ("X-Powered-By", "Example Framework"),
+            ("Content-Language", "   "),
             ("Server", "duplicate ignored"),
         )
     )
@@ -144,3 +193,19 @@ def test_header_allowlist_excludes_sensitive_and_normalizes_values() -> None:
         ("server", "nginx 1.27"),
         ("x-powered-by", "Example Framework"),
     )
+
+
+def test_header_values_are_bounded_and_lookup_queries_only_allowlisted_names() -> None:
+    queried: list[str] = []
+
+    def header_value(name: str) -> str | None:
+        queried.append(name)
+        if name == "server":
+            return "x" * 3_000
+        return None
+
+    headers = bounded_evidence_header_lookup(header_value)
+
+    assert headers == (("server", "x" * 2_000),)
+    assert "set-cookie" not in queried
+    assert "authorization" not in queried
