@@ -108,6 +108,51 @@ def test_url_surface_requires_target_url() -> None:
         )
 
 
+def test_surface_text_validation_rejects_empty_or_oversized_fields() -> None:
+    common = {
+        "organization_id": uuid4(),
+        "resource_version_id": uuid4(),
+        "kind": PublicSurfaceKind.SCRIPT,
+        "target_url": "https://example.com/app.js",
+    }
+    with pytest.raises(ValueError, match="source_locator is required"):
+        PublicSurfaceReference(**common, source_locator="   ")
+    with pytest.raises(ValueError, match="source_locator cannot exceed"):
+        PublicSurfaceReference(**common, source_locator="x" * 501)
+    with pytest.raises(ValueError, match="relation cannot exceed"):
+        PublicSurfaceReference(
+            **common,
+            source_locator="html:script[src]",
+            relation="x" * 201,
+        )
+    with pytest.raises(ValueError, match="value cannot exceed"):
+        PublicSurfaceReference(
+            organization_id=uuid4(),
+            resource_version_id=uuid4(),
+            kind=PublicSurfaceKind.RESPONSE_HEADER,
+            source_locator="header:server",
+            name="server",
+            value="x" * 2_001,
+        )
+
+
+def test_optional_blank_fields_normalize_to_none() -> None:
+    surface = PublicSurfaceReference(
+        organization_id=uuid4(),
+        resource_version_id=uuid4(),
+        kind=PublicSurfaceKind.SCRIPT,
+        source_locator="html:script[src]",
+        target_url="https://example.com/app.js",
+        relation="   ",
+        http_method="   ",
+        media_type="   ",
+    )
+
+    assert surface.relation is None
+    assert surface.http_method is None
+    assert surface.media_type is None
+
+
 def test_projection_deduplicates_surfaces() -> None:
     resource, version = _projection_parts()
     surface = PublicSurfaceReference(
