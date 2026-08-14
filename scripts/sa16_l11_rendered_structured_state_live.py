@@ -42,7 +42,7 @@ from cip.shared.persistence.session import (
     session_scope,
 )
 
-_ORIGIN = "https://httpbin.io/"
+_ORIGIN = "https://httpbingo.org/"
 _OFF_ORIGIN_HOST = "example.com"
 _SECRET_MARKERS = ("accesstoken", "sessionid", "must-drop", "password", "cookie")
 
@@ -118,13 +118,13 @@ xhr.send();
 fetch("https://example.com/off-origin.json").catch(() => {});
 </script></body></html>"""
     encoded = base64.urlsafe_b64encode(html.encode("utf-8")).decode("ascii")
-    return f"{_ORIGIN}base64/{encoded}"
+    return f"{_ORIGIN}base64/{encoded}?content-type=text/html"
 
 
 def _organization(now: datetime) -> Organization:
     return Organization(
         id=uuid5(NAMESPACE_URL, _ORIGIN),
-        canonical_name="HTTPBin SA16-L11 fixture",
+        canonical_name="HTTPBingo SA16-L11 fixture",
         legal_name=None,
         country_code=None,
         website_url=_ORIGIN,
@@ -182,12 +182,20 @@ def _governed_browser_target(
 def _assert_capture(states) -> tuple[int, int]:
     if not states:
         raise RuntimeError("SA16-L11 Chromium captured no structured state")
-    network = [state for state in states if state.kind is PublicStructuredStateKind.NETWORK_JSON]
-    scripts = [state for state in states if state.kind is PublicStructuredStateKind.SCRIPT_STATE]
+    network = [
+        state for state in states if state.kind is PublicStructuredStateKind.NETWORK_JSON
+    ]
+    scripts = [
+        state for state in states if state.kind is PublicStructuredStateKind.SCRIPT_STATE
+    ]
     if len(network) < 2:
-        raise RuntimeError(f"SA16-L11 expected at least 2 JSON responses, got {len(network)}")
+        raise RuntimeError(
+            f"SA16-L11 expected at least 2 JSON responses, got {len(network)}"
+        )
     if len(scripts) != 1:
-        raise RuntimeError(f"SA16-L11 expected exactly 1 script state, got {len(scripts)}")
+        raise RuntimeError(
+            f"SA16-L11 expected exactly 1 script state, got {len(scripts)}"
+        )
     if scripts[0].source_locator != "window.__INITIAL_STATE__":
         raise RuntimeError("SA16-L11 captured an unexpected script-state locator")
     if scripts[0].extractor_id != PUBLIC_SCRIPT_STATE_EXTRACTOR_ID:
