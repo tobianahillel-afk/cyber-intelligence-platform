@@ -19,6 +19,7 @@ from cip.adapters.sources.public_web.client import (
 )
 from cip.adapters.sources.public_web.collection_policy import PublicWebCollectionDeniedError
 from cip.adapters.sources.public_web.collector import collect_public_web_target
+from cip.adapters.sources.public_web.crawl_runtime import CrawlDeadline
 from cip.adapters.sources.public_web.parsing import PublicWebParseError
 from cip.adapters.sources.public_web.registry import PublicWebTarget
 from cip.modules.collection_orchestration.application.ports import (
@@ -69,11 +70,13 @@ class PublicWebAdapter:
                 follow_redirects=False,
                 transport=self._transport,
             ) as http_client:
+                client = PublicWebClient(
+                    http_client,
+                    request_timeout_seconds=self._timeout_seconds,
+                )
+                client.bind_deadline(CrawlDeadline(self._target.crawl_deadline_seconds))
                 batch = collect_public_web_target(
-                    PublicWebClient(
-                        http_client,
-                        request_timeout_seconds=self._timeout_seconds,
-                    ),
+                    client,
                     self._entry,
                     self._target,
                     collection_job_id=collection_job_id,
