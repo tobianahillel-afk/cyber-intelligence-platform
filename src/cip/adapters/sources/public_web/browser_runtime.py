@@ -8,7 +8,9 @@ from playwright.sync_api import Page, Request, Response, Route, sync_playwright
 
 from cip.adapters.sources.public_web.client import PublicWebFetchResult
 from cip.adapters.sources.public_web.registry import PublicWebTarget
-from cip.adapters.sources.public_web.response_headers import bounded_evidence_headers
+from cip.adapters.sources.public_web.response_headers import (
+    bounded_evidence_header_lookup,
+)
 from cip.modules.public_footprint.domain.scope import CrawlUsage
 from cip.modules.public_footprint.domain.url_identity import CanonicalUrl, same_origin
 
@@ -177,7 +179,7 @@ def _render_result(
             last_modified=None,
             redirects=redirects,
             status_code=response.status,
-            response_headers=bounded_evidence_headers(response.all_headers().items()),
+            response_headers=bounded_evidence_header_lookup(response.header_value),
         ),
         requests_seen=state.requests_seen,
         requests_blocked=state.requests_blocked,
