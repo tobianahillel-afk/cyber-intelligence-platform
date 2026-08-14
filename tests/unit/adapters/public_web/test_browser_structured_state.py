@@ -5,11 +5,11 @@ from datetime import UTC, datetime, timedelta
 from typing import cast
 from uuid import uuid4
 
-from playwright.sync_api import Page, Response
+from playwright.sync_api import Page, Request, Response
 
 from cip.adapters.sources.public_web.browser_runtime import (
     _BrowserState,
-    _capture_response,
+    _capture_finished_request,
     _capture_script_state,
 )
 from cip.adapters.sources.public_web.registry import PublicWebTarget
@@ -48,17 +48,41 @@ class _Response:
         return self._body
 
 
+class _Request:
+    def __init__(self, response: _Response, body_size: int) -> None:
+        self._response = response
+        self._body_size = body_size
+
+    def response(self) -> Response:
+        return cast(Response, self._response)
+
+    def sizes(self) -> dict[str, int]:
+        return {
+            "requestBodySize": 0,
+            "requestHeadersSize": 100,
+            "responseBodySize": self._body_size,
+            "responseHeadersSize": 100,
+        }
+
+
+class _BrokenRequest(_Request):
+    def sizes(self) -> dict[str, int]:
+        return {}
+
+
 class _Page:
     def __init__(self, raw: object) -> None:
         self.raw = raw
         self.expressions: list[str] = []
+        self.arguments: list[object] = []
 
-    def evaluate(self, expression: str) -> object:
+    def evaluate(self, expression: str, argument: object = None) -> object:
         self.expressions.append(expression)
+        self.arguments.append(argument)
         return self.raw
 
 
-def test_browser_captures_authorized_same_origin_json_and_sanitizes() -> None:
+def test_browser_captures_authorized_finished_same_origin_json_and_sanitizes() -> None:
     state = _BrowserState()
     response = _Response(
         url="https://example.com/api/state",
@@ -72,8 +96,8 @@ def test_browser_captures_authorized_same_origin_json_and_sanitizes() -> None:
     )
     authorized: list[str] = []
 
-    _capture_response(
-        cast(Response, response),
+    _capture_finished_request(
+        cast(Request, _Request(response, len(response._body))),
         _target(),
         CrawlUsage(),
         0,
@@ -95,26 +119,34 @@ def test_browser_captures_authorized_same_origin_json_and_sanitizes() -> None:
 def test_browser_does_not_read_off_origin_non_json_or_oversized_response_body() -> None:
     target = _target()
     state = _BrowserState()
-    responses = (
-        _Response(
-            url="https://other.example/api/state",
-            body=b'{"value":"off-origin"}',
+    responses_and_sizes = (
+        (
+            _Response(
+                url="https://other.example/api/state",
+                body=b'{"value":"off-origin"}',
+            ),
+            24,
         ),
-        _Response(
-            url="https://example.com/api/text",
-            body=b'{"value":"wrong mime"}',
-            content_type="text/plain",
+        (
+            _Response(
+                url="https://example.com/api/text",
+                body=b'{"value":"wrong mime"}',
+                content_type="text/plain",
+            ),
+            27,
         ),
-        _Response(
-            url="https://example.com/api/large",
-            body=b'{"value":"large"}',
-            content_length=str(state.structured.limits.max_response_bytes + 1),
+        (
+            _Response(
+                url="https://example.com/api/large",
+                body=b'{"value":"large"}',
+            ),
+            state.structured.limits.max_response_bytes + 1,
         ),
     )
 
-    for response in responses:
-        _capture_response(
-            cast(Response, response),
+    for response, body_size in responses_and_sizes:
+        _capture_finished_request(
+            cast(Request, _Request(response, body_size)),
             target,
             CrawlUsage(),
             0,
@@ -123,24 +155,47 @@ def test_browser_does_not_read_off_origin_non_json_or_oversized_response_body() 
         )
 
     assert state.captured_states == []
-    assert all(not response.body_called for response in responses)
+    assert all(not response.body_called for response, _ in responses_and_sizes)
+
+
+def test_browser_finished_request_without_size_metadata_fails_closed() -> None:
+    response = _Response(
+        url="https://example.com/api/state",
+        body=b'{"value":"must-not-materialize"}',
+    )
+    state = _BrowserState()
+
+    _capture_finished_request(
+        cast(Request, _BrokenRequest(response, 0)),
+        _target(),
+        CrawlUsage(),
+        0,
+        lambda _url: None,
+        state,
+    )
+
+    assert not response.body_called
+    assert state.captured_states == []
 
 
 def test_browser_fixed_script_extractor_only_promotes_reviewed_sanitized_state() -> None:
     state = _BrowserState()
     page = _Page(
         {
-            "__INITIAL_STATE__": {
-                "company": "Example",
-                "password": "drop-me",
-            },
-            "unreviewed": {"should": "not-be-seen"},
+            "__INITIAL_STATE__": json.dumps(
+                {
+                    "company": "Example",
+                    "password": "drop-me",
+                }
+            ),
+            "unreviewed": json.dumps({"should": "not-be-seen"}),
         }
     )
 
     captured = _capture_script_state(cast(Page, page), state)
 
     assert len(page.expressions) == 1
+    assert page.arguments == [state.structured.script_extractor_arguments()]
     assert len(captured) == 1
     assert captured[0].kind is PublicStructuredStateKind.SCRIPT_STATE
     assert captured[0].source_locator == "window.__INITIAL_STATE__"
