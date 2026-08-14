@@ -46,6 +46,7 @@ from cip.shared.persistence.session import (
     session_scope,
 )
 
+_FIXTURE_HOST = "sa16-l11-fixture.example"
 _OFF_ORIGIN_HOST = "example.com"
 _SECRET_MARKERS = ("accesstoken", "sessionid", "must-drop", "password", "cookie")
 _HTML = """<!doctype html>
@@ -133,11 +134,11 @@ class _FixtureHandler(BaseHTTPRequestHandler):
 @contextmanager
 def _serve_fixture() -> Iterator[str]:
     server = ThreadingHTTPServer(("127.0.0.1", 0), _FixtureHandler)
-    host, port = server.server_address[:2]
+    port = int(server.server_address[1])
     thread = Thread(target=server.serve_forever, daemon=True)
     thread.start()
     try:
-        yield f"http://{host}:{port}/"
+        yield f"http://{_FIXTURE_HOST}:{port}/"
     finally:
         server.shutdown()
         thread.join(timeout=5)
