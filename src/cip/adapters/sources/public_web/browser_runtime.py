@@ -165,9 +165,9 @@ def _install_response_capture(
     if not callable(listener):
         return
     listener(
-        "response",
-        lambda response: _capture_response(
-            response,
+        "requestfinished",
+        lambda request: _capture_finished_request(
+            request,
             target,
             usage,
             depth,
@@ -236,6 +236,33 @@ def _render_result(
     )
 
 
+def _capture_finished_request(
+    request: Request,
+    target: PublicWebTarget,
+    usage: CrawlUsage,
+    depth: int,
+    authorize_url: AuthorizeUrl,
+    state: _BrowserState,
+) -> None:
+    try:
+        response = request.response()
+        if response is None:
+            return
+        sizes = request.sizes()
+        body_size = int(sizes["responseBodySize"])
+    except (PlaywrightError, KeyError, TypeError, ValueError):
+        return
+    _capture_response(
+        response,
+        target,
+        usage,
+        depth,
+        authorize_url,
+        state,
+        body_size=body_size,
+    )
+
+
 def _capture_response(
     response: Response,
     target: PublicWebTarget,
@@ -243,6 +270,8 @@ def _capture_response(
     depth: int,
     authorize_url: AuthorizeUrl,
     state: _BrowserState,
+    *,
+    body_size: int,
 ) -> None:
     try:
         content_type = response.header_value("content-type") or ""
@@ -256,9 +285,13 @@ def _capture_response(
             depth=depth,
             authorize_url=authorize_url,
         )
+        if not state.structured.admits_network_body(body_size):
+            return
         content_length = _content_length(response)
-        max_bytes = state.structured.limits.max_response_bytes
-        if content_length is not None and content_length > max_bytes:
+        if (
+            content_length is not None
+            and content_length > state.structured.limits.max_response_bytes
+        ):
             return
         captured = state.structured.capture_network_json(
             source_url=source_url,
@@ -280,7 +313,10 @@ def _capture_script_state(
     if not callable(evaluator):
         return ()
     try:
-        raw = evaluator(PUBLIC_SCRIPT_STATE_JS)
+        raw = evaluator(
+            PUBLIC_SCRIPT_STATE_JS,
+            state.structured.script_extractor_arguments(),
+        )
     except PlaywrightError:
         return ()
     return state.structured.capture_script_states(raw)
