@@ -3,7 +3,6 @@ from __future__ import annotations
 from hashlib import sha256
 from urllib.parse import urljoin
 
-import httpx
 from playwright.sync_api import Page
 
 from cip.adapters.sources.public_web.artifact_context import BrowserArtifactExecutionContext
@@ -181,7 +180,10 @@ def _fetch_download(
 ) -> tuple[str, bytes, str]:
     transport = BoundedHttpTransport(
         context.download_client,
-        request_timeout_seconds=min(context.limits.request_timeout_seconds, timeout_ms / 1_000),
+        request_timeout_seconds=min(
+            context.limits.request_timeout_seconds,
+            timeout_ms / 1_000,
+        ),
     )
     current = initial_url
     redirects = 0
