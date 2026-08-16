@@ -7,8 +7,8 @@ from typing import Any
 from urllib.parse import urlsplit
 
 from playwright.sync_api import Error as PlaywrightError
-from playwright.sync_api import Page, Request, Route, TimeoutError as PlaywrightTimeoutError
-from playwright.sync_api import sync_playwright
+from playwright.sync_api import Locator, Page, Route, sync_playwright
+from playwright.sync_api import TimeoutError as PlaywrightTimeoutError
 
 from cip.adapters.sources.public_web.collection_policy import (
     PublicWebCollectionDeniedError,
@@ -335,7 +335,7 @@ def _require_authenticated(page: Page, profile: ProviderLoginProfile) -> None:
         raise ProviderSessionInvalidError("provider_authentication_not_established") from None
 
 
-def _unique_locator(page: Page, selector: str, label: str):
+def _unique_locator(page: Page, selector: str, label: str) -> Locator:
     locator = page.locator(selector)
     if locator.count() != 1:
         raise ProviderLoginPolicyError(f"reviewed {label} selector did not resolve uniquely")
