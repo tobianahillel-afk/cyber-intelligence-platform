@@ -5,16 +5,7 @@ from datetime import UTC, datetime, timedelta
 
 import pytest
 
-from cip.adapters.sources.public_web.delegated_login_runtime import (
-    ProviderLoginChallengeError,
-    ProviderLoginPolicyError,
-    ProviderSessionInvalidError,
-    _NetworkState,
-    _handle_route,
-    _parse_storage_state,
-    _raise_challenge,
-    _validate_execution,
-)
+from cip.adapters.sources.public_web import delegated_login_runtime as login_runtime
 from cip.modules.provider_onboarding.domain.browser_login import (
     ProviderLoginChallenge,
     ProviderLoginChallengeSignal,
@@ -145,9 +136,16 @@ class _Page:
 def test_route_guard_allows_reviewed_get_and_post() -> None:
     for method in ("GET", "POST"):
         route = _Route(_Request(method=method))
-        state = _NetworkState()
+        state = login_runtime._NetworkState()
 
-        _handle_route(route, _entry(), _profile(), PURPOSE, NOW, state)  # type: ignore[arg-type]
+        login_runtime._handle_route(
+            route,  # type: ignore[arg-type]
+            _entry(),
+            _profile(),
+            PURPOSE,
+            NOW,
+            state,
+        )
 
         assert route.continued
         assert not route.aborted
@@ -156,54 +154,96 @@ def test_route_guard_allows_reviewed_get_and_post() -> None:
 
 def test_route_guard_denies_unreviewed_transition_and_method() -> None:
     route = _Route(_Request(url="https://other.example/private"))
-    state = _NetworkState()
-    _handle_route(route, _entry(), _profile(), PURPOSE, NOW, state)  # type: ignore[arg-type]
+    state = login_runtime._NetworkState()
+    login_runtime._handle_route(
+        route,  # type: ignore[arg-type]
+        _entry(),
+        _profile(),
+        PURPOSE,
+        NOW,
+        state,
+    )
     assert route.aborted
     assert state.denial == "provider_login_transition_denied"
 
     route = _Route(_Request(method="PUT"))
-    state = _NetworkState()
-    _handle_route(route, _entry(), _profile(), PURPOSE, NOW, state)  # type: ignore[arg-type]
+    state = login_runtime._NetworkState()
+    login_runtime._handle_route(
+        route,  # type: ignore[arg-type]
+        _entry(),
+        _profile(),
+        PURPOSE,
+        NOW,
+        state,
+    )
     assert route.aborted
     assert state.denial == "provider_login_http_method_denied"
 
 
 def test_route_guard_enforces_request_and_redirect_budgets() -> None:
     profile = _profile(max_requests=1, max_redirects=0)
-    state = _NetworkState()
+    state = login_runtime._NetworkState()
     first = _Route(_Request())
-    _handle_route(first, _entry(), profile, PURPOSE, NOW, state)  # type: ignore[arg-type]
+    login_runtime._handle_route(
+        first,  # type: ignore[arg-type]
+        _entry(),
+        profile,
+        PURPOSE,
+        NOW,
+        state,
+    )
     assert first.continued
 
     second = _Route(_Request())
-    _handle_route(second, _entry(), profile, PURPOSE, NOW, state)  # type: ignore[arg-type]
+    login_runtime._handle_route(
+        second,  # type: ignore[arg-type]
+        _entry(),
+        profile,
+        PURPOSE,
+        NOW,
+        state,
+    )
     assert second.aborted
     assert state.denial == "provider_login_request_budget_exceeded"
 
     redirect = _Route(_Request(redirected=True))
-    redirect_state = _NetworkState()
-    _handle_route(redirect, _entry(), profile, PURPOSE, NOW, redirect_state)  # type: ignore[arg-type]
+    redirect_state = login_runtime._NetworkState()
+    login_runtime._handle_route(
+        redirect,  # type: ignore[arg-type]
+        _entry(),
+        profile,
+        PURPOSE,
+        NOW,
+        redirect_state,
+    )
     assert redirect.aborted
     assert redirect_state.denial == "provider_login_redirect_budget_exceeded"
 
 
 def test_route_guard_enforces_source_policy_and_blocks_passive_resources() -> None:
     route = _Route(_Request())
-    state = _NetworkState()
-    _handle_route(
-        route,
+    state = login_runtime._NetworkState()
+    login_runtime._handle_route(
+        route,  # type: ignore[arg-type]
         _entry(approved_hosts=frozenset({"different.example"})),
         _profile(),
         PURPOSE,
         NOW,
         state,
-    )  # type: ignore[arg-type]
+    )
     assert route.aborted
     assert state.denial == "provider_login_source_policy_denied"
 
     image = _Route(_Request(resource_type="image"))
-    image_state = _NetworkState()
-    _handle_route(image, _entry(), _profile(), PURPOSE, NOW, image_state)  # type: ignore[arg-type]
+    image_state = login_runtime._NetworkState()
+    login_runtime._handle_route(
+        image,  # type: ignore[arg-type]
+        _entry(),
+        _profile(),
+        PURPOSE,
+        NOW,
+        image_state,
+    )
     assert image.aborted
     assert image_state.denial is None
 
@@ -224,7 +264,7 @@ def test_storage_state_accepts_only_profile_hosts() -> None:
         }
     )
 
-    parsed = _parse_storage_state(raw, profile)
+    parsed = login_runtime._parse_storage_state(raw, profile)
 
     assert parsed["cookies"][0]["name"] == "sid"
 
@@ -237,8 +277,8 @@ def test_storage_state_rejects_off_scope_cookie_origin_and_bad_json() -> None:
             "origins": [],
         }
     )
-    with pytest.raises(ProviderSessionInvalidError, match="cookie_origin_denied"):
-        _parse_storage_state(cookie, profile)
+    with pytest.raises(login_runtime.ProviderSessionInvalidError, match="cookie_origin_denied"):
+        login_runtime._parse_storage_state(cookie, profile)
 
     origin = json.dumps(
         {
@@ -246,31 +286,34 @@ def test_storage_state_rejects_off_scope_cookie_origin_and_bad_json() -> None:
             "origins": [{"origin": "https://evil.example", "localStorage": []}],
         }
     )
-    with pytest.raises(ProviderSessionInvalidError, match="origin_denied"):
-        _parse_storage_state(origin, profile)
+    with pytest.raises(login_runtime.ProviderSessionInvalidError, match="origin_denied"):
+        login_runtime._parse_storage_state(origin, profile)
 
-    with pytest.raises(ProviderSessionInvalidError, match="json_invalid"):
-        _parse_storage_state("{broken", profile)
+    with pytest.raises(login_runtime.ProviderSessionInvalidError, match="json_invalid"):
+        login_runtime._parse_storage_state("{broken", profile)
 
 
 def test_challenge_signal_stops_login() -> None:
-    with pytest.raises(ProviderLoginChallengeError) as exc_info:
-        _raise_challenge(_Page({"#mfa"}), _profile())  # type: ignore[arg-type]
+    with pytest.raises(login_runtime.ProviderLoginChallengeError) as exc_info:
+        login_runtime._raise_challenge(
+            _Page({"#mfa"}),  # type: ignore[arg-type]
+            _profile(),
+        )
 
     assert exc_info.value.challenge is ProviderLoginChallenge.MFA
 
 
 def test_execution_rejects_profile_source_mismatch_and_expired_review() -> None:
-    with pytest.raises(ProviderLoginPolicyError, match="source mismatch"):
-        _validate_execution(
+    with pytest.raises(login_runtime.ProviderLoginPolicyError, match="source mismatch"):
+        login_runtime._validate_execution(
             _entry(),
             _profile(source_id="other-provider"),
             purpose=PURPOSE,
             now=NOW,
         )
 
-    with pytest.raises(ProviderLoginPolicyError, match="review expired"):
-        _validate_execution(
+    with pytest.raises(login_runtime.ProviderLoginPolicyError, match="review expired"):
+        login_runtime._validate_execution(
             _entry(),
             _profile(review_expires_at=NOW + timedelta(seconds=1)),
             purpose=PURPOSE,
