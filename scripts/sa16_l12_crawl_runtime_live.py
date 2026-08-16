@@ -5,10 +5,15 @@ from contextlib import contextmanager
 from dataclasses import replace
 from datetime import UTC, datetime, timedelta
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from pathlib import Path
 from threading import Lock, Thread
 from time import sleep
 from urllib.parse import urlsplit
 from uuid import NAMESPACE_URL, uuid4, uuid5
+
+from sqlalchemy import create_engine
+from sqlalchemy.orm import Session, sessionmaker
+from sqlalchemy.pool import StaticPool
 
 from cip.adapters.sources.public_web.provisioning import (
     AutomaticPublicWebPolicy,
@@ -20,8 +25,23 @@ from cip.modules.collection_orchestration.application.ports import (
     AdapterPartialExecutionError,
 )
 from cip.modules.collection_orchestration.application.public_web_adapter import PublicWebAdapter
+from cip.modules.collection_orchestration.application.worker import WorkerStatus, run_worker_once
+from cip.modules.collection_orchestration.domain.models import CollectionJob, SourceSchedule
+from cip.modules.collection_orchestration.infrastructure.repository import enqueue_job
+from cip.modules.data_governance.infrastructure.retention_loader import load_retention_policy
 from cip.modules.organizations.domain.entities import Organization
+from cip.modules.organizations.infrastructure.models import OrganizationRecord
+from cip.modules.source_governance.infrastructure.persistence import sync_source_registry
 from cip.modules.source_governance.infrastructure.registry import SourceRegistryEntry
+from cip.modules.source_portfolio.application.service import get_source_health, sync_source_portfolio
+from cip.modules.source_portfolio.domain.models import (
+    AdapterCapabilityManifest,
+    CatalogStatus,
+    CollectionMode,
+    SourceCatalogEntry,
+)
+from cip.shared.persistence.metadata import get_metadata
+from cip.shared.persistence.session import session_scope
 
 _FIXTURE_HOST = "sa16-l12-fixture.example"
 _FAST_PATHS = ("/00-fast", "/01-fast", "/02-fast", "/03-fast")
@@ -119,6 +139,7 @@ def main() -> None:
         )
         concurrency_target = replace(
             provisioned.target,
+            id=provisioned.target.source_id,
             seed_urls=tuple(f"{origin}{path.lstrip('/')}" for path in _FAST_PATHS),
             discover_security_txt=False,
             discover_sitemaps=False,
@@ -129,19 +150,18 @@ def main() -> None:
             crawl_deadline_seconds=10,
         )
         _max_active_requests = 0
-        concurrent = _adapter(provisioned.source_entry, concurrency_target).collect(
-            collection_job_id=uuid4(),
-            checkpoint_payload=None,
-            collected_at=now,
-            retention_until=now + timedelta(days=30),
+        concurrent_values = _run_worker_live(
+            provisioned.source_entry,
+            concurrency_target,
+            organization,
+            now,
         )
-        concurrent_values = _metric_values(concurrent.operational_metrics)
         if concurrent_values["fetched_pages"] != 4:
-            raise RuntimeError("SA16-L12 did not fetch all admitted concurrent pages")
+            raise RuntimeError("SA16-L12 did not persist all concurrent page metrics")
         if concurrent_values["effective_concurrency"] != 4:
-            raise RuntimeError("SA16-L12 did not apply configured static concurrency")
+            raise RuntimeError("SA16-L12 did not persist effective concurrency")
         if concurrent_values["max_concurrency_used"] != 4:
-            raise RuntimeError("SA16-L12 did not admit the expected deterministic wave")
+            raise RuntimeError("SA16-L12 did not persist actual concurrency")
         if _max_active_requests < 2:
             raise RuntimeError("SA16-L12 live fixture observed no real parallel requests")
         if concurrent_values["deadline_exceeded"] is not False:
@@ -176,9 +196,87 @@ def main() -> None:
 
     print(
         "SA-16 L12 live validation passed: "
-        f"real_parallelism={_max_active_requests} fetched=4 "
+        f"real_parallelism={_max_active_requests} fetched=4 metrics_persisted=1 "
         "partial_checkpoint_pages=1 deadline_retryable=1",
         flush=True,
+    )
+
+
+def _run_worker_live(
+    entry: SourceRegistryEntry,
+    target: PublicWebTarget,
+    organization: Organization,
+    now: datetime,
+) -> Mapping[str, object]:
+    factory = _factory()
+    adapter = _adapter(entry, target)
+    with session_scope(factory) as session:
+        sync_source_registry(session, (entry,))
+        session.add(
+            OrganizationRecord(
+                id=organization.id,
+                canonical_name=organization.canonical_name,
+                legal_name=organization.legal_name,
+                country_code=organization.country_code,
+                website_url=organization.website_url,
+                registration_ids=list(organization.registration_ids),
+                created_at=now,
+                updated_at=now,
+            )
+        )
+        sync_source_portfolio(session, (_catalog_entry(target, now),), now=now)
+        schedule = SourceSchedule(
+            source_id=target.id,
+            adapter_id=PublicWebAdapter.adapter_id,
+            interval_seconds=300,
+        )
+        if not enqueue_job(
+            session,
+            CollectionJob.from_schedule(schedule, scheduled_for=now),
+        ):
+            raise RuntimeError("SA16-L12 failed to enqueue live worker job")
+    outcome = run_worker_once(
+        factory,
+        worker_id="sa16-l12-live-worker",
+        adapters={(target.id, PublicWebAdapter.adapter_id): adapter},
+        retention_policy=load_retention_policy(Path("policies/retention.yml")),
+        clock=lambda: now + timedelta(seconds=1),
+    )
+    if outcome.status is not WorkerStatus.SUCCEEDED:
+        raise RuntimeError(f"SA16-L12 live worker failed: {outcome.status.value}")
+    with factory() as session:
+        health = get_source_health(session, target.id)
+        metrics = health.operational_metrics
+        if metrics.get("namespace") != "public_web.crawl.v1":
+            raise RuntimeError("SA16-L12 live worker did not persist crawl metrics")
+        values = metrics.get("values")
+        if not isinstance(values, dict):
+            raise RuntimeError("SA16-L12 persisted crawl metrics are malformed")
+        return values
+
+
+def _catalog_entry(target: PublicWebTarget, now: datetime) -> SourceCatalogEntry:
+    return SourceCatalogEntry(
+        source_id=target.id,
+        display_name="SA16-L12 controlled public web target",
+        canonical_url=f"https://{_FIXTURE_HOST}/",
+        category="public_web",
+        status=CatalogStatus.EXECUTABLE,
+        freshness_max_age_seconds=300,
+        commercial_use_cases=("corporate_public_footprint",),
+        adapter=AdapterCapabilityManifest(
+            source_id=target.id,
+            adapter_id=PublicWebAdapter.adapter_id,
+            adapter_version="1",
+            provider_schema_version="sa16-l12-live",
+            modes=frozenset({CollectionMode.INCREMENTAL_CURSOR}),
+            canonical_output_types=("raw_observation", "public_footprint_projection"),
+            supports_corrections=True,
+            supports_tombstones=True,
+            cost_per_request=0,
+        ),
+        authorization_expires_at=now + timedelta(days=1),
+        monthly_cost_limit=0,
     )
 
 
@@ -235,6 +333,16 @@ def _base_policy(now: datetime) -> AutomaticPublicWebPolicy:
         crawl_deadline_seconds=10,
         max_crawl_concurrency=4,
     )
+
+
+def _factory() -> sessionmaker[Session]:
+    engine = create_engine(
+        "sqlite+pysqlite://",
+        connect_args={"check_same_thread": False},
+        poolclass=StaticPool,
+    )
+    get_metadata().create_all(engine)
+    return sessionmaker(bind=engine, expire_on_commit=False, autoflush=False)
 
 
 if __name__ == "__main__":
