@@ -8,6 +8,7 @@ from uuid import UUID
 
 from sqlalchemy.orm import Session
 
+from cip.modules.public_footprint.domain.artifacts import BrowserScreenshotMode
 from cip.modules.public_footprint.domain.browser_actions import (
     BrowserActionCheckpoint,
     BrowserActionKind,
@@ -230,6 +231,11 @@ def _encode_step(step: BrowserActionStep) -> dict[str, object | None]:
         "expected_form_method": (
             step.expected_form_method.value if step.expected_form_method is not None else None
         ),
+        "expected_download_url": step.expected_download_url,
+        "screenshot_mode": (
+            step.screenshot_mode.value if step.screenshot_mode is not None else None
+        ),
+        "retain_raw_artifact": step.retain_raw_artifact,
         "timeout_ms": step.timeout_ms,
         "replay_policy": step.replay_policy.value,
     }
@@ -265,6 +271,7 @@ def _decode_plan(payload: dict[str, Any]) -> BrowserActionPlan:
 def _decode_step(payload: dict[str, Any]) -> BrowserActionStep:
     classification = payload.get("value_classification")
     method = payload.get("expected_form_method")
+    screenshot_mode = payload.get("screenshot_mode")
     return BrowserActionStep(
         step_id=_required_str(payload, "step_id"),
         kind=BrowserActionKind(_required_str(payload, "kind")),
@@ -276,6 +283,11 @@ def _decode_step(payload: dict[str, Any]) -> BrowserActionStep:
         target_url=_optional_str(payload.get("target_url")),
         expected_form_action_url=_optional_str(payload.get("expected_form_action_url")),
         expected_form_method=BrowserHttpMethod(method) if isinstance(method, str) else None,
+        expected_download_url=_optional_str(payload.get("expected_download_url")),
+        screenshot_mode=(
+            BrowserScreenshotMode(screenshot_mode) if isinstance(screenshot_mode, str) else None
+        ),
+        retain_raw_artifact=_optional_bool(payload.get("retain_raw_artifact"), default=False),
         timeout_ms=_optional_int(payload.get("timeout_ms")),
         replay_policy=BrowserStepReplayPolicy(_required_str(payload, "replay_policy")),
     )
@@ -322,4 +334,12 @@ def _optional_int(value: object) -> int | None:
         return None
     if not isinstance(value, int) or isinstance(value, bool):
         raise ValueError("stored browser action plan optional integer is invalid")
+    return value
+
+
+def _optional_bool(value: object, *, default: bool) -> bool:
+    if value is None:
+        return default
+    if not isinstance(value, bool):
+        raise ValueError("stored browser action plan optional boolean is invalid")
     return value
