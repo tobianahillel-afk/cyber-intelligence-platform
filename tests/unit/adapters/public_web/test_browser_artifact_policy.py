@@ -19,6 +19,7 @@ from cip.adapters.sources.public_web.artifact_policy import (
 )
 from cip.adapters.sources.public_web.artifact_quarantine import quarantined_artifact
 from cip.adapters.sources.public_web.artifact_screenshot import png_dimensions
+from cip.adapters.sources.public_web.ooxml_parsing import DOCX_MIME
 
 NOW = datetime(2026, 8, 16, 20, 0, tzinfo=UTC)
 
@@ -26,8 +27,18 @@ NOW = datetime(2026, 8, 16, 20, 0, tzinfo=UTC)
 def test_artifact_limits_validate_cross_budget_constraints() -> None:
     with pytest.raises(ValueError, match="max_artifact_bytes cannot exceed"):
         BrowserArtifactLimits(max_artifact_bytes=10, max_total_download_bytes=9)
-    with pytest.raises(ValueError, match="max_screenshots"):
-        BrowserArtifactLimits(max_screenshots=0)
+    for value in (0, 17):
+        with pytest.raises(ValueError, match="max_screenshots"):
+            BrowserArtifactLimits(max_screenshots=value)
+        with pytest.raises(ValueError, match="max_downloads"):
+            BrowserArtifactLimits(max_downloads=value)
+    for field_name in (
+        "max_screenshot_bytes",
+        "max_artifact_bytes",
+        "max_total_download_bytes",
+    ):
+        with pytest.raises(ValueError, match=field_name):
+            BrowserArtifactLimits(**{field_name: 0})
     with pytest.raises(ValueError, match="max_redirects"):
         BrowserArtifactLimits(max_redirects=11)
     with pytest.raises(ValueError, match="request_timeout_seconds"):
@@ -63,8 +74,9 @@ def test_screenshot_usage_enforces_count_and_bytes() -> None:
     usage.admit_screenshot_bytes(b"png", limits)
     with pytest.raises(BrowserArtifactPolicyError, match="count_budget"):
         usage.begin_screenshot(limits)
-    with pytest.raises(BrowserArtifactPolicyError, match="byte_budget"):
-        usage.admit_screenshot_bytes(b"toolarge", limits)
+    for body in (b"", b"toolarge"):
+        with pytest.raises(BrowserArtifactPolicyError, match="byte_budget"):
+            usage.admit_screenshot_bytes(body, limits)
 
 
 def test_png_dimensions_reject_invalid_header_and_bounds() -> None:
@@ -92,6 +104,12 @@ def test_download_usage_enforces_count_and_aggregate_bytes() -> None:
     usage.admit_download_bytes(b"5", limits)
     with pytest.raises(BrowserArtifactPolicyError, match="count_budget"):
         usage.begin_download(limits)
+
+    exhausted = BrowserArtifactUsage(download_bytes=5)
+    with pytest.raises(BrowserArtifactPolicyError, match="total_byte_budget"):
+        exhausted.begin_download(limits)
+    with pytest.raises(BrowserArtifactPolicyError, match="total_byte_budget"):
+        BrowserArtifactUsage(download_bytes=4).admit_download_bytes(b"12", limits)
 
 
 def test_pdf_type_requires_magic_and_consistent_extension() -> None:
@@ -134,7 +152,15 @@ def test_octet_stream_requires_safe_detectable_type() -> None:
         )
 
 
-def test_executable_and_unapproved_types_are_denied() -> None:
+def test_empty_ooxml_magic_executable_and_unapproved_types_are_denied() -> None:
+    with pytest.raises(BrowserArtifactPolicyError, match="empty_artifact"):
+        validate_download_media_type("https://example.com/report.txt", "text/plain", b"")
+    with pytest.raises(BrowserArtifactPolicyError, match="ooxml_magic_mismatch"):
+        validate_download_media_type(
+            "https://example.com/report.docx",
+            DOCX_MIME,
+            b"not-a-zip",
+        )
     with pytest.raises(BrowserArtifactPolicyError, match="executable_denied"):
         validate_download_media_type(
             "https://example.com/report.txt",
@@ -153,6 +179,14 @@ def test_executable_and_unapproved_types_are_denied() -> None:
             "text/plain",
             b"hello\x00world",
         )
+    assert (
+        validate_download_media_type(
+            "https://example.com/public/download",
+            "text/plain",
+            b"plain text",
+        )
+        == "text/plain"
+    )
 
 
 def test_filename_and_quarantine_suffix_are_bounded() -> None:
