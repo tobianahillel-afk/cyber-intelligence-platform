@@ -100,11 +100,12 @@ def _plan(*, retain: bool) -> tuple[BrowserActionPlan, BrowserActionStep]:
 
 
 def _context(store: _Store | None) -> BrowserArtifactExecutionContext:
+    transport = httpx.MockTransport(lambda _request: httpx.Response(500))
     return BrowserArtifactExecutionContext(
         job_id=uuid4(),
         captured_at=NOW,
         retention_until=NOW + timedelta(days=7),
-        download_client=httpx.Client(transport=httpx.MockTransport(lambda _request: httpx.Response(500))),
+        download_client=httpx.Client(transport=transport),
         store=store,
     )
 
