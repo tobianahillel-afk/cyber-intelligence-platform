@@ -10,10 +10,10 @@ from cip.modules.provider_onboarding.domain.models import (
     SecretReferenceScheme,
 )
 from cip.modules.source_governance.application.session_material import (
+    MAX_SESSION_MATERIAL_BYTES,
     SessionMaterialStoreError,
 )
 
-_MAX_SESSION_BYTES = 262_144
 _LOGICAL_ROOT = Path("/run/secrets")
 
 
@@ -31,25 +31,28 @@ class LocalFileSessionMaterialStore:
     def is_available(self, reference: SecretReference) -> bool:
         try:
             path = self._path(reference)
-            return path.is_file() and 0 < path.stat().st_size <= _MAX_SESSION_BYTES
+            return (
+                path.is_file()
+                and 0 < path.stat().st_size <= MAX_SESSION_MATERIAL_BYTES
+            )
         except (OSError, SessionMaterialStoreError):
             return False
 
     def resolve(self, reference: SecretReference) -> str:
         path = self._path(reference)
         try:
-            if not path.is_file() or path.stat().st_size > _MAX_SESSION_BYTES:
+            if not path.is_file() or path.stat().st_size > MAX_SESSION_MATERIAL_BYTES:
                 raise SessionMaterialStoreError("session material is unavailable")
             value = path.read_text(encoding="utf-8")
         except OSError as exc:
             raise SessionMaterialStoreError("session material is unavailable") from exc
-        if not value or len(value.encode("utf-8")) > _MAX_SESSION_BYTES:
+        if not value or len(value.encode("utf-8")) > MAX_SESSION_MATERIAL_BYTES:
             raise SessionMaterialStoreError("session material is unavailable")
         return value
 
     def write(self, reference: SecretReference, value: str) -> None:
         payload = value.encode("utf-8")
-        if not payload or len(payload) > _MAX_SESSION_BYTES:
+        if not payload or len(payload) > MAX_SESSION_MATERIAL_BYTES:
             raise SessionMaterialStoreError("session material size is invalid")
         path = self._path(reference)
         try:
