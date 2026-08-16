@@ -1,9 +1,14 @@
 from __future__ import annotations
 
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
+from struct import pack
+from uuid import uuid4
 
+import httpx
 import pytest
 
+from cip.adapters.sources.public_web.artifact_context import BrowserArtifactExecutionContext
 from cip.adapters.sources.public_web.artifact_policy import (
     BrowserArtifactLimits,
     BrowserArtifactPolicyError,
@@ -13,6 +18,9 @@ from cip.adapters.sources.public_web.artifact_policy import (
     validate_download_media_type,
 )
 from cip.adapters.sources.public_web.artifact_quarantine import quarantined_artifact
+from cip.adapters.sources.public_web.artifact_screenshot import png_dimensions
+
+NOW = datetime(2026, 8, 16, 20, 0, tzinfo=UTC)
 
 
 def test_artifact_limits_validate_cross_budget_constraints() -> None:
@@ -26,6 +34,27 @@ def test_artifact_limits_validate_cross_budget_constraints() -> None:
         BrowserArtifactLimits(request_timeout_seconds=0)
 
 
+def test_artifact_context_requires_future_retention_deadline() -> None:
+    client = httpx.Client(transport=httpx.MockTransport(lambda _request: httpx.Response(500)))
+    try:
+        with pytest.raises(ValueError, match="retention_until must follow"):
+            BrowserArtifactExecutionContext(
+                job_id=uuid4(),
+                captured_at=NOW,
+                retention_until=NOW,
+                download_client=client,
+            )
+        context = BrowserArtifactExecutionContext(
+            job_id=uuid4(),
+            captured_at=NOW,
+            retention_until=NOW + timedelta(days=1),
+            download_client=client,
+        )
+        assert context.captured_at == NOW
+    finally:
+        client.close()
+
+
 def test_screenshot_usage_enforces_count_and_bytes() -> None:
     limits = BrowserArtifactLimits(max_screenshots=1, max_screenshot_bytes=3)
     usage = BrowserArtifactUsage()
@@ -36,6 +65,17 @@ def test_screenshot_usage_enforces_count_and_bytes() -> None:
         usage.begin_screenshot(limits)
     with pytest.raises(BrowserArtifactPolicyError, match="byte_budget"):
         usage.admit_screenshot_bytes(b"toolarge", limits)
+
+
+def test_png_dimensions_reject_invalid_header_and_bounds() -> None:
+    with pytest.raises(BrowserArtifactPolicyError, match="invalid_png"):
+        png_dimensions(b"not-a-png")
+    zero_width = b"\x89PNG\r\n\x1a\n" + b"\x00\x00\x00\rIHDR" + pack(">II", 0, 10)
+    with pytest.raises(BrowserArtifactPolicyError, match="dimensions_invalid"):
+        png_dimensions(zero_width)
+    too_wide = b"\x89PNG\r\n\x1a\n" + b"\x00\x00\x00\rIHDR" + pack(">II", 20_001, 10)
+    with pytest.raises(BrowserArtifactPolicyError, match="dimensions_invalid"):
+        png_dimensions(too_wide)
 
 
 def test_download_usage_enforces_count_and_aggregate_bytes() -> None:
