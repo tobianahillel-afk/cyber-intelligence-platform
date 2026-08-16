@@ -148,21 +148,29 @@ class BrowserActionCheckpoint:
             raise ValueError("browser action checkpoint version must be positive")
         if not self.step_states or len(self.step_states) > _MAX_STEPS:
             raise ValueError("browser action checkpoint step_states are invalid")
-        needs_verification = False
-        completed_prefix = True
-        for state in self.step_states:
-            if needs_verification and state is not BrowserStepState.PENDING:
-                raise ValueError("steps after needs_verification must remain pending")
-            if state is BrowserStepState.NEEDS_VERIFICATION:
-                if not completed_prefix:
-                    raise ValueError("needs_verification must follow a completed prefix")
-                needs_verification = True
-                completed_prefix = False
-            elif state is BrowserStepState.COMPLETED:
-                if not completed_prefix:
-                    raise ValueError("completed steps must form a prefix")
-            elif state in {BrowserStepState.EXECUTING, BrowserStepState.PENDING}:
-                completed_prefix = False
+        _validate_checkpoint_states(self.step_states)
+
+
+def _validate_checkpoint_states(states: tuple[BrowserStepState, ...]) -> None:
+    tail_started = False
+    active_seen = False
+    for state in states:
+        if not tail_started and state is BrowserStepState.COMPLETED:
+            continue
+        if not tail_started and state in {
+            BrowserStepState.EXECUTING,
+            BrowserStepState.NEEDS_VERIFICATION,
+        }:
+            if active_seen:
+                raise ValueError("browser action checkpoint has multiple active steps")
+            active_seen = True
+            tail_started = True
+            continue
+        if not tail_started and state is BrowserStepState.PENDING:
+            tail_started = True
+            continue
+        if tail_started and state is not BrowserStepState.PENDING:
+            raise ValueError("browser action checkpoint must end with pending steps")
 
 
 def _validate_step_shape(step: BrowserActionStep) -> None:
