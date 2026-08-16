@@ -51,6 +51,7 @@ class FallbackPublicWebClient(PublicWebClient):
         request_timeout_seconds: float | None = None,
     ) -> None:
         super().__init__(client, request_timeout_seconds=request_timeout_seconds)
+        self._fallback_http_client = client
         self._browser_entry = browser_entry
         self._collected_at = require_aware_utc(collected_at, field_name="collected_at")
         self._policy = policy
@@ -92,7 +93,7 @@ class FallbackPublicWebClient(PublicWebClient):
         from cip.adapters.sources.public_web.browser_client import BrowserPublicWebClient
 
         browser = BrowserPublicWebClient(
-            self._client,
+            self._fallback_http_client,
             self._browser_entry,
             collected_at=self._collected_at,
         )
