@@ -5,6 +5,8 @@ from uuid import UUID
 
 from cip.modules.provider_onboarding.domain.models import SecretReference
 
+MAX_SESSION_MATERIAL_BYTES = 262_144
+
 
 class SessionMaterialStore(Protocol):
     def reference_for(self, identity_id: UUID) -> SecretReference: ...
