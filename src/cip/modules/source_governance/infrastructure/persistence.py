@@ -61,6 +61,9 @@ def _record_values(entry: SourceRegistryEntry) -> dict[str, object]:
         "approved_hosts": sorted(authorization.approved_hosts),
         "approved_path_prefixes": list(authorization.approved_path_prefixes),
         "approved_purposes": sorted(authorization.approved_purposes),
+        "approved_http_methods": sorted(
+            method.value for method in authorization.approved_http_methods
+        ),
         "automated_collection_allowed": authorization.automated_collection_allowed,
         "raw_storage_allowed": authorization.raw_storage_allowed,
     }
