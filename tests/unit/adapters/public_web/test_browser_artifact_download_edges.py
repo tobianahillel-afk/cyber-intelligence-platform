@@ -20,6 +20,7 @@ from cip.modules.public_footprint.domain.browser_actions import (
 
 NOW = datetime(2026, 8, 16, 20, 30, tzinfo=UTC)
 URL = "https://example.com/public/report.txt"
+PAGE_URL = "https://example.com/public/page"
 
 
 class _SelfLocator:
@@ -42,6 +43,10 @@ class _Link:
     def get_attribute(self, name: str) -> str | None:
         assert name == "href"
         return self.href
+
+
+def _page() -> Any:
+    return SimpleNamespace(url=PAGE_URL)
 
 
 def _step(expected: str = URL) -> BrowserActionStep:
@@ -81,7 +86,7 @@ def test_download_preflight_denies_non_link_missing_href_and_plan_mismatch(
         )
         with pytest.raises(BrowserArtifactPolicyError, match=match):
             artifact_download._preflight_download(
-                cast(Any, object()),
+                cast(Any, _page()),
                 cast(Any, object()),
                 cast(Any, object()),
                 cast(Any, object()),
@@ -100,7 +105,7 @@ def test_download_preflight_authorizes_exact_link(monkeypatch: pytest.MonkeyPatc
 
     monkeypatch.setattr(artifact_download, "authorize_browser_action_transition", authorize)
     result = artifact_download._preflight_download(
-        cast(Any, object()),
+        cast(Any, _page()),
         cast(Any, object()),
         cast(Any, object()),
         cast(Any, object()),
