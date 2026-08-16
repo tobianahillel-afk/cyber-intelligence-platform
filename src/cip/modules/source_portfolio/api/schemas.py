@@ -81,6 +81,7 @@ class SourceHealthResponse(BaseModel):
     cost_window_started_at: datetime | None
     current_backfill_state: str | None
     last_error_code: str | None
+    operational_metrics: dict[str, object]
 
     @classmethod
     def from_domain(cls, value: SourceHealth) -> SourceHealthResponse:
@@ -103,6 +104,7 @@ class SourceHealthResponse(BaseModel):
                 else None
             ),
             last_error_code=value.last_error_code,
+            operational_metrics=dict(value.operational_metrics),
         )
 
 
