@@ -163,14 +163,20 @@ def test_partial_retry_persists_progress_without_double_counting() -> None:
         assert checkpoint is not None
         assert checkpoint.payload == {"sequence": 1}
         assert checkpoint.version == 2
-        assert checkpoint.last_success_at == NOW + timedelta(seconds=32)
+        assert _sqlite_utc(checkpoint.last_success_at) == NOW + timedelta(seconds=32)
         health = get_source_health(session, adapter.source_id)
-        assert health.last_success_at == NOW + timedelta(seconds=32)
+        assert _sqlite_utc(health.last_success_at) == NOW + timedelta(seconds=32)
         assert health.consecutive_failures == 0
         assert health.last_error_code is None
         values = health.operational_metrics["values"]
         assert isinstance(values, dict)
         assert values["deadline_exceeded"] is False
+
+
+def _sqlite_utc(value: datetime | None) -> datetime | None:
+    if value is None or value.tzinfo is not None:
+        return value
+    return value.replace(tzinfo=UTC)
 
 
 def _source_record() -> SourceRecord:
