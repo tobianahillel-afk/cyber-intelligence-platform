@@ -88,12 +88,12 @@ def _patch_scope(monkeypatch: pytest.MonkeyPatch) -> None:
     )
     monkeypatch.setattr(
         worker,
-        "_record_success_health",
+        "record_success_health",
         lambda *args, **kwargs: None,
     )
     monkeypatch.setattr(
         worker,
-        "_record_failure_health",
+        "record_failure_health",
         lambda *args, **kwargs: None,
     )
     monkeypatch.setattr(
