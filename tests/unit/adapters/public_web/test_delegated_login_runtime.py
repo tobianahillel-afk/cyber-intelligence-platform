@@ -6,6 +6,7 @@ from datetime import UTC, datetime, timedelta
 import pytest
 
 from cip.adapters.sources.public_web import delegated_login_runtime as login_runtime
+from cip.adapters.sources.public_web import delegated_session_state as session_state
 from cip.modules.provider_onboarding.domain.browser_login import (
     ProviderLoginChallenge,
     ProviderLoginChallengeSignal,
@@ -264,7 +265,7 @@ def test_storage_state_accepts_only_profile_hosts() -> None:
         }
     )
 
-    parsed = login_runtime._parse_storage_state(raw, profile)
+    parsed = session_state.parse_storage_state(raw, profile)
 
     assert parsed["cookies"][0]["name"] == "sid"
 
@@ -277,8 +278,8 @@ def test_storage_state_rejects_off_scope_cookie_origin_and_bad_json() -> None:
             "origins": [],
         }
     )
-    with pytest.raises(login_runtime.ProviderSessionInvalidError, match="cookie_origin_denied"):
-        login_runtime._parse_storage_state(cookie, profile)
+    with pytest.raises(session_state.ProviderSessionInvalidError, match="cookie_origin_denied"):
+        session_state.parse_storage_state(cookie, profile)
 
     origin = json.dumps(
         {
@@ -286,11 +287,11 @@ def test_storage_state_rejects_off_scope_cookie_origin_and_bad_json() -> None:
             "origins": [{"origin": "https://evil.example", "localStorage": []}],
         }
     )
-    with pytest.raises(login_runtime.ProviderSessionInvalidError, match="origin_denied"):
-        login_runtime._parse_storage_state(origin, profile)
+    with pytest.raises(session_state.ProviderSessionInvalidError, match="origin_denied"):
+        session_state.parse_storage_state(origin, profile)
 
-    with pytest.raises(login_runtime.ProviderSessionInvalidError, match="json_invalid"):
-        login_runtime._parse_storage_state("{broken", profile)
+    with pytest.raises(session_state.ProviderSessionInvalidError, match="json_invalid"):
+        session_state.parse_storage_state("{broken", profile)
 
 
 def test_challenge_signal_stops_login() -> None:
