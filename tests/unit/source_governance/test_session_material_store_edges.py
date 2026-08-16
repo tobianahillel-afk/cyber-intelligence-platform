@@ -21,15 +21,9 @@ def test_missing_and_non_file_references_are_unavailable(tmp_path: Path) -> None
         store.resolve(reference)
 
 
-def test_store_rejects_reference_outside_logical_root(tmp_path: Path) -> None:
-    store = LocalFileSessionMaterialStore(tmp_path)
-    reference = SecretReference("file-secret:///tmp/session.json")
-
-    assert not store.is_available(reference)
-    with pytest.raises(SessionMaterialStoreError, match="logical root"):
-        store.resolve(reference)
-    with pytest.raises(SessionMaterialStoreError, match="logical root"):
-        store.delete(reference)
+def test_file_secret_domain_rejects_reference_outside_logical_root() -> None:
+    with pytest.raises(ValueError, match="under /run/secrets"):
+        SecretReference("file-secret:///tmp/session.json")
 
 
 def test_resolve_rejects_oversized_existing_file(tmp_path: Path) -> None:
