@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from datetime import UTC, datetime, timedelta
+from uuid import uuid4
 
 import pytest
 
@@ -36,7 +37,7 @@ def _identity() -> DelegatedBrowserIdentity:
     )
     return DelegatedBrowserIdentity(
         account=account,
-        tenant_id=__import__("uuid").uuid4(),
+        tenant_id=uuid4(),
         owner_kind=DelegatedOwnerKind.USER,
         owner_subject_id="user-123",
         purpose="authorized-provider-research",
