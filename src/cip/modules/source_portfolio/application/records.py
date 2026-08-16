@@ -119,6 +119,7 @@ def to_health(
             else None
         ),
         last_error_code=record.last_error_code,
+        operational_metrics=record.operational_metrics or {},
     )
 
 
