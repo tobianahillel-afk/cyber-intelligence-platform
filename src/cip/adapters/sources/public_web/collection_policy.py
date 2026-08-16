@@ -6,6 +6,7 @@ from cip.adapters.sources.public_web.registry import PublicWebTarget
 from cip.modules.source_governance.domain.models import (
     CollectionRequest,
     DataCategory,
+    HttpMethod,
     SourceRuntimeState,
 )
 from cip.modules.source_governance.infrastructure.registry import SourceRegistryEntry
@@ -20,12 +21,14 @@ def authorize_public_web_url(
     target_url: str,
     *,
     now: datetime,
+    http_method: HttpMethod = HttpMethod.GET,
 ) -> None:
     decision = entry.policy.evaluate(
         CollectionRequest(
             data_category=DataCategory.OFFICIAL_DOCUMENT_DISCOVERY,
             target_url=target_url,
             purpose="corporate-public-footprint",
+            http_method=http_method,
             automated=True,
             store_raw_content=False,
             human_review_completed=False,

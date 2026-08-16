@@ -32,6 +32,11 @@ class SourceType(StrEnum):
     LICENSED_DATASET = "licensed_dataset"
 
 
+class HttpMethod(StrEnum):
+    GET = "GET"
+    POST = "POST"
+
+
 class DataCategory(StrEnum):
     ORGANIZATION_METADATA = "organization_metadata"
     PROFESSIONAL_CONTACT = "professional_contact"
@@ -75,6 +80,7 @@ class DecisionReason(StrEnum):
     RATE_LIMIT_EXHAUSTED = "rate_limit_exhausted"
     HOST_NOT_ALLOWED = "host_not_allowed"
     PATH_NOT_ALLOWED = "path_not_allowed"
+    METHOD_NOT_ALLOWED = "method_not_allowed"
 
 
 @dataclass(frozen=True, slots=True)
@@ -86,6 +92,9 @@ class SourceAuthorization:
     approved_hosts: frozenset[str] = field(default_factory=frozenset)
     approved_path_prefixes: tuple[str, ...] = ()
     approved_purposes: frozenset[str] = field(default_factory=frozenset)
+    approved_http_methods: frozenset[HttpMethod] = field(
+        default_factory=lambda: frozenset({HttpMethod.GET})
+    )
     automated_collection_allowed: bool = False
     raw_storage_allowed: bool = False
 
@@ -128,6 +137,7 @@ class CollectionRequest:
     data_category: DataCategory
     target_url: str
     purpose: str
+    http_method: HttpMethod = HttpMethod.GET
     automated: bool = True
     store_raw_content: bool = False
     human_review_completed: bool = False
@@ -225,6 +235,8 @@ class SourcePolicy:
             return CollectionDecision(False, DecisionReason.RATE_LIMIT_EXHAUSTED)
         if request.purpose not in authorization.approved_purposes:
             return CollectionDecision(False, DecisionReason.AUTHORIZATION_NOT_APPROVED)
+        if request.http_method not in authorization.approved_http_methods:
+            return CollectionDecision(False, DecisionReason.METHOD_NOT_ALLOWED)
         if not _url_is_authorized(
             request.target_url,
             authorization.approved_hosts,

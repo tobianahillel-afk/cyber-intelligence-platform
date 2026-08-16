@@ -10,6 +10,7 @@ import yaml
 from cip.modules.source_governance.domain.models import (
     AuthorizationStatus,
     DataCategory,
+    HttpMethod,
     SourceAuthorization,
     SourcePolicy,
     SourceStatus,
@@ -81,6 +82,13 @@ def _parse_entry(value: object) -> SourceRegistryEntry:
         approved_purposes=frozenset(
             _require_string_list(authorization_payload, "approved_purposes")
         ),
+        approved_http_methods=frozenset(
+            HttpMethod(item)
+            for item in _optional_string_list(
+                authorization_payload.get("approved_http_methods"),
+                default=[HttpMethod.GET.value],
+            )
+        ),
         automated_collection_allowed=bool(
             authorization_payload.get("automated_collection_allowed", False)
         ),
@@ -124,6 +132,14 @@ def _require_string_list(payload: dict[str, Any], key: str) -> list[str]:
     value = payload.get(key)
     if not isinstance(value, list) or not all(isinstance(item, str) for item in value):
         raise ValueError(f"{key} must be a list of strings")
+    return value
+
+
+def _optional_string_list(value: object, *, default: list[str]) -> list[str]:
+    if value is None:
+        return list(default)
+    if not isinstance(value, list) or not all(isinstance(item, str) for item in value):
+        raise ValueError("optional list field must be a list of strings")
     return value
 
 

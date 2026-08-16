@@ -43,5 +43,6 @@ class SourceRecord(Base):
     approved_hosts: Mapped[list[str]] = mapped_column(JSON, default=list)
     approved_path_prefixes: Mapped[list[str]] = mapped_column(JSON, default=list)
     approved_purposes: Mapped[list[str]] = mapped_column(JSON, default=list)
+    approved_http_methods: Mapped[list[str]] = mapped_column(JSON, default=lambda: ["GET"])
     automated_collection_allowed: Mapped[bool] = mapped_column(Boolean, default=False)
     raw_storage_allowed: Mapped[bool] = mapped_column(Boolean, default=False)
