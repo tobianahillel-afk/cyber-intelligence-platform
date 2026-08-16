@@ -14,7 +14,9 @@ import httpx
 from sqlalchemy import select
 
 from cip.adapters.sources.public_web.artifact_context import BrowserArtifactExecutionContext
-from cip.adapters.sources.public_web.browser_action_executor import execute_public_browser_action_plan
+from cip.adapters.sources.public_web.browser_action_executor import (
+    execute_public_browser_action_plan,
+)
 from cip.adapters.sources.public_web.registry import PublicWebTarget
 from cip.modules.organizations.infrastructure.models import OrganizationRecord
 from cip.modules.public_footprint.domain.artifacts import (
@@ -69,7 +71,10 @@ class _FixtureHandler(BaseHTTPRequestHandler):
     def do_GET(self) -> None:
         path = urlsplit(self.path).path
         if path == "/public/page":
-            self._send(_page_html().encode("utf-8"), content_type="text/html; charset=utf-8")
+            self._send(
+                _page_html().encode("utf-8"),
+                content_type="text/html; charset=utf-8",
+            )
             return
         if path == "/public/report.txt":
             self._send(_REPORT, content_type="text/plain; charset=utf-8")
@@ -97,11 +102,20 @@ class _FixtureHandler(BaseHTTPRequestHandler):
 
 def _page_html() -> str:
     return """<!doctype html>
-<html><head><meta charset="utf-8"><title>SA16 L14 fixture</title><link rel="icon" href="data:,"></head>
+<html>
+<head>
+<meta charset="utf-8">
+<title>SA16 L14 fixture</title>
+<link rel="icon" href="data:,">
+</head>
 <body>
-<main id="evidence"><h1>Controlled public evidence</h1><p>Neutral first-party fixture.</p></main>
+<main id="evidence">
+<h1>Controlled public evidence</h1>
+<p>Neutral first-party fixture.</p>
+</main>
 <a id="report" href="/public/report.txt">Public report</a>
-</body></html>"""
+</body>
+</html>"""
 
 
 @contextmanager
@@ -152,7 +166,9 @@ def _entry(target: PublicWebTarget, now: datetime) -> SourceRegistryEntry:
             source_type=SourceType.BROWSER,
             owner="CIP controlled live validation",
             licence="Repository-owned ephemeral first-party validation fixture",
-            allowed_data_categories=frozenset({DataCategory.OFFICIAL_DOCUMENT_DISCOVERY}),
+            allowed_data_categories=frozenset(
+                {DataCategory.OFFICIAL_DOCUMENT_DISCOVERY}
+            ),
             retention_days=1,
             raw_content_storage=False,
             human_review_required=False,
@@ -230,12 +246,20 @@ def _persist_organization(factory, organization_id: UUID, now: datetime) -> None
 
 def _verify_persisted_result(factory, plan: BrowserActionPlan) -> None:
     with session_scope(factory) as session:
-        artifacts = load_browser_artifacts_for_plan(session, plan.plan_id, plan.version)
+        artifacts = load_browser_artifacts_for_plan(
+            session,
+            plan.plan_id,
+            plan.version,
+        )
         resources = session.scalars(select(PublicResourceRecord)).all()
     if len(artifacts) != 2:
         raise RuntimeError("SA16-L14 did not persist both artifact metadata records")
-    screenshot = next(item for item in artifacts if item.kind is BrowserArtifactKind.SCREENSHOT)
-    download = next(item for item in artifacts if item.kind is BrowserArtifactKind.DOWNLOAD)
+    screenshot = next(
+        item for item in artifacts if item.kind is BrowserArtifactKind.SCREENSHOT
+    )
+    download = next(
+        item for item in artifacts if item.kind is BrowserArtifactKind.DOWNLOAD
+    )
     if not screenshot.viewport_width or not screenshot.viewport_height:
         raise RuntimeError("SA16-L14 screenshot dimensions were not recorded")
     if screenshot.raw_retained or screenshot.storage_uri is not None:
@@ -290,7 +314,10 @@ def main() -> None:
                     result.public_footprint_projections,
                     now=now,
                 )
-        if any(state is not BrowserStepState.COMPLETED for state in result.checkpoint.step_states):
+        if any(
+            state is not BrowserStepState.COMPLETED
+            for state in result.checkpoint.step_states
+        ):
             raise RuntimeError("SA16-L14 browser artifact plan did not complete")
         if len(result.artifacts) != 2 or len(result.public_footprint_projections) != 1:
             raise RuntimeError("SA16-L14 artifact execution returned an invalid result shape")
