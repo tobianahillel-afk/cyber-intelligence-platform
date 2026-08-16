@@ -230,8 +230,8 @@ def _handle_route(
         state.requests_blocked += 1
         route.abort()
         return
-    method = _request_method(request)
     try:
+        method = _request_method(request)
         canonical = authorize_browser_action_transition(
             target,
             entry,
