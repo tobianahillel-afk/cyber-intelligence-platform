@@ -3,6 +3,7 @@ from __future__ import annotations
 from datetime import datetime
 
 from cip.adapters.sources.public_web.delegated_login_runtime import (
+    ProviderAuthenticatedRuntimeResult,
     execute_reviewed_provider_login,
     execute_reviewed_provider_logout,
     execute_reviewed_session_reuse,
@@ -95,7 +96,7 @@ class PublicWebDelegatedLoginExecutor:
         )
 
 
-def _result(value) -> AuthenticatedBrowserRuntimeResult:
+def _result(value: ProviderAuthenticatedRuntimeResult) -> AuthenticatedBrowserRuntimeResult:
     return AuthenticatedBrowserRuntimeResult(
         final_url=value.final_url,
         html=value.html,
