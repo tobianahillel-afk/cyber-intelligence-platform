@@ -236,7 +236,10 @@ def _decode_plan(payload: dict[str, Any]) -> BrowserActionPlan:
         BrowserTransitionRule(
             host=_required_str(item, "host"),
             path_prefix=_required_str(item, "path_prefix"),
-            methods=frozenset(BrowserHttpMethod(value) for value in _required_list(item, "methods")),
+            methods=frozenset(
+                BrowserHttpMethod(value)
+                for value in _required_list(item, "methods")
+            ),
         )
         for item in _mapping_list(payload, "allowed_transitions")
     )
