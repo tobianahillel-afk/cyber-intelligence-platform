@@ -178,21 +178,11 @@ def _validate_step_shape(step: BrowserActionStep) -> None:
     if step.kind in selector_kinds and step.selector is None:
         raise ValueError(f"{step.kind.value} requires a selector")
     if step.kind is BrowserActionKind.NAVIGATE:
-        if step.target_url is None:
-            raise ValueError("navigate requires target_url")
-        _forbid_fields(step, "selector", "value", "expected_form_action_url", "expected_form_method")
+        _validate_navigate(step)
     elif step.kind in {BrowserActionKind.FILL, BrowserActionKind.SELECT}:
-        if step.value is None or step.value_classification is not BrowserValueClassification.PUBLIC_NON_SECRET:
-            raise ValueError(f"{step.kind.value} requires an explicitly public non-secret value")
-        _forbid_fields(step, "target_url", "expected_form_action_url", "expected_form_method")
+        _validate_value_action(step)
     elif step.kind is BrowserActionKind.SUBMIT_FORM:
-        if step.expected_form_action_url is None or step.expected_form_method is None:
-            raise ValueError("submit_form requires expected form action and method")
-        if step.expected_form_method is BrowserHttpMethod.POST and (
-            step.replay_policy is BrowserStepReplayPolicy.SAFE
-        ):
-            raise ValueError("POST submit_form cannot be blindly replayable")
-        _forbid_fields(step, "value", "value_classification", "target_url")
+        _validate_submit(step)
     elif step.kind is BrowserActionKind.WAIT_FOR_NAVIGATION:
         _forbid_fields(
             step,
@@ -206,12 +196,45 @@ def _validate_step_shape(step: BrowserActionStep) -> None:
     else:
         _forbid_fields(
             step,
-            "value" if step.kind not in {BrowserActionKind.FILL, BrowserActionKind.SELECT} else "target_url",
-            "value_classification" if step.kind not in {BrowserActionKind.FILL, BrowserActionKind.SELECT} else "target_url",
+            "value",
+            "value_classification",
             "target_url",
             "expected_form_action_url",
             "expected_form_method",
         )
+
+
+def _validate_navigate(step: BrowserActionStep) -> None:
+    if step.target_url is None:
+        raise ValueError("navigate requires target_url")
+    _forbid_fields(
+        step,
+        "selector",
+        "value",
+        "value_classification",
+        "expected_form_action_url",
+        "expected_form_method",
+    )
+
+
+def _validate_value_action(step: BrowserActionStep) -> None:
+    if (
+        step.value is None
+        or step.value_classification is not BrowserValueClassification.PUBLIC_NON_SECRET
+    ):
+        raise ValueError(f"{step.kind.value} requires an explicitly public non-secret value")
+    _forbid_fields(step, "target_url", "expected_form_action_url", "expected_form_method")
+
+
+def _validate_submit(step: BrowserActionStep) -> None:
+    if step.expected_form_action_url is None or step.expected_form_method is None:
+        raise ValueError("submit_form requires expected form action and method")
+    if (
+        step.expected_form_method is BrowserHttpMethod.POST
+        and step.replay_policy is BrowserStepReplayPolicy.SAFE
+    ):
+        raise ValueError("POST submit_form cannot be blindly replayable")
+    _forbid_fields(step, "value", "value_classification", "target_url")
 
 
 def _forbid_fields(step: BrowserActionStep, *field_names: str) -> None:
