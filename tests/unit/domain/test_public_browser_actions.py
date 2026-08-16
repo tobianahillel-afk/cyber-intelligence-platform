@@ -231,7 +231,7 @@ def test_transition_rules_are_bounded_and_host_only() -> None:
         )
 
 
-def test_checkpoint_requires_monotonic_completed_prefix() -> None:
+def test_checkpoint_requires_completed_prefix_and_pending_tail() -> None:
     checkpoint = BrowserActionCheckpoint(
         plan_id=uuid4(),
         plan_version=1,
@@ -243,7 +243,7 @@ def test_checkpoint_requires_monotonic_completed_prefix() -> None:
     )
     assert checkpoint.step_states[1] is BrowserStepState.NEEDS_VERIFICATION
 
-    with pytest.raises(ValueError, match="completed steps must form a prefix"):
+    with pytest.raises(ValueError, match="must end with pending steps"):
         BrowserActionCheckpoint(
             plan_id=uuid4(),
             plan_version=1,
@@ -253,12 +253,24 @@ def test_checkpoint_requires_monotonic_completed_prefix() -> None:
             ),
         )
 
-    with pytest.raises(ValueError, match="steps after needs_verification must remain pending"):
+    with pytest.raises(ValueError, match="must end with pending steps"):
         BrowserActionCheckpoint(
             plan_id=uuid4(),
             plan_version=1,
             step_states=(
                 BrowserStepState.NEEDS_VERIFICATION,
                 BrowserStepState.EXECUTING,
+            ),
+        )
+
+
+def test_checkpoint_allows_only_one_current_step() -> None:
+    with pytest.raises(ValueError, match="must end with pending steps"):
+        BrowserActionCheckpoint(
+            plan_id=uuid4(),
+            plan_version=1,
+            step_states=(
+                BrowserStepState.EXECUTING,
+                BrowserStepState.NEEDS_VERIFICATION,
             ),
         )
