@@ -30,7 +30,7 @@ def retain_artifact_if_requested(
     allowed = public_web_raw_storage_allowed(
         entry,
         source_url,
-        now=context.retention_until,
+        now=context.captured_at,
         purpose=plan.purpose,
     )
     if not step.retain_raw_artifact:
