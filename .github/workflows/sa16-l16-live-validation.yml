@@ -16,8 +16,6 @@ jobs:
     if: github.event.pull_request.head.ref == 'agent/sa16-l16-authorized-login-session-reuse'
     runs-on: ubuntu-22.04
     timeout-minutes: 30
-    env:
-      CIP_L16_CONTROLLED_SECRET: controlled-l16-password-material-not-for-logs
     steps:
       - name: Check out exact pull-request head
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
