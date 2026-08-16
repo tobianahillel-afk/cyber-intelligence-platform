@@ -1,8 +1,10 @@
 from __future__ import annotations
 
+from datetime import datetime
 from uuid import UUID
 
 from cip.adapters.sources.public_web.client import PublicWebFetchResult
+from cip.adapters.sources.public_web.collection_policy import PublicWebCollectionDeniedError
 from cip.adapters.sources.public_web.collector_state import (
     CURRENT_EXTRACTION_PROFILE,
     CollectionContext,
@@ -89,20 +91,14 @@ def map_candidate(
     fetched: PublicWebFetchResult,
     *,
     collection_job_id: UUID,
-    collected_at: object,
-    retention_until: object,
+    collected_at: datetime,
+    retention_until: datetime,
     previous: PageCheckpoint | None,
     adapter_id: str,
 ) -> MappedPublicPage:
-    # The mapper owns the exact datetime validation; keeping this helper focused
-    # avoids duplicating timestamp policy in the crawl runtime.
     previous_state = previous_state_from_checkpoint(previous)
     if candidate.security_txt:
         if fetched.mime_type != "text/plain":
-            from cip.adapters.sources.public_web.collection_policy import (
-                PublicWebCollectionDeniedError,
-            )
-
             raise PublicWebCollectionDeniedError(
                 "security.txt must be served as text/plain"
             )
@@ -111,16 +107,16 @@ def map_candidate(
             fetched,
             parse_security_txt(fetched.body, target),
             collection_job_id=collection_job_id,
-            collected_at=collected_at,  # type: ignore[arg-type]
-            retention_until=retention_until,  # type: ignore[arg-type]
+            collected_at=collected_at,
+            retention_until=retention_until,
             previous=previous_state,
         )
     return map_public_page(
         target,
         fetched,
         collection_job_id=collection_job_id,
-        collected_at=collected_at,  # type: ignore[arg-type]
-        retention_until=retention_until,  # type: ignore[arg-type]
+        collected_at=collected_at,
+        retention_until=retention_until,
         previous=previous_state,
         discovery_method=candidate.discovery_method,
         discovery_source_url=candidate.source_locator,
