@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import secrets
 import tempfile
 import threading
 from datetime import UTC, datetime, timedelta
@@ -69,7 +70,8 @@ from cip.shared.persistence.session import create_database_engine, create_sessio
 
 _SOURCE_ID = "sa16-l16-controlled-provider"
 _PURPOSE = "sa16-l16-authorized-login-proof"
-_SECRET_REFERENCE = "env://CIP_L16_CONTROLLED_SECRET"
+_SECRET_ENV = "CIP_L16_CONTROLLED_SECRET"
+_SECRET_REFERENCE = f"env://{_SECRET_ENV}"
 _PROFILE_PATH = Path("tests/fixtures/sa16_l16_login_profiles.yml")
 _PORT = 18776
 _SESSION_COOKIE = "sa16-l16-controlled-session"
@@ -113,7 +115,7 @@ class _Handler(BaseHTTPRequestHandler):
         length = int(self.headers.get("Content-Length", "0"))
         payload = self.rfile.read(length).decode("utf-8")
         values = parse_qs(payload, keep_blank_values=True)
-        expected = os.environ.get("CIP_L16_CONTROLLED_SECRET", "")
+        expected = os.environ.get(_SECRET_ENV, "")
         username = values.get("username", [""])[0]
         password = values.get("password", [""])[0]
         if username != "controlled-user" or password != expected:
@@ -296,14 +298,8 @@ def _prepare_identity(session, identity: DelegatedBrowserIdentity, actor, resolv
     )
 
 
-def _require_environment() -> None:
-    value = os.environ.get("CIP_L16_CONTROLLED_SECRET")
-    if value is None or not value.strip():
-        raise RuntimeError("controlled L16 secret reference is unavailable")
-
-
 def main() -> None:
-    _require_environment()
+    os.environ[_SECRET_ENV] = secrets.token_urlsafe(32)
     _FixtureState.login_submissions = 0
     _FixtureState.private_hits = 0
     _FixtureState.logout_hits = 0
@@ -399,7 +395,7 @@ def main() -> None:
                 challenged = _identity(
                     now + timedelta(seconds=10),
                     tenant_id,
-                    "controlled-user",
+                    "controlled-user-challenge",
                 )
                 _prepare_identity(session, challenged, actor, reference_resolver)
                 _FixtureState.challenge_mode = True
@@ -441,6 +437,7 @@ def main() -> None:
         server.shutdown()
         server.server_close()
         thread.join(timeout=5)
+        os.environ.pop(_SECRET_ENV, None)
 
     print(
         "SA-16 L16 controlled login validation passed: "
