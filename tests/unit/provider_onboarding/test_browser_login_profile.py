@@ -49,9 +49,18 @@ def test_profile_is_executable_and_transitions_are_method_scoped() -> None:
     profile = _profile(review_expires_at=NOW + timedelta(days=1))
 
     assert profile.executable_at(NOW)
-    assert profile.allows("https://provider.example/login", ProviderLoginHttpMethod.POST)
-    assert not profile.allows("https://provider.example/login", ProviderLoginHttpMethod.GET) is False
-    assert not profile.allows("https://other.example/login", ProviderLoginHttpMethod.POST)
+    assert profile.allows(
+        "https://provider.example/login",
+        ProviderLoginHttpMethod.POST,
+    )
+    assert profile.allows(
+        "https://provider.example/login",
+        ProviderLoginHttpMethod.GET,
+    )
+    assert not profile.allows(
+        "https://other.example/login",
+        ProviderLoginHttpMethod.POST,
+    )
     assert not profile.executable_at(NOW + timedelta(days=2))
 
 
