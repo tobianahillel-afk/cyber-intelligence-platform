@@ -20,8 +20,10 @@ from cip.modules.provider_onboarding.application.secrets import (
 from cip.modules.provider_onboarding.domain.browser_login import ProviderLoginProfile
 from cip.modules.provider_onboarding.domain.models import SecretReference
 from cip.modules.source_governance.application.delegated_identity_contracts import (
+    DelegatedIdentityAccessDeniedError,
     DelegatedIdentityExecutionGrant,
     DelegatedOperatorContext,
+    DelegatedReferenceUnavailableError,
 )
 from cip.modules.source_governance.application.delegated_identity_service import (
     attach_delegated_session_reference,
@@ -111,7 +113,7 @@ def establish_delegated_provider_session(
             now=current,
             expires_at=current + timedelta(seconds=profile.session_ttl_seconds),
         )
-    except BaseException:
+    except Exception:
         session_store.delete(session_reference)
         raise
     return _safe_page(grant, runtime, established=True, reused=False)
@@ -169,9 +171,9 @@ def revoke_delegated_provider_session(
     actor = _actor(request)
     view = get_delegated_identity(session, identity_id, actor=actor)
     _validate_login_context(view.source_id, view.auth_mode, entry, profile)
+    local_reference = session_store.reference_for(identity_id)
     remote_attempted = False
     remote_completed = False
-    reference: SecretReference | None = None
     try:
         grant = issue_delegated_execution_grant(
             session,
@@ -185,23 +187,23 @@ def revoke_delegated_provider_session(
             now=current,
         )
         reference = _required_reference(grant.session_reference, "browser session")
-        if profile.logout_url is not None:
-            remote_attempted = True
-            try:
-                remote_completed = execute_reviewed_provider_logout(
-                    entry,
-                    profile,
-                    session_reference=reference,
-                    session_resolver=session_store,
-                    purpose=grant.purpose,
-                    now=current,
-                )
-            except ProviderLoginRuntimeError:
-                remote_completed = False
-    finally:
-        revoke_delegated_identity(session, identity_id, actor=actor, now=current)
-        if reference is not None:
-            session_store.delete(reference)
+    except (DelegatedIdentityAccessDeniedError, DelegatedReferenceUnavailableError):
+        reference = None
+    if reference is not None and profile.logout_url is not None:
+        remote_attempted = True
+        try:
+            remote_completed = execute_reviewed_provider_logout(
+                entry,
+                profile,
+                session_reference=reference,
+                session_resolver=session_store,
+                purpose=request.purpose,
+                now=current,
+            )
+        except ProviderLoginRuntimeError:
+            remote_completed = False
+    revoke_delegated_identity(session, identity_id, actor=actor, now=current)
+    session_store.delete(local_reference)
     return DelegatedSessionRevocationResult(
         identity_id=identity_id,
         local_revoked=True,
@@ -217,7 +219,9 @@ def _validate_login_context(
     profile: ProviderLoginProfile,
 ) -> None:
     if auth_mode is not SourceAccountAuthMode.INTERACTIVE_SESSION:
-        raise DelegatedLoginOrchestrationError("delegated identity is not interactive-session auth")
+        raise DelegatedLoginOrchestrationError(
+            "delegated identity is not interactive-session auth"
+        )
     if source_id != entry.policy.id or profile.source_id != source_id:
         raise DelegatedLoginOrchestrationError("delegated login source/profile mismatch")
 
