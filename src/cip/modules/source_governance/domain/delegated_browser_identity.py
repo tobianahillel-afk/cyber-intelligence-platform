@@ -124,7 +124,10 @@ class DelegatedBrowserIdentity:
             self.secret_reference is not None or self.session_reference is not None
         ):
             raise ValueError("deleted identity cannot retain secret/session references")
-        if self.revoked_at is not None and self.account.status is not SourceAccountStatus.REVOKED:
+        if (
+            self.revoked_at is not None
+            and self.account.status is not SourceAccountStatus.REVOKED
+        ):
             raise ValueError("revoked identity requires revoked source account status")
 
     @property
@@ -212,7 +215,10 @@ class DelegatedBrowserIdentity:
 
     def renew(self, *, expires_at: datetime, at: datetime) -> DelegatedBrowserIdentity:
         renewal = require_aware_utc(at, field_name="at")
-        if self.deleted_at is not None or self.account.status is SourceAccountStatus.REVOKED:
+        if (
+            self.deleted_at is not None
+            or self.account.status is SourceAccountStatus.REVOKED
+        ):
             raise ValueError("revoked/deleted identity cannot be renewed")
         expiry = require_aware_utc(expires_at, field_name="expires_at")
         if expiry <= renewal:
@@ -233,7 +239,11 @@ class DelegatedBrowserIdentity:
         deleted = require_aware_utc(at, field_name="at")
         if self.deleted_at is not None:
             return self
-        revoked = self if self.account.status is SourceAccountStatus.REVOKED else self.revoke(at=deleted)
+        revoked = (
+            self
+            if self.account.status is SourceAccountStatus.REVOKED
+            else self.revoke(at=deleted)
+        )
         return replace(
             revoked,
             secret_reference=None,
