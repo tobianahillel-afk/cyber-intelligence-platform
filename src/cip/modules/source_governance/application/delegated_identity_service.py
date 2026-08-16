@@ -1,17 +1,15 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import UTC, datetime
+from datetime import datetime
 from enum import StrEnum
-from uuid import UUID, uuid4
+from uuid import UUID
 
-from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from cip.modules.provider_onboarding.application.secrets import SecretReferenceResolver
 from cip.modules.provider_onboarding.domain.models import SecretReference
 from cip.modules.source_governance.domain.accounts import (
-    SourceAccount,
     SourceAccountAuthMode,
     SourceAccountStatus,
 )
@@ -22,7 +20,16 @@ from cip.modules.source_governance.domain.delegated_browser_identity import (
 )
 from cip.modules.source_governance.infrastructure.delegated_identity_models import (
     DelegatedBrowserIdentityAuditRecord,
-    DelegatedBrowserIdentityRecord,
+)
+from cip.modules.source_governance.infrastructure.delegated_identity_persistence import (
+    append_delegated_identity_audit,
+    audit_record_time,
+    insert_delegated_identity,
+    list_delegated_identities_for_owner,
+    list_delegated_identity_audit_records,
+    load_delegated_identity,
+    new_identity_record_exists,
+    save_delegated_identity,
 )
 from cip.modules.source_governance.infrastructure.models import SourceRecord
 from cip.shared.kernel.time import require_aware_utc
@@ -133,12 +140,10 @@ def register_delegated_identity(
         raise ValueError("new delegated identity must start pending verification")
     if session.get(SourceRecord, identity.account.source_id) is None:
         raise ValueError("delegated identity source must exist")
-    if session.get(DelegatedBrowserIdentityRecord, identity.id) is not None:
+    if new_identity_record_exists(session, identity.id):
         raise ValueError("delegated identity already exists")
-    record = _new_record(identity, changed_at)
-    session.add(record)
+    insert_delegated_identity(session, identity, now=changed_at)
     _audit(session, identity, actor, DelegatedIdentityAuditEvent.REGISTERED, changed_at)
-    session.flush()
     return _view(identity)
 
 
@@ -148,9 +153,7 @@ def get_delegated_identity(
     *,
     actor: DelegatedOperatorContext,
 ) -> DelegatedIdentityView:
-    identity = _get_domain(session, identity_id)
-    _assert_operator(identity, actor)
-    return _view(identity)
+    return _view(_get_owned(session, identity_id, actor))
 
 
 def list_delegated_identities(
@@ -158,20 +161,13 @@ def list_delegated_identities(
     *,
     actor: DelegatedOperatorContext,
 ) -> tuple[DelegatedIdentityView, ...]:
-    records = session.scalars(
-        select(DelegatedBrowserIdentityRecord)
-        .where(
-            DelegatedBrowserIdentityRecord.tenant_id == actor.tenant_id,
-            DelegatedBrowserIdentityRecord.owner_kind == actor.owner_kind.value,
-            DelegatedBrowserIdentityRecord.owner_subject_id == actor.owner_subject_id,
-        )
-        .order_by(
-            DelegatedBrowserIdentityRecord.source_id,
-            DelegatedBrowserIdentityRecord.created_at,
-            DelegatedBrowserIdentityRecord.id,
-        )
-    ).all()
-    return tuple(_view(_to_domain(record)) for record in records)
+    identities = list_delegated_identities_for_owner(
+        session,
+        tenant_id=actor.tenant_id,
+        owner_kind=actor.owner_kind,
+        owner_subject_id=actor.owner_subject_id,
+    )
+    return tuple(_view(identity) for identity in identities)
 
 
 def list_delegated_identity_audit(
@@ -180,16 +176,8 @@ def list_delegated_identity_audit(
     *,
     actor: DelegatedOperatorContext,
 ) -> tuple[DelegatedIdentityAuditView, ...]:
-    identity = _get_domain(session, identity_id)
-    _assert_operator(identity, actor)
-    records = session.scalars(
-        select(DelegatedBrowserIdentityAuditRecord)
-        .where(DelegatedBrowserIdentityAuditRecord.identity_id == identity_id)
-        .order_by(
-            DelegatedBrowserIdentityAuditRecord.occurred_at,
-            DelegatedBrowserIdentityAuditRecord.id,
-        )
-    ).all()
+    _get_owned(session, identity_id, actor)
+    records = list_delegated_identity_audit_records(session, identity_id)
     return tuple(_audit_view(record) for record in records)
 
 
@@ -202,8 +190,7 @@ def authorize_delegated_identity(
 ) -> DelegatedIdentityView:
     identity = _get_owned(session, identity_id, actor)
     updated = identity.authorize(reviewed_at=reviewed_at)
-    _save(session, updated, now=reviewed_at)
-    _audit(session, updated, actor, DelegatedIdentityAuditEvent.AUTHORIZED, reviewed_at)
+    _persist_change(session, updated, actor, DelegatedIdentityAuditEvent.AUTHORIZED, reviewed_at)
     return _view(updated)
 
 
@@ -219,8 +206,7 @@ def attach_delegated_secret_reference(
     normalized = _available_reference(reference, resolver)
     identity = _get_owned(session, identity_id, actor)
     updated = identity.attach_secret_reference(normalized, at=now)
-    _save(session, updated, now=now)
-    _audit(
+    _persist_change(
         session,
         updated,
         actor,
@@ -242,13 +228,8 @@ def attach_delegated_session_reference(
 ) -> DelegatedIdentityView:
     normalized = _available_reference(reference, resolver)
     identity = _get_owned(session, identity_id, actor)
-    updated = identity.attach_session_reference(
-        normalized,
-        at=now,
-        expires_at=expires_at,
-    )
-    _save(session, updated, now=now)
-    _audit(
+    updated = identity.attach_session_reference(normalized, at=now, expires_at=expires_at)
+    _persist_change(
         session,
         updated,
         actor,
@@ -268,8 +249,7 @@ def renew_delegated_identity(
 ) -> DelegatedIdentityView:
     identity = _get_owned(session, identity_id, actor)
     updated = identity.renew(expires_at=expires_at, at=now)
-    _save(session, updated, now=now)
-    _audit(session, updated, actor, DelegatedIdentityAuditEvent.RENEWED, now)
+    _persist_change(session, updated, actor, DelegatedIdentityAuditEvent.RENEWED, now)
     return _view(updated)
 
 
@@ -282,8 +262,7 @@ def revoke_delegated_identity(
 ) -> DelegatedIdentityView:
     identity = _get_owned(session, identity_id, actor)
     updated = identity.revoke(at=now)
-    _save(session, updated, now=now)
-    _audit(session, updated, actor, DelegatedIdentityAuditEvent.REVOKED, now)
+    _persist_change(session, updated, actor, DelegatedIdentityAuditEvent.REVOKED, now)
     return _view(updated)
 
 
@@ -296,8 +275,7 @@ def delete_delegated_identity(
 ) -> DelegatedIdentityView:
     identity = _get_owned(session, identity_id, actor)
     updated = identity.delete(at=now)
-    _save(session, updated, now=now)
-    _audit(session, updated, actor, DelegatedIdentityAuditEvent.DELETED, now)
+    _persist_change(session, updated, actor, DelegatedIdentityAuditEvent.DELETED, now)
     return _view(updated)
 
 
@@ -320,13 +298,12 @@ def issue_delegated_execution_grant(
         resolver,
     )
     used = identity.mark_used(at=now)
-    _save(session, used, now=now)
     actor = DelegatedOperatorContext(
         tenant_id=request.tenant_id,
         owner_kind=request.owner_kind,
         owner_subject_id=request.owner_subject_id,
     )
-    _audit(session, used, actor, DelegatedIdentityAuditEvent.USED, now)
+    _persist_change(session, used, actor, DelegatedIdentityAuditEvent.USED, now)
     return DelegatedIdentityExecutionGrant(
         identity_id=used.id,
         source_id=used.account.source_id,
@@ -336,6 +313,18 @@ def issue_delegated_execution_grant(
         secret_reference=secret,
         session_reference=browser_session,
     )
+
+
+def _persist_change(
+    session: Session,
+    identity: DelegatedBrowserIdentity,
+    actor: DelegatedOperatorContext,
+    event: DelegatedIdentityAuditEvent,
+    at: datetime,
+) -> None:
+    if not save_delegated_identity(session, identity, now=at):
+        raise DelegatedIdentityNotFoundError(str(identity.id))
+    _audit(session, identity, actor, event, at)
 
 
 def _required_available(
@@ -368,102 +357,19 @@ def _get_owned(
 
 
 def _get_domain(session: Session, identity_id: UUID) -> DelegatedBrowserIdentity:
-    record = session.get(DelegatedBrowserIdentityRecord, identity_id)
-    if record is None:
+    identity = load_delegated_identity(session, identity_id)
+    if identity is None:
         raise DelegatedIdentityNotFoundError(str(identity_id))
-    return _to_domain(record)
+    return identity
 
 
-def _assert_operator(
-    identity: DelegatedBrowserIdentity,
-    actor: DelegatedOperatorContext,
-) -> None:
+def _assert_operator(identity: DelegatedBrowserIdentity, actor: DelegatedOperatorContext) -> None:
     if (
         identity.tenant_id != actor.tenant_id
         or identity.owner_kind is not actor.owner_kind
         or identity.owner_subject_id != actor.owner_subject_id
     ):
         raise DelegatedIdentityAccessDeniedError("delegated identity owner mismatch")
-
-
-def _new_record(identity: DelegatedBrowserIdentity, now: datetime) -> DelegatedBrowserIdentityRecord:
-    return DelegatedBrowserIdentityRecord(
-        id=identity.id,
-        source_id=identity.account.source_id,
-        external_reference=identity.account.external_reference,
-        auth_mode=identity.account.auth_mode.value,
-        account_status=identity.account.status.value,
-        authorization_document_reference=identity.account.authorization_document_reference,
-        approved_purposes=sorted(identity.account.approved_purposes),
-        tenant_id=identity.tenant_id,
-        owner_kind=identity.owner_kind.value,
-        owner_subject_id=identity.owner_subject_id,
-        purpose=identity.purpose,
-        approved_scopes=sorted(identity.approved_scopes),
-        secret_reference=identity.secret_reference,
-        session_reference=identity.session_reference,
-        created_at=identity.created_at,
-        verified_at=identity.account.verified_at,
-        account_expires_at=identity.account.expires_at,
-        last_used_at=identity.account.last_used_at,
-        authorized_at=identity.authorized_at,
-        reviewed_at=identity.reviewed_at,
-        renewed_at=identity.renewed_at,
-        reference_rotated_at=identity.reference_rotated_at,
-        revoked_at=identity.revoked_at,
-        deleted_at=identity.deleted_at,
-        session_expires_at=identity.session_expires_at,
-        reference_version=identity.reference_version,
-        updated_at=require_aware_utc(now, field_name="now"),
-    )
-
-
-def _save(session: Session, identity: DelegatedBrowserIdentity, *, now: datetime) -> None:
-    record = session.get(DelegatedBrowserIdentityRecord, identity.id)
-    if record is None:
-        raise DelegatedIdentityNotFoundError(str(identity.id))
-    replacement = _new_record(identity, now)
-    for column in DelegatedBrowserIdentityRecord.__table__.columns:
-        if column.name == "id":
-            continue
-        setattr(record, column.name, getattr(replacement, column.name))
-    session.flush()
-
-
-def _to_domain(record: DelegatedBrowserIdentityRecord) -> DelegatedBrowserIdentity:
-    created = _coerce_utc(record.created_at)
-    account = SourceAccount(
-        id=record.id,
-        source_id=record.source_id,
-        external_reference=record.external_reference,
-        auth_mode=SourceAccountAuthMode(record.auth_mode),
-        status=SourceAccountStatus(record.account_status),
-        authorization_document_reference=record.authorization_document_reference,
-        approved_purposes=frozenset(record.approved_purposes),
-        created_at=created,
-        verified_at=_optional_utc(record.verified_at),
-        expires_at=_optional_utc(record.account_expires_at),
-        last_used_at=_optional_utc(record.last_used_at),
-    )
-    return DelegatedBrowserIdentity(
-        account=account,
-        tenant_id=record.tenant_id,
-        owner_kind=DelegatedOwnerKind(record.owner_kind),
-        owner_subject_id=record.owner_subject_id,
-        purpose=record.purpose,
-        approved_scopes=frozenset(record.approved_scopes),
-        created_at=created,
-        authorized_at=_optional_utc(record.authorized_at),
-        reviewed_at=_optional_utc(record.reviewed_at),
-        renewed_at=_optional_utc(record.renewed_at),
-        reference_rotated_at=_optional_utc(record.reference_rotated_at),
-        revoked_at=_optional_utc(record.revoked_at),
-        deleted_at=_optional_utc(record.deleted_at),
-        session_expires_at=_optional_utc(record.session_expires_at),
-        reference_version=record.reference_version,
-        secret_reference=record.secret_reference,
-        session_reference=record.session_reference,
-    )
 
 
 def _view(identity: DelegatedBrowserIdentity) -> DelegatedIdentityView:
@@ -502,19 +408,14 @@ def _audit(
     event: DelegatedIdentityAuditEvent,
     at: datetime,
 ) -> None:
-    session.add(
-        DelegatedBrowserIdentityAuditRecord(
-            id=uuid4(),
-            identity_id=identity.id,
-            tenant_id=identity.tenant_id,
-            event_type=event.value,
-            actor_kind=actor.owner_kind.value,
-            actor_subject_id=actor.owner_subject_id,
-            reference_version=identity.reference_version,
-            occurred_at=require_aware_utc(at, field_name="at"),
-        )
+    append_delegated_identity_audit(
+        session,
+        identity,
+        actor_kind=actor.owner_kind,
+        actor_subject_id=actor.owner_subject_id,
+        event_type=event.value,
+        at=at,
     )
-    session.flush()
 
 
 def _audit_view(record: DelegatedBrowserIdentityAuditRecord) -> DelegatedIdentityAuditView:
@@ -523,15 +424,5 @@ def _audit_view(record: DelegatedBrowserIdentityAuditRecord) -> DelegatedIdentit
         actor_kind=DelegatedOwnerKind(record.actor_kind),
         actor_subject_id=record.actor_subject_id,
         reference_version=record.reference_version,
-        occurred_at=_coerce_utc(record.occurred_at),
+        occurred_at=audit_record_time(record),
     )
-
-
-def _optional_utc(value: datetime | None) -> datetime | None:
-    return None if value is None else _coerce_utc(value)
-
-
-def _coerce_utc(value: datetime) -> datetime:
-    if value.tzinfo is None:
-        return value.replace(tzinfo=UTC)
-    return value.astimezone(UTC)
