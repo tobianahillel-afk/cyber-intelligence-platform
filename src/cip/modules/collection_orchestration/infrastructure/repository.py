@@ -6,6 +6,7 @@ from cip.modules.collection_orchestration.infrastructure.repository_common impor
 from cip.modules.collection_orchestration.infrastructure.repository_completion import (
     cancel_claimed_job,
     complete_job,
+    persist_partial_progress,
 )
 from cip.modules.collection_orchestration.infrastructure.repository_failures import (
     fail_job,
@@ -27,5 +28,6 @@ __all__ = [
     "fail_job",
     "has_active_job",
     "heartbeat_job",
+    "persist_partial_progress",
     "recover_expired_leases",
 ]
