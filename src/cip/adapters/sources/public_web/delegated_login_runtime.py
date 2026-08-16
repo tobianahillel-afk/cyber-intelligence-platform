@@ -1,13 +1,14 @@
 from __future__ import annotations
 
 import json
+from collections.abc import Mapping
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any
+from typing import Any, cast
 from urllib.parse import urlsplit
 
 from playwright.sync_api import Error as PlaywrightError
-from playwright.sync_api import Locator, Page, Route, sync_playwright
+from playwright.sync_api import Locator, Page, Route, StorageState, sync_playwright
 from playwright.sync_api import TimeoutError as PlaywrightTimeoutError
 
 from cip.adapters.sources.public_web.collection_policy import (
@@ -342,7 +343,7 @@ def _unique_locator(page: Page, selector: str, label: str) -> Locator:
     return locator.first
 
 
-def _serialize_storage_state(value: dict[str, Any], profile: ProviderLoginProfile) -> str:
+def _serialize_storage_state(value: StorageState, profile: ProviderLoginProfile) -> str:
     _validate_storage_state(value, profile)
     serialized = json.dumps(value, sort_keys=True, separators=(",", ":"))
     if len(serialized.encode("utf-8")) > MAX_SESSION_MATERIAL_BYTES:
@@ -350,7 +351,7 @@ def _serialize_storage_state(value: dict[str, Any], profile: ProviderLoginProfil
     return serialized
 
 
-def _parse_storage_state(raw: str, profile: ProviderLoginProfile) -> dict[str, Any]:
+def _parse_storage_state(raw: str, profile: ProviderLoginProfile) -> StorageState:
     if not raw or len(raw.encode("utf-8")) > MAX_SESSION_MATERIAL_BYTES:
         raise ProviderSessionInvalidError("delegated_session_size_invalid")
     try:
@@ -360,10 +361,13 @@ def _parse_storage_state(raw: str, profile: ProviderLoginProfile) -> dict[str, A
     if not isinstance(payload, dict):
         raise ProviderSessionInvalidError("delegated_session_shape_invalid")
     _validate_storage_state(payload, profile)
-    return payload
+    return cast(StorageState, payload)
 
 
-def _validate_storage_state(value: dict[str, Any], profile: ProviderLoginProfile) -> None:
+def _validate_storage_state(
+    value: Mapping[str, Any],
+    profile: ProviderLoginProfile,
+) -> None:
     cookies = value.get("cookies")
     origins = value.get("origins")
     if not isinstance(cookies, list) or not isinstance(origins, list):
