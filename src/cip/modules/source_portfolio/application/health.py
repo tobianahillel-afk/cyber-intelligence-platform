@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 
@@ -44,6 +44,7 @@ class CollectionHealthUpdate:
     not_modified: bool = False
     volume_state: AnomalyState = AnomalyState.NORMAL
     field_population_state: AnomalyState = AnomalyState.NORMAL
+    operational_metrics: Mapping[str, object] | None = None
 
     def __post_init__(self) -> None:
         if self.quota_remaining is not None and self.quota_remaining < 0:
@@ -57,8 +58,7 @@ def ensure_health(session: Session, entry: SourceCatalogEntry, now: datetime) ->
         return
     historical_only = (
         entry.adapter is not None
-        and entry.adapter.modes
-        == frozenset({CollectionMode.HISTORICAL_BACKFILL})
+        and entry.adapter.modes == frozenset({CollectionMode.HISTORICAL_BACKFILL})
     )
     state = (
         FreshnessState.HISTORICAL_ONLY
@@ -81,6 +81,7 @@ def ensure_health(session: Session, entry: SourceCatalogEntry, now: datetime) ->
             cost_window_started_at=_month_start(now),
             current_backfill_state=None,
             last_error_code=None,
+            operational_metrics=None,
             updated_at=now,
         )
     )
@@ -146,6 +147,8 @@ def record_collection_success(
     if update.quota_remaining is not None:
         record.quota_remaining = update.quota_remaining
     record.monthly_cost_used += non_negative(update.cost, "cost")
+    if update.operational_metrics is not None:
+        record.operational_metrics = dict(update.operational_metrics)
     record.last_error_code = None
     record.freshness_state = _freshness_state(session, source_id, changed_at).value
     record.updated_at = changed_at
@@ -160,6 +163,7 @@ def record_collection_failure(
     error_code: str,
     schema_drift: bool,
     now: datetime,
+    operational_metrics: Mapping[str, object] | None = None,
 ) -> SourceHealth:
     changed_at = require_aware_utc(now, field_name="now")
     record = get_health_record(session, source_id)
@@ -169,6 +173,8 @@ def record_collection_failure(
     record.last_error_code = bounded_value(error_code, "error_code", maximum=100)
     if schema_drift:
         record.schema_state = SchemaState.DRIFTED.value
+    if operational_metrics is not None:
+        record.operational_metrics = dict(operational_metrics)
     record.freshness_state = FreshnessState.SOURCE_UNAVAILABLE.value
     record.updated_at = changed_at
     session.flush()
@@ -185,8 +191,7 @@ def refresh_freshness(session: Session, source_id: str, *, now: datetime) -> Sou
     if state is FreshnessState.FRESH:
         historical_only = (
             entry.adapter is not None
-            and entry.adapter.modes
-            == frozenset({CollectionMode.HISTORICAL_BACKFILL})
+            and entry.adapter.modes == frozenset({CollectionMode.HISTORICAL_BACKFILL})
         )
         if historical_only:
             state = FreshnessState.HISTORICAL_ONLY

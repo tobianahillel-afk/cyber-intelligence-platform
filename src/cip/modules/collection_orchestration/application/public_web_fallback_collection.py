@@ -37,6 +37,7 @@ def collect_with_browser_fallback(
             browser_entry,
             collected_at=run.collected_at,
             policy=policy,
+            request_timeout_seconds=run.timeout_seconds,
         )
         return collect_public_web_target(
             client,

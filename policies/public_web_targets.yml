@@ -24,3 +24,5 @@ targets:
       max_total_bytes: 5000000
       max_resource_bytes: 1000000
       max_redirects: 2
+      crawl_deadline_seconds: 300
+      max_crawl_concurrency: 1

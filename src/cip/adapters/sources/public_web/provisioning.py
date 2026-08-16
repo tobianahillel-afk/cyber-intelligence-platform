@@ -47,6 +47,8 @@ class AutomaticPublicWebPolicy:
     max_total_bytes: int = 10_000_000
     max_resource_bytes: int = 1_000_000
     max_redirects: int = 3
+    crawl_deadline_seconds: int = 300
+    max_crawl_concurrency: int = 1
 
     def __post_init__(self) -> None:
         reference = self.authorization_reference.strip()
@@ -72,6 +74,10 @@ class AutomaticPublicWebPolicy:
             raise ValueError("max_sitemaps must be between 1 and 100")
         if not 1 <= self.max_feeds <= 50:
             raise ValueError("max_feeds must be between 1 and 50")
+        if not 1 <= self.crawl_deadline_seconds <= 3_600:
+            raise ValueError("crawl_deadline_seconds must be between 1 and 3600")
+        if not 1 <= self.max_crawl_concurrency <= 16:
+            raise ValueError("max_crawl_concurrency must be between 1 and 16")
         object.__setattr__(self, "authorization_reference", reference)
         object.__setattr__(self, "reviewed_at", reviewed)
         object.__setattr__(self, "expires_at", expires)
@@ -121,6 +127,8 @@ def provision_public_web_target(
         max_total_bytes=policy.max_total_bytes,
         max_resource_bytes=policy.max_resource_bytes,
         max_redirects=policy.max_redirects,
+        crawl_deadline_seconds=policy.crawl_deadline_seconds,
+        max_crawl_concurrency=policy.max_crawl_concurrency,
     )
     return ProvisionedPublicWebTarget(
         target=target,

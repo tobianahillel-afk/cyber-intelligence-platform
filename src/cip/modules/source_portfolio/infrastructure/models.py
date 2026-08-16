@@ -120,6 +120,7 @@ class SourceHealthRecord(Base):
     cost_window_started_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
     current_backfill_state: Mapped[str | None] = mapped_column(String(40), nullable=True)
     last_error_code: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    operational_metrics: Mapped[dict[str, object] | None] = mapped_column(JSON, nullable=True)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)
 
 

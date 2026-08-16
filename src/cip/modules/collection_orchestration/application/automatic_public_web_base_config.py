@@ -20,6 +20,8 @@ class AutomaticPublicWebBaseConfig:
     max_total_bytes: int = 10_000_000
     max_resource_bytes: int = 1_000_000
     max_redirects: int = 3
+    crawl_deadline_seconds: int = 300
+    max_crawl_concurrency: int = 1
 
     def policy(self) -> AutomaticPublicWebPolicy | None:
         if not self.enabled:
@@ -40,4 +42,6 @@ class AutomaticPublicWebBaseConfig:
             max_total_bytes=self.max_total_bytes,
             max_resource_bytes=self.max_resource_bytes,
             max_redirects=self.max_redirects,
+            crawl_deadline_seconds=self.crawl_deadline_seconds,
+            max_crawl_concurrency=self.max_crawl_concurrency,
         )

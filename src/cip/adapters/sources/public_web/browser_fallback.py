@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import datetime
 
 import httpx
@@ -48,13 +48,18 @@ class FallbackPublicWebClient(PublicWebClient):
         *,
         collected_at: datetime,
         policy: BrowserFallbackPolicy,
+        request_timeout_seconds: float | None = None,
     ) -> None:
-        super().__init__(client)
+        super().__init__(client, request_timeout_seconds=request_timeout_seconds)
+        self._fallback_http_client = client
         self._browser_entry = browser_entry
         self._collected_at = require_aware_utc(collected_at, field_name="collected_at")
         self._policy = policy
-        self._extra_bytes = 0
         self._fallback_urls: list[str] = []
+
+    @property
+    def supports_concurrent_fetches(self) -> bool:
+        return False
 
     @property
     def fallback_urls(self) -> tuple[str, ...]:
@@ -71,12 +76,11 @@ class FallbackPublicWebClient(PublicWebClient):
         etag: str | None = None,
         last_modified: str | None = None,
     ) -> PublicWebFetchResult:
-        effective = self._effective_usage(usage)
         static = super().fetch_page(
             target,
             url,
             robots,
-            usage=effective,
+            usage=usage,
             depth=depth,
             etag=etag,
             last_modified=last_modified,
@@ -89,13 +93,15 @@ class FallbackPublicWebClient(PublicWebClient):
         from cip.adapters.sources.public_web.browser_client import BrowserPublicWebClient
 
         browser = BrowserPublicWebClient(
-            self._client,
+            self._fallback_http_client,
             self._browser_entry,
             collected_at=self._collected_at,
         )
+        if self.deadline is not None:
+            browser.bind_deadline(self.deadline)
         browser_usage = CrawlUsage(
-            pages_fetched=effective.pages_fetched,
-            bytes_fetched=effective.bytes_fetched + len(static.body),
+            pages_fetched=usage.pages_fetched,
+            bytes_fetched=usage.bytes_fetched + static.bytes_received,
         )
         rendered = browser.fetch_page(
             target,
@@ -104,12 +110,8 @@ class FallbackPublicWebClient(PublicWebClient):
             usage=browser_usage,
             depth=depth,
         )
-        self._extra_bytes += len(static.body)
         self._fallback_urls.append(rendered.fetched_url)
-        return rendered
-
-    def _effective_usage(self, usage: CrawlUsage) -> CrawlUsage:
-        return CrawlUsage(
-            pages_fetched=usage.pages_fetched,
-            bytes_fetched=usage.bytes_fetched + self._extra_bytes,
+        return replace(
+            rendered,
+            bytes_received=static.bytes_received + rendered.bytes_received,
         )

@@ -11,6 +11,7 @@ from cip.adapters.sources.public_web.checkpoint import (
     load_checkpoint,
 )
 from cip.adapters.sources.public_web.client import (
+    PublicWebDeadlineExceededError,
     PublicWebPolicyDeniedError,
     PublicWebResponseError,
 )
@@ -53,6 +54,8 @@ def execute_public_web_fallback(
         )
     except PublicWebCheckpointError as exc:
         raise _error(exc, "invalid_checkpoint", False) from exc
+    except PublicWebDeadlineExceededError as exc:
+        raise _error(exc, "crawl_deadline_exceeded", True) from exc
     except (PublicWebCollectionDeniedError, PublicWebPolicyDeniedError) as exc:
         raise _error(exc, "source_policy_denied", False) from exc
     except PublicWebParseError as exc:

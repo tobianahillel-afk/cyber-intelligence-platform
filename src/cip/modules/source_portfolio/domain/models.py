@@ -175,6 +175,7 @@ class SourceHealth:
     cost_window_started_at: datetime | None = None
     current_backfill_state: BackfillState | None = None
     last_error_code: str | None = None
+    operational_metrics: Mapping[str, object] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
         if not self.source_id.strip():
@@ -187,6 +188,11 @@ class SourceHealth:
             raise ValueError("quota_remaining cannot be negative")
         if self.monthly_cost_used < 0:
             raise ValueError("monthly_cost_used cannot be negative")
+        object.__setattr__(
+            self,
+            "operational_metrics",
+            MappingProxyType(dict(self.operational_metrics)),
+        )
         for field_name in (
             "last_attempt_at",
             "last_success_at",
