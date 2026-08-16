@@ -69,8 +69,16 @@ def test_download_preflight_denies_non_link_missing_href_and_plan_mismatch(
         (_Link(href=None), "missing_href"),
         (_Link(href=URL), "does_not_match_plan"),
     ):
-        monkeypatch.setattr(artifact_download, "exact_locator", lambda *_args: link)
-        expected = "https://example.com/public/other.txt" if match == "does_not_match_plan" else URL
+        monkeypatch.setattr(
+            artifact_download,
+            "exact_locator",
+            lambda *_args, current_link=link: current_link,
+        )
+        expected = (
+            "https://example.com/public/other.txt"
+            if match == "does_not_match_plan"
+            else URL
+        )
         with pytest.raises(BrowserArtifactPolicyError, match=match):
             artifact_download._preflight_download(
                 cast(Any, object()),
