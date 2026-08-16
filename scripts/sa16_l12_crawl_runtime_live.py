@@ -14,12 +14,14 @@ from cip.adapters.sources.public_web.provisioning import (
     AutomaticPublicWebPolicy,
     provision_public_web_target,
 )
+from cip.adapters.sources.public_web.registry import PublicWebTarget
 from cip.modules.collection_orchestration.application.ports import (
     AdapterOperationalMetrics,
     AdapterPartialExecutionError,
 )
 from cip.modules.collection_orchestration.application.public_web_adapter import PublicWebAdapter
 from cip.modules.organizations.domain.entities import Organization
+from cip.modules.source_governance.infrastructure.registry import SourceRegistryEntry
 
 _FIXTURE_HOST = "sa16-l12-fixture.example"
 _FAST_PATHS = ("/00-fast", "/01-fast", "/02-fast", "/03-fast")
@@ -145,9 +147,10 @@ def main() -> None:
         if concurrent_values["deadline_exceeded"] is not False:
             raise RuntimeError("SA16-L12 healthy concurrent crawl hit its deadline")
 
+        fast_url = f"{origin}00-fast"
         deadline_target = replace(
             provisioned.target,
-            seed_urls=(f"{origin}00-fast", f"{origin}{_SLOW_PATH.lstrip('/')}"),
+            seed_urls=(fast_url, f"{origin}{_SLOW_PATH.lstrip('/')}"),
             discover_security_txt=False,
             discover_sitemaps=False,
             discover_feeds=False,
@@ -161,7 +164,7 @@ def main() -> None:
             now,
         )
         pages = partial.batch.checkpoint_payload.get("pages")
-        if not isinstance(pages, dict) or tuple(pages) != (f"{origin}00-fast",):
+        if not isinstance(pages, dict) or set(pages) != {fast_url}:
             raise RuntimeError("SA16-L12 checkpoint included incomplete deadline work")
         partial_values = _metric_values(partial.batch.operational_metrics)
         if partial_values["deadline_exceeded"] is not True:
@@ -179,8 +182,8 @@ def main() -> None:
     )
 
 
-def _adapter(entry: object, target: object) -> PublicWebAdapter:
-    return PublicWebAdapter(entry, target, timeout_seconds=10.0)  # type: ignore[arg-type]
+def _adapter(entry: SourceRegistryEntry, target: PublicWebTarget) -> PublicWebAdapter:
+    return PublicWebAdapter(entry, target, timeout_seconds=10.0)
 
 
 def _expect_partial_deadline(
