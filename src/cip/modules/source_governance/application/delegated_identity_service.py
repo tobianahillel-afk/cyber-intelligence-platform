@@ -190,7 +190,13 @@ def authorize_delegated_identity(
 ) -> DelegatedIdentityView:
     identity = _get_owned(session, identity_id, actor)
     updated = identity.authorize(reviewed_at=reviewed_at)
-    _persist_change(session, updated, actor, DelegatedIdentityAuditEvent.AUTHORIZED, reviewed_at)
+    _persist_change(
+        session,
+        updated,
+        actor,
+        DelegatedIdentityAuditEvent.AUTHORIZED,
+        reviewed_at,
+    )
     return _view(updated)
 
 
@@ -291,7 +297,11 @@ def issue_delegated_execution_grant(
     decision = identity.evaluate_execution(request, now=now)
     if not decision.allowed:
         raise DelegatedIdentityAccessDeniedError(decision.reason.value)
-    secret = _required_available(identity.secret_reference, request.require_secret_reference, resolver)
+    secret = _required_available(
+        identity.secret_reference,
+        request.require_secret_reference,
+        resolver,
+    )
     browser_session = _required_available(
         identity.session_reference,
         request.require_session_reference,
@@ -333,7 +343,7 @@ def _required_available(
     resolver: SecretReferenceResolver,
 ) -> str | None:
     if not required:
-        return reference
+        return None
     if reference is None:
         raise DelegatedReferenceUnavailableError("required delegated reference is missing")
     return _available_reference(reference, resolver)
@@ -363,7 +373,10 @@ def _get_domain(session: Session, identity_id: UUID) -> DelegatedBrowserIdentity
     return identity
 
 
-def _assert_operator(identity: DelegatedBrowserIdentity, actor: DelegatedOperatorContext) -> None:
+def _assert_operator(
+    identity: DelegatedBrowserIdentity,
+    actor: DelegatedOperatorContext,
+) -> None:
     if (
         identity.tenant_id != actor.tenant_id
         or identity.owner_kind is not actor.owner_kind
