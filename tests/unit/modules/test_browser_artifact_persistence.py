@@ -20,6 +20,7 @@ from cip.modules.public_footprint.domain.browser_actions import (
     BrowserTransitionRule,
 )
 from cip.modules.public_footprint.infrastructure.artifact_persistence import (
+    _coerce_utc,
     load_browser_artifacts_for_plan,
     persist_browser_artifact,
 )
@@ -154,3 +155,9 @@ def test_artifact_query_is_scoped_to_plan_version() -> None:
         persist_browser_artifact(session, _artifact(plan), now=NOW)
         session.commit()
         assert load_browser_artifacts_for_plan(session, uuid4(), 1) == ()
+
+
+def test_artifact_persistence_coerces_aware_timestamp_to_utc() -> None:
+    offset = NOW.astimezone(UTC)
+    assert _coerce_utc(offset) == NOW
+    assert _coerce_utc(offset).tzinfo is UTC
