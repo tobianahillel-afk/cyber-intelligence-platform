@@ -3,6 +3,8 @@ from __future__ import annotations
 from collections.abc import Mapping
 from dataclasses import dataclass
 from datetime import datetime
+from math import isfinite
+from types import MappingProxyType
 from typing import Protocol
 from uuid import UUID
 
@@ -20,12 +22,40 @@ from cip.modules.source_governance.domain.models import DataCategory
 from cip.modules.threat_telemetry.domain.models import IndicatorSnapshot
 from cip.modules.vulnerability_knowledge.domain.models import VulnerabilitySnapshot
 
+OperationalMetricValue = int | float | bool
+
 
 class AdapterExecutionError(RuntimeError):
     def __init__(self, message: str, *, error_code: str, retryable: bool) -> None:
         super().__init__(message)
         self.error_code = error_code
         self.retryable = retryable
+
+
+@dataclass(frozen=True, slots=True)
+class AdapterOperationalMetrics:
+    """Bounded adapter-owned metrics safe to expose through source health."""
+
+    namespace: str
+    values: Mapping[str, OperationalMetricValue]
+
+    def __post_init__(self) -> None:
+        namespace = self.namespace.strip()
+        if not namespace or len(namespace) > 100:
+            raise ValueError("operational metric namespace must be 1..100 characters")
+        normalized = dict(self.values)
+        if len(normalized) > 32:
+            raise ValueError("operational metrics are limited to 32 values")
+        for key, value in normalized.items():
+            if not key.strip() or len(key) > 100:
+                raise ValueError("operational metric keys must be 1..100 characters")
+            if isinstance(value, float) and not isfinite(value):
+                raise ValueError("operational metric floats must be finite")
+        object.__setattr__(self, "namespace", namespace)
+        object.__setattr__(self, "values", MappingProxyType(normalized))
+
+    def as_payload(self) -> dict[str, object]:
+        return {"namespace": self.namespace, "values": dict(self.values)}
 
 
 @dataclass(frozen=True, slots=True)
@@ -58,6 +88,7 @@ class AdapterCollectionBatch:
     threat_indicator_snapshots: tuple[IndicatorSnapshot, ...] = ()
     quota_remaining: int | None = None
     request_cost: float = 0.0
+    operational_metrics: AdapterOperationalMetrics | None = None
 
     def __post_init__(self) -> None:
         organization_ids = {organization.id for organization in self.procurement_organizations}
@@ -70,6 +101,21 @@ class AdapterCollectionBatch:
             raise ValueError("quota_remaining cannot be negative")
         if self.request_cost < 0:
             raise ValueError("request_cost cannot be negative")
+
+
+class AdapterPartialExecutionError(AdapterExecutionError):
+    """Retryable adapter failure carrying safely persistable partial progress."""
+
+    def __init__(
+        self,
+        message: str,
+        *,
+        error_code: str,
+        retryable: bool,
+        batch: AdapterCollectionBatch,
+    ) -> None:
+        super().__init__(message, error_code=error_code, retryable=retryable)
+        self.batch = batch
 
 
 class CollectionAdapter(Protocol):
