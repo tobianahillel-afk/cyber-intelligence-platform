@@ -174,18 +174,24 @@ def test_quarantine_is_private_and_removed_after_success() -> None:
 
 def test_quarantine_is_removed_after_parser_failure() -> None:
     retained_path: Path | None = None
-    with pytest.raises(RuntimeError, match="parse failed"):
-        with quarantined_artifact(b"unsafe bytes", suffix=".bin") as path:
-            retained_path = path
-            raise RuntimeError("parse failed")
+    with (
+        pytest.raises(RuntimeError, match="parse failed"),
+        quarantined_artifact(b"unsafe bytes", suffix=".bin") as path,
+    ):
+        retained_path = path
+        raise RuntimeError("parse failed")
     assert retained_path is not None
     assert not retained_path.exists()
 
 
 def test_quarantine_rejects_empty_or_unsafe_suffix() -> None:
-    with pytest.raises(ValueError, match="cannot be empty"):
-        with quarantined_artifact(b"", suffix=".bin"):
-            pass
-    with pytest.raises(ValueError, match="suffix"):
-        with quarantined_artifact(b"x", suffix="../bad"):
-            pass
+    with (
+        pytest.raises(ValueError, match="cannot be empty"),
+        quarantined_artifact(b"", suffix=".bin"),
+    ):
+        pass
+    with (
+        pytest.raises(ValueError, match="suffix"),
+        quarantined_artifact(b"x", suffix="../bad"),
+    ):
+        pass
