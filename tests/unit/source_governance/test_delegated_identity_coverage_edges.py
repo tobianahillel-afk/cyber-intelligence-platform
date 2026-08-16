@@ -114,28 +114,29 @@ def test_domain_rejects_revoked_metadata_on_active_account() -> None:
 def test_register_fails_when_source_record_is_missing() -> None:
     factory = _factory()
     identity = _identity()
-    with factory() as session:
-        with pytest.raises(ValueError, match="source must exist"):
-            service.register_delegated_identity(
-                session,
-                identity,
-                actor=_actor(),
-                now=NOW,
-            )
+    with (
+        factory() as session,
+        pytest.raises(ValueError, match="source must exist"),
+    ):
+        service.register_delegated_identity(
+            session,
+            identity,
+            actor=_actor(),
+            now=NOW,
+        )
 
 
 def test_persist_change_fails_when_identity_record_is_missing() -> None:
     factory = _factory()
     identity = _identity()
-    with factory() as session:
-        with pytest.raises(DelegatedIdentityNotFoundError):
-            service._persist_change(
-                session,
-                identity,
-                _actor(),
-                DelegatedIdentityAuditEvent.USED,
-                NOW,
-            )
+    with factory() as session, pytest.raises(DelegatedIdentityNotFoundError):
+        service._persist_change(
+            session,
+            identity,
+            _actor(),
+            DelegatedIdentityAuditEvent.USED,
+            NOW,
+        )
 
 
 def test_required_reference_missing_fails_before_resolver() -> None:
