@@ -12,13 +12,8 @@ from cip.modules.provider_onboarding.application.secrets import (
     SecretValueResolver,
 )
 from cip.modules.provider_onboarding.domain.browser_login import ProviderLoginProfile
-from cip.modules.source_governance.application.delegated_provider_session_service import (
-    DelegatedAuthenticatedPage,
-    DelegatedProviderSessionError,
-    DelegatedSessionRevocationResult,
-    establish_delegated_provider_session as _establish,
-    reuse_delegated_provider_session as _reuse,
-    revoke_delegated_provider_session as _revoke,
+from cip.modules.source_governance.application import (
+    delegated_provider_session_service as session_service,
 )
 from cip.modules.source_governance.application.session_material import SessionMaterialStore
 from cip.modules.source_governance.domain.delegated_browser_identity import (
@@ -26,7 +21,9 @@ from cip.modules.source_governance.domain.delegated_browser_identity import (
 )
 from cip.modules.source_governance.infrastructure.registry import SourceRegistryEntry
 
-DelegatedLoginOrchestrationError = DelegatedProviderSessionError
+DelegatedAuthenticatedPage = session_service.DelegatedAuthenticatedPage
+DelegatedLoginOrchestrationError = session_service.DelegatedProviderSessionError
+DelegatedSessionRevocationResult = session_service.DelegatedSessionRevocationResult
 
 
 def establish_delegated_provider_session(
@@ -40,8 +37,8 @@ def establish_delegated_provider_session(
     secret_value_resolver: SecretValueResolver,
     session_store: SessionMaterialStore,
     now: datetime,
-) -> DelegatedAuthenticatedPage:
-    return _establish(
+) -> session_service.DelegatedAuthenticatedPage:
+    return session_service.establish_delegated_provider_session(
         session,
         identity_id,
         request,
@@ -62,8 +59,8 @@ def reuse_delegated_provider_session(
     *,
     session_store: SessionMaterialStore,
     now: datetime,
-) -> DelegatedAuthenticatedPage:
-    return _reuse(
+) -> session_service.DelegatedAuthenticatedPage:
+    return session_service.reuse_delegated_provider_session(
         session,
         identity_id,
         request,
@@ -82,8 +79,8 @@ def revoke_delegated_provider_session(
     *,
     session_store: SessionMaterialStore,
     now: datetime,
-) -> DelegatedSessionRevocationResult:
-    return _revoke(
+) -> session_service.DelegatedSessionRevocationResult:
+    return session_service.revoke_delegated_provider_session(
         session,
         identity_id,
         request,
