@@ -64,6 +64,34 @@ def complete_job(
     return written
 
 
+def persist_partial_progress(
+    session: Session,
+    claimed: ClaimedJob,
+    batch: AdapterCollectionBatch,
+    *,
+    now: datetime,
+) -> int:
+    """Persist completed work while keeping the job eligible for failure handling."""
+    current = require_aware_utc(now, field_name="now")
+    record = owned_running_job(
+        session,
+        claimed=claimed,
+        now=current,
+        require_unexpired=False,
+    )
+    written = insert_observations(session, batch.observations)
+    advance_partial_checkpoint(
+        session,
+        claimed=claimed,
+        payload=batch.checkpoint_payload,
+        observations=batch.observations,
+        now=current,
+    )
+    record.observations_written = written
+    record.not_modified = False
+    return written
+
+
 def cancel_claimed_job(
     session: Session,
     claimed: ClaimedJob,
@@ -97,10 +125,7 @@ def advance_checkpoint(
         (claimed.source_id, claimed.adapter_id),
         with_for_update=True,
     )
-    last_observation_at = max(
-        (observation.collected_at for observation in observations),
-        default=None,
-    )
+    last_observation_at = _last_observation_at(observations)
     if checkpoint is None:
         session.add(
             CollectionCheckpointRecord(
@@ -114,12 +139,69 @@ def advance_checkpoint(
             )
         )
         return
+    _update_checkpoint(
+        checkpoint,
+        payload=payload,
+        now=now,
+        last_observation_at=last_observation_at,
+    )
+    checkpoint.last_success_at = now
+
+
+def advance_partial_checkpoint(
+    session: Session,
+    *,
+    claimed: ClaimedJob,
+    payload: Mapping[str, object],
+    observations: Sequence[RawObservation],
+    now: datetime,
+) -> None:
+    checkpoint = session.get(
+        CollectionCheckpointRecord,
+        (claimed.source_id, claimed.adapter_id),
+        with_for_update=True,
+    )
+    last_observation_at = _last_observation_at(observations)
+    if checkpoint is None:
+        session.add(
+            CollectionCheckpointRecord(
+                source_id=claimed.source_id,
+                adapter_id=claimed.adapter_id,
+                payload=dict(payload),
+                version=1,
+                updated_at=now,
+                last_success_at=None,
+                last_observation_at=last_observation_at,
+            )
+        )
+        return
+    _update_checkpoint(
+        checkpoint,
+        payload=payload,
+        now=now,
+        last_observation_at=last_observation_at,
+    )
+
+
+def _update_checkpoint(
+    checkpoint: CollectionCheckpointRecord,
+    *,
+    payload: Mapping[str, object],
+    now: datetime,
+    last_observation_at: datetime | None,
+) -> None:
     checkpoint.payload = dict(payload)
     checkpoint.version += 1
     checkpoint.updated_at = now
-    checkpoint.last_success_at = now
     if last_observation_at is not None:
         checkpoint.last_observation_at = last_observation_at
+
+
+def _last_observation_at(observations: Sequence[RawObservation]) -> datetime | None:
+    return max(
+        (observation.collected_at for observation in observations),
+        default=None,
+    )
 
 
 def insert_observations(
