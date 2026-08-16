@@ -96,8 +96,13 @@ def test_profile_rejects_invalid_transition_challenge_and_budget_counts() -> Non
             _profile(**changes)
 
 
-def test_profile_review_expiry_and_path_matching_are_fail_closed() -> None:
-    profile = _profile(review_expires_at=NOW + timedelta(seconds=1))
+def test_profile_review_expiry_and_method_path_matching_are_fail_closed() -> None:
+    profile = _profile(
+        review_expires_at=NOW + timedelta(seconds=1),
+        allowed_transitions=(
+            _rule(methods=frozenset({ProviderLoginHttpMethod.GET})),
+        ),
+    )
     assert profile.executable_at(NOW)
     assert not profile.executable_at(NOW + timedelta(seconds=1))
     assert profile.allows(
@@ -106,8 +111,8 @@ def test_profile_review_expiry_and_path_matching_are_fail_closed() -> None:
     )
     assert not profile.allows(
         "https://provider.example/deep/path",
-        ProviderLoginHttpMethod("POST"),
-    ) is True
+        ProviderLoginHttpMethod.POST,
+    )
 
 
 def test_registry_rejects_missing_file_root_shape_and_profile_list(tmp_path: Path) -> None:
@@ -149,9 +154,15 @@ profiles:
     cases = (
         (base.replace("methods: [GET, POST]", "methods: GET"), "methods must be a list"),
         (base.replace("methods: [GET, POST]", "methods: [GET, '']"), "non-empty strings"),
-        (base.replace("reviewed_at: '2026-08-17T00:00:00+00:00'", "reviewed_at: nope"), "ISO-8601"),
+        (
+            base.replace(
+                "reviewed_at: '2026-08-17T00:00:00+00:00'",
+                "reviewed_at: nope",
+            ),
+            "ISO-8601",
+        ),
         (base.replace("id: p", "id: ''"), "non-empty string"),
-        (base.replace("review:\n", "review: []\n"), "review must be a mapping"),
+        (base.replace("    review:\n", "    review: []\n    ignored: true\n"), "review must be a mapping"),
     )
     for payload, match in cases:
         path.write_text(payload, encoding="utf-8")
