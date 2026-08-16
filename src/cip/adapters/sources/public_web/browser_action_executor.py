@@ -4,9 +4,16 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import datetime
 
+import httpx
 from playwright.sync_api import Error as PlaywrightError
 from playwright.sync_api import Page, Request, Route, sync_playwright
 
+from cip.adapters.sources.public_web.artifact_context import BrowserArtifactExecutionContext
+from cip.adapters.sources.public_web.artifact_policy import BrowserArtifactPolicyError
+from cip.adapters.sources.public_web.artifact_runtime import (
+    BrowserArtifactRuntimeState,
+    execute_artifact_step,
+)
 from cip.adapters.sources.public_web.browser_action_authorization import (
     BrowserActionAuthorizationError,
     authorize_browser_action_transition,
@@ -20,13 +27,18 @@ from cip.adapters.sources.public_web.browser_action_steps import (
     preflight_step,
     submit_guard_allows,
 )
+from cip.adapters.sources.public_web.client_contract import PublicWebResponseError
+from cip.adapters.sources.public_web.document_parsing import PublicDocumentParseError
 from cip.adapters.sources.public_web.registry import PublicWebTarget
+from cip.modules.public_footprint.domain.artifacts import BrowserEvidenceArtifact
 from cip.modules.public_footprint.domain.browser_actions import (
     BrowserActionCheckpoint,
+    BrowserActionKind,
     BrowserActionPlan,
     BrowserHttpMethod,
     BrowserStepState,
 )
+from cip.modules.public_footprint.domain.models import PublicFootprintProjection
 from cip.modules.public_footprint.domain.url_identity import CanonicalUrl
 from cip.modules.public_footprint.infrastructure.browser_action_persistence import (
     recover_interrupted_checkpoint,
@@ -36,6 +48,7 @@ from cip.shared.kernel.time import require_aware_utc
 
 CheckpointWriter = Callable[[BrowserActionCheckpoint], None]
 _BLOCKED_RESOURCE_TYPES = frozenset({"font", "image", "media"})
+_ARTIFACT_ACTIONS = frozenset({BrowserActionKind.SCREENSHOT, BrowserActionKind.DOWNLOAD})
 
 
 @dataclass(frozen=True, slots=True)
@@ -58,6 +71,18 @@ class BrowserActionExecutionResult:
     completed_step_ids: tuple[str, ...]
     requests_seen: int
     requests_blocked: int
+    artifacts: tuple[BrowserEvidenceArtifact, ...] = ()
+    public_footprint_projections: tuple[PublicFootprintProjection, ...] = ()
+
+
+@dataclass(slots=True)
+class _BrowserRunContext:
+    now: datetime
+    checkpoint_writer: CheckpointWriter
+    limits: BrowserActionLimits
+    action_state: BrowserActionRuntimeState
+    artifact_context: BrowserArtifactExecutionContext | None
+    artifact_state: BrowserArtifactRuntimeState
 
 
 def execute_public_browser_action_plan(
@@ -69,31 +94,35 @@ def execute_public_browser_action_plan(
     collected_at: datetime,
     checkpoint_writer: CheckpointWriter,
     limits: BrowserActionLimits | None = None,
+    artifact_context: BrowserArtifactExecutionContext | None = None,
 ) -> BrowserActionExecutionResult:
     now = require_aware_utc(collected_at, field_name="collected_at")
-    effective_limits = limits or BrowserActionLimits()
+    if artifact_context is not None and artifact_context.captured_at != now:
+        raise ValueError("artifact captured_at must match browser collected_at")
     current = recover_interrupted_checkpoint(plan, checkpoint)
     if current != checkpoint:
         checkpoint_writer(current)
     _raise_if_verification_required(current)
-    state = BrowserActionRuntimeState()
+    run = _BrowserRunContext(
+        now=now,
+        checkpoint_writer=checkpoint_writer,
+        limits=limits or BrowserActionLimits(),
+        action_state=BrowserActionRuntimeState(),
+        artifact_context=artifact_context,
+        artifact_state=BrowserArtifactRuntimeState(),
+    )
     try:
-        return _run_browser(
-            target,
-            entry,
-            plan,
-            current,
-            now=now,
-            checkpoint_writer=checkpoint_writer,
-            limits=effective_limits,
-            state=state,
-        )
+        return _run_browser(target, entry, plan, current, run=run)
     except BrowserActionExecutionError:
         raise
+    except BrowserArtifactPolicyError as exc:
+        raise BrowserActionPolicyDeniedError(str(exc)) from exc
     except (BrowserActionAuthorizationError, PlaywrightError, ValueError) as exc:
-        if state.denial is not None:
-            raise BrowserActionPolicyDeniedError(state.denial) from exc
+        if run.action_state.denial is not None:
+            raise BrowserActionPolicyDeniedError(run.action_state.denial) from exc
         raise BrowserActionExecutionError("browser_action_execution_failed") from exc
+    except (PublicDocumentParseError, PublicWebResponseError, httpx.HTTPError) as exc:
+        raise BrowserActionExecutionError("browser_artifact_processing_failed") from exc
 
 
 def _run_browser(
@@ -102,10 +131,7 @@ def _run_browser(
     plan: BrowserActionPlan,
     checkpoint: BrowserActionCheckpoint,
     *,
-    now: datetime,
-    checkpoint_writer: CheckpointWriter,
-    limits: BrowserActionLimits,
-    state: BrowserActionRuntimeState,
+    run: _BrowserRunContext,
 ) -> BrowserActionExecutionResult:
     with sync_playwright() as playwright:
         browser = playwright.chromium.launch(headless=True, chromium_sandbox=True)
@@ -118,35 +144,26 @@ def _run_browser(
         )
         try:
             page = context.new_page()
-            _install_request_guard(
-                page,
-                target,
-                entry,
-                plan,
-                now=now,
-                limits=limits,
-                state=state,
-            )
+            _install_request_guard(page, target, entry, plan, run=run)
             current = _execute_remaining_steps(
                 page,
                 target,
                 entry,
                 plan,
                 checkpoint,
-                now=now,
-                checkpoint_writer=checkpoint_writer,
-                limits=limits,
-                state=state,
+                run=run,
             )
-            if state.denial is not None:
-                raise BrowserActionPolicyDeniedError(state.denial)
+            if run.action_state.denial is not None:
+                raise BrowserActionPolicyDeniedError(run.action_state.denial)
             return BrowserActionExecutionResult(
                 final_url=CanonicalUrl(page.url).value,
                 html=page.content().encode("utf-8"),
                 checkpoint=current,
-                completed_step_ids=tuple(state.completed_step_ids),
-                requests_seen=state.requests_seen,
-                requests_blocked=state.requests_blocked,
+                completed_step_ids=tuple(run.action_state.completed_step_ids),
+                requests_seen=run.action_state.requests_seen,
+                requests_blocked=run.action_state.requests_blocked,
+                artifacts=tuple(run.artifact_state.artifacts),
+                public_footprint_projections=tuple(run.artifact_state.projections),
             )
         finally:
             context.close()
@@ -159,9 +176,7 @@ def _install_request_guard(
     entry: SourceRegistryEntry,
     plan: BrowserActionPlan,
     *,
-    now: datetime,
-    limits: BrowserActionLimits,
-    state: BrowserActionRuntimeState,
+    run: _BrowserRunContext,
 ) -> None:
     page.route(
         "**/*",
@@ -170,9 +185,7 @@ def _install_request_guard(
             target=target,
             entry=entry,
             plan=plan,
-            now=now,
-            limits=limits,
-            state=state,
+            run=run,
         ),
     )
 
@@ -184,10 +197,7 @@ def _execute_remaining_steps(
     plan: BrowserActionPlan,
     checkpoint: BrowserActionCheckpoint,
     *,
-    now: datetime,
-    checkpoint_writer: CheckpointWriter,
-    limits: BrowserActionLimits,
-    state: BrowserActionRuntimeState,
+    run: _BrowserRunContext,
 ) -> BrowserActionCheckpoint:
     current = checkpoint
     for index, step in enumerate(plan.steps):
@@ -198,16 +208,29 @@ def _execute_remaining_steps(
             raise BrowserActionNeedsVerificationError("browser_action_needs_verification")
         if step_state is not BrowserStepState.PENDING:
             raise BrowserActionExecutionError("browser_action_checkpoint_not_resumable")
-        preflight_step(page, target, entry, plan, step, now=now)
+        if step.kind not in _ARTIFACT_ACTIONS:
+            preflight_step(page, target, entry, plan, step, now=run.now)
         current = _replace_step_state(current, index, BrowserStepState.EXECUTING)
-        checkpoint_writer(current)
-        timeout = step.timeout_ms or limits.default_step_timeout_ms
-        execute_step(page, step, timeout=timeout, state=state)
-        if state.denial is not None:
-            raise BrowserActionPolicyDeniedError(state.denial)
+        run.checkpoint_writer(current)
+        timeout = step.timeout_ms or run.limits.default_step_timeout_ms
+        if step.kind in _ARTIFACT_ACTIONS:
+            execute_artifact_step(
+                page,
+                target,
+                entry,
+                plan,
+                step,
+                run.artifact_context,
+                run.artifact_state,
+                timeout_ms=timeout,
+            )
+        else:
+            execute_step(page, step, timeout=timeout, state=run.action_state)
+        if run.action_state.denial is not None:
+            raise BrowserActionPolicyDeniedError(run.action_state.denial)
         current = _replace_step_state(current, index, BrowserStepState.COMPLETED)
-        checkpoint_writer(current)
-        state.completed_step_ids.append(step.step_id)
+        run.checkpoint_writer(current)
+        run.action_state.completed_step_ids.append(step.step_id)
     return current
 
 
@@ -217,17 +240,15 @@ def _handle_route(
     target: PublicWebTarget,
     entry: SourceRegistryEntry,
     plan: BrowserActionPlan,
-    now: datetime,
-    limits: BrowserActionLimits,
-    state: BrowserActionRuntimeState,
+    run: _BrowserRunContext,
 ) -> None:
     request = route.request
-    state.requests_seen += 1
-    if state.requests_seen > limits.max_requests:
-        _deny_route(route, state, "browser_action_request_budget_exceeded")
+    run.action_state.requests_seen += 1
+    if run.action_state.requests_seen > run.limits.max_requests:
+        _deny_route(route, run.action_state, "browser_action_request_budget_exceeded")
         return
     if request.resource_type in _BLOCKED_RESOURCE_TYPES:
-        state.requests_blocked += 1
+        run.action_state.requests_blocked += 1
         route.abort()
         return
     try:
@@ -238,11 +259,16 @@ def _handle_route(
             plan,
             request.url,
             method,
-            now=now,
+            now=run.now,
         )
-        _enforce_submission_guard(request, canonical, method, state.submission_guard)
+        _enforce_submission_guard(
+            request,
+            canonical,
+            method,
+            run.action_state.submission_guard,
+        )
     except (BrowserActionAuthorizationError, ValueError) as exc:
-        _deny_route(route, state, str(exc))
+        _deny_route(route, run.action_state, str(exc))
         return
     route.continue_()
 

@@ -49,6 +49,7 @@ def authorize_browser_action_transition(
         canonical.value,
         now=now,
         http_method=HttpMethod(method.value),
+        purpose=plan.purpose,
     )
     return canonical.value
 

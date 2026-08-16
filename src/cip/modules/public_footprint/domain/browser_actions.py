@@ -4,6 +4,8 @@ from dataclasses import dataclass
 from enum import StrEnum
 from uuid import UUID
 
+from cip.modules.public_footprint.domain.artifacts import BrowserScreenshotMode
+
 _MAX_IDENTITY = 200
 _MAX_PURPOSE = 500
 _MAX_SELECTOR = 1_000
@@ -23,6 +25,8 @@ class BrowserActionKind(StrEnum):
     SUBMIT_FORM = "submit_form"
     WAIT_FOR_NAVIGATION = "wait_for_navigation"
     WAIT_FOR_DOM_CONDITION = "wait_for_dom_condition"
+    SCREENSHOT = "screenshot"
+    DOWNLOAD = "download"
 
 
 class BrowserHttpMethod(StrEnum):
@@ -74,6 +78,9 @@ class BrowserActionStep:
     target_url: str | None = None
     expected_form_action_url: str | None = None
     expected_form_method: BrowserHttpMethod | None = None
+    expected_download_url: str | None = None
+    screenshot_mode: BrowserScreenshotMode | None = None
+    retain_raw_artifact: bool = False
     timeout_ms: int | None = None
     replay_policy: BrowserStepReplayPolicy = BrowserStepReplayPolicy.SAFE
 
@@ -81,16 +88,12 @@ class BrowserActionStep:
         _bounded_text(self.step_id, field_name="step_id", maximum=_MAX_IDENTITY)
         _optional_bounded_text(self.selector, field_name="selector", maximum=_MAX_SELECTOR)
         _optional_bounded_text(self.value, field_name="value", maximum=_MAX_VALUE)
-        _optional_bounded_text(
-            self.target_url,
-            field_name="target_url",
-            maximum=_MAX_VALUE,
-        )
-        _optional_bounded_text(
-            self.expected_form_action_url,
-            field_name="expected_form_action_url",
-            maximum=_MAX_VALUE,
-        )
+        for field_name, value in (
+            ("target_url", self.target_url),
+            ("expected_form_action_url", self.expected_form_action_url),
+            ("expected_download_url", self.expected_download_url),
+        ):
+            _optional_bounded_text(value, field_name=field_name, maximum=_MAX_VALUE)
         if self.timeout_ms is not None and not 1 <= self.timeout_ms <= _MAX_TIMEOUT_MS:
             raise ValueError("timeout_ms must be between 1 and 120000")
         _validate_step_shape(self)
@@ -182,6 +185,7 @@ def _validate_step_shape(step: BrowserActionStep) -> None:
         BrowserActionKind.UNCHECK,
         BrowserActionKind.SUBMIT_FORM,
         BrowserActionKind.WAIT_FOR_DOM_CONDITION,
+        BrowserActionKind.DOWNLOAD,
     }
     if step.kind in selector_kinds and step.selector is None:
         raise ValueError(f"{step.kind.value} requires a selector")
@@ -191,6 +195,10 @@ def _validate_step_shape(step: BrowserActionStep) -> None:
         _validate_value_action(step)
     elif step.kind is BrowserActionKind.SUBMIT_FORM:
         _validate_submit(step)
+    elif step.kind is BrowserActionKind.SCREENSHOT:
+        _validate_screenshot(step)
+    elif step.kind is BrowserActionKind.DOWNLOAD:
+        _validate_download(step)
     elif step.kind is BrowserActionKind.WAIT_FOR_NAVIGATION:
         _forbid_fields(
             step,
@@ -201,6 +209,7 @@ def _validate_step_shape(step: BrowserActionStep) -> None:
             "expected_form_action_url",
             "expected_form_method",
         )
+        _forbid_artifact_fields(step)
     else:
         _forbid_fields(
             step,
@@ -210,6 +219,7 @@ def _validate_step_shape(step: BrowserActionStep) -> None:
             "expected_form_action_url",
             "expected_form_method",
         )
+        _forbid_artifact_fields(step)
 
 
 def _validate_navigate(step: BrowserActionStep) -> None:
@@ -223,6 +233,7 @@ def _validate_navigate(step: BrowserActionStep) -> None:
         "expected_form_action_url",
         "expected_form_method",
     )
+    _forbid_artifact_fields(step)
 
 
 def _validate_value_action(step: BrowserActionStep) -> None:
@@ -232,6 +243,7 @@ def _validate_value_action(step: BrowserActionStep) -> None:
     ):
         raise ValueError(f"{step.kind.value} requires an explicitly public non-secret value")
     _forbid_fields(step, "target_url", "expected_form_action_url", "expected_form_method")
+    _forbid_artifact_fields(step)
 
 
 def _validate_submit(step: BrowserActionStep) -> None:
@@ -243,6 +255,47 @@ def _validate_submit(step: BrowserActionStep) -> None:
     ):
         raise ValueError("POST submit_form cannot be blindly replayable")
     _forbid_fields(step, "value", "value_classification", "target_url")
+    _forbid_artifact_fields(step)
+
+
+def _validate_screenshot(step: BrowserActionStep) -> None:
+    if step.screenshot_mode is None:
+        raise ValueError("screenshot requires screenshot_mode")
+    if step.screenshot_mode is BrowserScreenshotMode.ELEMENT and step.selector is None:
+        raise ValueError("element screenshot requires selector")
+    if step.screenshot_mode is BrowserScreenshotMode.VIEWPORT and step.selector is not None:
+        raise ValueError("viewport screenshot cannot declare selector")
+    _forbid_fields(
+        step,
+        "value",
+        "value_classification",
+        "target_url",
+        "expected_form_action_url",
+        "expected_form_method",
+        "expected_download_url",
+    )
+
+
+def _validate_download(step: BrowserActionStep) -> None:
+    if step.expected_download_url is None:
+        raise ValueError("download requires expected_download_url")
+    if step.replay_policy is not BrowserStepReplayPolicy.SAFE:
+        raise ValueError("download must use safe replay semantics")
+    _forbid_fields(
+        step,
+        "value",
+        "value_classification",
+        "target_url",
+        "expected_form_action_url",
+        "expected_form_method",
+        "screenshot_mode",
+    )
+
+
+def _forbid_artifact_fields(step: BrowserActionStep) -> None:
+    _forbid_fields(step, "expected_download_url", "screenshot_mode")
+    if step.retain_raw_artifact:
+        raise ValueError(f"{step.kind.value} does not allow retain_raw_artifact")
 
 
 def _forbid_fields(step: BrowserActionStep, *field_names: str) -> None:

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections.abc import Callable
 from datetime import UTC, datetime
 from types import SimpleNamespace
 from typing import Any, cast
@@ -62,6 +63,22 @@ def _checkpoint(plan: BrowserActionPlan, state: BrowserStepState) -> BrowserActi
         plan_id=plan.plan_id,
         plan_version=plan.version,
         step_states=(state,),
+    )
+
+
+def _run_context(
+    *,
+    checkpoint_writer: Callable[[BrowserActionCheckpoint], None] | None = None,
+    limits: executor.BrowserActionLimits | None = None,
+    state: BrowserActionRuntimeState | None = None,
+) -> executor._BrowserRunContext:
+    return executor._BrowserRunContext(
+        now=NOW,
+        checkpoint_writer=checkpoint_writer or (lambda _: None),
+        limits=limits or executor.BrowserActionLimits(),
+        action_state=state or BrowserActionRuntimeState(),
+        artifact_context=None,
+        artifact_state=executor.BrowserArtifactRuntimeState(),
     )
 
 
@@ -203,10 +220,7 @@ def test_verification_and_non_resumable_states_fail_before_execution() -> None:
             cast(Any, object()),
             plan,
             verification,
-            now=NOW,
-            checkpoint_writer=lambda _: None,
-            limits=executor.BrowserActionLimits(),
-            state=BrowserActionRuntimeState(),
+            run=_run_context(),
         )
 
     executing = _checkpoint(plan, BrowserStepState.EXECUTING)
@@ -217,10 +231,7 @@ def test_verification_and_non_resumable_states_fail_before_execution() -> None:
             cast(Any, object()),
             plan,
             executing,
-            now=NOW,
-            checkpoint_writer=lambda _: None,
-            limits=executor.BrowserActionLimits(),
-            state=BrowserActionRuntimeState(),
+            run=_run_context(),
         )
 
 
@@ -236,10 +247,11 @@ def test_remaining_steps_skip_completed_and_persist_transitions(
             cast(Any, object()),
             plan,
             completed,
-            now=NOW,
-            checkpoint_writer=lambda _: pytest.fail("completed step must not be rewritten"),
-            limits=executor.BrowserActionLimits(),
-            state=BrowserActionRuntimeState(),
+            run=_run_context(
+                checkpoint_writer=lambda _: pytest.fail(
+                    "completed step must not be rewritten"
+                )
+            ),
         )
         == completed
     )
@@ -255,10 +267,11 @@ def test_remaining_steps_skip_completed_and_persist_transitions(
         cast(Any, object()),
         plan,
         pending,
-        now=NOW,
-        checkpoint_writer=writes.append,
-        limits=executor.BrowserActionLimits(default_step_timeout_ms=321),
-        state=state,
+        run=_run_context(
+            checkpoint_writer=writes.append,
+            limits=executor.BrowserActionLimits(default_step_timeout_ms=321),
+            state=state,
+        ),
     )
     assert [item.step_states[0] for item in writes] == [
         BrowserStepState.EXECUTING,
@@ -280,6 +293,7 @@ def test_remaining_step_denial_stops_before_completion(
 
     monkeypatch.setattr(executor, "execute_step", _deny)
     writes: list[BrowserActionCheckpoint] = []
+    state = BrowserActionRuntimeState()
     with pytest.raises(BrowserActionPolicyDeniedError, match="network-denied"):
         executor._execute_remaining_steps(
             cast(Any, object()),
@@ -287,10 +301,7 @@ def test_remaining_step_denial_stops_before_completion(
             cast(Any, object()),
             plan,
             _checkpoint(plan, BrowserStepState.PENDING),
-            now=NOW,
-            checkpoint_writer=writes.append,
-            limits=executor.BrowserActionLimits(),
-            state=BrowserActionRuntimeState(),
+            run=_run_context(checkpoint_writer=writes.append, state=state),
         )
     assert writes[-1].step_states == (BrowserStepState.EXECUTING,)
 
@@ -327,9 +338,10 @@ def test_request_method_submission_guard_and_route_denials(
         target=target,
         entry=entry,
         plan=plan,
-        now=NOW,
-        limits=executor.BrowserActionLimits(max_requests=1),
-        state=state,
+        run=_run_context(
+            limits=executor.BrowserActionLimits(max_requests=1),
+            state=state,
+        ),
     )
     assert budget_route.aborted
     assert state.denial == "browser_action_request_budget_exceeded"
@@ -341,9 +353,7 @@ def test_request_method_submission_guard_and_route_denials(
         target=target,
         entry=entry,
         plan=plan,
-        now=NOW,
-        limits=executor.BrowserActionLimits(),
-        state=blocked_state,
+        run=_run_context(state=blocked_state),
     )
     assert blocked_route.aborted
     assert blocked_state.denial is None
@@ -356,9 +366,7 @@ def test_request_method_submission_guard_and_route_denials(
         target=target,
         entry=entry,
         plan=plan,
-        now=NOW,
-        limits=executor.BrowserActionLimits(),
-        state=unsupported_state,
+        run=_run_context(state=unsupported_state),
     )
     assert unsupported_route.aborted
     assert "method_not_supported" in (unsupported_state.denial or "")
@@ -375,9 +383,7 @@ def test_request_method_submission_guard_and_route_denials(
         target=target,
         entry=entry,
         plan=plan,
-        now=NOW,
-        limits=executor.BrowserActionLimits(),
-        state=allowed_state,
+        run=_run_context(state=allowed_state),
     )
     assert allowed_route.continued
 
@@ -390,9 +396,7 @@ def test_request_method_submission_guard_and_route_denials(
         target=target,
         entry=entry,
         plan=plan,
-        now=NOW,
-        limits=executor.BrowserActionLimits(),
-        state=guarded_state,
+        run=_run_context(state=guarded_state),
     )
     assert guarded_route.aborted
     assert "submission_guard_denied" in (guarded_state.denial or "")
