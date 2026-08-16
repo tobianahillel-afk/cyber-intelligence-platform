@@ -102,9 +102,12 @@ class _FixtureHandler(BaseHTTPRequestHandler):
 
 def _form_html() -> str:
     return """<!doctype html>
-<html><head><meta charset="utf-8"><title>SA16 L13 fixture</title></head>
+<html><head><meta charset="utf-8"><title>SA16 L13 fixture</title>
+<link rel="icon" href="data:,">
+</head>
 <body>
-<button id="advanced" type="button" onclick="document.getElementById('advanced-state').textContent='open'">Advanced</button>
+<button id="advanced" type="button"
+ onclick="document.getElementById('advanced-state').textContent='open'">Advanced</button>
 <div id="advanced-state">closed</div>
 <form id="get-form" action="/public/search" method="GET">
   <input name="query" type="text">
@@ -282,7 +285,10 @@ def _run_success_plan(
                 now=now,
             ),
         )
-        if any(state is not BrowserStepState.COMPLETED for state in result.checkpoint.step_states):
+        if any(
+            state is not BrowserStepState.COMPLETED
+            for state in result.checkpoint.step_states
+        ):
             raise RuntimeError("SA16-L13 successful plan did not complete every step")
         return result
 
@@ -301,9 +307,12 @@ def _prove_ambiguous_post_recovery(
         pass
 
     with session_scope(factory) as session:
+
         def crash_writer(value: BrowserActionCheckpoint) -> None:
             if value.step_states[-1] is BrowserStepState.COMPLETED:
-                raise SimulatedCrash("crash after network effect before completion persistence")
+                raise SimulatedCrash(
+                    "crash after network effect before completion persistence"
+                )
             save_browser_action_checkpoint(session, value, now=now)
             session.commit()
 
@@ -319,12 +328,19 @@ def _prove_ambiguous_post_recovery(
         except SimulatedCrash:
             pass
         else:
-            raise RuntimeError("SA16-L13 crash simulation did not interrupt completion persistence")
+            raise RuntimeError(
+                "SA16-L13 crash simulation did not interrupt completion persistence"
+            )
 
     with session_scope(factory) as session:
         persisted = load_browser_action_checkpoint(session, plan.plan_id, plan.version)
-        if persisted is None or persisted.step_states[-1] is not BrowserStepState.EXECUTING:
-            raise RuntimeError("SA16-L13 did not persist the ambiguous executing checkpoint")
+        if (
+            persisted is None
+            or persisted.step_states[-1] is not BrowserStepState.EXECUTING
+        ):
+            raise RuntimeError(
+                "SA16-L13 did not persist the ambiguous executing checkpoint"
+            )
         recovered = recover_interrupted_checkpoint(plan, persisted)
         save_browser_action_checkpoint(session, recovered, now=now)
 
@@ -388,8 +404,13 @@ def main() -> None:
             ),
         )
         get_result = _run_success_plan(factory, target, entry, get_plan, now)
-        if b"SA16-L13-GET" not in get_result.html or b'data-method="GET"' not in get_result.html:
-            raise RuntimeError("SA16-L13 GET plan did not capture resulting public evidence")
+        if (
+            b"SA16-L13-GET" not in get_result.html
+            or b'data-method="GET"' not in get_result.html
+        ):
+            raise RuntimeError(
+                "SA16-L13 GET plan did not capture resulting public evidence"
+            )
 
         post_plan = _plan(
             target,
@@ -405,8 +426,13 @@ def main() -> None:
             ),
         )
         post_result = _run_success_plan(factory, target, entry, post_plan, now)
-        if b"SA16-L13-POST" not in post_result.html or b'data-method="POST"' not in post_result.html:
-            raise RuntimeError("SA16-L13 POST plan did not capture resulting public evidence")
+        if (
+            b"SA16-L13-POST" not in post_result.html
+            or b'data-method="POST"' not in post_result.html
+        ):
+            raise RuntimeError(
+                "SA16-L13 POST plan did not capture resulting public evidence"
+            )
 
         crash_plan = _plan(
             target,
