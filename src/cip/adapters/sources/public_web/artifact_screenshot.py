@@ -129,8 +129,29 @@ def _capture_scope(page: Page, step: BrowserActionStep) -> Locator:
 
 
 def _deny_sensitive_capture(scope: Locator) -> None:
-    if scope.locator(_SENSITIVE_CAPTURE_SELECTOR).count() > 0:
+    if _scope_itself_is_sensitive(scope) or scope.locator(_SENSITIVE_CAPTURE_SELECTOR).count() > 0:
         raise BrowserArtifactPolicyError("browser_screenshot_sensitive_surface_denied")
+
+
+def _scope_itself_is_sensitive(scope: Locator) -> bool:
+    if scope.get_attribute("data-captcha") is not None:
+        return True
+    if (scope.get_attribute("data-sensitive") or "").casefold() == "true":
+        return True
+    if scope.locator("xpath=self::input").count() == 1:
+        input_type = (scope.get_attribute("type") or "").casefold()
+        autocomplete = (scope.get_attribute("autocomplete") or "").casefold()
+        name = (scope.get_attribute("name") or "").casefold()
+        if input_type in {"password", "file"}:
+            return True
+        if autocomplete == "one-time-code" or "otp" in name:
+            return True
+    if scope.locator("xpath=self::iframe").count() == 1:
+        source = (scope.get_attribute("src") or "").casefold()
+        title = (scope.get_attribute("title") or "").casefold()
+        if "captcha" in source or "captcha" in title:
+            return True
+    return False
 
 
 def _capture_png(page: Page, scope: Locator, step: BrowserActionStep) -> bytes:
