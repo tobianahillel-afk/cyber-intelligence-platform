@@ -61,7 +61,6 @@ class PartialThenSuccessfulAdapter:
         retention_until: datetime,
     ) -> AdapterCollectionBatch:
         self._calls += 1
-        # Re-emit the same completed unit on retry to prove repository idempotence.
         batch = self._reference.collect(
             collection_job_id=collection_job_id,
             checkpoint_payload=None,
@@ -123,7 +122,7 @@ def test_partial_retry_persists_progress_without_double_counting() -> None:
     assert first.observations_written == 1
     assert first.error_code == "crawl_deadline_exceeded"
 
-    with Session(factory.kw["bind"]) as session:
+    with factory() as session:
         assert _count(session, RawObservationRecord) == 1
         assert _count(session, SourceValueEventRecord) == 0
         checkpoint = session.get(
@@ -154,7 +153,7 @@ def test_partial_retry_persists_progress_without_double_counting() -> None:
     assert resumed.status is WorkerStatus.SUCCEEDED
     assert resumed.observations_written == 0
 
-    with Session(factory.kw["bind"]) as session:
+    with factory() as session:
         assert _count(session, RawObservationRecord) == 1
         assert _count(session, SourceValueEventRecord) == 1
         checkpoint = session.get(
