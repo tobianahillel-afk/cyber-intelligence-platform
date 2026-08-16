@@ -1,7 +1,7 @@
 from __future__ import annotations
 
+from collections.abc import Callable
 from datetime import UTC, datetime
-from typing import Callable
 from uuid import uuid4
 
 import pytest
@@ -584,7 +584,12 @@ def test_playwright_timeout_is_wrapped(monkeypatch: pytest.MonkeyPatch) -> None:
         target,
         (
             _navigate_step(),
-            BrowserActionStep("slow", BrowserActionKind.CLICK, selector="button#slow", timeout_ms=100),
+            BrowserActionStep(
+                "slow",
+                BrowserActionKind.CLICK,
+                selector="button#slow",
+                timeout_ms=100,
+            ),
         ),
     )
 
