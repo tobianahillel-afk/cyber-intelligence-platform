@@ -66,10 +66,14 @@ def persist_browser_action_plan(
         session.flush()
         return checkpoint
     _validate_existing_plan(existing, plan, payload_json, payload_hash)
-    checkpoint = load_browser_action_checkpoint(session, plan.plan_id, plan.version)
-    if checkpoint is None:
+    loaded_checkpoint = load_browser_action_checkpoint(
+        session,
+        plan.plan_id,
+        plan.version,
+    )
+    if loaded_checkpoint is None:
         raise ValueError("browser action plan is missing its checkpoint")
-    return checkpoint
+    return loaded_checkpoint
 
 
 def load_browser_action_plan(
