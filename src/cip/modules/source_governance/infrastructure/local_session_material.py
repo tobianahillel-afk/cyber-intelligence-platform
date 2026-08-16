@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 import tempfile
+from contextlib import suppress
 from pathlib import Path
 from uuid import UUID
 
@@ -66,11 +67,9 @@ class LocalFileSessionMaterialStore:
                     os.fsync(handle.fileno())
                 os.replace(temporary, path)
                 os.chmod(path, 0o600)
-            except BaseException:
-                try:
+            except Exception:
+                with suppress(OSError):
                     os.close(fd)
-                except OSError:
-                    pass
                 Path(temporary).unlink(missing_ok=True)
                 raise
         except OSError as exc:
