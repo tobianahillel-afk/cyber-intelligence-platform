@@ -81,6 +81,12 @@ class DelegatedBrowserIdentity:
     session_reference: str | None = field(default=None, repr=False)
 
     def __post_init__(self) -> None:
+        _bounded_required(self.account.source_id, "source_id", 64)
+        _bounded_required(self.account.external_reference, "external_reference", 500)
+        _optional_reference(
+            self.account.authorization_document_reference,
+            "authorization_document_reference",
+        )
         _bounded_required(self.owner_subject_id, "owner_subject_id", 200)
         _bounded_required(self.purpose, "purpose", 200)
         _validate_scopes(self.approved_scopes)
@@ -194,15 +200,20 @@ class DelegatedBrowserIdentity:
         at: datetime,
         expires_at: datetime | None = None,
     ) -> DelegatedBrowserIdentity:
+        rotated = require_aware_utc(at, field_name="at")
         session_expiry = _optional_time(expires_at, "expires_at")
+        if session_expiry is not None and session_expiry <= rotated:
+            raise ValueError("session expiry must follow reference rotation time")
         return self._rotate_reference(
             session_reference=reference,
             session_expires_at=session_expiry,
-            at=at,
+            at=rotated,
         )
 
     def renew(self, *, expires_at: datetime, at: datetime) -> DelegatedBrowserIdentity:
         renewal = require_aware_utc(at, field_name="at")
+        if self.deleted_at is not None or self.account.status is SourceAccountStatus.REVOKED:
+            raise ValueError("revoked/deleted identity cannot be renewed")
         expiry = require_aware_utc(expires_at, field_name="expires_at")
         if expiry <= renewal:
             raise ValueError("renewed expiry must follow renewal time")
@@ -233,6 +244,12 @@ class DelegatedBrowserIdentity:
 
     def mark_used(self, *, at: datetime) -> DelegatedBrowserIdentity:
         used = require_aware_utc(at, field_name="at")
+        if (
+            self.deleted_at is not None
+            or self.revoked_at is not None
+            or self.account.status is not SourceAccountStatus.ACTIVE
+        ):
+            raise ValueError("only active delegated identity can be marked used")
         return replace(self, account=replace(self.account, last_used_at=used))
 
     def _ownership_mismatch(
@@ -261,8 +278,12 @@ class DelegatedBrowserIdentity:
         session_expires_at: datetime | None = None,
     ) -> DelegatedBrowserIdentity:
         rotated = require_aware_utc(at, field_name="at")
-        if self.deleted_at is not None or self.revoked_at is not None:
-            raise ValueError("revoked/deleted identity references cannot be rotated")
+        if (
+            self.deleted_at is not None
+            or self.revoked_at is not None
+            or self.account.status is not SourceAccountStatus.ACTIVE
+        ):
+            raise ValueError("only active delegated identity references can be rotated")
         secret = self.secret_reference if secret_reference is None else secret_reference
         session = self.session_reference if session_reference is None else session_reference
         _optional_reference(secret, "secret_reference")
