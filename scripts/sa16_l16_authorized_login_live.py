@@ -47,7 +47,15 @@ from cip.modules.source_governance.domain.delegated_browser_identity import (
     DelegatedExecutionRequest,
     DelegatedOwnerKind,
 )
-from cip.modules.source_governance.domain.models import DataCategory
+from cip.modules.source_governance.domain.models import (
+    AuthorizationStatus,
+    DataCategory,
+    HttpMethod,
+    SourceAuthorization,
+    SourcePolicy,
+    SourceStatus,
+    SourceType,
+)
 from cip.modules.source_governance.infrastructure.delegated_identity_models import (
     DelegatedBrowserIdentityRecord,
 )
@@ -55,10 +63,7 @@ from cip.modules.source_governance.infrastructure.local_session_material import 
     LocalFileSessionMaterialStore,
 )
 from cip.modules.source_governance.infrastructure.models import SourceRecord
-from cip.modules.source_governance.infrastructure.registry import (
-    SourceRegistryEntry,
-    load_source_registry,
-)
+from cip.modules.source_governance.infrastructure.registry import SourceRegistryEntry
 from cip.shared.persistence.metadata import get_metadata
 from cip.shared.persistence.session import create_database_engine, create_session_factory
 
@@ -202,15 +207,6 @@ def _source(now: datetime) -> SourceRecord:
 
 
 def _entry(now: datetime) -> SourceRegistryEntry:
-    from cip.modules.source_governance.domain.models import (
-        AuthorizationStatus,
-        HttpMethod,
-        SourceAuthorization,
-        SourcePolicy,
-        SourceStatus,
-        SourceType,
-    )
-
     policy = SourcePolicy(
         id=_SOURCE_ID,
         name="SA16 L16 controlled provider",
@@ -237,7 +233,11 @@ def _entry(now: datetime) -> SourceRegistryEntry:
     return SourceRegistryEntry(policy, authorization, {})
 
 
-def _identity(now: datetime, tenant_id, external_reference: str) -> DelegatedBrowserIdentity:
+def _identity(
+    now: datetime,
+    tenant_id,
+    external_reference: str,
+) -> DelegatedBrowserIdentity:
     account = SourceAccount(
         source_id=_SOURCE_ID,
         external_reference=external_reference,
@@ -418,7 +418,9 @@ def main() -> None:
                     )
                 except ProviderLoginChallengeError as exc:
                     if exc.challenge is not ProviderLoginChallenge.MFA:
-                        raise RuntimeError("unexpected controlled challenge classification") from exc
+                        raise RuntimeError(
+                            "unexpected controlled challenge classification"
+                        ) from exc
                 else:
                     raise RuntimeError("controlled MFA challenge was not stopped")
                 if _FixtureState.login_submissions != submissions_before:
