@@ -150,6 +150,11 @@ profiles:
       document_reference: AUTH
       reviewed_at: '2026-08-17T00:00:00+00:00'
 """
+    review_block = (
+        "    review:\n"
+        "      document_reference: AUTH\n"
+        "      reviewed_at: '2026-08-17T00:00:00+00:00'\n"
+    )
     path = tmp_path / "registry.yml"
     cases = (
         (base.replace("methods: [GET, POST]", "methods: GET"), "methods must be a list"),
@@ -162,7 +167,10 @@ profiles:
             "ISO-8601",
         ),
         (base.replace("id: p", "id: ''"), "non-empty string"),
-        (base.replace("    review:\n", "    review: []\n    ignored: true\n"), "review must be a mapping"),
+        (
+            base.replace(review_block, "    review: []\n"),
+            "review must be a mapping",
+        ),
     )
     for payload, match in cases:
         path.write_text(payload, encoding="utf-8")
