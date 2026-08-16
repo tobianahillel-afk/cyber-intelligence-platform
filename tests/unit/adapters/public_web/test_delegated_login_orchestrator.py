@@ -7,6 +7,7 @@ from uuid import uuid4
 
 import pytest
 
+from cip.adapters.sources.public_web import delegated_login_executor as login_executor
 from cip.adapters.sources.public_web import delegated_login_orchestrator as orchestrator
 from cip.adapters.sources.public_web.delegated_login_runtime import (
     ProviderAuthenticatedRuntimeResult,
@@ -235,7 +236,11 @@ def _runtime_result(session_value: str) -> ProviderAuthenticatedRuntimeResult:
         session_state_json=json.dumps(
             {
                 "cookies": [
-                    {"name": "sid", "value": session_value, "domain": "provider.example"}
+                    {
+                        "name": "sid",
+                        "value": session_value,
+                        "domain": "provider.example",
+                    }
                 ],
                 "origins": [],
             }
@@ -254,7 +259,7 @@ def test_login_reuse_and_revoke_session_lifecycle(
     with factory() as session:
         identity = _prepare(session)
         monkeypatch.setattr(
-            orchestrator,
+            login_executor,
             "execute_reviewed_provider_login",
             lambda *args, **kwargs: _runtime_result("session-v1"),
         )
@@ -277,7 +282,7 @@ def test_login_reuse_and_revoke_session_lifecycle(
         assert "session-v1" in store.resolve(reference)
 
         monkeypatch.setattr(
-            orchestrator,
+            login_executor,
             "execute_reviewed_session_reuse",
             lambda *args, **kwargs: _runtime_result("session-v2"),
         )
@@ -294,7 +299,7 @@ def test_login_reuse_and_revoke_session_lifecycle(
         assert "session-v2" in store.resolve(reference)
 
         monkeypatch.setattr(
-            orchestrator,
+            login_executor,
             "execute_reviewed_provider_logout",
             lambda *args, **kwargs: True,
         )
@@ -333,7 +338,7 @@ def test_login_challenge_does_not_create_session_material(
         def _challenge(*args, **kwargs):
             raise ProviderLoginChallengeError(ProviderLoginChallenge.MFA)
 
-        monkeypatch.setattr(orchestrator, "execute_reviewed_provider_login", _challenge)
+        monkeypatch.setattr(login_executor, "execute_reviewed_provider_login", _challenge)
         with pytest.raises(ProviderLoginChallengeError):
             orchestrator.establish_delegated_provider_session(
                 session,
@@ -347,3 +352,52 @@ def test_login_challenge_does_not_create_session_material(
                 now=NOW + timedelta(seconds=3),
             )
         assert not store.is_available(store.reference_for(identity.id))
+
+
+def test_revoke_succeeds_when_session_material_is_already_missing(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    factory = _factory()
+    store = LocalFileSessionMaterialStore(tmp_path)
+    with factory() as session:
+        identity = _prepare(session)
+        monkeypatch.setattr(
+            login_executor,
+            "execute_reviewed_provider_login",
+            lambda *args, **kwargs: _runtime_result("session-v1"),
+        )
+        orchestrator.establish_delegated_provider_session(
+            session,
+            identity.id,
+            _request(),
+            _entry(),
+            _profile(),
+            secret_reference_resolver=_ReferenceResolver(),
+            secret_value_resolver=_ValueResolver(),
+            session_store=store,
+            now=NOW + timedelta(seconds=3),
+        )
+        reference = store.reference_for(identity.id)
+        store.delete(reference)
+
+        def _unexpected_logout(*args, **kwargs):
+            pytest.fail("remote logout must not run without usable session material")
+
+        monkeypatch.setattr(
+            login_executor,
+            "execute_reviewed_provider_logout",
+            _unexpected_logout,
+        )
+        revoked = orchestrator.revoke_delegated_provider_session(
+            session,
+            identity.id,
+            _request(),
+            _entry(),
+            _profile(),
+            session_store=store,
+            now=NOW + timedelta(seconds=4),
+        )
+        assert revoked.local_revoked
+        assert not revoked.remote_logout_attempted
+        assert not store.is_available(reference)
