@@ -54,7 +54,8 @@ def test_login_registry_loads_reviewed_profile(tmp_path: Path) -> None:
 
 def test_login_registry_rejects_duplicate_source(tmp_path: Path) -> None:
     path = tmp_path / "login.yml"
-    path.write_text(_VALID.replace("profiles:\n", "profiles:\n") + _VALID.split("profiles:\n", 1)[1], encoding="utf-8")
+    duplicate_profile = _VALID.split("profiles:\n", 1)[1]
+    path.write_text(_VALID + duplicate_profile, encoding="utf-8")
 
     with pytest.raises(ValueError, match="duplicate"):
         load_provider_login_profiles(path)
