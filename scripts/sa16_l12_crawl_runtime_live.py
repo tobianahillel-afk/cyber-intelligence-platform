@@ -90,7 +90,7 @@ def _page(path: str) -> bytes:
     return (
         "<!doctype html><html><head><title>SA16 L12</title></head>"
         f"<body><h1>{path}</h1><p>controlled public crawl evidence</p></body></html>"
-    ).encode("utf-8")
+    ).encode()
 
 
 @contextmanager
@@ -225,7 +225,6 @@ def _base_policy(now: datetime) -> AutomaticPublicWebPolicy:
     return AutomaticPublicWebPolicy(
         authorization_reference="sa16-l12-live-approval",
         reviewed_at=now,
-        discover_security_txt=False,
         discover_sitemaps=False,
         discover_feeds=False,
         max_link_depth=0,
