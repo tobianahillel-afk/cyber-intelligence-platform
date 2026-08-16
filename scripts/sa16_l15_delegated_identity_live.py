@@ -35,7 +35,11 @@ from cip.modules.source_governance.infrastructure.delegated_identity_models impo
 )
 from cip.modules.source_governance.infrastructure.models import SourceRecord
 from cip.shared.persistence.metadata import get_metadata
-from cip.shared.persistence.session import create_database_engine, create_session_factory, session_scope
+from cip.shared.persistence.session import (
+    create_database_engine,
+    create_session_factory,
+    session_scope,
+)
 
 _SECRET_REFERENCE = "env://CIP_L15_CONTROLLED_SECRET"
 _SESSION_REFERENCE = "env://CIP_L15_CONTROLLED_SESSION"
@@ -132,6 +136,7 @@ def main() -> None:
 
     with session_scope(factory) as session:
         session.add(_source(now))
+        session.flush()
         register_delegated_identity(session, identity, actor=actor, now=now)
         authorize_delegated_identity(
             session,
@@ -221,7 +226,11 @@ def main() -> None:
                 DelegatedBrowserIdentityRecord.id == identity.id
             )
         )
-        if record is None or record.secret_reference is not None or record.session_reference is not None:
+        if (
+            record is None
+            or record.secret_reference is not None
+            or record.session_reference is not None
+        ):
             raise RuntimeError("SA16-L15 deleted record retained delegated references")
 
     print(
