@@ -10,6 +10,7 @@ from cip.modules.public_footprint.domain.browser_actions import (
     BrowserActionKind,
     BrowserActionStep,
     BrowserHttpMethod,
+    BrowserStepReplayPolicy,
     BrowserValueClassification,
 )
 
@@ -200,6 +201,7 @@ def test_form_inspection_rejects_shape_method_metadata_fields_and_control(
         selector="form#search",
         expected_form_action_url="https://example.com/public/search",
         expected_form_method=BrowserHttpMethod.POST,
+        replay_policy=BrowserStepReplayPolicy.VERIFY_BEFORE_REPLAY,
     )
     common = (
         cast(Any, object()),
@@ -390,6 +392,7 @@ def test_submit_guard_matching_and_submit_handler_reset_guard() -> None:
         selector="form",
         expected_form_action_url="https://example.com/public/search",
         expected_form_method=BrowserHttpMethod.POST,
+        replay_policy=BrowserStepReplayPolicy.VERIFY_BEFORE_REPLAY,
     )
     steps._submit_form(page, step, 200, state)
     assert state.submission_guard is None
