@@ -1,0 +1,41 @@
+name: SA-16 L15 Identity Validation
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: sa16-l15-identity-${{ github.event.pull_request.head.sha }}
+  cancel-in-progress: true
+
+jobs:
+  delegated-identity-control-plane:
+    if: github.event.pull_request.head.ref == 'agent/sa16-l15-delegated-browser-identity-sessions'
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+    env:
+      CIP_L15_CONTROLLED_SECRET: controlled-secret-material-not-for-logs
+      CIP_L15_CONTROLLED_SESSION: controlled-session-material-not-for-logs
+    steps:
+      - name: Check out exact pull-request head
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - name: Set up Python
+        uses: actions/setup-python@42375524e23c412d93fb67b49958b491fce71c38 # v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install project
+        run: python -m pip install .
+
+      - name: Verify dependency consistency
+        run: python -m pip check
+
+      - name: Validate delegated identity and reference control plane
+        run: python scripts/sa16_l15_delegated_identity_live.py
