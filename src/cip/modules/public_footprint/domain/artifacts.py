@@ -114,7 +114,9 @@ class BrowserEvidenceArtifact:
 def _validate_retention(artifact: BrowserEvidenceArtifact) -> None:
     if artifact.raw_retained and not artifact.raw_retention_allowed:
         raise ValueError("raw artifact cannot be retained when retention is not allowed")
-    if artifact.raw_retained and (artifact.storage_uri is None or artifact.retention_until is None):
+    if artifact.raw_retained and (
+        artifact.storage_uri is None or artifact.retention_until is None
+    ):
         raise ValueError("retained raw artifact requires storage_uri and retention_until")
     if not artifact.raw_retained and artifact.storage_uri is not None:
         raise ValueError("storage_uri requires raw_retained")
@@ -126,11 +128,20 @@ def _validate_kind_shape(artifact: BrowserEvidenceArtifact) -> None:
             raise ValueError("screenshot artifact requires PNG media type and screenshot mode")
         if not artifact.viewport_width or not artifact.viewport_height:
             raise ValueError("screenshot artifact requires positive dimensions")
-        if artifact.screenshot_mode is BrowserScreenshotMode.ELEMENT and artifact.element_selector is None:
+        if (
+            artifact.screenshot_mode is BrowserScreenshotMode.ELEMENT
+            and artifact.element_selector is None
+        ):
             raise ValueError("element screenshot requires element_selector")
-        if artifact.screenshot_mode is BrowserScreenshotMode.VIEWPORT and artifact.element_selector is not None:
+        if (
+            artifact.screenshot_mode is BrowserScreenshotMode.VIEWPORT
+            and artifact.element_selector is not None
+        ):
             raise ValueError("viewport screenshot cannot declare element_selector")
-        if artifact.original_filename is not None or artifact.extracted_text_hash_sha256 is not None:
+        if (
+            artifact.original_filename is not None
+            or artifact.extracted_text_hash_sha256 is not None
+        ):
             raise ValueError("screenshot artifact cannot declare download fields")
         return
     if artifact.screenshot_mode is not None or artifact.viewport_width is not None:
@@ -161,5 +172,7 @@ def _bounded_required(value: str, field_name: str, maximum: int) -> None:
 
 
 def _optional_bounded(value: str | None, field_name: str, maximum: int) -> None:
-    if value is not None and (not value.strip() or len(value) > maximum or "\x00" in value):
+    if value is not None and (
+        not value.strip() or len(value) > maximum or "\x00" in value
+    ):
         raise ValueError(f"{field_name} is invalid")
