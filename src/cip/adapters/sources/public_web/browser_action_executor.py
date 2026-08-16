@@ -347,8 +347,8 @@ def _inspect_form(
 
 
 def _inspect_form_fields(form: Locator) -> None:
-    for field in form.locator("input, textarea, select").all():
-        field_type = (field.get_attribute("type") or "").casefold()
+    for form_field in form.locator("input, textarea, select").all():
+        field_type = (form_field.get_attribute("type") or "").casefold()
         if field_type == "password":
             raise BrowserActionPolicyDeniedError("password_field_denied")
         if field_type == "file":
@@ -404,7 +404,8 @@ def _enforce_submission_guard(
     expected_url, expected_method = guard
     actual = CanonicalUrl(canonical_url)
     expected = CanonicalUrl(expected_url)
-    if method is not expected_method or actual.origin != expected.origin or actual.path != expected.path:
+    wrong_destination = actual.origin != expected.origin or actual.path != expected.path
+    if method is not expected_method or wrong_destination:
         raise BrowserActionAuthorizationError("browser_action_submission_guard_denied")
 
 
