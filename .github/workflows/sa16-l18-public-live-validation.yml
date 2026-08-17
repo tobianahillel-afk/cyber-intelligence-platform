@@ -1,0 +1,44 @@
+name: SA-16 L18 Public E2E Validation
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: sa16-l18-public-${{ github.event.pull_request.head.sha }}
+  cancel-in-progress: true
+
+jobs:
+  public-composite-e2e:
+    if: github.event.pull_request.head.ref == 'agent/sa16-l18-composite-e2e-closeout'
+    runs-on: ubuntu-22.04
+    timeout-minutes: 35
+    steps:
+      - name: Check out exact pull-request head
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - name: Set up Python
+        uses: actions/setup-python@42375524e23c412d93fb67b49958b491fce71c38 # v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install project and isolated browser binding
+        run: |
+          python -m pip install .
+          python -m pip install playwright==1.61.0
+          python -m pip check
+
+      - name: Install Chromium runtime
+        run: python -m playwright install --with-deps chromium
+
+      - name: Configure controlled first-party hostname
+        run: echo '127.0.0.1 sa16-l18-public.example' | sudo tee -a /etc/hosts
+
+      - name: Validate composite automatic public acquisition path
+        run: python scripts/sa16_l18_public_e2e.py
