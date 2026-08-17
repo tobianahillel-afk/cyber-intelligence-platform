@@ -1,0 +1,80 @@
+version: 1
+recovery_id: lots-01-05-finality
+tracker_issue: 173
+baseline_sha: 8d7184b8a6f494ceb407ab489d8971f4d015bab6
+allowed_terminal_dispositions:
+  - implemented_proven_here
+  - owned_by_existing_later_scope
+  - terminal_already_proven
+  - explicitly_excluded
+forbidden_terminal_dispositions:
+  - later
+  - future_hardening
+  - manual
+  - blocked
+  - not_currently_called
+  - works_in_test
+findings:
+  - id: F01
+    historical_lot: 2
+    capability: long_running_collection_lease_ownership
+    severity: high
+    status: recovery_local
+    owner: R01-L02
+    expected_invariant: healthy long-running collection retains one worker owner and stale execution cannot complete successfully
+    terminal_disposition: null
+  - id: F02
+    historical_lot: 2
+    capability: schedule_revision_provenance
+    severity: high
+    status: recovery_local
+    owner: R01-L03
+    expected_invariant: every new scheduled job is traceable to one exact schedule identity revision and fingerprint
+    terminal_disposition: null
+  - id: F03
+    historical_lot: 4
+    capability: ted_complete_bounded_pagination
+    severity: critical
+    status: recovery_local
+    owner: R01-L04
+    expected_invariant: TED result sets larger than one page can be traversed and resumed without gaps or duplicates
+    terminal_disposition: null
+  - id: F04
+    historical_lot: 4
+    capability: ted_versioned_discovery_relevance
+    severity: high
+    status: recovery_local
+    owner: R01-L05
+    expected_invariant: TED discovery and relevance are versioned auditable and cover canonical cyber-service semantics without a duplicated hidden taxonomy
+    terminal_disposition: null
+  - id: F05
+    historical_lot: 5
+    capability: boamp_dense_window_convergence
+    severity: high
+    status: recovery_local
+    owner: R01-L06
+    expected_invariant: dense BOAMP windows are partitioned and resumed under bounded budgets rather than abandoned
+    terminal_disposition: null
+  - id: F06
+    historical_lot: 3
+    capability: labelled_opportunity_evaluation_foundation
+    severity: high
+    status: split_recovery_and_handoff
+    owner: R01-L07
+    later_owner: Lot25
+    expected_invariant: historical opportunity rules have a reproducible labelled baseline while full calibration feedback and drift remain Lot25 scope
+    terminal_disposition: null
+handoffs:
+  - capability: advanced_scoring_calibration_feedback
+    owner: Lot25
+  - capability: cross_module_derived_state_reconciliation
+    owner: Lot28
+    tracker_issue: 171
+  - capability: dns_address_safety_and_broad_resilience
+    owner: Lot30
+    tracker_issue: 169
+  - capability: privacy_rights_deletion_non_resurrection
+    owner: Lot31
+    tracker_issue: 5
+  - capability: residual_provider_live_proof
+    owner: SA20
