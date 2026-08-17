@@ -103,6 +103,8 @@ def test_database_metadata_contains_foundation_tables() -> None:
         "collection_checkpoints",
         "collection_circuits",
         "collection_dead_letters",
+        "collection_human_checkpoint_events",
+        "collection_human_checkpoints",
         "collection_jobs",
         "commercial_signals",
         "conditional_execution_decisions",
@@ -209,6 +211,8 @@ def test_metadata_creates_on_sqlite() -> None:
     foreign_key_tables = (
         "raw_observations",
         "collection_jobs",
+        "collection_human_checkpoints",
+        "collection_human_checkpoint_events",
         "opportunities",
         "commercial_signals",
         "conditional_provider_approval_revisions",
