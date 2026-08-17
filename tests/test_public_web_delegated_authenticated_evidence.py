@@ -63,6 +63,21 @@ def test_authenticated_evidence_preserves_provenance_without_secret_body() -> No
     assert "private account evidence" not in repr(evidence)
 
 
+def test_authenticated_evidence_without_structured_json_is_explicit() -> None:
+    now = datetime(2026, 8, 17, 12, tzinfo=UTC)
+    evidence = build_delegated_authenticated_evidence(
+        _page(b"<html><body><main>semantic-only evidence</main></body></html>"),
+        collection_job_id=uuid4(),
+        collected_at=now,
+        retention_until=now + timedelta(days=1),
+    )
+
+    assert evidence.structured_record_count == 0
+    assert not evidence.structured_extracted
+    assert evidence.structured_text_sha256 is None
+    assert evidence.semantic_text_sha256 is None
+
+
 def test_authenticated_evidence_rejects_missing_rendered_body() -> None:
     now = datetime(2026, 8, 17, 12, tzinfo=UTC)
     with pytest.raises(ValueError, match="rendered page html"):
