@@ -181,7 +181,9 @@ def test_exchange_rejects_binding_expiry_incomplete_and_transition_before_networ
     def forbidden(request: httpx.Request) -> httpx.Response:
         raise AssertionError(f"unexpected network request: {request.url}")
 
-    cases: list[tuple[ProviderFederatedAuthProfile, FederatedAuthorizationMaterial, datetime, str]] = []
+    cases: list[
+        tuple[ProviderFederatedAuthProfile, FederatedAuthorizationMaterial, datetime, str]
+    ] = []
     cases.append((_profile(), _material(profile_id="other"), NOW, "binding_mismatch"))
     expiring = _profile(review_expires_at=NOW + timedelta(seconds=1))
     cases.append((expiring, _material(), NOW + timedelta(seconds=2), "not_executable"))
