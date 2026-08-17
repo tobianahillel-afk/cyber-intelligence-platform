@@ -42,7 +42,14 @@ class FixtureHandler(BaseHTTPRequestHandler):
         with _LOCK:
             FixtureState.requests += 1
         if path == "/robots.txt":
-            self._send(b"User-agent: *\nAllow: /\n", "text/plain; charset=utf-8")
+            self._send(
+                (
+                    "User-agent: *\n"
+                    "Allow: /\n"
+                    f"Sitemap: {self.origin}sitemap.xml\n"
+                ).encode(),
+                "text/plain; charset=utf-8",
+            )
             return
         if path == "/sitemap.xml":
             self._send(_sitemap_index(self.origin), "application/xml")
@@ -55,7 +62,10 @@ class FixtureHandler(BaseHTTPRequestHandler):
             return
         if path == "/.well-known/security.txt":
             self._send(
-                f"Contact: {self.origin}security\nExpires: 2030-01-01T00:00:00Z\n".encode(),
+                (
+                    f"Contact: mailto:security@{FIXTURE_HOST}\n"
+                    "Expires: 2030-01-01T00:00:00Z\n"
+                ).encode(),
                 "text/plain; charset=utf-8",
             )
             return
