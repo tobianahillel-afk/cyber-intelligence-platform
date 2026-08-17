@@ -8,6 +8,7 @@ from types import MappingProxyType
 from typing import Protocol
 from uuid import UUID
 
+from cip.modules.collection_orchestration.domain.human_checkpoints import HumanCheckpointRequest
 from cip.modules.corporate_changes.domain.models import ChangeClaimSnapshot
 from cip.modules.evidence.domain.entities import Evidence
 from cip.modules.incident_intelligence.domain.models import IncidentClaimSnapshot
@@ -30,6 +31,14 @@ class AdapterExecutionError(RuntimeError):
         super().__init__(message)
         self.error_code = error_code
         self.retryable = retryable
+
+
+class HumanCheckpointRequiredError(RuntimeError):
+    """Stop adapter execution without treating a legitimate challenge as failure."""
+
+    def __init__(self, checkpoint: HumanCheckpointRequest) -> None:
+        super().__init__("human checkpoint required")
+        self.checkpoint = checkpoint
 
 
 @dataclass(frozen=True, slots=True)
