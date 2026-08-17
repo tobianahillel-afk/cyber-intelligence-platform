@@ -15,6 +15,7 @@ class JobStatus(StrEnum):
     PENDING = "pending"
     RUNNING = "running"
     RETRY_SCHEDULED = "retry_scheduled"
+    AWAITING_HUMAN_CHECKPOINT = "awaiting_human_checkpoint"
     SUCCEEDED = "succeeded"
     NOT_MODIFIED = "not_modified"
     DEAD_LETTERED = "dead_lettered"
