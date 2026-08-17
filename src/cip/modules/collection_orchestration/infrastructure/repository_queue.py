@@ -1,19 +1,29 @@
 from __future__ import annotations
 
 from datetime import datetime, timedelta
-from uuid import UUID
 
-from sqlalchemy import Select, and_, or_, select
-from sqlalchemy.exc import IntegrityError
+from sqlalchemy import select
+from sqlalchemy.dialects.postgresql import insert as postgresql_insert
+from sqlalchemy.dialects.sqlite import insert as sqlite_insert
 from sqlalchemy.orm import Session
+from sqlalchemy.sql import Select
 
 from cip.modules.collection_orchestration.application.ports import ClaimedJob
 from cip.modules.collection_orchestration.domain.models import CollectionJob, JobStatus
-from cip.modules.collection_orchestration.infrastructure.models import CollectionJobRecord
+from cip.modules.collection_orchestration.infrastructure.models import (
+    CollectionCheckpointRecord,
+    CollectionJobRecord,
+)
 from cip.modules.collection_orchestration.infrastructure.repository_circuits import (
     circuit_allows_claim,
 )
-from cip.modules.collection_orchestration.infrastructure.repository_common import database_utc
+from cip.modules.collection_orchestration.infrastructure.repository_common import (
+    owned_running_job,
+)
+from cip.modules.collection_orchestration.infrastructure.repository_failures import (
+    dead_letter_job,
+    recover_expired_leases,
+)
 from cip.shared.kernel.time import require_aware_utc
 
 _ACTIVE_STATUSES = (
@@ -34,35 +44,25 @@ def has_active_job(session: Session, *, source_id: str, adapter_id: str) -> bool
 
 
 def enqueue_job(session: Session, job: CollectionJob) -> bool:
-    record = CollectionJobRecord(
-        id=job.id,
-        source_id=job.source_id,
-        adapter_id=job.adapter_id,
-        status=job.status.value,
-        scheduled_for=job.scheduled_for,
-        available_at=job.available_at,
-        idempotency_key=job.idempotency_key,
-        attempt=job.attempt,
-        lease_seconds=job.lease_seconds,
-        max_attempts=job.max_attempts,
-        base_delay_seconds=job.base_delay_seconds,
-        max_delay_seconds=job.max_delay_seconds,
-        circuit_failure_threshold=job.circuit_failure_threshold,
-        circuit_reset_seconds=job.circuit_reset_seconds,
-        created_at=job.created_at,
-        human_resume_pending=False,
-        observations_written=0,
-        not_modified=False,
-    )
-    nested = session.begin_nested()
-    try:
-        session.add(record)
-        session.flush()
-        nested.commit()
-    except IntegrityError:
-        nested.rollback()
-        return False
-    return True
+    values = _job_values(job)
+    dialect = session.get_bind().dialect.name
+    if dialect == "postgresql":
+        postgres_statement = postgresql_insert(CollectionJobRecord).values(**values)
+        result = session.execute(
+            postgres_statement.on_conflict_do_nothing(
+                index_elements=["idempotency_key"]
+            )
+        )
+        return bool(getattr(result, "rowcount", 0))
+    if dialect == "sqlite":
+        sqlite_statement = sqlite_insert(CollectionJobRecord).values(**values)
+        result = session.execute(
+            sqlite_statement.on_conflict_do_nothing(
+                index_elements=["idempotency_key"]
+            )
+        )
+        return bool(getattr(result, "rowcount", 0))
+    return _enqueue_portable(session, job, values)
 
 
 def claim_next_job(
@@ -74,17 +74,38 @@ def claim_next_job(
     current = require_aware_utc(now, field_name="now")
     if not worker_id.strip():
         raise ValueError("worker_id is required")
-    candidates = session.scalars(_claim_statement(current)).all()
-    for record in candidates:
-        if not circuit_allows_claim(
-            session,
-            source_id=record.source_id,
-            adapter_id=record.adapter_id,
-            now=current,
-        ):
+    recover_expired_leases(session, now=current)
+    session.flush()
+    for record in session.scalars(_claim_statement(current)):
+        if not circuit_allows_claim(session, record=record, now=current):
             continue
-        return _claim_record(record, worker_id=worker_id, now=current)
+        if not record.human_resume_pending and record.attempt >= record.max_attempts:
+            dead_letter_job(
+                session,
+                record=record,
+                now=current,
+                error_code="attempt_limit_reached",
+                error_message="job reached its configured attempt limit before claim",
+            )
+            continue
+        return _claim_record(session, record=record, worker_id=worker_id, now=current)
     return None
+
+
+def heartbeat_job(
+    session: Session,
+    claimed: ClaimedJob,
+    *,
+    now: datetime,
+    lease_seconds: int,
+) -> datetime:
+    current = require_aware_utc(now, field_name="now")
+    if lease_seconds < 1:
+        raise ValueError("lease_seconds must be positive")
+    record = owned_running_job(session, claimed=claimed, now=current)
+    lease_expires_at = current + timedelta(seconds=lease_seconds)
+    record.lease_expires_at = lease_expires_at
+    return lease_expires_at
 
 
 def _claim_statement(now: datetime) -> Select[tuple[CollectionJobRecord]]:
@@ -95,122 +116,84 @@ def _claim_statement(now: datetime) -> Select[tuple[CollectionJobRecord]]:
                 (JobStatus.PENDING.value, JobStatus.RETRY_SCHEDULED.value)
             ),
             CollectionJobRecord.available_at <= now,
-            or_(
-                CollectionJobRecord.lease_expires_at.is_(None),
-                CollectionJobRecord.lease_expires_at <= now,
-            ),
         )
-        .order_by(CollectionJobRecord.available_at, CollectionJobRecord.scheduled_for)
-        .limit(50)
+        .order_by(CollectionJobRecord.scheduled_for, CollectionJobRecord.created_at)
         .with_for_update(skip_locked=True)
+        .limit(20)
     )
 
 
 def _claim_record(
-    record: CollectionJobRecord,
+    session: Session,
     *,
+    record: CollectionJobRecord,
     worker_id: str,
     now: datetime,
 ) -> ClaimedJob:
-    resumed_from_human = record.human_resume_pending
-    if not resumed_from_human:
+    lease_expires_at = now + timedelta(seconds=record.lease_seconds)
+    record.status = JobStatus.RUNNING.value
+    if not record.human_resume_pending:
         record.attempt += 1
     record.human_resume_pending = False
-    record.status = JobStatus.RUNNING.value
-    record.started_at = now
-    record.finished_at = None
+    record.started_at = record.started_at or now
     record.lease_owner = worker_id
-    record.lease_expires_at = now + timedelta(seconds=record.lease_seconds)
+    record.lease_expires_at = lease_expires_at
     record.error_code = None
     record.error_message = None
+    checkpoint = session.get(
+        CollectionCheckpointRecord,
+        (record.source_id, record.adapter_id),
+    )
     return ClaimedJob(
         id=record.id,
         source_id=record.source_id,
         adapter_id=record.adapter_id,
         attempt=record.attempt,
         lease_owner=worker_id,
-        lease_expires_at=record.lease_expires_at,
+        lease_expires_at=lease_expires_at,
         max_attempts=record.max_attempts,
         base_delay_seconds=record.base_delay_seconds,
         max_delay_seconds=record.max_delay_seconds,
         circuit_failure_threshold=record.circuit_failure_threshold,
         circuit_reset_seconds=record.circuit_reset_seconds,
-        checkpoint_payload=None,
+        checkpoint_payload=dict(checkpoint.payload) if checkpoint else None,
     )
 
 
-def heartbeat_job(
+def _enqueue_portable(
     session: Session,
-    claimed: ClaimedJob,
-    *,
-    now: datetime,
-    lease_seconds: int,
-) -> datetime:
-    from cip.modules.collection_orchestration.infrastructure.repository_common import (
-        LeaseLostError,
-        owned_running_job,
-    )
-
-    current = require_aware_utc(now, field_name="now")
-    if lease_seconds < 1:
-        raise ValueError("lease_seconds must be positive")
-    record = owned_running_job(session, claimed=claimed, now=current)
-    record.lease_expires_at = current + timedelta(seconds=lease_seconds)
-    if record.lease_expires_at is None:  # pragma: no cover - defensive typing guard
-        raise LeaseLostError("job lease could not be renewed")
-    return database_utc(record.lease_expires_at)
-
-
-def recover_expired_leases(session: Session, *, now: datetime) -> int:
-    current = require_aware_utc(now, field_name="now")
-    statement = (
-        select(CollectionJobRecord)
-        .where(
-            and_(
-                CollectionJobRecord.status == JobStatus.RUNNING.value,
-                CollectionJobRecord.lease_expires_at.is_not(None),
-                CollectionJobRecord.lease_expires_at <= current,
-            )
-        )
-        .with_for_update(skip_locked=True)
-    )
-    recovered = 0
-    for record in session.scalars(statement):
-        record.status = JobStatus.RETRY_SCHEDULED.value
-        record.available_at = current
-        record.lease_owner = None
-        record.lease_expires_at = None
-        record.human_resume_pending = False
-        record.error_code = "lease_expired"
-        record.error_message = "worker lease expired before completion"
-        recovered += 1
-    return recovered
-
-
-def cancel_queued_job(
-    session: Session,
-    *,
-    job_id: UUID,
-    now: datetime,
-    reason: str,
+    job: CollectionJob,
+    values: dict[str, object],
 ) -> bool:
-    current = require_aware_utc(now, field_name="now")
-    normalized_reason = reason.strip()
-    if not normalized_reason or len(normalized_reason) > 100:
-        raise ValueError("cancellation reason must be non-empty and at most 100 characters")
-    record = session.get(CollectionJobRecord, job_id, with_for_update=True)
-    if record is None:
+    existing = session.scalar(
+        select(CollectionJobRecord.id).where(
+            CollectionJobRecord.idempotency_key == job.idempotency_key
+        )
+    )
+    if existing is not None:
         return False
-    if record.status not in {
-        JobStatus.PENDING.value,
-        JobStatus.RETRY_SCHEDULED.value,
-    }:
-        return False
-    record.status = JobStatus.CANCELLED.value
-    record.finished_at = current
-    record.lease_owner = None
-    record.lease_expires_at = None
-    record.human_resume_pending = False
-    record.error_code = normalized_reason
-    record.error_message = "collection cancelled before adapter execution"
+    session.add(CollectionJobRecord(**values))
     return True
+
+
+def _job_values(job: CollectionJob) -> dict[str, object]:
+    return {
+        "id": job.id,
+        "source_id": job.source_id,
+        "adapter_id": job.adapter_id,
+        "status": job.status.value,
+        "scheduled_for": job.scheduled_for,
+        "available_at": job.available_at,
+        "idempotency_key": job.idempotency_key,
+        "attempt": job.attempt,
+        "lease_seconds": job.lease_seconds,
+        "max_attempts": job.max_attempts,
+        "base_delay_seconds": job.base_delay_seconds,
+        "max_delay_seconds": job.max_delay_seconds,
+        "circuit_failure_threshold": job.circuit_failure_threshold,
+        "circuit_reset_seconds": job.circuit_reset_seconds,
+        "created_at": job.created_at,
+        "human_resume_pending": False,
+        "observations_written": 0,
+        "not_modified": False,
+    }
