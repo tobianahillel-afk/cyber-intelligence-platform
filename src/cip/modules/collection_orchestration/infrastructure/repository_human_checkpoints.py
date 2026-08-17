@@ -79,6 +79,10 @@ def pause_claimed_job_for_human(
     job.human_resume_pending = False
     job.error_code = None
     job.error_message = None
+    # Make the checkpoint and its audit row visible to subsequent operations in
+    # the same transaction. This also surfaces uniqueness/FK conflicts before
+    # callers attempt a resume/cancel/expiry transition.
+    session.flush()
     return checkpoint.id
 
 
