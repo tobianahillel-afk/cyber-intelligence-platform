@@ -11,6 +11,7 @@ from urllib.parse import urlsplit
 FIXTURE_HOST = "sa16-l18-public.example"
 ETAG = '"sa16-l18-v1"'
 REPORT = b"SA16 L18 controlled document\npublic evidence pipeline\n"
+ARTIFACT_REPORT = b"SA16 L18 browser download\nquarantine projection proof\n"
 _LOCK = Lock()
 
 
@@ -20,6 +21,7 @@ class FixtureState:
     json_hits = 0
     xhr_hits = 0
     document_hits = 0
+    artifact_download_hits = 0
 
     @classmethod
     def reset(cls) -> None:
@@ -29,6 +31,7 @@ class FixtureState:
             cls.json_hits = 0
             cls.xhr_hits = 0
             cls.document_hits = 0
+            cls.artifact_download_hits = 0
 
 
 class FixtureHandler(BaseHTTPRequestHandler):
@@ -84,6 +87,14 @@ class FixtureHandler(BaseHTTPRequestHandler):
             with _LOCK:
                 FixtureState.document_hits += 1
             self._send_versioned(REPORT, "text/plain; charset=utf-8")
+            return
+        if path == "/artifact-download.txt":
+            with _LOCK:
+                FixtureState.artifact_download_hits += 1
+            self._send(ARTIFACT_REPORT, "text/plain; charset=utf-8")
+            return
+        if path == "/artifact":
+            self._send(_artifact_page().encode(), "text/html; charset=utf-8")
             return
         if path == "/gone":
             self._send(b"gone", "text/plain; charset=utf-8", status=HTTPStatus.GONE)
@@ -195,6 +206,13 @@ window.__INITIAL_STATE__ = {company:"SA16 L18 Fixture", region:"eu", accessToken
 fetch("/api/app.json").then(r=>r.json()).then(v=>{document.querySelector("#app").textContent="rendered "+v.technology;});
 const xhr=new XMLHttpRequest();xhr.open("GET","/api/xhr");xhr.send();
 </script></body></html>"""
+
+
+def _artifact_page() -> str:
+    return """<!doctype html><html><head><title>Artifact Evidence</title></head><body>
+<main id="evidence"><h1>Controlled artifact evidence</h1><p>safe screenshot content</p></main>
+<a id="download" href="/artifact-download.txt">Download controlled report</a>
+</body></html>"""
 
 
 def _feed_item() -> str:
