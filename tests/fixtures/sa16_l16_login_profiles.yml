@@ -1,0 +1,40 @@
+version: 1
+profiles:
+  - id: sa16-l16-controlled-login-v1
+    source_id: sa16-l16-controlled-provider
+    login_url: http://127.0.0.1:18776/login
+    username_selector: '#username'
+    secret_selector: '#password'
+    submit_selector: 'button[type=submit]'
+    success_selector: '#authenticated'
+    authenticated_probe_url: http://127.0.0.1:18776/private
+    logout_url: http://127.0.0.1:18776/logout
+    allowed_transitions:
+      - host: 127.0.0.1
+        path_prefix: /
+        methods: [GET, POST]
+    challenge_signals:
+      - challenge: mfa
+        selector: '#mfa'
+      - challenge: captcha
+        selector: '#captcha'
+      - challenge: oauth
+        selector: '#oauth'
+      - challenge: sso
+        selector: '#sso'
+      - challenge: identity_verification
+        selector: '#identity-verification'
+      - challenge: lockout_risk
+        selector: '#lockout-risk'
+      - challenge: password_reset
+        selector: '#password-reset'
+      - challenge: terms_confirmation
+        selector: '#terms-confirmation'
+    review:
+      document_reference: SA16-L16-CONTROLLED-AUTH
+      reviewed_at: '2026-08-17T00:00:00+00:00'
+    budgets:
+      max_requests: 24
+      max_redirects: 4
+      timeout_ms: 10000
+      session_ttl_seconds: 3600

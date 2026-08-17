@@ -1,0 +1,259 @@
+from __future__ import annotations
+
+from dataclasses import dataclass, field, replace
+from datetime import datetime, timedelta
+from uuid import UUID
+
+from sqlalchemy.orm import Session
+
+from cip.modules.provider_onboarding.application.secrets import (
+    SecretReferenceResolver,
+    SecretValueResolver,
+)
+from cip.modules.provider_onboarding.domain.models import SecretReference
+from cip.modules.source_governance.application.delegated_identity_contracts import (
+    DelegatedIdentityAccessDeniedError,
+    DelegatedIdentityExecutionGrant,
+    DelegatedOperatorContext,
+    DelegatedReferenceUnavailableError,
+)
+from cip.modules.source_governance.application.delegated_identity_service import (
+    attach_delegated_session_reference,
+    get_delegated_identity,
+    issue_delegated_execution_grant,
+    revoke_delegated_identity,
+)
+from cip.modules.source_governance.application.provider_session_runtime import (
+    AuthenticatedBrowserRuntimeResult,
+    DelegatedBrowserSessionExecutor,
+)
+from cip.modules.source_governance.application.session_material import SessionMaterialStore
+from cip.modules.source_governance.domain.accounts import SourceAccountAuthMode
+from cip.modules.source_governance.domain.delegated_browser_identity import (
+    DelegatedExecutionRequest,
+)
+from cip.shared.kernel.time import require_aware_utc
+
+
+class DelegatedProviderSessionError(RuntimeError):
+    pass
+
+
+@dataclass(frozen=True, slots=True)
+class DelegatedAuthenticatedPage:
+    identity_id: UUID
+    source_id: str
+    final_url: str
+    html: bytes = field(repr=False)
+    session_established: bool = False
+    session_reused: bool = False
+    requests_seen: int = 0
+    redirects_seen: int = 0
+
+
+@dataclass(frozen=True, slots=True)
+class DelegatedSessionRevocationResult:
+    identity_id: UUID
+    local_revoked: bool
+    remote_logout_attempted: bool
+    remote_logout_completed: bool
+
+
+def establish_delegated_provider_session(
+    session: Session,
+    identity_id: UUID,
+    request: DelegatedExecutionRequest,
+    executor: DelegatedBrowserSessionExecutor,
+    *,
+    secret_reference_resolver: SecretReferenceResolver,
+    secret_value_resolver: SecretValueResolver,
+    session_store: SessionMaterialStore,
+    now: datetime,
+) -> DelegatedAuthenticatedPage:
+    current = require_aware_utc(now, field_name="now")
+    actor = _actor(request)
+    view = get_delegated_identity(session, identity_id, actor=actor)
+    _validate_context(view.source_id, view.auth_mode, executor)
+    grant = issue_delegated_execution_grant(
+        session,
+        identity_id,
+        replace(
+            request,
+            require_secret_reference=True,
+            require_session_reference=False,
+        ),
+        resolver=secret_reference_resolver,
+        now=current,
+    )
+    secret_reference = _required_reference(grant.secret_reference, "login secret")
+    runtime = executor.login(
+        account_identifier=view.provider_account_identifier,
+        secret_reference=secret_reference,
+        secret_resolver=secret_value_resolver,
+        purpose=grant.purpose,
+        now=current,
+    )
+    session_reference = session_store.reference_for(identity_id)
+    try:
+        session_store.write(session_reference, runtime.session_state_json)
+        attach_delegated_session_reference(
+            session,
+            identity_id,
+            session_reference.value,
+            actor=actor,
+            resolver=session_store,
+            now=current,
+            expires_at=current + timedelta(seconds=executor.session_ttl_seconds),
+        )
+    except Exception:
+        session_store.delete(session_reference)
+        raise
+    return _safe_page(grant, runtime, established=True, reused=False)
+
+
+def reuse_delegated_provider_session(
+    session: Session,
+    identity_id: UUID,
+    request: DelegatedExecutionRequest,
+    executor: DelegatedBrowserSessionExecutor,
+    *,
+    session_store: SessionMaterialStore,
+    now: datetime,
+) -> DelegatedAuthenticatedPage:
+    current = require_aware_utc(now, field_name="now")
+    actor = _actor(request)
+    view = get_delegated_identity(session, identity_id, actor=actor)
+    _validate_context(view.source_id, view.auth_mode, executor)
+    grant = issue_delegated_execution_grant(
+        session,
+        identity_id,
+        replace(
+            request,
+            require_secret_reference=False,
+            require_session_reference=True,
+        ),
+        resolver=session_store,
+        now=current,
+    )
+    session_reference = _required_reference(grant.session_reference, "browser session")
+    runtime = executor.reuse(
+        session_reference=session_reference,
+        session_resolver=session_store,
+        purpose=grant.purpose,
+        now=current,
+    )
+    session_store.write(session_reference, runtime.session_state_json)
+    return _safe_page(grant, runtime, established=False, reused=True)
+
+
+def revoke_delegated_provider_session(
+    session: Session,
+    identity_id: UUID,
+    request: DelegatedExecutionRequest,
+    executor: DelegatedBrowserSessionExecutor,
+    *,
+    session_store: SessionMaterialStore,
+    now: datetime,
+) -> DelegatedSessionRevocationResult:
+    current = require_aware_utc(now, field_name="now")
+    actor = _actor(request)
+    view = get_delegated_identity(session, identity_id, actor=actor)
+    _validate_context(view.source_id, view.auth_mode, executor)
+    local_reference = session_store.reference_for(identity_id)
+    reference = _session_reference_if_usable(
+        session,
+        identity_id,
+        request,
+        session_store,
+        current,
+    )
+    remote_attempted = reference is not None and executor.supports_remote_logout
+    remote_completed = False
+    if remote_attempted and reference is not None:
+        try:
+            remote_completed = executor.logout(
+                session_reference=reference,
+                session_resolver=session_store,
+                purpose=request.purpose,
+                now=current,
+            )
+        except RuntimeError:
+            remote_completed = False
+    revoke_delegated_identity(session, identity_id, actor=actor, now=current)
+    session_store.delete(local_reference)
+    return DelegatedSessionRevocationResult(
+        identity_id=identity_id,
+        local_revoked=True,
+        remote_logout_attempted=remote_attempted,
+        remote_logout_completed=remote_completed,
+    )
+
+
+def _session_reference_if_usable(
+    session: Session,
+    identity_id: UUID,
+    request: DelegatedExecutionRequest,
+    session_store: SessionMaterialStore,
+    now: datetime,
+) -> SecretReference | None:
+    try:
+        grant = issue_delegated_execution_grant(
+            session,
+            identity_id,
+            replace(
+                request,
+                require_secret_reference=False,
+                require_session_reference=True,
+            ),
+            resolver=session_store,
+            now=now,
+        )
+    except (DelegatedIdentityAccessDeniedError, DelegatedReferenceUnavailableError):
+        return None
+    return _required_reference(grant.session_reference, "browser session")
+
+
+def _validate_context(
+    source_id: str,
+    auth_mode: SourceAccountAuthMode,
+    executor: DelegatedBrowserSessionExecutor,
+) -> None:
+    if auth_mode is not SourceAccountAuthMode.INTERACTIVE_SESSION:
+        raise DelegatedProviderSessionError(
+            "delegated identity is not interactive-session auth"
+        )
+    if source_id != executor.source_id:
+        raise DelegatedProviderSessionError("delegated session source mismatch")
+
+
+def _required_reference(value: str | None, label: str) -> SecretReference:
+    if value is None:
+        raise DelegatedProviderSessionError(f"required {label} reference is missing")
+    return SecretReference(value)
+
+
+def _actor(request: DelegatedExecutionRequest) -> DelegatedOperatorContext:
+    return DelegatedOperatorContext(
+        tenant_id=request.tenant_id,
+        owner_kind=request.owner_kind,
+        owner_subject_id=request.owner_subject_id,
+    )
+
+
+def _safe_page(
+    grant: DelegatedIdentityExecutionGrant,
+    runtime: AuthenticatedBrowserRuntimeResult,
+    *,
+    established: bool,
+    reused: bool,
+) -> DelegatedAuthenticatedPage:
+    return DelegatedAuthenticatedPage(
+        identity_id=grant.identity_id,
+        source_id=grant.source_id,
+        final_url=runtime.final_url,
+        html=runtime.html,
+        session_established=established,
+        session_reused=reused,
+        requests_seen=runtime.requests_seen,
+        redirects_seen=runtime.redirects_seen,
+    )
