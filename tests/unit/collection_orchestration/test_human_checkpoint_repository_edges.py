@@ -46,11 +46,6 @@ def _schedule() -> SourceSchedule:
         adapter_id="adapter",
         interval_seconds=900,
         lease_seconds=120,
-        max_attempts=4,
-        base_delay_seconds=30,
-        max_delay_seconds=900,
-        circuit_failure_threshold=3,
-        circuit_reset_seconds=900,
     )
 
 
