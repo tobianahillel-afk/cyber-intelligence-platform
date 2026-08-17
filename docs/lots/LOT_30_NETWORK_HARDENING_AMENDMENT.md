@@ -4,6 +4,8 @@
 
 `PLANNED_LOCKED` as part of Lot 30.
 
+Tracking issue: #169 — `Lot 30: DNS pinning and rebinding defense for outbound acquisition`.
+
 ## Purpose
 
 This amendment assigns the remaining Lot 12 DNS-resolution hardening risk to an existing future product lot instead of leaving it as unowned "future hardening".
