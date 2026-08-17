@@ -166,7 +166,7 @@ profiles:
             ),
             "ISO-8601",
         ),
-        (base.replace("id: p", "id: ''"), "non-empty string"),
+        (base.replace("  - id: p\n", "  - id: ''\n"), "non-empty string"),
         (
             base.replace(review_block, "    review: []\n"),
             "review must be a mapping",
