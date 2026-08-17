@@ -91,7 +91,11 @@ class FederatedAuthorizationMaterial:
         state = value["state"]
         verifier = value["code_verifier"]
         nonce = value["nonce"]
-        if not isinstance(profile_id, str) or not isinstance(state, str) or not isinstance(verifier, str):
+        if (
+            not isinstance(profile_id, str)
+            or not isinstance(state, str)
+            or not isinstance(verifier, str)
+        ):
             raise ValueError("invalid federated authorization material fields")
         if nonce is not None and not isinstance(nonce, str):
             raise ValueError("invalid federated authorization nonce")
