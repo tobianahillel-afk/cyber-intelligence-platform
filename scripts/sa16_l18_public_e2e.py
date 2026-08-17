@@ -16,6 +16,7 @@ from sa16_l18_public_support import (
     verify_artifacts,
     verify_public_persistence,
 )
+from sa16_l18_worker_diagnostics import worker_failure_detail
 
 from cip.modules.collection_orchestration.application.automatic_public_web_runtime import (
     build_automatic_public_web_runtime,
@@ -64,7 +65,7 @@ def main() -> None:
         if first.status is not WorkerStatus.SUCCEEDED:
             raise RuntimeError(
                 "L18 first public worker failed: "
-                f"status={first.status.value} error_code={first.error_code}"
+                f"status={first.status.value} {worker_failure_detail(factory, first.job_id)}"
             )
         first_metrics = health_values(factory, target.id)
         _assert_first_run_metrics(first_metrics)
@@ -94,7 +95,7 @@ def main() -> None:
         if second.status not in {WorkerStatus.SUCCEEDED, WorkerStatus.NOT_MODIFIED}:
             raise RuntimeError(
                 "L18 public recrawl failed: "
-                f"status={second.status.value} error_code={second.error_code}"
+                f"status={second.status.value} {worker_failure_detail(factory, second.job_id)}"
             )
         second_metrics = health_values(factory, target.id)
         if int(second_metrics.get("not_modified_pages", 0)) <= 0:
