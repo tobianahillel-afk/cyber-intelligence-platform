@@ -22,14 +22,14 @@ The audit distinguishes:
 
 ## Final ownership decisions
 
-| Historical residual | Audit result | Final owner | Required disposition |
+| Historical residual | Audit result | Final owner / tracker | Final disposition |
 | --- | --- | --- | --- |
-| end-to-end privacy rights, rectification, objection/restriction, erasure and propagation | real unfinished product capability | **Lot 31** | dedicated implementation before controlled pilot |
-| DNS-resolution pinning / DNS rebinding protection | real network hardening residual | **Lot 30** | mandatory outbound-network security gate |
+| end-to-end privacy rights, rectification, objection/restriction, erasure and propagation | real unfinished product capability | **Lot 31 / issue #5** | dedicated implementation before controlled pilot; issue kept open |
+| DNS-resolution pinning / DNS rebinding protection | real network hardening residual | **Lot 30 / issue #169** | mandatory outbound-network security gate; issue open |
 | Starlette/TestClient deprecation and dependency migration | already assigned | **Lot 29 / issue #6** | keep open until dependency/release hardening closes it |
-| isolated Chromium + download quarantine deferred by early lots | subsequently implemented | **SA-16** | do not reimplement; close historical issue #3 as completed/superseded |
-| Lot 23 tracking issue #61 | implementation already merged via PR #62 | historical tracking only | close as completed |
-| Lot 24 shown as planned in authoritative roadmap/README | stale documentation | current product docs | mark Lot 24 `IMPLEMENTED_VALIDATED`; next sequential product lot becomes Lot 25 |
+| isolated Chromium + download quarantine deferred by early lots | subsequently implemented | **SA-16 / historical issue #3** | no reimplementation; issue #3 closed completed on 2026-08-17 |
+| Lot 23 tracking issue #61 | implementation already merged via PR #62 | historical tracking only | issue #61 closed completed on 2026-08-17 |
+| Lot 24 shown as planned in authoritative roadmap/README | stale documentation | current product docs | corrected to `IMPLEMENTED_VALIDATED`; next sequential product lot is Lot 25 |
 
 ## Why Lot 31 is reassigned
 
@@ -57,6 +57,8 @@ No completed product lot number is changed or reused.
 
 Canonical Lot 31 scope: `docs/lots/LOT_31_PRIVACY_RIGHTS_AND_DELETION_PROPAGATION.md`.
 
+Implementation tracker: issue #5, renamed `Lot 31: privacy rights and deletion propagation` and deliberately kept open.
+
 ## Why DNS hardening belongs to Lot 30
 
 Lot 12 recorded DNS-resolution pinning as a future hardening topic. SA-16 added strong hostname/origin/path/request controls but did not explicitly make DNS-rebinding resistance a terminal certified capability.
@@ -64,6 +66,8 @@ Lot 12 recorded DNS-resolution pinning as a future hardening topic. SA-16 added 
 Lot 30 already owns resilience, recovery, operational failure handling, and collection/runtime observability. The remaining DNS/address-safety property is therefore attached to Lot 30 rather than creating another out-of-sequence product lot.
 
 Canonical amendment: `docs/lots/LOT_30_NETWORK_HARDENING_AMENDMENT.md`.
+
+Implementation tracker: issue #169, `Lot 30: DNS pinning and rebinding defense for outbound acquisition`.
 
 Lot 30 must not close until static HTTP, browser-backed acquisition, authenticated flows, redirects/retries, and controlled downloads share an effective fail-closed address policy that prevents an authorized hostname from reaching a forbidden internal/non-public address through DNS change or interpretation tricks.
 
@@ -90,40 +94,47 @@ Lot 28 still owns generic lineage/publication-quality mechanics and Lot 30 still
 
 ### Issue #3 — isolated Chromium and download quarantine
 
-Disposition: **close as completed/superseded by SA-16**.
+Disposition: **closed as completed/superseded by SA-16** on 2026-08-17.
 
-The issue must not stay open as if browser execution were absent. Any remaining DNS/address-safety work is tracked separately under Lot 30 and is not evidence that the browser runtime itself still needs reimplementation.
+The browser capability is no longer represented as absent. The remaining DNS/address-safety work is tracked separately by Lot 30 / issue #169 and is not evidence that the browser runtime itself needs reimplementation.
 
 ### Issue #5 — privacy rights and deletion propagation
 
-Disposition: **keep open and rename/annotate as Lot 31 ownership**.
+Disposition: **open under Lot 31**.
 
-It becomes the implementation tracker for the dedicated Lot 31 privacy scope.
+The issue was renamed `Lot 31: privacy rights and deletion propagation` and annotated with the canonical Lot 31 ownership handoff.
 
 ### Issue #6 — repository hardening / lockfiles / release provenance
 
-Disposition: **keep open under Lot 29**.
+Disposition: **open under Lot 29**.
 
-The historical Starlette/TestClient deprecation warning is already attached to this dependency-hardening stream and is not orphaned.
+The issue was annotated with the explicit Lot 29 ownership handoff. The historical Starlette/TestClient deprecation warning remains part of dependency-hardening scope and is not orphaned.
 
 ### Issue #61 — Lot 23 governed research
 
-Disposition: **close as completed**.
+Disposition: **closed as completed** on 2026-08-17.
 
-PR #62 merged Lot 23 with exact-head CI evidence. Keeping #61 open incorrectly suggests the product capability is still unfinished.
+PR #62 had already merged Lot 23 with exact-head CI evidence. The open issue was stale tracking rather than unfinished implementation.
+
+### Issue #169 — DNS pinning/rebinding
+
+Disposition: **open under Lot 30**.
+
+This new tracker owns the complete DNS/address-safety exit gate across static HTTP, browser-backed acquisition, authenticated flows, OAuth/token paths, redirects/retries/reconnects and controlled downloads.
 
 ## Authoritative roadmap corrections
 
-`docs/PROJECT_DELIVERY_PLAN.md` must reflect:
+`docs/PROJECT_DELIVERY_PLAN.md` now reflects:
 
 - Lots `00–24` are the contiguous `IMPLEMENTED_VALIDATED` product prefix;
 - Lot 24 is not `PLANNED_LOCKED` anymore;
 - Lot 25 is the next sequential normal product implementation lot;
+- Lot 29 explicitly owns the historical Starlette/TestClient dependency-maintenance path;
 - Lot 30 explicitly owns DNS pinning/rebinding and outbound address safety;
 - Lot 31 is the dedicated privacy-rights/deletion-propagation lot, not a second browser implementation;
-- Lot 32 depends on all mandatory Lots 00–31 and cannot use privacy rights merely as a pilot-time test for a capability that was never implemented.
+- Lot 32 depends on all mandatory Lots 00–31 and cannot use privacy rights or DNS safety merely as pilot-time experiments for capabilities never implemented beforehand.
 
-The README/current-baseline summary should carry the same status truth.
+The README/current-baseline summary carries the same status truth and points provider activation claims to the separate Source Activation programme.
 
 ## Sequencing after reconciliation
 
