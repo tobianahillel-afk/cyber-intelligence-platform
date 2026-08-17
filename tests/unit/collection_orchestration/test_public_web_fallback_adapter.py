@@ -16,6 +16,7 @@ from cip.adapters.sources.public_web.client import (
 from cip.adapters.sources.public_web.collection_policy import (
     PublicWebCollectionDeniedError,
 )
+from cip.adapters.sources.public_web.crawl_runtime import CrawlTelemetry
 from cip.adapters.sources.public_web.parsing import PublicWebParseError
 from cip.adapters.sources.public_web.registry import PublicWebTarget
 from cip.modules.collection_orchestration.application import (
@@ -126,6 +127,7 @@ def test_execution_returns_canonical_batch(monkeypatch: pytest.MonkeyPatch) -> N
             checkpoint=object(),
             not_modified=True,
             projections=(),
+            telemetry=CrawlTelemetry(),
         ),
     )
     monkeypatch.setattr(
@@ -138,6 +140,8 @@ def test_execution_returns_canonical_batch(monkeypatch: pytest.MonkeyPatch) -> N
     assert batch.not_modified is True
     assert batch.checkpoint_payload == {"dumped": True}
     assert batch.public_footprint_projections == ()
+    assert batch.operational_metrics is not None
+    assert batch.operational_metrics.namespace == "public_web.crawl.v1"
 
 
 def test_execution_maps_invalid_checkpoint(monkeypatch: pytest.MonkeyPatch) -> None:

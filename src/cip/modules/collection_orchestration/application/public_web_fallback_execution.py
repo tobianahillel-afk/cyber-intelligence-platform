@@ -23,6 +23,10 @@ from cip.adapters.sources.public_web.registry import PublicWebTarget
 from cip.modules.collection_orchestration.application.ports import (
     AdapterCollectionBatch,
     AdapterExecutionError,
+    AdapterPartialExecutionError,
+)
+from cip.modules.collection_orchestration.application.public_web_crawl_metrics import (
+    crawl_operational_metrics,
 )
 from cip.modules.collection_orchestration.application.public_web_fallback_collection import (
     collect_with_browser_fallback,
@@ -71,12 +75,21 @@ def execute_public_web_fallback(
         ) from exc
     except (httpx.TimeoutException, httpx.TransportError) as exc:
         raise _error(exc, "source_transport_error", True) from exc
-    return AdapterCollectionBatch(
+    adapter_batch = AdapterCollectionBatch(
         observations=batch.observations,
         checkpoint_payload=dump_checkpoint(batch.checkpoint),
         not_modified=batch.not_modified,
         public_footprint_projections=batch.projections,
+        operational_metrics=crawl_operational_metrics(batch.telemetry),
     )
+    if batch.telemetry.deadline_exceeded:
+        raise AdapterPartialExecutionError(
+            "whole-crawl deadline exceeded after partial progress",
+            error_code="crawl_deadline_exceeded",
+            retryable=True,
+            batch=adapter_batch,
+        )
+    return adapter_batch
 
 
 def _error(exc: Exception, code: str, retryable: bool) -> AdapterExecutionError:
