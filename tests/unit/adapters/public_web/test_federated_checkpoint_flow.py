@@ -377,19 +377,21 @@ def test_token_ready_replay_does_not_exchange_consumed_code_again(
         del session, request
         raise RuntimeError("database transaction failed after provider exchange")
 
-    with httpx.Client(transport=_token_transport(posts)) as client:
-        with pytest.raises(RuntimeError, match="database transaction failed"):
-            complete_delegated_federated_checkpoint(
-                object(),
-                _context(),
-                _entry(),
-                _profile(),
-                completion,
-                identity_reference_resolver=AlwaysAvailableResolver(),
-                material_store=store,
-                client=client,
-                resume_checkpoint=fail_resume,
-            )
+    with (
+        httpx.Client(transport=_token_transport(posts)) as client,
+        pytest.raises(RuntimeError, match="database transaction failed"),
+    ):
+        complete_delegated_federated_checkpoint(
+            object(),
+            _context(),
+            _entry(),
+            _profile(),
+            completion,
+            identity_reference_resolver=AlwaysAvailableResolver(),
+            material_store=store,
+            client=client,
+            resume_checkpoint=fail_resume,
+        )
     assert posts == [1]
     persisted = FederatedContinuationBundle.from_secret_json(store.resolve(reference))
     assert persisted.state is FederatedContinuationState.TOKEN_READY
@@ -435,19 +437,21 @@ def test_revoked_identity_stops_completion_before_network_or_resume(
         actor_reference="user:controlled-approver",
         completed_at=NOW,
     )
-    with httpx.Client(transport=httpx.MockTransport(transport)) as client:
-        with pytest.raises(DelegatedIdentityAccessDeniedError, match="revoked"):
-            complete_delegated_federated_checkpoint(
-                object(),
-                _context(),
-                _entry(),
-                _profile(),
-                completion,
-                identity_reference_resolver=AlwaysAvailableResolver(),
-                material_store=store,
-                client=client,
-                resume_checkpoint=lambda _session, _request: resumed.append(True) or JOB_ID,
-            )
+    with (
+        httpx.Client(transport=httpx.MockTransport(transport)) as client,
+        pytest.raises(DelegatedIdentityAccessDeniedError, match="revoked"),
+    ):
+        complete_delegated_federated_checkpoint(
+            object(),
+            _context(),
+            _entry(),
+            _profile(),
+            completion,
+            identity_reference_resolver=AlwaysAvailableResolver(),
+            material_store=store,
+            client=client,
+            resume_checkpoint=lambda _session, _request: resumed.append(True) or JOB_ID,
+        )
     assert not resumed
 
 
@@ -455,7 +459,7 @@ def test_resolve_token_is_bound_to_same_job_and_ready_bundle(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     store = MemoryMaterialStore()
-    started = _start(monkeypatch, store)
+    _start(monkeypatch, store)
     reference = store.reference_for(IDENTITY_ID, CHECKPOINT_ID)
     pending = FederatedContinuationBundle.from_secret_json(store.resolve(reference))
     ready = pending.with_token(
