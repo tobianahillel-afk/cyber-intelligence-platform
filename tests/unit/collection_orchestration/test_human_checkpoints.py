@@ -115,7 +115,11 @@ def _binding(job_id: UUID) -> HumanCheckpointBinding:
     )
 
 
-def _checkpoint(job_id: UUID, *, expires_at: datetime | None = None) -> HumanCheckpointRequest:
+def _checkpoint(
+    job_id: UUID,
+    *,
+    expires_at: datetime | None = None,
+) -> HumanCheckpointRequest:
     return HumanCheckpointRequest.from_correlation_token(
         binding=_binding(job_id),
         kind=HumanCheckpointKind.MFA,
@@ -126,7 +130,12 @@ def _checkpoint(job_id: UUID, *, expires_at: datetime | None = None) -> HumanChe
     )
 
 
-def _resume(checkpoint_id: UUID, job_id: UUID, *, token: str = TOKEN) -> HumanCheckpointResumeRequest:
+def _resume(
+    checkpoint_id: UUID,
+    job_id: UUID,
+    *,
+    token: str = TOKEN,
+) -> HumanCheckpointResumeRequest:
     return HumanCheckpointResumeRequest(
         checkpoint_id=checkpoint_id,
         binding=_binding(job_id),
@@ -262,7 +271,9 @@ def test_checkpoint_cancel_and_identity_invalidation_are_audited() -> None:
             reason="operator cancelled checkpoint",
             now=NOW + timedelta(seconds=1),
         )
-        assert session.get(CollectionJobRecord, first.id).status == JobStatus.CANCELLED.value  # type: ignore[union-attr]
+        first_job = session.get(CollectionJobRecord, first.id)
+        assert first_job is not None
+        assert first_job.status == JobStatus.CANCELLED.value
 
         assert schedule_due_jobs(session, [_schedule()], now=NOW + timedelta(minutes=15)) == 1
         second = claim_next_job(
@@ -291,7 +302,9 @@ def test_checkpoint_cancel_and_identity_invalidation_are_audited() -> None:
             reason="delegated identity revoked",
             now=NOW + timedelta(minutes=16),
         ) == 1
-        assert session.get(CollectionJobRecord, second.id).status == JobStatus.CANCELLED.value  # type: ignore[union-attr]
+        second_job = session.get(CollectionJobRecord, second.id)
+        assert second_job is not None
+        assert second_job.status == JobStatus.CANCELLED.value
 
         event_count = session.scalar(select(func.count(CollectionHumanCheckpointEventRecord.id)))
         assert event_count == 4

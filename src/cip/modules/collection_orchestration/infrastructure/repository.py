@@ -1,10 +1,10 @@
-from __future__ import annotations
-
 """Stable collection-orchestration persistence facade.
 
 The implementation lives in focused repository modules so this public import surface remains
 stable without allowing one persistence file to grow into an architecture bottleneck.
 """
+
+from __future__ import annotations
 
 from cip.modules.collection_orchestration.infrastructure.repository_backfill import (
     backfill_batch,
