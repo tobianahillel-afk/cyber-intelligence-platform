@@ -170,6 +170,14 @@ def serve_fixture() -> Iterator[str]:
 
 
 def _home(origin: str) -> str:
+    json_ld = (
+        '{"@context":"https://schema.org","@type":"Organization",'
+        '"name":"SA16 L18 Fixture"}'
+    )
+    embedded = (
+        '{"company":"SA16 L18 Fixture","technology":"static-json",'
+        '"password":"must-drop"}'
+    )
     return f"""<!doctype html><html><head>
 <title>SA16 L18 Public Composite</title>
 <meta name="description" content="Controlled organization research fixture">
@@ -179,8 +187,8 @@ def _home(origin: str) -> str:
 <link rel="alternate" type="application/rss+xml" href="{origin}feed.xml">
 <link rel="stylesheet" href="{origin}assets/site.css">
 <script src="{origin}assets/site.js"></script>
-<script type="application/ld+json">{{"@context":"https://schema.org","@type":"Organization","name":"SA16 L18 Fixture"}}</script>
-<script type="application/json">{{"company":"SA16 L18 Fixture","technology":"static-json","password":"must-drop"}}</script>
+<script type="application/ld+json">{json_ld}</script>
+<script type="application/json">{embedded}</script>
 </head><body><main><h1>Controlled organization research</h1>
 <p>{'bounded public evidence ' * 20}</p></main>
 <a href="{origin}static">Static evidence</a>
@@ -202,9 +210,15 @@ def _static_page() -> str:
 def _app_page() -> str:
     return """<!doctype html><html><head><title>Rendered App</title></head><body>
 <div id="app">loading</div><script>
-window.__INITIAL_STATE__ = {company:"SA16 L18 Fixture", region:"eu", accessToken:"must-drop"};
-fetch("/api/app.json").then(r=>r.json()).then(v=>{document.querySelector("#app").textContent="rendered "+v.technology;});
-const xhr=new XMLHttpRequest();xhr.open("GET","/api/xhr");xhr.send();
+window.__INITIAL_STATE__ = {
+  company:"SA16 L18 Fixture", region:"eu", accessToken:"must-drop"
+};
+fetch("/api/app.json").then(r => r.json()).then(v => {
+  document.querySelector("#app").textContent = "rendered " + v.technology;
+});
+const xhr = new XMLHttpRequest();
+xhr.open("GET", "/api/xhr");
+xhr.send();
 </script></body></html>"""
 
 
@@ -216,20 +230,34 @@ def _artifact_page() -> str:
 
 
 def _feed_item() -> str:
-    return "<!doctype html><html><body><h1>Feed evidence</h1><p>controlled feed item</p></body></html>"
+    return (
+        "<!doctype html><html><body><h1>Feed evidence</h1>"
+        "<p>controlled feed item</p></body></html>"
+    )
 
 
 def _sitemap_index(origin: str) -> bytes:
     return (
-        '<?xml version="1.0"?><sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'
+        '<?xml version="1.0"?><sitemapindex '
+        'xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'
         f"<sitemap><loc>{origin}sitemap-pages.xml</loc></sitemap></sitemapindex>"
     ).encode()
 
 
 def _sitemap_pages(origin: str) -> bytes:
-    urls = (origin, f"{origin}static", f"{origin}app", f"{origin}documents/report.txt", f"{origin}gone")
+    urls = (
+        origin,
+        f"{origin}static",
+        f"{origin}app",
+        f"{origin}documents/report.txt",
+        f"{origin}gone",
+    )
     body = "".join(f"<url><loc>{url}</loc></url>" for url in urls)
-    return f'<?xml version="1.0"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">{body}</urlset>'.encode()
+    return (
+        '<?xml version="1.0"?><urlset '
+        'xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'
+        f"{body}</urlset>"
+    ).encode()
 
 
 def _feed(origin: str) -> bytes:
