@@ -4,6 +4,8 @@
 
 `PLANNED_LOCKED`
 
+Tracking issue: #5 — `Lot 31: privacy rights and deletion propagation`.
+
 ## Ownership amendment
 
 Lot 31 was originally reserved for an isolated browser and download-quarantine runtime. That implementation scope was subsequently delivered through the merged SA-16 browser/authentication programme, including bounded Chromium execution, governed request interception, typed browser actions, screenshots, controlled downloads, quarantine, delegated identities, session reuse, OAuth/OIDC/SSO, and durable human checkpoints.
