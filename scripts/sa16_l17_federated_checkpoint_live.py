@@ -9,6 +9,25 @@ from uuid import uuid4
 
 import httpx
 from playwright.sync_api import sync_playwright
+from sa16_l17_controlled_oauth_fixture import (
+    ACCESS_TOKEN,
+    AUTH_CODE,
+    BASE,
+    FixtureState,
+    create_server,
+    reset_fixture,
+)
+from sa16_l17_live_domain_setup import (
+    PROFILE_PATH,
+    PURPOSE,
+    checkpoint_context,
+    collection_job,
+    delegated_identity,
+    execution_request,
+    operator_context,
+    source_entry,
+    source_record,
+)
 from sqlalchemy import select
 
 from cip.adapters.sources.public_web.collection_policy import authorize_public_web_url
@@ -55,25 +74,6 @@ from cip.modules.source_governance.infrastructure.delegated_identity_models impo
 )
 from cip.shared.persistence.metadata import get_metadata
 from cip.shared.persistence.session import create_database_engine, create_session_factory
-from sa16_l17_controlled_oauth_fixture import (
-    ACCESS_TOKEN,
-    AUTH_CODE,
-    BASE,
-    FixtureState,
-    create_server,
-    reset_fixture,
-)
-from sa16_l17_live_domain_setup import (
-    PROFILE_PATH,
-    PURPOSE,
-    checkpoint_context,
-    collection_job,
-    delegated_identity,
-    execution_request,
-    operator_context,
-    source_entry,
-    source_record,
-)
 
 
 def _approve_in_browser(authorization_url: str) -> str:
@@ -252,11 +252,15 @@ def main() -> None:
                     raise RuntimeError("resumed L17 job did not reach terminal success")
                 if identity_record is None or identity_record.session_reference != reference.value:
                     raise RuntimeError("federated session reference metadata is missing")
+                event_state = [
+                    (event.event_type, event.actor_reference, event.reason)
+                    for event in events
+                ]
                 public_state = repr(
                     (
                         checkpoint.correlation_digest,
                         checkpoint.session_reference,
-                        [(event.event_type, event.actor_reference, event.reason) for event in events],
+                        event_state,
                         identity_record.session_reference,
                     )
                 )
