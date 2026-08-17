@@ -1,7 +1,8 @@
-version: 1
+version: 2
 recovery_id: lots-01-05-finality
 tracker_issue: 173
 baseline_sha: 8d7184b8a6f494ceb407ab489d8971f4d015bab6
+final_audit_document: docs/lots/LOTS_01_05_FINAL_AUDIT_AND_OWNERSHIP_LOCK.md
 allowed_terminal_dispositions:
   - implemented_proven_here
   - owned_by_existing_later_scope
@@ -33,11 +34,11 @@ findings:
     terminal_disposition: null
   - id: F03
     historical_lot: 4
-    capability: ted_complete_bounded_pagination
+    capability: ted_complete_bounded_traversal
     severity: critical
     status: recovery_local
     owner: R01-L04
-    expected_invariant: TED result sets larger than one page can be traversed and resumed without gaps or duplicates
+    expected_invariant: TED result sets larger than one page can be traversed under bounded work and resumed without gaps or duplicates
     terminal_disposition: null
   - id: F04
     historical_lot: 4
@@ -57,19 +58,57 @@ findings:
     terminal_disposition: null
   - id: F06
     historical_lot: 3
-    capability: labelled_opportunity_evaluation_foundation
+    capability: labelled_opportunity_evaluation_and_first_measurement
     severity: high
     status: split_recovery_and_handoff
     owner: R01-L07
     later_owner: Lot25
-    expected_invariant: historical opportunity rules have a reproducible labelled baseline while full calibration feedback and drift remain Lot25 scope
+    expected_invariant: historical opportunity rules have a reproducible labelled baseline including the first supported precision-at-10 acceptance-rate and false-positive measurements while full calibration feedback and drift remain Lot25 scope
     terminal_disposition: null
+  - id: F07
+    historical_lot: 4
+    capability: ted_incremental_query_scope_and_high_watermark_ordering
+    severity: critical
+    status: recovery_local
+    owner: R01-L04
+    expected_invariant: TED incremental collection uses a verified deterministic query scope ordering and frontier contract rather than implicit first-row newest assumptions or an unbounded ALL scan
+    terminal_disposition: null
+  - id: F08
+    historical_lot: 2
+    capability: isolated_browser_and_download_quarantine
+    severity: high
+    status: historical_deferred_terminal
+    owner: SA16
+    tracker_issue: 3
+    expected_invariant: isolated browser challenge pause-resume and controlled download quarantine are implemented once without a competing R01 runtime
+    terminal_disposition: terminal_already_proven
+  - id: F09
+    historical_lot: 2
+    capability: privacy_rights_deletion_and_non_resurrection
+    severity: critical
+    status: later_scope
+    owner: Lot31
+    tracker_issue: 5
+    expected_invariant: privacy rights correction restriction deletion downstream propagation audit SLA and restore non-resurrection are implemented end to end
+    terminal_disposition: owned_by_existing_later_scope
+  - id: F10
+    historical_lot: 2
+    capability: deterministic_supply_chain_release_and_repository_protection
+    severity: high
+    status: later_scope
+    owner: Lot29
+    tracker_issue: 6
+    expected_invariant: dependency locks reproducible installs SBOM attestations repository protection release rollback secret rotation and supported dependency maintenance are implemented and exact-head validated
+    terminal_disposition: owned_by_existing_later_scope
 handoffs:
   - capability: advanced_scoring_calibration_feedback
     owner: Lot25
   - capability: cross_module_derived_state_reconciliation
     owner: Lot28
     tracker_issue: 171
+  - capability: supply_chain_release_provenance_repository_protection
+    owner: Lot29
+    tracker_issue: 6
   - capability: dns_address_safety_and_broad_resilience
     owner: Lot30
     tracker_issue: 169
@@ -78,3 +117,7 @@ handoffs:
     tracker_issue: 5
   - capability: residual_provider_live_proof
     owner: SA20
+terminal_proofs:
+  - capability: isolated_browser_and_download_quarantine
+    owner: SA16
+    tracker_issue: 3
