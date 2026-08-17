@@ -165,6 +165,8 @@ class _Page:
             return _Locator(selector, unique=self.unique_username)
         if selector == "#password":
             return _Locator(selector, password_type=self.password_type)
+        if selector == "button[type=submit]":
+            return _Locator(selector)
         if selector == "#authenticated":
             return _Locator(selector, fail_wait=self.fail_success)
         return _Locator("#challenge-never")
