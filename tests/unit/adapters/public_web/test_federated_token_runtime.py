@@ -162,9 +162,19 @@ def test_token_exchange_uses_exact_post_and_keeps_tokens_out_of_repr() -> None:
 
 def test_token_exchange_rejects_redirect_status_body_and_scope_escalation() -> None:
     cases = (
-        (httpx.Response(302, headers={"Location": "https://evil.example/"}), "redirect_denied"),
+        (
+            httpx.Response(302, headers={"Location": "https://evil.example/"}),
+            "redirect_denied",
+        ),
         (httpx.Response(401, text="private provider body"), "provider_status:401"),
-        (httpx.Response(200, headers={"Content-Type": "text/html"}, text="no"), "content_type_invalid"),
+        (
+            httpx.Response(
+                200,
+                headers={"Content-Type": "text/html"},
+                text="no",
+            ),
+            "content_type_invalid",
+        ),
         (
             httpx.Response(
                 200,
