@@ -69,6 +69,9 @@ class FixtureHandler(BaseHTTPRequestHandler):
                 "text/plain; charset=utf-8",
             )
             return
+        if path == "/manifest.webmanifest":
+            self._send_json({"name": "SA16 L18 Fixture", "start_url": "/"})
+            return
         if path == "/api/app.json":
             with _LOCK:
                 FixtureState.json_hits += 1
@@ -196,6 +199,7 @@ def _home(origin: str) -> str:
 <link rel="alternate" hreflang="fr" href="{origin}static">
 <link rel="alternate" type="application/rss+xml" href="{origin}feed.xml">
 <link rel="stylesheet" href="{origin}assets/site.css">
+<link rel="manifest" href="{origin}manifest.webmanifest">
 <script src="{origin}assets/site.js"></script>
 <script type="application/ld+json">{json_ld}</script>
 <script type="application/json">{embedded}</script>
