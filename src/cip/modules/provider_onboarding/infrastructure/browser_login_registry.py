@@ -20,8 +20,11 @@ from cip.modules.provider_onboarding.domain.federated_auth import (
 
 
 class _ProviderProfileIdentity(Protocol):
-    id: str
-    source_id: str
+    @property
+    def id(self) -> str: ...
+
+    @property
+    def source_id(self) -> str: ...
 
 
 def load_provider_login_profiles(path: Path) -> tuple[ProviderLoginProfile, ...]:
