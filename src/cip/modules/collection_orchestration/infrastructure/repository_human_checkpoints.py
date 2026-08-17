@@ -150,6 +150,7 @@ def cancel_human_checkpoint(
         code="human_checkpoint_cancelled",
         message="human checkpoint cancelled",
     )
+    session.flush()
     return checkpoint.job_id
 
 
@@ -181,6 +182,8 @@ def expire_human_checkpoints(session: Session, *, now: datetime) -> int:
             code="human_checkpoint_expired",
             message="human checkpoint expired",
         )
+    if records:
+        session.flush()
     return len(records)
 
 
@@ -220,6 +223,8 @@ def invalidate_human_checkpoints_for_identity(
             code="human_checkpoint_invalidated",
             message="human checkpoint invalidated",
         )
+    if records:
+        session.flush()
     return len(records)
 
 
