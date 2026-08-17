@@ -79,7 +79,19 @@ from cip.shared.persistence.session import (
     session_scope,
 )
 
-_REQUIRED_SURFACES = frozenset(kind.value for kind in PublicSurfaceKind)
+_REQUIRED_SURFACES = frozenset(
+    {
+        PublicSurfaceKind.RESPONSE_HEADER.value,
+        PublicSurfaceKind.CANONICAL_LINK.value,
+        PublicSurfaceKind.ALTERNATE_LINK.value,
+        PublicSurfaceKind.STYLESHEET.value,
+        PublicSurfaceKind.SCRIPT.value,
+        PublicSurfaceKind.RESOURCE_REFERENCE.value,
+        PublicSurfaceKind.FORM_ENDPOINT.value,
+        PublicSurfaceKind.DOCUMENT_LINK.value,
+        PublicSurfaceKind.MEDIA_LINK.value,
+    }
+)
 _SECRET_MARKERS = ("must-drop", "accesstoken", "sessionid", "password")
 
 
@@ -89,11 +101,10 @@ def main() -> None:
     with serve_fixture() as origin, TemporaryDirectory(prefix="cip-l18-public-") as root:
         organization_id = uuid5(NAMESPACE_URL, origin)
         factory = _factory(Path(root), organization_id, origin, now)
-        config = _config(organization_id, now)
         with session_scope(factory) as session:
             bundle = build_automatic_public_web_runtime(
                 session,
-                config,
+                _config(organization_id, now),
                 now=now,
                 timeout_seconds=15.0,
             )
@@ -101,7 +112,7 @@ def main() -> None:
             raise RuntimeError("L18 automatic runtime did not build exactly one target")
         target = bundle.targets[0]
         schedule = bundle.schedules[0]
-        _prepare_worker_source(factory, target.id, schedule.adapter_id, origin, now)
+        _prepare_worker_source(factory, target.id, schedule.adapter_id, now)
 
         with session_scope(factory) as session:
             if schedule_due_jobs(session, bundle.schedules, now=now) != 1:
@@ -122,7 +133,12 @@ def main() -> None:
             raise RuntimeError("L18 configured crawl concurrency was not persisted")
         if first_metrics.get("effective_concurrency") != 1:
             raise RuntimeError("L18 browser-safe effective concurrency is not explicit")
-        _verify_public_persistence(factory, organization_id, schedule.adapter_id)
+        _verify_public_persistence(
+            factory,
+            organization_id,
+            target.id,
+            schedule.adapter_id,
+        )
 
         with session_scope(factory) as session:
             if schedule_due_jobs(session, bundle.schedules, now=now) != 0:
@@ -149,7 +165,7 @@ def main() -> None:
             raise RuntimeError("L18 fixture observed no conditional 304 request")
 
         plan = _artifact_plan(target.id, origin)
-        _run_artifact_plan(factory, target, plan, origin, now)
+        _run_artifact_plan(factory, target, plan, now)
         _verify_artifacts(factory, plan)
 
     if set(Path(gettempdir()).glob("cip-artifact-*")) != quarantine_before:
@@ -209,7 +225,7 @@ def _config(organization_id: UUID, now: datetime) -> AutomaticPublicWebRuntimeCo
     )
 
 
-def _prepare_worker_source(factory, source_id: str, adapter_id: str, origin: str, now: datetime) -> None:
+def _prepare_worker_source(factory, source_id: str, adapter_id: str, now: datetime) -> None:
     with session_scope(factory) as session:
         sync_source_portfolio(
             session,
@@ -253,7 +269,12 @@ def _health_values(factory, source_id: str) -> dict[str, object]:
         return dict(values)
 
 
-def _verify_public_persistence(factory, organization_id: UUID, adapter_id: str) -> None:
+def _verify_public_persistence(
+    factory,
+    organization_id: UUID,
+    target_id: str,
+    adapter_id: str,
+) -> None:
     with factory() as session:
         surfaces = set(session.scalars(select(PublicSurfaceReferenceRecord.kind)))
         missing = _REQUIRED_SURFACES - surfaces
@@ -279,12 +300,12 @@ def _verify_public_persistence(factory, organization_id: UUID, adapter_id: str) 
             item.mime_type == "application/x-public-resource-tombstone" for item in versions
         ):
             raise RuntimeError("L18 crawler persisted no tombstone version")
-        checkpoint = session.get(CollectionCheckpointRecord, (resources[0].source_id, adapter_id))
+        checkpoint = session.get(CollectionCheckpointRecord, (target_id, adapter_id))
         if checkpoint is None or not checkpoint.payload.get("pages"):
             raise RuntimeError("L18 public crawl checkpoint was not persisted")
         jobs = tuple(session.scalars(select(CollectionJobRecord)))
-        if not jobs or any(job.source_id != resources[0].source_id for job in jobs):
-            raise RuntimeError("L18 public job lineage is inconsistent")
+        if not jobs or any(job.source_id != target_id for job in jobs):
+            raise RuntimeError("L18 target-specific public job lineage is inconsistent")
         if any(resource.organization_id != organization_id for resource in resources):
             raise RuntimeError("L18 public evidence lost organization provenance")
 
@@ -358,8 +379,7 @@ def _artifact_plan(source_id: str, origin: str) -> BrowserActionPlan:
     )
 
 
-def _run_artifact_plan(factory, target, plan: BrowserActionPlan, origin: str, now: datetime) -> None:
-    del origin
+def _run_artifact_plan(factory, target, plan: BrowserActionPlan, now: datetime) -> None:
     with session_scope(factory) as session:
         checkpoint = persist_browser_action_plan(session, plan, now=now)
     with httpx.Client(follow_redirects=False, trust_env=False) as client:
