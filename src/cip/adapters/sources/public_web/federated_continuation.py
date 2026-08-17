@@ -40,7 +40,10 @@ class FederatedContinuationBundle:
                 raise ValueError(f"{label} is invalid")
         if self.state is FederatedContinuationState.TOKEN_READY and self.token is None:
             raise ValueError("token_ready continuation requires token material")
-        if self.state is FederatedContinuationState.AUTHORIZATION_PENDING and self.token is not None:
+        if (
+            self.state is FederatedContinuationState.AUTHORIZATION_PENDING
+            and self.token is not None
+        ):
             raise ValueError("authorization_pending continuation cannot contain token material")
 
     def with_token(self, token: FederatedTokenMaterial) -> FederatedContinuationBundle:
