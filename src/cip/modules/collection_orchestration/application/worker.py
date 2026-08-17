@@ -14,6 +14,7 @@ from cip.modules.collection_orchestration.application.ports import (
     AdapterPartialExecutionError,
     ClaimedJob,
     CollectionAdapter,
+    HumanCheckpointRequiredError,
 )
 from cip.modules.collection_orchestration.application.worker_persistence import (
     persist_batch_projections,
@@ -22,11 +23,14 @@ from cip.modules.collection_orchestration.application.worker_persistence import 
 )
 from cip.modules.collection_orchestration.domain.models import JobStatus
 from cip.modules.collection_orchestration.infrastructure.repository import (
+    HumanCheckpointError,
     LeaseLostError,
     cancel_claimed_job,
     claim_next_job,
     complete_job,
+    expire_human_checkpoints,
     fail_job,
+    pause_claimed_job_for_human,
     persist_partial_progress,
 )
 from cip.modules.data_governance.domain.retention import RetentionPolicy
@@ -45,6 +49,7 @@ class WorkerStatus(StrEnum):
     SUCCEEDED = "succeeded"
     NOT_MODIFIED = "not_modified"
     RETRY_SCHEDULED = "retry_scheduled"
+    AWAITING_HUMAN_CHECKPOINT = "awaiting_human_checkpoint"
     DEAD_LETTERED = "dead_lettered"
     CANCELLED = "cancelled"
     LEASE_LOST = "lease_lost"
@@ -68,6 +73,7 @@ def run_worker_once(
 ) -> WorkerOutcome:
     claim_time = _read_clock(clock)
     with session_scope(factory) as session:
+        expire_human_checkpoints(session, now=claim_time)
         claimed = claim_next_job(session, worker_id=worker_id, now=claim_time)
         if claimed is not None and not source_execution_allowed(
             session,
@@ -109,6 +115,13 @@ def run_worker_once(
             checkpoint_payload=claimed.checkpoint_payload,
             collected_at=claim_time,
             retention_until=retention_until,
+        )
+    except HumanCheckpointRequiredError as exc:
+        return _record_human_checkpoint(
+            factory,
+            claimed=claimed,
+            checkpoint_error=exc,
+            clock=clock,
         )
     except AdapterPartialExecutionError as exc:
         return _record_partial_failure(
@@ -156,6 +169,43 @@ def run_worker_once(
         WorkerStatus.NOT_MODIFIED if batch.not_modified else WorkerStatus.SUCCEEDED,
         job_id=claimed.id,
         observations_written=written,
+    )
+
+
+def _record_human_checkpoint(
+    factory: sessionmaker[Session],
+    *,
+    claimed: ClaimedJob,
+    checkpoint_error: HumanCheckpointRequiredError,
+    clock: Callable[[], datetime],
+) -> WorkerOutcome:
+    try:
+        with session_scope(factory) as session:
+            pause_claimed_job_for_human(
+                session,
+                claimed,
+                checkpoint_error.checkpoint,
+                now=_read_clock(clock),
+            )
+    except LeaseLostError:
+        return WorkerOutcome(
+            WorkerStatus.LEASE_LOST,
+            job_id=claimed.id,
+            error_code="lease_lost",
+        )
+    except (HumanCheckpointError, ValueError) as exc:
+        return _record_failure(
+            factory,
+            claimed=claimed,
+            clock=clock,
+            error_code="invalid_human_checkpoint",
+            error_message=str(exc),
+            retryable=False,
+        )
+    return WorkerOutcome(
+        WorkerStatus.AWAITING_HUMAN_CHECKPOINT,
+        job_id=claimed.id,
+        error_code="human_checkpoint_required",
     )
 
 

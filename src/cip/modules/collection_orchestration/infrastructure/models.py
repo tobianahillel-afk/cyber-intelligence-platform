@@ -51,6 +51,7 @@ class CollectionJobRecord(Base):
         nullable=True,
         index=True,
     )
+    human_resume_pending: Mapped[bool] = mapped_column(Boolean, default=False)
     error_code: Mapped[str | None] = mapped_column(String(100), nullable=True)
     error_message: Mapped[str | None] = mapped_column(Text, nullable=True)
     observations_written: Mapped[int] = mapped_column(Integer, default=0)
@@ -109,3 +110,64 @@ class CollectionDeadLetterRecord(Base):
     error_code: Mapped[str] = mapped_column(String(100))
     error_message: Mapped[str] = mapped_column(Text)
     checkpoint_snapshot: Mapped[dict[str, object] | None] = mapped_column(JSON, nullable=True)
+
+
+class CollectionHumanCheckpointRecord(Base):
+    __tablename__ = "collection_human_checkpoints"
+    __table_args__ = (
+        Index("ix_collection_human_checkpoints_job_state", "job_id", "state"),
+        Index("ix_collection_human_checkpoints_expiry", "state", "expires_at"),
+        Index(
+            "ix_collection_human_checkpoints_identity_state",
+            "delegated_identity_id",
+            "state",
+        ),
+    )
+
+    id: Mapped[UUID] = mapped_column(primary_key=True)
+    job_id: Mapped[UUID] = mapped_column(
+        ForeignKey("collection_jobs.id", ondelete="CASCADE"),
+        index=True,
+    )
+    source_id: Mapped[str] = mapped_column(ForeignKey("sources.id"), index=True)
+    adapter_id: Mapped[str] = mapped_column(String(100), index=True)
+    delegated_identity_id: Mapped[UUID] = mapped_column(
+        ForeignKey("delegated_browser_identities.id", ondelete="RESTRICT"),
+        index=True,
+    )
+    purpose: Mapped[str] = mapped_column(String(200), index=True)
+    kind: Mapped[str] = mapped_column(String(40), index=True)
+    state: Mapped[str] = mapped_column(String(40), index=True)
+    correlation_digest: Mapped[str] = mapped_column(String(64))
+    session_reference: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)
+    completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    cancelled_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    invalidated_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+
+class CollectionHumanCheckpointEventRecord(Base):
+    __tablename__ = "collection_human_checkpoint_events"
+    __table_args__ = (
+        Index(
+            "ix_collection_human_checkpoint_events_checkpoint_time",
+            "checkpoint_id",
+            "occurred_at",
+        ),
+        Index("ix_collection_human_checkpoint_events_job_time", "job_id", "occurred_at"),
+    )
+
+    id: Mapped[UUID] = mapped_column(primary_key=True)
+    checkpoint_id: Mapped[UUID] = mapped_column(
+        ForeignKey("collection_human_checkpoints.id", ondelete="CASCADE"),
+        index=True,
+    )
+    job_id: Mapped[UUID] = mapped_column(
+        ForeignKey("collection_jobs.id", ondelete="CASCADE"),
+        index=True,
+    )
+    event_type: Mapped[str] = mapped_column(String(40), index=True)
+    occurred_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)
+    actor_reference: Mapped[str] = mapped_column(String(200))
+    reason: Mapped[str | None] = mapped_column(String(500), nullable=True)

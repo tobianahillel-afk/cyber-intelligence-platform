@@ -1,0 +1,28 @@
+version: 1
+profiles:
+  - id: controlled-oauth-v1
+    source_id: sa16-l17-controlled-provider
+    flow: oauth2_authorization_code_pkce
+    authorization_url: http://127.0.0.1:18777/oauth/authorize
+    redirect_uri: http://127.0.0.1:18777/oauth/callback
+    client_id: cip-controlled-public-client
+    token_url: http://127.0.0.1:18777/oauth/token
+    scopes: [read]
+    allowed_transitions:
+      - host: 127.0.0.1
+        path_prefix: /oauth/authorize
+        methods: [GET]
+      - host: 127.0.0.1
+        path_prefix: /oauth/callback
+        methods: [GET]
+      - host: 127.0.0.1
+        path_prefix: /oauth/token
+        methods: [POST]
+    review:
+      document_reference: SA16-L17-CONTROLLED-OAUTH
+      reviewed_at: '2026-08-17T00:00:00+00:00'
+    budgets:
+      max_requests: 32
+      max_redirects: 4
+      timeout_ms: 15000
+      material_ttl_seconds: 3600

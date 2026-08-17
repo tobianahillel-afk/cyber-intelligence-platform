@@ -30,6 +30,7 @@ _ACTIVE_STATUSES = (
     JobStatus.PENDING.value,
     JobStatus.RUNNING.value,
     JobStatus.RETRY_SCHEDULED.value,
+    JobStatus.AWAITING_HUMAN_CHECKPOINT.value,
 )
 
 
@@ -78,7 +79,7 @@ def claim_next_job(
     for record in session.scalars(_claim_statement(current)):
         if not circuit_allows_claim(session, record=record, now=current):
             continue
-        if record.attempt >= record.max_attempts:
+        if not record.human_resume_pending and record.attempt >= record.max_attempts:
             dead_letter_job(
                 session,
                 record=record,
@@ -131,7 +132,9 @@ def _claim_record(
 ) -> ClaimedJob:
     lease_expires_at = now + timedelta(seconds=record.lease_seconds)
     record.status = JobStatus.RUNNING.value
-    record.attempt += 1
+    if not record.human_resume_pending:
+        record.attempt += 1
+    record.human_resume_pending = False
     record.started_at = record.started_at or now
     record.lease_owner = worker_id
     record.lease_expires_at = lease_expires_at
@@ -190,6 +193,7 @@ def _job_values(job: CollectionJob) -> dict[str, object]:
         "circuit_failure_threshold": job.circuit_failure_threshold,
         "circuit_reset_seconds": job.circuit_reset_seconds,
         "created_at": job.created_at,
+        "human_resume_pending": False,
         "observations_written": 0,
         "not_modified": False,
     }

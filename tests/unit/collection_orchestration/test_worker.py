@@ -83,6 +83,11 @@ def _patch_scope(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(worker, "session_scope", fake_scope)
     monkeypatch.setattr(
         worker,
+        "expire_human_checkpoints",
+        lambda *args, **kwargs: 0,
+    )
+    monkeypatch.setattr(
+        worker,
         "source_execution_allowed",
         lambda *args, **kwargs: True,
     )
