@@ -35,6 +35,7 @@ A lot is complete only when one final commit passes every applicable backend, fr
 - Public or licensed data is minimized. Credentials, victim files, private communications, private-life data, active prospect scanning, and access-control bypasses are excluded.
 - Every commercial lot covers the canonical service taxonomy rather than treating SIEM or SOC as the default need.
 - Any later commit invalidates an earlier validation result; the final pull-request head must pass all gates.
+- Accepted limitations and deferred capabilities must retain a named product lot, Source Activation lot, or explicit product/security/legal exclusion; generic `future hardening`, `manual`, `blocked`, or `deferred` language is not sufficient ownership by itself.
 
 ## Product delivery stages
 
@@ -72,14 +73,14 @@ A lot is complete only when one final commit passes every applicable backend, fr
 | 21 | Professional organization maps, contacts, and public community signals | `IMPLEMENTED_VALIDATED` |
 | 22 | Conditional, premium, LinkedIn, Discord, and BrixHub integrations | `IMPLEMENTED_VALIDATED` |
 | 23 | Analyst research and governed OSINT catalog orchestration | `IMPLEMENTED_VALIDATED` |
-| 24 | Signal fusion, need hypotheses, and commercial taxonomy | `PLANNED_LOCKED` |
+| 24 | Signal fusion, need hypotheses, and commercial taxonomy | `IMPLEMENTED_VALIDATED` |
 | 25 | Advanced scoring, calibration, explainability, and feedback | `PLANNED_LOCKED` |
 | 26 | Native commercial operations, alerts, tasks, and engagement | `PLANNED_LOCKED` |
 | 27 | Complete company intelligence and analyst workspace | `PLANNED_LOCKED` |
 | 28 | Data quality, reconciliation, lineage, and publication gates | `PLANNED_LOCKED` |
 | 29 | Supply-chain, release provenance, and repository protection | `PLANNED_LOCKED` |
-| 30 | Observability, performance, resilience, and recovery | `PLANNED_LOCKED` |
-| 31 | Isolated browser and download-quarantine runtime | `DEFERRED` |
+| 30 | Observability, performance, resilience, recovery, and network hardening | `PLANNED_LOCKED` |
+| 31 | Privacy rights, lawful-basis operations, and deletion propagation | `PLANNED_LOCKED` |
 | 32 | Controlled pilot and production gate | `PLANNED_LOCKED` |
 
 ## Lot 00 — Product, legal, and source-governance foundation
@@ -465,9 +466,9 @@ A lot is complete only when one final commit passes every applicable backend, fr
 
 ## Lot 24 — Signal fusion, need hypotheses, and commercial taxonomy
 
-**Status:** `PLANNED_LOCKED`
+**Status:** `IMPLEMENTED_VALIDATED`
 
-**Primary business outcome:** Fuse independent evidence into explicit cybersecurity need hypotheses across the complete service taxonomy without collapsing weak observations into deterministic conclusions.
+**Outcome:** Release `0.24.0` provides a versioned evidence-first fusion layer across the 19 canonical cybersecurity service families and 12 canonical need-hypothesis classes. Independent/corroboration groups prevent duplicated or syndicated evidence from counting as independent confirmations; contradiction, negative evidence, freshness, expiry, historical-only state, source contribution and ablation remain explicit; and weak research discovery cannot silently become a confirmed commercial need.
 
 **Dependencies:** Lots 11–23 and the canonical service taxonomy.
 
@@ -630,7 +631,8 @@ A lot is complete only when one final commit passes every applicable backend, fr
 - dependency-update policy and lockfile review;
 - protected `main`, required PR and checks, CODEOWNERS, resolved conversations, and force-push prohibition;
 - secret scanning and available repository security controls;
-- release, rollback, and secret-rotation runbooks.
+- release, rollback, and secret-rotation runbooks;
+- supported dependency migration for the historical Starlette/TestClient deprecation path tracked in issue #6, without weakening the test suite.
 
 **Required tests:**
 
@@ -639,18 +641,19 @@ A lot is complete only when one final commit passes every applicable backend, fr
 - SBOM generation;
 - pinned GitHub Action SHAs;
 - protected-branch behavior;
+- supported Starlette/httpx test-client migration with no regression;
 - release rollback rehearsal;
 - full regression gates.
 
-**Exit gate:** Every release has reproducible dependencies, provenance evidence, and repository protections preventing unreviewed changes.
+**Exit gate:** Every release has reproducible dependencies, provenance evidence, and repository protections preventing unreviewed changes, and known dependency-maintenance debt assigned to this lot has been resolved on supported versions.
 
-## Lot 30 — Observability, performance, resilience, and recovery
+## Lot 30 — Observability, performance, resilience, recovery, and network hardening
 
 **Status:** `PLANNED_LOCKED`
 
-**Primary business outcome:** Operate collection, processing, APIs, and analyst workflows reliably under expected load and recover predictably from failure.
+**Primary business outcome:** Operate collection, processing, APIs, and analyst workflows reliably under expected load, recover predictably from failure, and prevent authorized public hostnames from reaching forbidden network addresses through DNS rebinding or inconsistent resolution handling.
 
-**Dependencies:** Lots 02, 10, 27–29.
+**Dependencies:** Lots 02, 10, 12, 23, 27–29 and the merged SA-16 acquisition/browser runtime.
 
 **Deliverables:**
 
@@ -660,7 +663,12 @@ A lot is complete only when one final commit passes every applicable backend, fr
 - backup, restore, disaster recovery, and suppression reapplication;
 - worker crash, database interruption, provider outage, and partial-dependency recovery;
 - runbooks and incident exercises;
-- data-integrity checks after recovery.
+- data-integrity checks after recovery;
+- one shared outbound-address policy for static HTTP, browser interception, authenticated flows, OAuth/token requests, redirects/retries, and controlled downloads;
+- canonical A/AAAA/CNAME/address-family handling with fail-closed rejection of loopback, private, link-local, multicast, unspecified, reserved or otherwise forbidden destination classes;
+- DNS-resolution/address validation at the point a network connection may occur, including re-evaluation after redirect, retry, reconnect, or resolver drift;
+- deterministic protection against DNS rebinding without weakening TLS hostname verification or source-governance host/path checks;
+- bounded network-decision telemetry that does not log credentials, session material, private content, or sensitive query data.
 
 **Required tests:**
 
@@ -669,40 +677,53 @@ A lot is complete only when one final commit passes every applicable backend, fr
 - database and provider interruption;
 - backup/restore and suppression replay;
 - alerting and SLO calculation;
+- public-to-private/loopback/link-local DNS rebinding fixtures fail before a forbidden connection;
+- mixed-address, CNAME, IPv4-mapped IPv6, redirect, retry, reconnect, browser-subresource and controlled-download address-policy cases;
+- TLS verification and source host/path authorization are not weakened to implement address pinning;
 - performance regressions;
 - complete release gates.
 
-**Exit gate:** Operational failure is observable, bounded, recoverable, and documented with measured recovery objectives.
+**Exit gate:** Operational failure is observable, bounded, recoverable, and documented with measured recovery objectives, and no product-owned outbound acquisition path can pass hostname/source authorization and then reach a forbidden address because DNS resolution changed or was interpreted inconsistently. `docs/lots/LOT_30_NETWORK_HARDENING_AMENDMENT.md` is normative for the DNS/address-safety residual.
 
-## Lot 31 — Isolated browser and download-quarantine runtime
+## Lot 31 — Privacy rights, lawful-basis operations, and deletion propagation
 
-**Status:** `DEFERRED`
+**Status:** `PLANNED_LOCKED`
 
-**Primary business outcome:** Provide a browser path only when approved structured APIs and bounded static HTTP cannot satisfy a reviewed source requirement.
+**Primary business outcome:** Make privacy rights operational end to end so correction, objection/restriction, erasure and applicable access/export requests are tracked, propagated, auditable, replay-safe, and cannot be silently undone by later ingestion, projection rebuild, export, cache refresh, or backup restoration.
 
-**Dependencies:** Lots 09, 10, 23, 28–30 plus an approved browser-specific threat model.
+**Dependencies:** Lots 01–02, 08–10, 20–30 plus deployment-specific legal and data-protection decisions for supported jurisdictions and channels.
 
 **Deliverables:**
 
-- isolated Chromium/Playwright workers;
-- ephemeral profile and context per source/account;
-- host/path allowlists and network interception;
-- page, time, CPU, memory, and download budgets;
-- login, MFA, CAPTCHA, anti-bot, and terms-change detection producing `manual_action_required`;
-- quarantined downloads with MIME detection, hashes, size limits, archive controls, isolated parsing, kill switch, and cleanup;
-- no CAPTCHA solving, copied cookies, fake accounts, proxy bypass, or ban evasion.
+- machine-readable processing-purpose, data-category and lawful-basis state by source, purpose, jurisdiction and communication channel;
+- legitimate-interest assessment references where that basis is used, plus retention, minimization, transfer and recipient constraints;
+- persisted rights-request workflow with request type, scope, jurisdiction, received/due times, owner, status, decision and completion evidence;
+- protected privacy/operator API and UI with proportionate requestor-verification state, SLA timers, escalation and overdue reporting;
+- stable suppression/privacy keys that prevent re-ingestion without retaining deleted personal payloads;
+- correction, restriction and deletion propagation across canonical PostgreSQL records, derived projections, search/index/cache layers, generated exports, commercial/engagement/CRM-style projections and other product-owned copies when those components exist;
+- invalidation/recomputation of signals, hypotheses, scores, opportunities, contact recommendations and saved views whose personal-data basis changed;
+- connector-aware correction/deletion propagation where an approved upstream contract supports it, and explicit local suppression when it does not;
+- durable per-destination propagation state so partial completion cannot be reported as global success;
+- suppression and rights state restored before ordinary collection resumes after backup recovery;
+- deterministic non-resurrection across ingestion, backfill, replay, re-resolution, projection rebuild and restore;
+- request chronology and audit evidence without copying deleted personal payloads into logs, tombstones, dead letters, metrics, traces or support artifacts;
+- jurisdiction/channel/transfer matrix and operator runbooks for requests, failed propagation, restore and privacy incidents.
 
 **Required tests:**
 
-- local simulated application E2E;
-- isolation between sources;
-- network allowlist enforcement;
-- challenge pause behavior;
-- download quarantine and parser failure;
-- browser crash and cleanup;
-- complete security and regression gates.
+- a deleted contact/person cannot reappear after fresh ingestion, backfill, identity-resolution replay, projection rebuild or backup restore;
+- correction updates canonical and derived state and invalidates stale outputs;
+- restriction/objection blocks prohibited use without falsely claiming erasure;
+- export, cache/index, engagement and CRM-style projections are invalidated or updated consistently;
+- concurrent collection and deletion cannot commit a resurrected current projection;
+- partial propagation remains visibly incomplete and retryable rather than reporting false success;
+- suppression state is applied before workers resume after restore;
+- audit records retain request/action metadata but not deleted personal payloads;
+- deadlines, escalation, authorization, role boundaries and protected API/UI behavior are enforced;
+- provider deletion unavailability, revocation and retry exhaustion fail closed;
+- migration, architecture, backend, frontend, security, privacy and full regression gates.
 
-**Exit gate:** The browser runtime remains disabled unless separately approved and cannot escape source, network, account, or download isolation.
+**Exit gate:** A rights request can be accepted, tracked, decided, propagated across every applicable product-owned destination, verified and closed; corrected/restricted/deleted personal data cannot silently reappear through ingestion, replay, restore, projection rebuild, cache/index refresh, export or commercial workflow; and the audit trail proves what happened without retaining the deleted payload itself. `docs/lots/LOT_31_PRIVACY_RIGHTS_AND_DELETION_PROPAGATION.md` is the detailed normative scope.
 
 ## Lot 32 — Controlled pilot and production gate
 
@@ -710,12 +731,13 @@ A lot is complete only when one final commit passes every applicable backend, fr
 
 **Primary business outcome:** Validate the complete platform with a controlled set of authorized sources, organizations, analysts, and measurable commercial outcomes before general production use.
 
-**Dependencies:** Lots 00–30 and Lot 31 only if explicitly activated.
+**Dependencies:** Lots 00–31. Lot 32 may not treat privacy rights or DNS/address safety as pilot-only experiments; Lots 30 and 31 must have already passed their implementation exit gates.
 
 **Deliverables:**
 
 - pilot scope, users, organizations, sources, jurisdictions, and success metrics;
 - data-protection, security, source-authorization, and operational sign-offs;
+- privacy-rights/operator sign-off using the implemented Lot 31 workflow;
 - analyst training and runbooks;
 - precision, recall, false-positive, freshness, source-value, workflow, and commercial-outcome measurement;
 - support, incident, rollback, and kill-switch procedures;
@@ -725,21 +747,23 @@ A lot is complete only when one final commit passes every applicable backend, fr
 **Required tests:**
 
 - end-to-end authorized-source workflows;
-- privacy rights and suppression;
-- source revocation and kill switches;
+- privacy rights, correction, restriction, deletion, suppression and non-resurrection;
+- DNS/address-safety and source revocation/kill switches;
 - disaster recovery;
 - role and permission tests;
 - pilot metrics and acceptance thresholds;
 - security, performance, and full regression gates.
 
-**Exit gate:** Named owners approve a measured pilot result, all mandatory controls are operational, and production can be disabled or rolled back without data-integrity loss.
+**Exit gate:** Named owners approve a measured pilot result, all mandatory controls are operational, privacy and outbound-network hardening have already passed their dedicated lot gates, and production can be disabled or rolled back without data-integrity loss.
 
 ## Current release boundary
 
-Version `0.24.0` implements and validates lots `00–23`. Lot 23 adds persisted governed research plans, immutable revisions and decisions, ordered steps, budgets, explicit execution modes, replay-safe attempts and results, deterministic source ranking, protected APIs and the analyst Research workspace.
+Version `0.24.0` implements and validates lots `00–24`. Lot 23 adds persisted governed research plans, immutable revisions and decisions, ordered steps, budgets, explicit execution modes, replay-safe attempts and results, deterministic source ranking, protected APIs and the analyst Research workspace. Lot 24 adds generalized signal fusion and explicit cybersecurity need hypotheses across the canonical service taxonomy with independent-source grouping, contradiction/negative evidence, freshness/expiry, weak-research boundaries and source-contribution explanations.
 
 Research remains fail-closed. A research question, plan, ranked source, manual link or eligible step is not execution authorization. Automated eligibility requires the exact approved source/tool/purpose/category/step/host/path/budget/risk plus positive persisted Source Governance, Provider Onboarding, executable Source Portfolio, registered adapter capability, quota/cost and applicable conditional-provider controls. Manual links remain analyst actions, and `approved_ingestion` only accepts separately approved paths; the built-in `existing-evidence-reference` path validates an already persisted Evidence reference rather than fetching new content.
 
-Lot 23 preserves the evidence/commercial boundary: an attempt or result is not itself evidence, captured evidence retains source identity and provenance, and no research output directly creates a commercial signal, need hypothesis, opportunity, contact target or outreach authorization. The release adds no arbitrary HTTP tool, unrestricted browser, authenticated automation, active scanning/probing, CAPTCHA/MFA/paywall bypass, fake identity, autonomous opportunity creation or outreach path.
+The evidence/commercial boundary remains explicit: a provider response, research attempt/result, observation, claim, signal, need hypothesis, score, opportunity and outreach authorization are separate states. Lot 24 does not turn duplicated reporting, global vulnerability knowledge, historical incidents or weak discovery metadata into unsupported current commercial certainty.
 
-Lot 24 — Signal fusion, need hypotheses, and commercial taxonomy — is the next locked implementation lot and must start from the merged Lot 23 `main` commit.
+The original deferred Lot 31 browser/download scope was subsequently implemented by the merged SA-16 acquisition/browser/authentication programme and must not be reimplemented as a competing runtime. The remaining Lot 12 DNS-resolution-pinning risk is now owned by Lot 30, and end-to-end privacy-rights/deletion propagation is now owned by Lot 31. The reconciliation is recorded in `docs/PRODUCT_LOT_ORPHAN_RECONCILIATION.md`.
+
+Lot 25 — Advanced scoring, calibration, explainability, and feedback — is the next locked sequential product implementation lot and must start from the merged current `main` baseline.
