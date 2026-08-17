@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime
 from pathlib import Path
+from typing import Protocol
 
 import yaml
 
@@ -16,6 +17,11 @@ from cip.modules.provider_onboarding.domain.federated_auth import (
     ProviderFederatedAuthFlow,
     ProviderFederatedAuthProfile,
 )
+
+
+class _ProviderProfileIdentity(Protocol):
+    id: str
+    source_id: str
 
 
 def load_provider_login_profiles(path: Path) -> tuple[ProviderLoginProfile, ...]:
@@ -48,11 +54,14 @@ def _registry_profiles(path: Path, label: str) -> list[object]:
     return raw_profiles
 
 
-def _unique_profiles(profiles: tuple[object, ...], label: str) -> None:
-    ids = [str(getattr(profile, "id")) for profile in profiles]
+def _unique_profiles(
+    profiles: tuple[_ProviderProfileIdentity, ...],
+    label: str,
+) -> None:
+    ids = [profile.id for profile in profiles]
     if len(ids) != len(set(ids)):
         raise ValueError(f"duplicate {label} profile id")
-    sources = [str(getattr(profile, "source_id")) for profile in profiles]
+    sources = [profile.source_id for profile in profiles]
     if len(sources) != len(set(sources)):
         raise ValueError(f"duplicate {label} source_id")
 
