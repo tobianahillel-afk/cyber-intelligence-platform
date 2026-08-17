@@ -21,7 +21,7 @@ The product covers the complete canonical cybersecurity service taxonomy rather 
 
 The current validated product release is version `0.24.0`, covering normal product lots `00` through `24`.
 
-That baseline includes:
+That historical bounded-context baseline includes:
 
 - source governance, provider onboarding, retention, suppression, provenance and durable source/runtime controls;
 - PostgreSQL persistence, reversible migrations, scheduler/worker/checkpoint/retry/recovery mechanics;
@@ -32,19 +32,21 @@ That baseline includes:
 - governed analyst research orchestration with explicit manual/automated execution boundaries;
 - generalized signal fusion and cybersecurity need hypotheses across the 19 canonical service families and 12 canonical hypothesis classes, with independent-source/corroboration groups, contradiction and negative evidence, freshness/expiry, weak-research boundaries, rule/taxonomy versioning and source-contribution explanations.
 
-Lot `24` is therefore `IMPLEMENTED_VALIDATED`; it is not the next planned lot. The next sequential product lot is **Lot 25 — Advanced scoring, calibration, explainability, and feedback**.
+Lot `24` remains the latest historically `IMPLEMENTED_VALIDATED` normal product lot; it is not the next planned lot. The next sequential product lot is **Lot 25 — Advanced scoring, calibration, explainability, and feedback**.
+
+A later cross-module audit found an important finality boundary that the local Lots 13–24 validations did not close: the runtime does not yet guarantee one durable automatic chain from every canonical change through applicability/relationships/graph/signals/hypotheses/opportunities **and the reverse invalidation chain for correction, retraction, expiry, suppression, deletion and identity changes**. That composed property is now explicit mandatory **Lot 28** scope tracked by issue #171. The historical lot numbers are not reopened, but their cross-lot reactive finality must not be represented as already complete.
 
 ## Product roadmap truth
 
 [`docs/PROJECT_DELIVERY_PLAN.md`](docs/PROJECT_DELIVERY_PLAN.md) is the authoritative normal-product roadmap. The post-SA16 orphan audit and ownership repair is recorded in [`docs/PRODUCT_LOT_ORPHAN_RECONCILIATION.md`](docs/PRODUCT_LOT_ORPHAN_RECONCILIATION.md).
 
-- Lots `00–24`: `IMPLEMENTED_VALIDATED`.
+- Lots `00–24`: historical `IMPLEMENTED_VALIDATED` bounded-context baseline.
 - Lots `25–27`: advanced scoring/calibration, native commercial operations, and Company 360/analyst workspace.
-- Lot `28`: data quality, reconciliation, lineage and publication gates.
+- Lot `28`: data quality, reconciliation, lineage and publication gates **plus the mandatory derived-state reconciliation/reactive invalidation recovery L01–L12 tracked by issue #171**.
 - Lot `29`: supply-chain/release provenance/repository protection, including the historical Starlette/TestClient dependency-maintenance path.
 - Lot `30`: observability, performance, resilience and recovery **plus the historical DNS-resolution-pinning / DNS-rebinding hardening residual**.
 - Lot `31`: **end-to-end privacy rights, lawful-basis operations, correction/restriction/erasure and deletion propagation**.
-- Lot `32`: controlled pilot and production gate, only after mandatory Lots 30 and 31 have passed their own exit gates.
+- Lot `32`: controlled pilot and production gate, only after mandatory Lots 28, 30 and 31 have passed their own exit gates.
 
 The old deferred Lot 31 browser/download scope is not future product work anymore. The browser/authentication/download runtime was subsequently implemented through SA-16. It must not be rebuilt as a competing normal-product runtime.
 
@@ -56,9 +58,11 @@ A modeled source, adapter, browser runtime or research option is not automatical
 
 SA-16 materially delivered the governed company-web/browser/authentication acquisition layer: automatic governed targets/schedules, recursive bounded public acquisition, semantic and structured extraction, bounded Chromium fallback, rendered network/script-state capture, reviewed browser actions, screenshots, controlled downloads/quarantine, delegated identities, reviewed login/session reuse, OAuth/OIDC/SSO and durable human checkpoints. Provider-specific execution remains separately authorized, and CAPTCHA/MFA/provider-security controls remain hard stop/resume boundaries rather than bypass targets.
 
-SA-21 now owns the previously orphaned source-activation recovery items. That source-activation ownership must not be confused with normal product Lot 30/31 ownership.
+SA-21 now owns the previously orphaned source-activation recovery items. That source-activation ownership must not be confused with normal product Lot 28/30/31 ownership. No SA-22 is created for the derived-state reconciliation gap because it is a normal product architecture responsibility.
 
 ## Evidence flow
+
+Target product flow:
 
 ```text
 source candidate
@@ -72,6 +76,8 @@ source candidate
   -> alert / task / company workspace / opportunity
   -> analyst decision and outcome feedback
 ```
+
+The current `0.24.0` bounded contexts implement the individual layers, but the **platform-wide automatic propagation/invalidation guarantee between all of those layers is not yet final**. Lot 28 owns the durable canonical-change outbox, dependency-driven/time-driven reconciliation, desired-set invalidation, incremental/backfill/replay convergence and publication-readiness proof needed to make this diagram an ordinary runtime invariant rather than a sequence that is only correct when every necessary local recompute happens to be invoked.
 
 Important invariants:
 
@@ -109,6 +115,8 @@ Domain modules cannot depend on FastAPI, SQLAlchemy models, adapters, API packag
 
 Canonical provider payloads never write directly to company, score, alert or opportunity projections.
 
+Lot 28 must preserve that rule: provider adapters emit governed source-native/canonical data, while a separate durable reconciliation layer reacts to committed canonical changes through application-level projector contracts. The fix must not introduce provider-specific direct graph/hypothesis/opportunity writes or cross-module infrastructure shortcuts.
+
 ## Quality gates
 
 Every pull request must pass on one final SHA:
@@ -131,7 +139,9 @@ Core code limits include:
 - React component: maximum 300 lines;
 - no test/coverage weakening merely to pass CI.
 
-Normal-lot documentation now has an explicit **no-orphan rule**: every useful accepted limitation must be owned by a named later product lot, a named Source Activation lot, or an explicit product/security/legal exclusion. Generic `future hardening`, `manual`, `blocked` or `deferred` wording is not sufficient ownership by itself.
+Normal-lot documentation has an explicit **no-orphan rule**: every useful accepted limitation must be owned by a named later product lot, a named Source Activation lot, or an explicit product/security/legal exclusion. Generic `future hardening`, `manual`, `blocked` or `deferred` wording is not sufficient ownership by itself.
+
+For derived-state correctness, `works when explicitly recomputed`, `refresh endpoint exists`, `domain reconciler is correct when invoked`, or `local tests pass` is also not sufficient terminal evidence. Ordinary runtime propagation, reverse invalidation, time transitions and replay convergence must be proven.
 
 ## Source and data safety
 
@@ -151,6 +161,26 @@ The platform does not:
 - turn a research result or weak observation directly into a commercial conclusion.
 
 ## Current orphan-reconciliation ownership
+
+### Lot 28 — Derived-state reconciliation and reactive invalidation
+
+[`docs/lots/LOT_28_DERIVED_STATE_RECONCILIATION_RECOVERY.md`](docs/lots/LOT_28_DERIVED_STATE_RECONCILIATION_RECOVERY.md) is the canonical amendment. Implementation is tracked by issue #171.
+
+Lot 28 owns the missing composed finality across the already implemented bounded contexts, including:
+
+- transactional canonical-change outbox and durable idempotent reconciliation jobs;
+- explicit dependency routing;
+- automatic applicability/relationship/graph reconciliation;
+- versioned canonical-to-commercial signal synthesis with truth-preserving no-upgrade rules;
+- desired-set need-hypothesis invalidation, including zero-result withdrawal/expiry;
+- migration away from the legacy SIEM/SOC private orchestration path into one generalized pipeline;
+- separation of analyst workflow state from generated-basis currentness;
+- time-only expiry/staleness/validity sweeps;
+- incremental/backfill/shuffled replay/restore convergence;
+- `current / stale / reconciling / failed` readiness and publication gates;
+- exact-head E2E proof of both forward propagation and reverse invalidation.
+
+The current release is still `0.24.0`; this work targets Lot 28 / `0.28.0` and does not make the current package pretend to be newer.
 
 ### Lot 30 — DNS/address safety
 
@@ -244,6 +274,10 @@ npm run build
 - [`docs/PROJECT_DELIVERY_PLAN.md`](docs/PROJECT_DELIVERY_PLAN.md)
 - [`docs/PRODUCT_LOT_ORPHAN_RECONCILIATION.md`](docs/PRODUCT_LOT_ORPHAN_RECONCILIATION.md)
 - [`docs/LOT_24_SIGNAL_FUSION_CLOSEOUT.md`](docs/LOT_24_SIGNAL_FUSION_CLOSEOUT.md)
+- [`docs/lots/LOT_28_DERIVED_STATE_RECONCILIATION_RECOVERY.md`](docs/lots/LOT_28_DERIVED_STATE_RECONCILIATION_RECOVERY.md)
+- [`docs/lots/LOT_28_REACTIVE_RECONCILIATION_MICROLOTS.md`](docs/lots/LOT_28_REACTIVE_RECONCILIATION_MICROLOTS.md)
+- [`docs/lots/LOT_28_DEPENDENCY_INVALIDATION_MATRIX.md`](docs/lots/LOT_28_DEPENDENCY_INVALIDATION_MATRIX.md)
+- [`docs/lots/LOT_28_IMPLEMENTATION_GAP_AUDIT.md`](docs/lots/LOT_28_IMPLEMENTATION_GAP_AUDIT.md)
 - [`docs/lots/LOT_30_NETWORK_HARDENING_AMENDMENT.md`](docs/lots/LOT_30_NETWORK_HARDENING_AMENDMENT.md)
 - [`docs/lots/LOT_31_PRIVACY_RIGHTS_AND_DELETION_PROPAGATION.md`](docs/lots/LOT_31_PRIVACY_RIGHTS_AND_DELETION_PROPAGATION.md)
 - [`docs/source_activation/SA_16_COMPLETION_AUDIT_AND_REMAINING_LOTS.md`](docs/source_activation/SA_16_COMPLETION_AUDIT_AND_REMAINING_LOTS.md)
