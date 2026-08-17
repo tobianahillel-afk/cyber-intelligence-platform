@@ -4,6 +4,8 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from uuid import UUID
 
+from sa16_l17_controlled_oauth_fixture import BASE
+
 from cip.adapters.sources.public_web.federated_checkpoint_flow import (
     FederatedCheckpointContext,
 )
@@ -32,7 +34,6 @@ from cip.modules.source_governance.domain.models import (
 )
 from cip.modules.source_governance.infrastructure.models import SourceRecord
 from cip.modules.source_governance.infrastructure.registry import SourceRegistryEntry
-from sa16_l17_controlled_oauth_fixture import BASE
 
 SOURCE_ID = "sa16-l17-controlled-provider"
 ADAPTER_ID = "sa16-l17-controlled-oauth"
