@@ -47,6 +47,28 @@ def _profile(**changes: object) -> ProviderLoginProfile:
     return ProviderLoginProfile(**values)  # type: ignore[arg-type]
 
 
+def _registry(profile_id: str = "p", source_id: str = "provider") -> str:
+    return f"""\
+version: 1
+profiles:
+  - id: {profile_id}
+    source_id: {source_id}
+    login_url: https://provider.example/login
+    username_selector: '#u'
+    secret_selector: '#p'
+    submit_selector: '#s'
+    success_selector: '#ok'
+    authenticated_probe_url: https://provider.example/private
+    allowed_transitions:
+      - host: provider.example
+        path_prefix: /
+        methods: [GET, POST]
+    review:
+      document_reference: AUTH
+      reviewed_at: '2026-08-17T00:00:00+00:00'
+"""
+
+
 def test_transition_rule_rejects_invalid_host_path_and_empty_methods() -> None:
     with pytest.raises(ValueError, match="host"):
         _rule(host="bad host")
@@ -131,25 +153,7 @@ def test_registry_rejects_missing_file_root_shape_and_profile_list(tmp_path: Pat
 
 
 def test_registry_rejects_invalid_nested_shapes_and_values(tmp_path: Path) -> None:
-    base = """\
-version: 1
-profiles:
-  - id: p
-    source_id: provider
-    login_url: https://provider.example/login
-    username_selector: '#u'
-    secret_selector: '#p'
-    submit_selector: '#s'
-    success_selector: '#ok'
-    authenticated_probe_url: https://provider.example/private
-    allowed_transitions:
-      - host: provider.example
-        path_prefix: /
-        methods: [GET, POST]
-    review:
-      document_reference: AUTH
-      reviewed_at: '2026-08-17T00:00:00+00:00'
-"""
+    base = _registry()
     review_block = (
         "    review:\n"
         "      document_reference: AUTH\n"
@@ -176,3 +180,59 @@ profiles:
         path.write_text(payload, encoding="utf-8")
         with pytest.raises(ValueError, match=match):
             load_provider_login_profiles(path)
+
+
+def test_registry_rejects_duplicate_profile_ids(tmp_path: Path) -> None:
+    second = _registry(source_id="provider-two").split("profiles:\n", 1)[1]
+    path = tmp_path / "registry.yml"
+    path.write_text(_registry() + second, encoding="utf-8")
+
+    with pytest.raises(ValueError, match="duplicate provider login profile id"):
+        load_provider_login_profiles(path)
+
+
+def test_registry_rejects_optional_and_budget_type_errors(tmp_path: Path) -> None:
+    base = _registry()
+    path = tmp_path / "registry.yml"
+    cases = (
+        (
+            base.replace(
+                "    allowed_transitions:\n",
+                "    logout_url: []\n    allowed_transitions:\n",
+            ),
+            "logout_url must be null or a non-empty string",
+        ),
+        (
+            base.replace(
+                "      reviewed_at: '2026-08-17T00:00:00+00:00'",
+                "      reviewed_at: []",
+            ),
+            "reviewed_at must be an ISO-8601 datetime",
+        ),
+        (
+            base.replace(
+                "    review:\n",
+                "    budgets:\n      max_requests: true\n    review:\n",
+            ),
+            "max_requests must be an integer",
+        ),
+    )
+    for payload, match in cases:
+        path.write_text(payload, encoding="utf-8")
+        with pytest.raises(ValueError, match=match):
+            load_provider_login_profiles(path)
+
+
+def test_registry_accepts_yaml_datetime_and_optional_expiry(tmp_path: Path) -> None:
+    path = tmp_path / "registry.yml"
+    payload = _registry().replace(
+        "      reviewed_at: '2026-08-17T00:00:00+00:00'",
+        "      reviewed_at: 2026-08-17T00:00:00+00:00\n"
+        "      expires_at: 2026-08-18T00:00:00+00:00",
+    )
+    path.write_text(payload, encoding="utf-8")
+
+    profile = load_provider_login_profiles(path)[0]
+
+    assert profile.reviewed_at == NOW.replace(hour=0)
+    assert profile.review_expires_at == NOW.replace(hour=0) + timedelta(days=1)
