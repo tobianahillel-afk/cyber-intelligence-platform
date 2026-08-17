@@ -1,0 +1,167 @@
+version: 1
+recovery_id: R02
+title: Lots 06-10 implementation finality recovery
+status: FINAL_AUDIT_COMPLETE_IMPLEMENTATION_PENDING
+baseline:
+  branch: main
+  sha: 8d7184b8a6f494ceb407ab489d8971f4d015bab6
+tracking_issue: 175
+historical_trackers:
+  lot_06: 21
+  lot_07: 23
+  lot_08: 25
+  lot_09: 27
+  lot_10: 29
+
+allowed_terminal_dispositions:
+  - implemented_proven_here
+  - owned_by_existing_later_scope
+  - terminal_already_proven
+  - explicitly_excluded
+
+forbidden_terminal_dispositions:
+  - later
+  - future_hardening
+  - manual
+  - blocked
+  - not_currently_called
+  - works_in_test
+
+findings:
+  - id: R02-F01
+    historical_lot: 7
+    historical_issue: 23
+    capability: cross_provider_public_job_dedup_runtime_and_reversibility
+    severity: high
+    status: recovery_local
+    owner: R02-L02
+    evidence:
+      - src/cip/adapters/sources/canonical_jobs.py exposes exact_cross_provider_match and an exact-match candidate key
+      - public-job source_record_key and CommercialSignal identifiers remain provider/source scoped
+      - no durable cross-provider duplicate decision, group, rejection or reversal contract is materialized by the canonical job mapping path
+    invariant: >-
+      Exact duplicates across approved ATS providers converge to one analyst-current commercial fact without
+      erasing source-native evidence, ambiguous cases are never auto-merged, and every dedup decision is
+      persisted, explainable, deterministic on replay and reversible.
+    terminal_disposition: null
+
+  - id: R02-F02
+    historical_lot: 9
+    historical_issue: 27
+    capability: provider_specific_connectivity_verification
+    severity: high
+    status: recovery_local
+    owner: R02-L03
+    evidence:
+      - verify_provider_configuration delegates to _verification_result
+      - authenticated verification checks missing references and SecretReferenceResolver.is_available only
+      - _verification_result returns connected without invoking a provider-specific connectivity port
+    invariant: >-
+      An authenticated provider cannot enter CONNECTED solely because a secret reference resolves; an approved,
+      bounded, typed provider-specific connectivity verification must succeed, with policy applied before network
+      and without exposing secret material.
+    terminal_disposition: null
+
+  - id: R02-F03
+    historical_lot: 9
+    historical_issue: 27
+    capability: onboarding_state_transition_legality
+    severity: high
+    status: recovery_local
+    owner: R02-L04
+    evidence:
+      - provider onboarding _transition writes record.state = target.value directly
+      - audit records preserve previous and next states but do not themselves reject illegal transitions
+    invariant: >-
+      Every provider-onboarding state change is validated against an explicit legal transition graph before
+      persistence; illegal jumps fail without mutating state or emitting a misleading success audit record.
+    terminal_disposition: null
+
+  - id: R02-F04
+    historical_lot: 9
+    historical_issue: 27
+    capability: credential_expiry_rotation_and_reverification_lifecycle
+    severity: high
+    status: recovery_local
+    owner: R02-L04
+    evidence:
+      - ProviderOnboardingRecord exposes expires_at and service reads it into the domain model
+      - ordinary onboarding routes expose start, human checkpoint, secret-reference registration, verify and revoke
+      - revoke clears expires_at, but the ordinary service/API does not establish a complete rotate/expire/reverify workflow or block a stale connected state from the Lot09 lifecycle itself
+    invariant: >-
+      Credential/reference rotation and expiry are explicit audited lifecycle events; expired authorization cannot
+      remain CONNECTED/current, replacement references require re-verification, and revocation/rotation never
+      leak or persist raw secrets.
+    terminal_disposition: null
+
+  - id: R02-F05
+    historical_lot: 10
+    historical_issue: 29
+    capability: fail_closed_source_portfolio_execution_authority
+    severity: critical
+    status: recovery_local
+    owner: R02-L05
+    evidence:
+      - source_execution_allowed loads SourcePortfolioRecord by source_id
+      - when no portfolio record exists it explicitly returns true for legacy behavior
+    invariant: >-
+      Every executable queued, scheduled, backfill, refresh or manual source run is represented by and authorized
+      through the central source portfolio; a missing catalogue record is non-executable rather than a legacy
+      allow path.
+    terminal_disposition: null
+
+  - id: R02-F06
+    historical_lot: 10
+    historical_issue: 29
+    capability: backfill_incremental_and_retraction_derived_state_convergence
+    severity: critical
+    status: later_scope
+    owner: Lot28
+    tracker_issue: 171
+    evidence:
+      - Lot10 originally requires backfill/incremental convergence plus correction, deletion and retraction behavior
+      - the later cross-module finality audit explicitly records that historical backfill and incremental workers do not yet share the complete downstream reconciliation contract
+      - issue 171 assigns durable propagation, invalidation and replay/backfill convergence to Lot28
+    invariant: >-
+      Incremental ingestion, historical backfill, replay and correction/retraction/expiry converge to the same
+      canonical and analyst-current derived state through the shared durable reconciliation architecture.
+    terminal_disposition: owned_by_existing_later_scope
+
+terminal_proofs:
+  - historical_lot: 6
+    capability: greenhouse_bounded_expiry_and_refresh
+    disposition: terminal_already_proven
+    rationale: >-
+      Current Greenhouse collection emits projections for still-published relevant jobs on every successful board
+      refresh, while observations are fingerprint-gated. Signal expiry is refreshed for active jobs; absent jobs no
+      longer receive a projection and therefore age out under the bounded TTL. No immediate source-specific
+      tombstone requirement is added beyond the historical Lot06 contract.
+
+  - historical_lot: 8
+    capability: organization_identity_safe_auto_confirmation_boundary
+    disposition: terminal_already_proven
+    rationale: >-
+      Current identity contracts preserve explicit evidence/identity projections and prevent multiple automatic
+      confirmations; the audited resolver path only auto-confirms exact official identifiers while ambiguous or
+      conflicting candidates remain review-required. Broader temporal graph finality belongs to later lots.
+
+handoffs:
+  - capability: cross_module_derived_state_reconciliation_and_invalidation
+    owner: Lot28
+    tracker_issue: 171
+  - capability: supply_chain_release_provenance_repository_protection
+    owner: Lot29
+    tracker_issue: 6
+  - capability: dns_address_safety_and_broad_resilience
+    owner: Lot30
+    tracker_issue: 169
+  - capability: privacy_rights_deletion_non_resurrection
+    owner: Lot31
+    tracker_issue: 5
+  - capability: residual_controlled_provider_live_proof
+    owner: SA20
+
+closeout:
+  required_micro_lot: R02-L06
+  closeout_document: docs/lots/LOTS_06_10_FINALITY_RECOVERY_CLOSEOUT.md
+  create_only_after_runtime_implementation: true
