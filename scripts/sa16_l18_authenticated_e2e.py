@@ -143,7 +143,9 @@ def main() -> None:
                     retention_until=now + timedelta(days=1),
                 )
                 if insert_observations(session, (replay.observation,)) != 0:
-                    raise RuntimeError("L18 authenticated replay bypassed observation deduplication")
+                    raise RuntimeError(
+                        "L18 authenticated replay bypassed observation deduplication"
+                    )
 
                 session_reference = store.reference_for(identity.id)
                 revoked = revoke_delegated_provider_session(
@@ -205,7 +207,8 @@ def _verify_established(session, store, identity_id, established) -> None:
     record = session.get(DelegatedBrowserIdentityRecord, identity_id)
     if record is None or record.session_reference != reference.value:
         raise RuntimeError("L18 delegated session reference metadata is missing")
-    if l16_fixture._SESSION_COOKIE in repr(record) or l16_fixture._SESSION_COOKIE in repr(established):
+    cookie = l16_fixture._SESSION_COOKIE
+    if cookie in repr(record) or cookie in repr(established):
         raise RuntimeError("L18 raw session material leaked into ordinary representations")
 
 
