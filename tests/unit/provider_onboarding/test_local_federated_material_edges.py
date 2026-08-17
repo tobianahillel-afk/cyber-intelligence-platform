@@ -96,9 +96,6 @@ def test_delete_wraps_filesystem_error(
         store.delete(reference)
 
 
-def test_reference_must_stay_under_logical_root(tmp_path: Path) -> None:
-    store = LocalFederatedContinuationMaterialStore(tmp_path)
-    outside = SecretReference("file-secret:///var/tmp/material.json")
-    assert not store.is_available(outside)
-    with pytest.raises(FederatedContinuationMaterialStoreError, match="outside logical root"):
-        store.resolve(outside)
+def test_reference_domain_rejects_outside_logical_root() -> None:
+    with pytest.raises(ValueError, match="must stay under /run/secrets"):
+        SecretReference("file-secret:///var/tmp/material.json")
