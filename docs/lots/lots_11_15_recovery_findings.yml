@@ -1,17 +1,30 @@
-version: 1
+version: 2
 recovery_id: R03
 title: Lots 11-15 implementation finality recovery
-status: DEEP_AUDIT_COMPLETE_IMPLEMENTATION_PENDING
+status: AUDIT_SIGNED_OFF_IMPLEMENTATION_PENDING
+audit_date: 2026-08-18
 baseline:
   branch: main
   sha: 8d7184b8a6f494ceb407ab489d8971f4d015bab6
 tracking_issue: 177
+draft_pr: 178
+audit_signoff_document: docs/lots/LOTS_11_15_AUDIT_SIGNOFF.md
+evidence_correction_matrix: docs/lots/LOTS_11_15_AUDIT_EVIDENCE_AND_CORRECTION_MATRIX.md
 historical_trackers:
-  lot_11: 31
-  lot_12: 34
-  lot_13: 36
-  lot_14: 38
-  lot_15: 40
+  lot_11: {issue: 31, pr: 33}
+  lot_12: {issue: 34, pr: 35}
+  lot_13: {issue: 36, pr: 37}
+  lot_14: {issue: 38, pr: 39}
+  lot_15: {issue: 40, pr: 41}
+
+audit_signoff:
+  kind: reviewer_attestation
+  cryptographic_git_signature: false
+  runtime_finality: false
+  reviewer: OpenAI ChatGPT (GPT-5.6 Sol)
+  statement: >-
+    The Lots 11-15 audit scope is signed off for implementation planning after a final adversarial pass.
+    This attestation is not a cryptographic Git signature and does not assert that runtime corrections are implemented.
 
 allowed_terminal_dispositions:
   - implemented_proven_here
@@ -26,47 +39,45 @@ forbidden_terminal_dispositions:
   - blocked
   - not_currently_called
   - works_in_test
+  - deterministic_only
+  - documentation_only
 
 findings:
   - id: R03-F01
     historical_lot: 11
-    historical_issue: 31
     capability: procurement_revision_causal_ordering_and_equal_timestamp_convergence
     severity: high
     status: recovery_local
     owner: R03-L02
     invariant: >-
-      Current procurement state is selected by provider/source causal revision semantics, not process order or content
-      hash ordering; equal-time ambiguity is explicit and shuffled replay converges.
+      Current procurement state is selected by provider/source causal revision semantics, not process order,
+      insertion time or content/revision hash ordering; equal-time ambiguity is explicit and replay converges.
     terminal_disposition: null
 
   - id: R03-F02
     historical_lot: 11
-    historical_issue: 31
     capability: procurement_sparse_amendment_effective_state_merge
     severity: critical
     status: recovery_local
     owner: R03-L02
     invariant: >-
-      Sparse amendments change only fields the provider explicitly modifies; omitted amendment fields retain the prior
-      effective value and explicit clearing requires explicit source semantics.
+      Sparse amendments change only explicitly modified fields; omitted fields retain prior effective values and
+      source-supported explicit clearing is distinct from omission.
     terminal_disposition: null
 
   - id: R03-F03
     historical_lot: 11
-    historical_issue: 31
     capability: procurement_cross_source_contract_identity_convergence
     severity: high
     status: recovery_local
     owner: R03-L03
     invariant: >-
-      Duplicate official procurement publications from independent sources converge through an explicit reversible
-      canonical procurement identity decision while source-native identifiers/evidence remain independent.
+      Duplicate official procurement publications converge through an explicit reversible canonical identity decision
+      while source-native identifiers and evidence remain independent.
     terminal_disposition: null
 
   - id: R03-F04
     historical_lot: 11
-    historical_issue: 31
     related_historical_lot: 8
     capability: procurement_buyer_canonical_organization_binding
     severity: high
@@ -74,12 +85,11 @@ findings:
     owner: R03-L03
     invariant: >-
       Procurement buyer aggregation references a Lot08-safe canonical organization only after exact or reviewed
-      identity binding; a mapper-local name/UUID cannot silently create canonical organization truth.
+      identity binding; mapper-local UUID/name material cannot silently become canonical organization truth.
     terminal_disposition: null
 
   - id: R03-F05
     historical_lot: 12
-    historical_issue: 34
     capability: public_footprint_claim_currentness_and_withdrawal
     severity: high
     status: recovery_local
@@ -91,91 +101,94 @@ findings:
 
   - id: R03-F06
     historical_lot: 12
-    historical_issue: 34
     capability: public_footprint_version_causal_head_integrity
     severity: high
     status: recovery_local
     owner: R03-L04
     invariant: >-
       Each resource has one race-safe causal current head; stale/fork revisions are explicit and historical backfill
-      cannot steal currentness merely by write/fetch ordering.
+      cannot steal currentness by fetched/write ordering.
     terminal_disposition: null
 
   - id: R03-F07
     historical_lot: 13
-    historical_issue: 36
     capability: vulnerability_alias_bridge_canonical_convergence_and_provenance
     severity: high
     status: recovery_local
     owner: R03-L05
     invariant: >-
-      Exact alias assertions retain source/snapshot provenance and can safely converge previously distinct canonical
-      vulnerabilities through a durable reversible authority-aware identity decision rather than ingestion failure.
+      Exact alias assertions retain source/source-record/snapshot provenance and can safely converge prior duplicate
+      canonicals through a durable reversible authority-aware identity decision rather than ingestion failure.
     terminal_disposition: null
 
   - id: R03-F08
     historical_lot: 13
-    historical_issue: 36
     capability: vulnerability_lifecycle_authority_and_conflict_resolution
     severity: high
     status: recovery_local
     owner: R03-L05
     invariant: >-
-      Canonical vulnerability lifecycle is controlled by the authority for the relevant identifier namespace;
-      advisory-source withdrawal/rejection remains a source fact and cannot silently withdraw an authoritative CVE.
+      Canonical lifecycle is controlled by authority for the relevant identifier namespace; advisory withdrawal/reject
+      remains a source fact and cannot silently withdraw an authoritative CVE.
+    terminal_disposition: null
+
+  - id: R03-F16
+    historical_lot: 13
+    capability: vulnerability_current_provider_record_set_preservation
+    severity: high
+    status: recovery_local
+    owner: R03-L05
+    invariant: >-
+      Canonical reconciliation consumes every distinct current provider-record head, not only the newest row per
+      provider source; sibling GHSA/OSV records that resolve to one CVE remain independently current until their own lineage ends.
     terminal_disposition: null
 
   - id: R03-F09
     historical_lot: 14
-    historical_issue: 38
     capability: incident_official_confirmation_source_authority_binding
     severity: high
     status: recovery_local
     owner: R03-L06
     invariant: >-
-      Official confirmation requires a compatible authoritative source kind and claim type; secondary reporting or
-      provider/attacker claims can never become official solely by claim-label choice.
+      Official confirmation requires a compatible authoritative source kind and claim type; secondary/provider/attacker
+      reporting cannot become official solely by claim-label choice.
     terminal_disposition: null
 
   - id: R03-F10
     historical_lot: 14
-    historical_issue: 38
     capability: incident_claim_cross_key_supersession_causal_integrity
     severity: high
     status: recovery_local
     owner: R03-L06
     invariant: >-
-      Cross-key source corrections/retractions advance one valid source-local incident-claim lineage with no cycles,
-      stale forks or replay-order divergence while immutable predecessor history remains queryable.
+      Cross-key source corrections/retractions advance one valid source-local claim lineage with no cycles, stale forks
+      or replay-order divergence while immutable predecessor history remains queryable.
     terminal_disposition: null
 
   - id: R03-F11
     historical_lot: 14
-    historical_issue: 38
     capability: cross_source_incident_identity_resolution
     severity: high
     status: recovery_local
     owner: R03-L07
     invariant: >-
-      Independent provider-native incident identifiers may resolve to one canonical incident through strong exact or
-      reviewed evidence, preserving source independence; similarity alone never auto-merges incidents.
+      Independent provider-native incident IDs may resolve to one canonical incident through strong exact or reviewed
+      evidence while source independence is preserved; fuzzy similarity alone never auto-merges.
     terminal_disposition: null
 
   - id: R03-F12
     historical_lot: 14
-    historical_issue: 38
     capability: incident_type_authority_and_conflict_resolution
     severity: high
     status: recovery_local
     owner: R03-L06
     invariant: >-
-      Canonical incident typing preserves source conflicts and is authority/confidence/review aware; a weak severe
+      Canonical incident type preserves source conflicts and is authority/confidence/review aware; a weak severe
       allegation cannot silently upgrade the authoritative analyst summary.
     terminal_disposition: null
 
   - id: R03-F13
     historical_lot: 15
-    historical_issue: 40
     capability: threat_indicator_cross_key_supersession_causal_integrity
     severity: high
     status: recovery_local
@@ -187,51 +200,34 @@ findings:
 
   - id: R03-F14
     historical_lot: 15
-    historical_issue: 40
     capability: threat_indicator_clock_expiration_and_reactivation
     severity: high
     status: recovery_local
     owner: R03-L08
     invariant: >-
-      Indicator currentness changes at the evidence expiry boundary even without new ingestion; independent unexpired
-      evidence can retain activity and fresh evidence can reactivate without rewriting history.
+      Indicator currentness changes at evidence expiry even without new ingestion; independent unexpired evidence may
+      retain activity and fresh evidence may reactivate without rewriting history.
     terminal_disposition: null
 
   - id: R03-F15
     historical_lot: 15
-    historical_issue: 40
     capability: canonical_campaign_malware_entities_and_analyst_timeline
     severity: high
     status: recovery_local
     owner: R03-L09
     invariant: >-
-      Lot15 provides canonical searchable campaign/malware threat entities and typed temporal/provenanced relations to
-      indicators/vulnerabilities, with current/history/review semantics; opaque source target strings alone are not a
-      terminal analyst campaign model.
+      Lot15 provides canonical searchable Campaign/Malware analyst concepts and typed temporal/provenanced relations to
+      indicators/vulnerabilities; opaque source target strings alone are not a terminal campaign model.
     terminal_disposition: null
 
 handoffs:
-  - capability: incumbent_and_renewal_relationship_context
-    owner: Lot19
-    tracker_issue: 52
-  - capability: global_corporate_entity_graph_identity
-    owner: Lot20
-    tracker_issue: 54
-  - capability: cross_module_derived_state_reconciliation_and_invalidation
-    owner: Lot28
-    tracker_issue: 171
-  - capability: supply_chain_release_repository_protection
-    owner: Lot29
-    tracker_issue: 6
-  - capability: dns_address_safety_and_broad_resilience
-    owner: Lot30
-    tracker_issue: 169
-  - capability: privacy_deletion_and_non_resurrection
-    owner: Lot31
-    tracker_issue: 5
-  - capability: provider_source_activation_finality
-    owner: SA21
-    tracker_issue: 158
+  - {capability: incumbent_and_renewal_relationship_context, owner: Lot19, tracker_issue: 52}
+  - {capability: global_corporate_entity_graph_identity, owner: Lot20, tracker_issue: 54}
+  - {capability: cross_module_derived_state_reconciliation_and_invalidation, owner: Lot28, tracker_issue: 171}
+  - {capability: supply_chain_release_repository_protection, owner: Lot29, tracker_issue: 6}
+  - {capability: dns_address_safety_and_broad_resilience, owner: Lot30, tracker_issue: 169}
+  - {capability: privacy_deletion_and_non_resurrection, owner: Lot31, tracker_issue: 5}
+  - {capability: provider_source_activation_finality, owner: SA21, tracker_issue: 158}
 
 terminal_non_findings:
   - capability: public_search_lead_requires_governed_retrieval_or_review
@@ -240,6 +236,8 @@ terminal_non_findings:
     disposition: owned_by_existing_later_scope
     owner: Lot19
     tracker_issue: 52
+  - capability: threat_relation_snapshot_source_provenance_exists
+    disposition: terminal_already_proven
 
 micro_lots:
   - id: R03-L01
@@ -252,7 +250,7 @@ micro_lots:
   - id: R03-L04
     owns: [R03-F05, R03-F06]
   - id: R03-L05
-    owns: [R03-F07, R03-F08]
+    owns: [R03-F07, R03-F08, R03-F16]
   - id: R03-L06
     owns: [R03-F09, R03-F10, R03-F12]
   - id: R03-L07

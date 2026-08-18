@@ -1,159 +1,67 @@
-# Lots 11–15 final audit and ownership lock
+# Lots 11–15 — final audit and ownership lock
 
-Status: **DEEP_AUDIT_COMPLETE_IMPLEMENTATION_PENDING**  
+Status: **AUDIT_SIGNED_OFF_IMPLEMENTATION_PENDING**  
 Recovery: **R03**  
+Audit date: **2026-08-18**  
+Baseline: `main@8d7184b8a6f494ceb407ab489d8971f4d015bab6`  
 Tracking issue: **#177**  
-Audited baseline: `main@8d7184b8a6f494ceb407ab489d8971f4d015bab6`
+Draft PR: **#178**
 
-This document and `lots_11_15_recovery_findings.yml` are the authoritative pre-implementation ownership lock for R03. They are not a runtime closeout.
+This document and `lots_11_15_recovery_findings.yml` are the authoritative pre-implementation ownership lock. The sign-off is an audit/reviewer attestation, **not a cryptographic Git signature and not a runtime closeout**.
 
-## 1. Recovery-local findings
+## 1. Final recovery-local register
 
 | ID | Lot | Severity | Owner | Locked correction |
 |---|---:|---|---|---|
 | F01 | 11 | HIGH | L02 | causal procurement revision ordering |
-| F02 | 11 | CRITICAL | L02 | sparse amendment effective-state merge |
+| F02 | 11 | **CRITICAL** | L02 | sparse amendment effective-state merge |
 | F03 | 11 | HIGH | L03 | cross-source procurement identity |
-| F04 | 11↔08 | HIGH | L03 | canonical buyer organization binding |
-| F05 | 12 | HIGH | L04 | claim currentness/withdrawal |
-| F06 | 12 | HIGH | L04 | single causal resource head |
-| F07 | 13 | HIGH | L05 | alias bridge convergence + provenance |
-| F08 | 13 | HIGH | L05 | lifecycle source authority |
+| F04 | 11↔08 | HIGH | L03 | Lot08-safe buyer organization binding |
+| F05 | 12 | HIGH | L04 | current claim withdrawal/reconciliation |
+| F06 | 12 | HIGH | L04 | one causal public-resource head |
+| F07 | 13 | HIGH | L05 | alias bridge convergence + source assertion provenance |
+| F08 | 13 | HIGH | L05 | lifecycle source/namespace authority |
+| **F16** | 13 | HIGH | L05 | current head per provider record, not one snapshot per provider |
 | F09 | 14 | HIGH | L06 | official confirmation authority matrix |
 | F10 | 14 | HIGH | L06 | cross-key claim supersession |
-| F11 | 14 | HIGH | L07 | cross-source incident identity |
+| F11 | 14 | HIGH | L07 | reversible cross-source incident identity |
 | F12 | 14 | HIGH | L06 | authority-aware incident typing |
-| F13 | 15 | HIGH | L08 | cross-key indicator supersession |
+| F13 | 15 | HIGH | L08 | cross-key IOC supersession |
 | F14 | 15 | HIGH | L08 | clock expiry/reactivation |
-| F15 | 15 | HIGH | L09 | campaign/malware canonical analyst model |
+| F15 | 15 | HIGH | L09 | canonical Campaign/Malware analyst model |
 
-There is no known ownerless residual in the audited local Lots11–15 scope after this deep pass.
+**Final count: 16 findings.**
 
-## 2. Existing later ownership preserved
+There is no known ownerless local residual in audited Lots11–15 after the final adversarial pass. If implementation reveals another defect, L10 must add F17+ rather than force closure.
+
+## 2. Why F16 is separate
+
+F07 answers **which canonical vulnerability** a source record belongs to. F08 answers **which lifecycle assertion has authority**. F16 answers **how many distinct current source records from one provider continue contributing after grouping**.
+
+A perfect F07 merge can still lose facts if hydration keeps only one GitHub/OSV record per provider. A perfect lifecycle policy cannot restore scores/ranges/references from a sibling provider record that was dropped before reconciliation. Therefore F16 has its own invariant and proof, while sharing L05 because the persistence/reconciliation surfaces are tightly coupled.
+
+## 3. Existing later ownership preserved
 
 | Capability | Owner |
 |---|---|
 | procurement incumbent/renewal relationship context | Lot19/#52 |
 | global corporate/entity graph identity | Lot20/#54 |
-| downstream derived-state routing/invalidation/replay convergence | Lot28/#171 |
+| downstream derived-state routing/invalidation/time/replay convergence | Lot28/#171 |
 | release/supply-chain/repository hardening | Lot29/#6 |
-| DNS/address safety and broad resilience | Lot30/#169 |
+| DNS/address safety and resilience | Lot30/#169 |
 | privacy deletion/non-resurrection | Lot31/#5 |
-| provider/source live activation | SA21/#158 |
+| provider/source activation | SA21/#158 |
 
-R03 may expose better local canonical change truth to Lot28; it must not implement a competing global outbox/reconciliation engine.
+R03 may expose more truthful local canonical change events to Lot28. R03 must not implement a competing global outbox, scheduler or reconciliation architecture.
 
-## 3. Why the findings are not duplicates
-
-### F01 vs F02
-
-F01 is chronology/head selection. F02 is sparse amendment field semantics. A perfect causal head can still contain data loss if patch fields are interpreted as a complete snapshot; a perfect patch merger can still choose the wrong head.
-
-### F03 vs F04
-
-F03 resolves the procurement object across sources. F04 resolves the buyer organization through Lot08. A single procurement can still point to duplicate buyer organizations, and one buyer can participate in distinct procurements.
-
-### F05 vs F06
-
-F06 identifies the current resource version. F05 identifies which claims that version currently supports. A single correct head does not automatically withdraw omitted claim rows unless claim currentness is reconciled.
-
-### F07 vs F08
-
-F07 is vulnerability identity/alias authority. F08 is lifecycle status authority after identity is known.
-
-### F09/F10/F12 vs F11
-
-F09/F10/F12 make claim semantics truthful inside one canonical incident. F11 determines whether independent native incident identifiers belong to the same canonical incident at all.
-
-### F13/F14 vs F15
-
-F13/F14 complete indicator current-state semantics. F15 completes the historical campaign/malware analyst capability and typed threat relationships.
-
-## 4. Mandatory terminal proofs
-
-### L02
-
-- sparse DECP amendment retains unmodified values;
-- explicit clear is distinguished from omission;
-- equal-time revisions use causal semantics;
-- shuffled replay and two-writer races converge;
-- old backfill does not steal current head.
-
-### L03
-
-- exact cross-source duplicate procurement converges;
-- false similar procurement does not;
-- review/reject/split is durable and reversible;
-- exact buyer official ID binds Lot08 organization;
-- name-only buyer does not silently canonicalize.
-
-### L04
-
-- one resource head under race/replay;
-- removed claim becomes historical/withdrawn;
-- tombstone withdraws current claim set;
-- current vs historical query semantics are explicit.
-
-### L05
-
-- authoritative alias bridge can reconcile previous duplicates;
-- alias assertion source provenance remains visible;
-- OSV/advisory withdrawal cannot globally withdraw authoritative CVE;
-- authoritative reject/supersede behaves correctly;
-- identity and lifecycle conflicts are reviewable/reversible.
-
-### L06
-
-- claim-type/source-kind authority matrix enforced;
-- cross-key correction/retraction works;
-- cycles/forks/stale mutation rejected;
-- weak severe allegation cannot upgrade official incident type.
-
-### L07
-
-- independent sources with different native IDs can safely corroborate the same incident;
-- ambiguous same-victim events remain separate unless reviewed;
-- split/reject/replay/concurrency are proven;
-- source independence remains measurable.
-
-### L08
-
-- cross-key indicator supersession works;
-- expiry changes currentness without new ingestion;
-- independent TTLs compose correctly;
-- fresh evidence reactivates;
-- analyst filters are clock-correct.
-
-### L09
-
-- campaign/malware entities exist as canonical searchable analyst concepts;
-- source-native aliases/targets remain provenance;
-- typed temporal relations preserve source/confidence/validity;
-- ambiguity/review/split/retraction/expiry/replay are covered;
-- campaign analyst search/detail/timeline exit gate is real.
-
-### L10
-
-All migrations, PostgreSQL races, replay/order/time tests, architecture, security, backend/full regression, frontend gates when touched, review-thread audit and exact-head CI must pass on one SHA.
-
-## 5. Deep-audit non-findings
-
-Do not reopen without new code evidence:
-
-- public search/archive results are discovery leads routed to governed retrieval or review, not automatically confirmed footprint claims;
-- source activation omissions already tracked by SA21 are not local model defects;
-- procurement incumbent/renewal inference has explicit Lot19 ownership;
-- Lot15 relation rows do retain snapshot/source provenance, so F15 is not a claim that relation provenance is completely absent;
-- Lot28 remains the correct owner for downstream propagation once local truth changes.
-
-## 6. One-owner map
+## 4. One-owner map
 
 ```text
-L01: registry/no-orphan process
+L01: registry / no-orphan process
 L02: F01 F02
 L03: F03 F04
 L04: F05 F06
-L05: F07 F08
+L05: F07 F08 F16
 L06: F09 F10 F12
 L07: F11
 L08: F13 F14
@@ -161,6 +69,85 @@ L09: F15
 L10: terminal qualification only
 ```
 
-## 7. Closeout rule
+## 5. Mandatory terminal proofs by micro-lot
 
-Do not create `docs/lots/LOTS_11_15_FINALITY_RECOVERY_CLOSEOUT.md` before R03-L10 has one exact implementation SHA proving every R03-local finding. Issue #177 remains open until then.
+### L02
+
+- equal-time revisions do not use hash/write chronology;
+- sparse amendments preserve omitted facts;
+- explicit clear differs from omission;
+- shuffled replay/backfill/concurrent heads converge.
+
+### L03
+
+- cross-source exact duplicate procurement converges;
+- near-duplicate remains separate;
+- merge/reject/split/review is durable/reversible;
+- exact buyer ID binds Lot08; name-only does not silently canonicalize.
+
+### L04
+
+- one resource current head under race/replay;
+- claim removal/tombstone withdraws current support;
+- old evidence remains historical;
+- current filters/counts cannot match withdrawn-only claims.
+
+### L05
+
+- exact alias bridge may safely converge prior duplicates;
+- source-level alias provenance remains visible;
+- advisory withdrawal cannot globally withdraw authoritative CVE;
+- authoritative reject/supersede behaves correctly;
+- **two distinct current GHSA/OSV records resolving to one CVE both remain in current reconciliation**;
+- changing/withdrawing one provider record does not erase its sibling;
+- replay/concurrency/same-time provider-record heads converge.
+
+### L06
+
+- claim type + source kind authority enforced;
+- true cross-key correction/retraction works;
+- cycles/forks/stale mutation rejected;
+- weak severe allegation cannot upgrade authoritative incident type.
+
+### L07
+
+- different native IDs can safely corroborate the same event;
+- same-victim separate incidents remain separate absent explicit identity evidence/review;
+- split/reject/replay/concurrency proven;
+- source independence preserved.
+
+### L08
+
+- IOC cross-key supersession works;
+- expiry changes truth with no new write;
+- independent TTLs compose;
+- fresh evidence reactivates;
+- analyst filters are clock-correct.
+
+### L09
+
+- Campaign/Malware exist as searchable canonical analyst concepts;
+- source-native aliases/targets remain provenance;
+- typed temporal relations retain source/confidence/validity;
+- ambiguity/review/split/retraction/expiry/replay covered;
+- campaign search/detail/timeline exit gate is real.
+
+### L10
+
+All migrations, PostgreSQL races, shuffled replay, time-only tests, architecture, security, backend/full regression, frontend gates when touched, review-thread audit and exact-head CI pass on one implementation SHA.
+
+## 6. Locked non-findings
+
+Do not reopen without new evidence:
+
+- search/archive result → governed retrieval/review boundary is already safe;
+- provider activation is SA21 ownership;
+- Lot11 incumbent/renewal context is Lot19 ownership;
+- Lot15 relation rows do retain source snapshot provenance;
+- Lot28 remains the single owner for downstream propagation/invalidation after local canonical truth changes.
+
+## 7. Sign-off and closeout rule
+
+The audit scope is signed off for implementation start. Runtime corrections remain unimplemented/unproven.
+
+Do not create `docs/lots/LOTS_11_15_FINALITY_RECOVERY_CLOSEOUT.md` until R03-L10 proves every local finding on one exact implementation SHA. Issue #177 remains open until then.

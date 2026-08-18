@@ -1,270 +1,464 @@
-# Lots 11–15 — implementation gap audit
+# Lots 11–15 — ultra-deep implementation gap audit
 
-Status: **DEEP_AUDIT_COMPLETE_IMPLEMENTATION_PENDING**  
+Status: **AUDIT_SIGNED_OFF_IMPLEMENTATION_PENDING**  
 Recovery: **R03**  
+Baseline: `main@8d7184b8a6f494ceb407ab489d8971f4d015bab6`  
 Issue: **#177**  
-Baseline: `main@8d7184b8a6f494ceb407ab489d8971f4d015bab6`
+PR: **#178**
 
-## Audit method
+This audit distinguishes historical test success from semantic finality. Every local finding below has one recovery owner, an exact correction contract and terminal proof. “Works in a happy-path test”, “deterministic”, “manual refresh exists”, “later”, or “future hardening” are not terminal dispositions.
 
-For each historical lot this audit compares:
+## R03-F01 — procurement revision causal ordering
 
-1. original issue/spec and validation report;
-2. source mappers and provider-native keys;
-3. domain invariants;
-4. persistence/current-head rules;
-5. local reconciliation;
-6. analyst queries/API;
-7. replay/order/concurrency/time-only semantics;
-8. later-lot ownership to prevent duplicate architecture.
+**Lot:** 11  
+**Severity:** HIGH  
+**Owner:** R03-L02
 
-A residual is retained only when current code proves a local capability gap and no existing later owner already covers the exact responsibility.
+### Expected contract
 
----
+The current contract/procedure head must follow source/provider causal revision semantics. Replay order, database insertion order and a content-derived hash must not choose business chronology.
 
-## Lot11 — procurement contract history
+### Current behavior / root cause
 
-### R03-F01 — HIGH — procurement revision causal ordering
+`procurement_history.infrastructure.projections._publication_is_newer()` compares effective timestamps and, when equal, falls back to `candidate.revision_key >= current.revision_key`. `revision_key` is an immutable identity/deduplication key, not a source sequence or predecessor proof.
 
-**Observed implementation**
+### Failure scenario
 
-- Procedure current state accepts an equal `effective_at` replacement, so process order can decide current state.
-- Contract publication ordering uses `revision_key` as a tie-break at equal effective time.
-- `revision_key` is a deterministic content identity, not provider chronology.
-- DECP exposes date-granularity publication/modification fields, so equal timestamps are not theoretical.
+Two genuine source revisions share the same published/effective timestamp. The newer business revision has a lexically smaller revision hash/key. The older record remains current even though both rows are stored immutably. Shuffled replay can therefore produce a current state selected by a non-causal property.
 
-**Gap**
+### Exact correction
 
-Determinism is not the same as causal correctness. A lexically larger hash can beat a genuinely later source revision, while procedure state can depend on replay order.
+- add explicit source-native revision sequence/version/notice identifier where available;
+- persist predecessor/current-head relationship for a source-local procurement lineage;
+- if the source provides no order and two changed revisions are equal-time, record an explicit conflict/review state rather than inventing chronology;
+- historical/backfill rows may be inserted without stealing the current head;
+- current-head advance must be atomic/race-safe in PostgreSQL.
 
-**Required correction**
+### Required proof
 
-Persist source revision sequence/predecessor/version metadata where available; establish one causal head; surface true same-time ambiguity as typed conflict/review; keep backfilled older revisions historical without stealing the head.
+Equal-time opposite lexical hashes, shuffled replay, stale backfill, duplicate replay and two concurrent head candidates all converge to the same justified outcome.
 
-### R03-F02 — CRITICAL — sparse DECP amendment state loss
+### Not acceptable
 
-**Observed implementation**
-
-DECP modification helpers prefer modification-only fields. On an amendment:
-
-- amount reads modified amount only;
-- duration reads modified duration only;
-- derived end/renewal dates are recalculated from amendment fields;
-- absent amendment values become `None`;
-- procurement persistence then overwrites the materialized current contract columns from that projection.
-
-**Gap**
-
-An amendment that changes only one dimension can erase still-valid fields from the original contract. Existing integration tests use fully populated amendment snapshots and do not prove sparse patch semantics.
-
-**Required correction**
-
-Represent amendment deltas or materialize a complete effective state by applying a sparse delta to the valid predecessor. Omission must not clear. Preserve field-level provenance and explicit-clear semantics.
-
-### R03-F03 — HIGH — duplicate official procurement publications remain source-isolated
-
-**Observed implementation**
-
-Native canonical keys are source-prefixed (`decp:*`, `boamp:*`, `ted:*`). Historical API tests can show multiple publications under one procedure only because the test manually supplies the same canonical procedure key.
-
-**Gap**
-
-The runtime mappers do not guarantee that the same procurement event published in several official channels becomes one procedure/contract history, despite the historical duplicate-publication acceptance case.
-
-**Required correction**
-
-Create a local procurement identity layer with exact official reference assertions, durable match/reject/split decisions and review for ambiguity. Never fuzzy-auto-merge by title/name alone.
-
-### R03-F04 — HIGH — buyer organization identity bypasses Lot08
-
-**Observed implementation**
-
-DECP/BOAMP/TED construct `Organization` values using source-local UUID derivation. Generic organization persistence upserts by UUID and does not reinterpret these source-local IDs through Lot08 identity resolution.
-
-**Gap**
-
-One real buyer can become several canonical organizations, and name-only buyer data can be made canonical by mapper side effect.
-
-**Required correction**
-
-Bind exact official buyer IDs to Lot08 canonical identity. Name-only buyer observations remain source-party evidence and review candidates until resolved.
-
-**Existing handoff**
-
-Incumbent/renewal relationship inference is explicitly owned by Lot19/#52 and is not duplicated in R03.
+Replacing `revision_key` with another arbitrary hash/UUID or relying on insertion time.
 
 ---
 
-## Lot12 — corporate public footprint
+## R03-F02 — sparse DECP amendments overwrite valid fields
 
-### R03-F05 — HIGH — stale claims survive newer versions/tombstones
+**Lot:** 11  
+**Severity:** CRITICAL  
+**Owner:** R03-L02
 
-**Observed implementation**
+### Expected contract
 
-Projection persistence inserts/updates claims that are present in the incoming projection. It does not close or withdraw claims absent from a newer current version. Query paths list persisted claims without restricting them to the claim set of the current resource head.
+A sparse amendment modifies only fields actually amended. Omission means “unchanged” unless the source explicitly represents a clear/removal.
 
-**Gap**
+### Current behavior / root cause
 
-A claim such as “uses vendor X” can remain analyst-visible after the page removes that evidence or after the resource is tombstoned.
+For a modification, `DecpContract.duration_months()` reads only `dureemoismodification`; `amount_value()` reads only `montantmodification`. Missing values return `None`. `map_decp_contract()` builds a complete `ProcurementContractProjection`, derives dates from those values, and `_upsert_contract()` overwrites every current field via `_contract_values()`.
 
-**Required correction**
+### Failure scenario
 
-Retain immutable claim assertion history while materializing an explicit current validity/withdrawal state tied to the current resource head. Current APIs default to currently supported claims; history remains separately queryable.
+A modification changes only title, procedure wording or titular information. Because amount/duration modification fields are absent, the resulting current contract can lose amount, end date and renewal date even though the source never cancelled those facts.
 
-### R03-F06 — HIGH — resource versions lack a mandatory single causal head
+### Exact correction
 
-**Observed implementation**
+- represent amendment field state as at least `ABSENT / SET(value) / EXPLICIT_CLEAR` or an equivalent typed delta;
+- map DECP modification payload to an amendment delta, not to a synthetic complete snapshot;
+- load the causal predecessor effective state and apply only explicit delta fields;
+- materialize the new complete effective state after merge for read performance;
+- retain field-level source publication/provenance and basis for inherited vs changed values;
+- distinguish explicit cancellation/retraction from field omission;
+- backfill existing amendment history in deterministic causal order to rebuild correct effective state.
 
-`supersedes_version_id` is optional. Persistence validates predecessor compatibility only when a predecessor is supplied. A changed version can therefore be inserted as a parallel branch; claim update ordering then relies heavily on fetch time/write sequence.
+### Required proof
 
-**Gap**
+Title-only, amount-only, duration-only, titular-only, explicit clear, cancellation and multi-amendment chains preserve unaffected facts. Migration up/down/up and replay produce the same effective state.
 
-Version chronology is not protected against silent forks or same-time race ambiguity.
+### Not acceptable
 
-**Required correction**
-
-Introduce one current resource-head contract, explicit stale/fork conflict semantics and PostgreSQL-safe advancement. Historical backfill may insert an older historical revision without becoming current.
-
-**Non-finding**
-
-Search/archive discovery correctly routes a candidate toward a governed target or source review and does not directly upgrade search lead text into a confirmed footprint claim.
-
----
-
-## Lot13 — vulnerability knowledge
-
-### R03-F07 — HIGH — exact alias bridge cannot converge existing canonicals
-
-**Observed implementation**
-
-If the aliases of an incoming snapshot resolve to more than one existing vulnerability record, persistence raises an error. Alias values are then stored on the canonical vulnerability and reused when hydrating all source snapshots, losing the exact assertion provenance of which source established which alias.
-
-**Gap**
-
-A legitimate authoritative alias discovered after two records were independently created cannot converge safely; ingestion stops instead of producing a reviewed/reversible identity decision.
-
-**Required correction**
-
-Persist source/snapshot alias assertions, authority and decision history. Support deterministic exact union where safe, review otherwise, and reversible merge/split/reject decisions while preserving all source snapshots.
-
-### R03-F08 — HIGH — canonical lifecycle is source-agnostic
-
-**Observed implementation**
-
-Canonical status chooses the highest lifecycle severity (`REJECTED`, `WITHDRAWN`, `SUPERSEDED`, etc.) across source snapshots. Existing integration tests explicitly demonstrate an OSV withdrawn snapshot making the entire canonical vulnerability `withdrawn`.
-
-**Gap**
-
-An ecosystem advisory can globally withdraw/reject an authoritative CVE it does not own. Other fields already have source precedence, but lifecycle does not.
-
-**Required correction**
-
-Make lifecycle namespace/source-authority aware. Retain source-specific withdrawal as a source fact; only the authority for the canonical identifier may authoritatively withdraw/reject it. Validate supersession targets and prevent cycles/conflicting terminal state.
+`value or old_value` shortcuts that cannot distinguish legitimate zero/empty/explicit-clear semantics.
 
 ---
 
-## Lot14 — incident intelligence
+## R03-F03 — procurement cross-source identity is source-prefixed
 
-### R03-F09 — HIGH — official confirmation is claim-type-only
+**Lot:** 11  
+**Severity:** HIGH  
+**Owner:** R03-L03
 
-**Observed implementation**
+### Expected contract
 
-The domain considers company confirmation, regulator notice and CERT notice official when the claim type matches and the claim is active. It does not require the corresponding source kind.
+The same real procurement published by DECP, BOAMP and/or TED can resolve to one canonical procedure/contract history while source-native publications remain independent immutable evidence.
 
-**Gap**
+### Current behavior / root cause
 
-A mapping error or future adapter could label media/provider/attacker content as a company/regulator/CERT claim type and create an official confirmation.
+Mappers construct source-local canonical keys (for example `decp:procedure:*`, `decp:contract:*`, with analogous BOAMP/TED source namespaces). Persistence keys procedures/contracts by those values. Multi-source history therefore occurs only when mappers already happen to agree on the same canonical key, which the source prefix prevents for the same cross-channel event.
 
-**Required correction**
+### Exact correction
 
-Enforce a domain authority matrix before persistence: company confirmation↔company source, regulator notice↔regulator, CERT notice↔CERT, plus only explicitly approved equivalents. Secondary reporting remains secondary.
+- persist native source identifiers/reference chains separately from canonical procurement ID;
+- create a deterministic/reviewed `ProcurementIdentityDecision` (or equivalent) with rule/version, evidence, state, decision history and reversible merge/reject/split semantics;
+- auto-bind only strong exact shared official references/identifiers;
+- name/title/amount/date similarity may rank candidates but must not silently merge;
+- canonical procurement lookup occurs before aggregation/projection;
+- preserve every source publication and source-local lineage after grouping.
 
-### R03-F10 — HIGH — cross-key supersession is ignored
+### Required proof
 
-**Observed implementation**
-
-Claims contain `supersedes_record_key`, but reconciliation selects the latest revision independently for each `(source_id, source_record_key)` and does not apply the supersedes relationship. Historical tests retract by reusing the same key, masking the gap.
-
-**Required correction**
-
-Apply source-local causal supersession across record keys; validate predecessor/incident/source, reject cycles/stale forks, preserve immutable history and converge under shuffled replay/concurrency.
-
-### R03-F11 — HIGH — incident grouping depends on provider-native key equality
-
-**Observed implementation**
-
-Provider payload `incident_key` flows directly into the canonical claim and reconciliation groups by that key. Independent sources with distinct native incident IDs therefore cannot reliably corroborate or contradict each other.
-
-**Required correction**
-
-Add a reversible local canonical incident identity decision using strong exact external incident references and reviewed organization/event anchors. Preserve each source-native incident ID and independence key; ambiguous similarity is review-required.
-
-### R03-F12 — HIGH — most severe incident type wins
-
-**Observed implementation**
-
-Canonical incident type uses a fixed type-priority ordering. A weak ransomware/supply-chain allegation can therefore set the canonical type even if official sources only confirm a less severe class.
-
-**Required correction**
-
-Keep type as source assertions with conflicts. Select authoritative/confirmed analyst summary using authority/confidence/review, not severity. Weak claims remain visible without silently upgrading official fact.
+DECP↔BOAMP, DECP↔TED and BOAMP↔TED duplicate cases converge; near-duplicates do not. Review, reject, split, replay and concurrent arrivals are durable and reversible.
 
 ---
 
-## Lot15 — threat telemetry
+## R03-F04 — procurement buyer bypasses Lot08 identity authority
 
-### R03-F13 — HIGH — cross-key indicator supersession ignored
+**Lot:** 11↔08  
+**Severity:** HIGH  
+**Owner:** R03-L03
 
-**Observed implementation**
+### Expected contract
 
-Indicator snapshots carry `supersedes_record_key`; local selection still groups independently by `(source_id, source_record_key)`. Tests cover same-key correction/retraction only.
+Procurement buyer aggregation references the canonical organization only after exact/reviewed organization identity binding.
 
-**Required correction**
+### Current behavior / root cause
 
-Implement one source-local causal indicator lineage supporting cross-key correction/retraction, stale/fork/cycle rejection, deterministic replay and PostgreSQL concurrency safety.
+DECP creates `Organization(id=uuid5(..., "decp:buyer:..."))` directly; other procurement sources have analogous mapper-local identity material. The procurement record then treats that UUID as the buyer identity. A source-local mapping choice can therefore become canonical organization identity without the Lot08 authority/review path.
 
-### R03-F14 — HIGH — expiry is metadata rather than current-state truth
+### Exact correction
 
-**Observed implementation**
+- introduce a procurement source-party assertion with source, native buyer IDs/name/address evidence;
+- resolve exact SIREN/SIRET/official identifier through the Lot08 organization identity service/port;
+- name-only or conflicting identifiers remain unresolved/review-required;
+- persist a durable source-party→canonical-organization binding decision;
+- procurement projection references canonical organization only after binding; otherwise keep unresolved party evidence without inventing organization truth.
 
-Snapshots have `expires_at`, but reconciliation derives active state from `snapshot.active` and has no `now` parameter. Persistence only reconciles on writes; queries do not clock-filter active state. Historical tests explicitly set expired examples to inactive rather than proving automatic expiry.
+### Required proof
 
-**Gap**
-
-An `active=True` IOC can remain active after its expiry until another provider write happens.
-
-**Required correction**
-
-Make local currentness clock-aware through as-of reconciliation and/or a durable local expiry sweep. One expired source assertion stops contributing; another unexpired independent source can keep the indicator active. Fresh evidence can reactivate it.
-
-### R03-F15 — HIGH — campaign/malware capability stopped at opaque relation strings
-
-**Historical requirement**
-
-Lot15 requires indicator↔campaign↔malware↔vulnerability relations with provenance and an analyst ability to search/understand an indicator **or a campaign**.
-
-**Observed implementation**
-
-The bounded context contains canonical indicator records and snapshot-owned relation rows whose targets are opaque strings. The protected API exposes `/v1/threat-indicators` list/detail only; no canonical campaign/malware entity, identity, timeline or campaign endpoint exists.
-
-**Gap**
-
-The indicator side was implemented; the campaign/malware analyst side of the historical exit gate was not developed to the same depth.
-
-**Required correction**
-
-Add canonical threat entities (Campaign, MalwareFamily or a rigorously typed equivalent), immutable source assertions, alias/review decisions, typed temporal relations to indicators/vulnerabilities, current+historical timelines and protected search/detail API/UI. Source-native relation strings remain provenance until safely resolved.
+Same SIREN/SIRET across differently labelled buyers binds one canonical org; same name without exact evidence does not. Conflicting identifiers force review. Reversal/replay/concurrency preserve evidence.
 
 ---
 
-## Ownership conclusion
+## R03-F05 — public-footprint claims remain current after evidence removal
 
-No R03-local finding above has a valid existing later owner. Known later responsibilities remain intentionally outside R03:
+**Lot:** 12  
+**Severity:** HIGH  
+**Owner:** R03-L04
 
-- Lot19 relationship/incumbent/renewal context;
-- Lot20 global corporate/entity graph;
-- Lot28 cross-module downstream reconciliation/invalidation;
-- Lot29/30/31 hardening/privacy;
-- SA21 live source activation.
+### Expected contract
 
-The authoritative machine-readable owner mapping is `lots_11_15_recovery_findings.yml`.
+Immutable claim history remains, while the analyst “current” claim set equals claims supported by the current causal resource head.
+
+### Current behavior / root cause
+
+`persist_public_footprint_projections()` only upserts claims present in `projection.claims`. It never reconciles claims that existed on the predecessor but are absent on the new version/tombstone. Query filters and counts can match historical rows.
+
+### Failure scenario
+
+A company page removes a technology/security claim or returns 404/410. The old claim remains visible/countable as though supported now.
+
+### Exact correction
+
+- link every claim assertion to supporting version(s);
+- materialize explicit currentness/validity or derive a desired current claim set from the protected head;
+- on head advance, reconcile previous current claims against new desired claims: retained, superseded, withdrawn, reappeared;
+- tombstone head produces an empty current claim set unless another independent current resource supports an equivalent claim;
+- current list/filter/search defaults must use current support only;
+- historical/detail timeline remains complete.
+
+### Required proof
+
+Claim removal, tombstone, reappearance, correction, replay and concurrent head advance all produce correct current vs historical results.
+
+---
+
+## R03-F06 — public-footprint versions do not have one protected causal head
+
+**Lot:** 12  
+**Severity:** HIGH  
+**Owner:** R03-L04
+
+### Current behavior / root cause
+
+`supersedes_version_id` is optional. `_validated_predecessor()` validates a supplied predecessor but accepts no predecessor. Reads infer “latest” by `fetched_at DESC, created_at DESC` rather than a persisted current-head invariant.
+
+### Exact correction
+
+- add one protected current-head reference per resource or equivalent uniqueness-enforced head table;
+- changed/tombstone incremental versions must advance from the current predecessor unless explicitly marked historical import;
+- reject/record stale and fork attempts before head mutation;
+- historical import does not become current merely because fetched later;
+- head advance and version insert must be one transaction with row lock/CAS/unique guard;
+- same-time ambiguity uses causal predecessor, not created_at.
+
+### Required proof
+
+Two writers, same fetched time, stale predecessor, branch attempt, replay and late backfill all preserve one justified head.
+
+---
+
+## R03-F07 — vulnerability alias bridge cannot converge existing canonicals safely
+
+**Lot:** 13  
+**Severity:** HIGH  
+**Owner:** R03-L05
+
+### Current behavior / root cause
+
+`_resolve_vulnerability()` queries canonical/alias matches and raises if more than one `VulnerabilityRecord` matches. The historical validation report explicitly treated this as validated behavior. Alias rows are canonical-global rather than source assertion history; hydration injects canonical aliases into every source snapshot.
+
+### Exact correction
+
+- persist `VulnerabilityAliasAssertion` (or equivalent) with source, source record, snapshot, asserted alias/canonical identifier, authority and timestamp;
+- introduce durable canonical vulnerability identity decisions with merge/reject/split/review states and rule version;
+- an authoritative exact bridge can converge existing canonical records without deleting source snapshots;
+- conflicting/ambiguous bridges require review;
+- canonical identifier selection remains deterministic but does not erase former identifiers;
+- identity reversal/split restores correct grouping without rewriting source evidence.
+
+### Required proof
+
+Bridge after duplicate creation, concurrent bridges, false/ambiguous bridge, split/reject, replay and source-provenance display.
+
+---
+
+## R03-F08 — vulnerability lifecycle authority is source-agnostic
+
+**Lot:** 13  
+**Severity:** HIGH  
+**Owner:** R03-L05
+
+### Current behavior / root cause
+
+`reconcile_vulnerability_snapshots()` chooses status via a fixed `_STATUS_PRIORITY`, independent of which source owns the identifier lifecycle. OSV/GHSA mappers set `WITHDRAWN` for their advisory withdrawal, which can globally withdraw a canonical CVE.
+
+### Exact correction
+
+- model lifecycle as source assertions plus identifier-namespace authority policy;
+- CVE.org/CNA-authoritative lifecycle controls CVE rejected/published/superseded semantics; advisory withdrawal remains advisory-local unless the advisory identifier itself is canonical without stronger authority;
+- expose source conflicts rather than flattening them;
+- validate `superseded_by` target existence/identity where required, prevent self/cycle/incompatible terminal states;
+- preserve status history and policy/rule version used for canonical selection.
+
+### Required proof
+
+CVE active + OSV withdrawn, CVE active + GHSA withdrawn, authoritative CVE rejection/supersession, later correction and policy replay.
+
+---
+
+## R03-F16 — vulnerability hydration drops additional current records from the same provider
+
+**Lot:** 13  
+**Severity:** HIGH  
+**Owner:** R03-L05
+
+### Expected contract
+
+After canonical convergence, **all distinct current provider records** that still assert facts about the canonical vulnerability contribute to current truth.
+
+### Current behavior / root cause
+
+`latest_vulnerability_snapshots()` orders rows by `source, modified_at DESC` and keeps only `latest[source]`. GitHub and OSV adapters use provider-native record keys (`GHSA-*`, OSV IDs); multiple distinct records can share the same exact CVE alias and resolve to one canonical vulnerability. Only the most recently modified record from that provider survives hydration.
+
+### Failure scenario
+
+Two GitHub advisories map to the same CVE and both remain valid, one carrying package range A and another range B. The more recently modified GHSA becomes the sole GitHub snapshot in reconciliation; the other still-current advisory’s ranges/references/scores disappear from current canonical truth.
+
+### Exact correction
+
+- define source-local lineage identity as `(vulnerability_id, source, source_record_key)` or an explicit provider-record lineage key;
+- compute one current head per **source record**, not one per source;
+- feed all current source-record heads into canonical reconciliation;
+- if a provider record changes, its own predecessor lineage advances without suppressing sibling records;
+- withdrawal/retraction of one provider record retires only that record’s contribution;
+- add same-modified-time/fork handling using causal semantics, not insertion order.
+
+### Required proof
+
+Two GHSA records and two OSV records sharing one CVE all contribute; updating/withdrawing one does not erase the sibling; replay/concurrent ingestion/same timestamp converge.
+
+### Not acceptable
+
+Changing the dictionary key from `source` to another value that still conflates distinct native records.
+
+---
+
+## R03-F09 — incident official confirmation lacks source-kind binding
+
+**Lot:** 14  
+**Severity:** HIGH  
+**Owner:** R03-L06
+
+### Current behavior / root cause
+
+`is_official_confirmation` checks membership in `_OFFICIAL_CLAIM_TYPES` and `active`; it does not require `COMPANY_CONFIRMATION` to come from `COMPANY`, regulator notice from `REGULATOR`, or CERT notice from `CERT`.
+
+### Exact correction
+
+- central domain/application authority matrix for allowed `(claim_type, source_kind)` combinations;
+- validate at construction/mapping/persistence boundary before a claim can contribute to official status;
+- incompatible input remains a lower-authority assertion or is rejected/quarantined with typed reason; never silently upgrades;
+- `confirmed_at` additionally requires compatible authority.
+
+### Required proof
+
+Media/provider/ransomware source mislabeled as official does not confirm; company/regulator/CERT valid combinations do; corrections retain history.
+
+---
+
+## R03-F10 — incident cross-key supersession is stored but ignored
+
+**Lot:** 14  
+**Severity:** HIGH  
+**Owner:** R03-L06
+
+### Current behavior / root cause
+
+`_latest_claim_revisions()` reduces by `(source_id, source_record_key)` and latest `modified_at`. `supersedes_record_key` never participates. Existing integration tests retract the **same** record key, so they do not prove cross-key semantics.
+
+### Exact correction
+
+- persist source-local claim lineage with predecessor pointer/head state;
+- allow correction/retraction record B to supersede source record A when the provider says so;
+- validate same source/incident lineage and compatible identity;
+- reject cycles, self-supersession, stale predecessor and concurrent fork;
+- same modified timestamp requires lineage, not write order;
+- immutable predecessor snapshots remain queryable.
+
+### Required proof
+
+A→B cross-key correction/retraction, invalid cross-source predecessor, cycle, fork, stale write, replay and concurrent attempts.
+
+---
+
+## R03-F11 — incident grouping trusts provider-native `incident_key`
+
+**Lot:** 14  
+**Severity:** HIGH  
+**Owner:** R03-L07
+
+### Current behavior / root cause
+
+`reconcile_incident_claims()` groups directly by `claim.incident_key`; mappers pass provider payload `incident_key` through. Independent providers normally use different native IDs, so corroboration/contradiction cannot reliably meet on one canonical incident.
+
+### Exact correction
+
+- preserve native incident identifier as evidence;
+- create a canonical incident identity decision/group service;
+- deterministic binding only on strong exact shared event/reference identifiers;
+- reviewed match may use canonical organization + bounded event/time anchors with explicit human decision;
+- fuzzy similarity alone never merges;
+- persist merge/reject/split/review history and rule version;
+- independence/syndication calculations run after grouping without collapsing provenance.
+
+### Required proof
+
+Same real incident/different IDs merges safely; same victim/two separate incidents remain separate; review/reject/split/replay/concurrency all work.
+
+---
+
+## R03-F12 — incident type uses “most severe wins”
+
+**Lot:** 14  
+**Severity:** HIGH  
+**Owner:** R03-L06
+
+### Current behavior / root cause
+
+`_TYPE_PRIORITY` selects the maximum incident type across claims, irrespective of source authority/confidence. A low-confidence attacker allegation can therefore make the canonical type `ransomware` while an official source confirms only unauthorized access/service disruption.
+
+### Exact correction
+
+- retain typed incident-type assertions per claim/source;
+- select primary type by source authority, confirmation state, confidence and explicit review policy;
+- expose conflicts/alternative asserted types;
+- low-authority severe allegations remain allegations, not canonical fact;
+- retain policy/rule version in decision history.
+
+### Required proof
+
+Ransomware allegation + company unauthorized-access confirmation results in authoritative primary type plus visible ransomware allegation, not silent ransomware upgrade.
+
+---
+
+## R03-F13 — IOC cross-key supersession is stored but ignored
+
+**Lot:** 15  
+**Severity:** HIGH  
+**Owner:** R03-L08
+
+### Current behavior / root cause
+
+`latest_indicator_snapshots()` reduces by `(source_id, source_record_key)` and never follows `supersedes_record_key`. Existing reclassification test reuses the same key.
+
+### Exact correction
+
+Implement source-local indicator record lineage equivalent to F10: predecessor/head, cross-key correction/retraction, same indicator identity/source validation, cycle/fork/stale protection, replay determinism and immutable history.
+
+### Required proof
+
+Cross-key retraction, cross-key correction, invalid identity/source predecessor, cycle/fork, same-time concurrency and replay.
+
+---
+
+## R03-F14 — IOC expiry is metadata, not clock truth
+
+**Lot:** 15  
+**Severity:** HIGH  
+**Owner:** R03-L08
+
+### Current behavior / root cause
+
+`_reconcile_indicator()` considers `snapshot.active` but not `expires_at <= now`; queries do not receive `now` and filter the stored `active` column. Existing historical test manually sets `active=False`, so it does not prove automatic expiration.
+
+### Exact correction
+
+- define current assertion semantics `is_effective(as_of)` where expiry boundary is explicit;
+- either make read/reconcile paths clock-aware plus schedule next transition, or integrate a durable **local** expiry reconciliation trigger with Lot28’s global time-driven mechanism;
+- expired positive assertion stops contributing exactly at boundary;
+- independent unexpired evidence may keep canonical indicator active;
+- fresh evidence may reactivate without deleting expired history;
+- API filters and counts must be time-correct.
+
+### Required proof
+
+No-write passage of time, exact boundary, multiple source TTLs, reactivation and concurrent update/expiry.
+
+---
+
+## R03-F15 — Lot15 campaign/malware capability stops at opaque relation targets
+
+**Lot:** 15  
+**Severity:** HIGH  
+**Owner:** R03-L09
+
+### Expected contract
+
+An analyst can search and understand an indicator **or a campaign**, including typed chronology/provenance across indicator↔campaign↔malware↔vulnerability.
+
+### Current behavior / root cause
+
+`TelemetryRelation` contains only `relation_type`, `target_key`, `confidence`. The protected router exposes `/v1/threat-indicators` list/detail only. No canonical Campaign/Malware identity, source assertion history, review/split or dedicated analyst timeline exists in this bounded context.
+
+### Exact correction
+
+- add canonical `Campaign` and `MalwareFamily` (or rigorously equivalent threat-entity types);
+- persist source-native aliases/assertions and reversible identity decisions;
+- add source/current/history timestamps and correction/retraction/expiry semantics;
+- replace opaque-only relations with typed relation assertions referencing canonical entity when resolved while retaining native target string as provenance;
+- relation metadata includes source snapshot, confidence and validity interval;
+- add protected analyst list/search/detail/timeline APIs and frontend workspace if required by the existing product UI contract;
+- map STIX/TAXII/provider metadata conservatively; no name-only unsafe merge;
+- never actively validate IOCs or retrieve malware binaries.
+
+### Required proof
+
+Cross-source campaign aliases, ambiguous same-name campaigns, split/reject, relation expiry/retraction, campaign timeline, malware↔vulnerability provenance, auth/search/detail and replay.
+
+---
+
+## Final audit conclusion
+
+The final adversarial pass has **16 recovery-local findings**. F01–F16 each have one owner in R03-L02 through R03-L09, except L01/L10 which are process/qualification micro-lots. No known local residual is ownerless after this pass.
+
+This audit is signed off as scope-complete for implementation start. It does **not** assert that any finding is fixed in runtime. R03-L10 must reopen the contracts again after implementation and may add new findings instead of forcing a closeout.
