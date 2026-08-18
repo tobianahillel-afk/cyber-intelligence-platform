@@ -1,248 +1,256 @@
-# Lots 06–10 finality recovery micro-lots
+# Lots 06–10 finality recovery micro-lots — version 3
 
-Status: **PLANNED_LOCKED_AFTER_SECOND_AUDIT**  
+Status: **PLANNED_LOCKED_AFTER_THIRD_PASS**  
 Recovery overlay: **R02**  
-Tracking issue: **#175**  
-Baseline audited: `main@8d7184b8a6f494ceb407ab489d8971f4d015bab6`
+Issue: **#175**  
+Baseline: `main@8d7184b8a6f494ceb407ab489d8971f4d015bab6`
 
-## Mandatory order
+## Mandatory implementation order
 
 ```text
-R02-L01 ownership registry / anti-orphan guard
-  -> R02-L02 ATS identity binding + durable reversible inter-ATS dedup
-  -> R02-L03 provider-specific connectivity verification
-  -> R02-L04 legal onboarding lifecycle / expiry / rotation / reverify
-  -> R02-L05 composed fail-closed runtime execution authority
-  -> R02-L06 adversarial exact-head qualification / closeout
+R02-L01 ownership guard
+  -> R02-L02 ATS identity binding + reversible dedup
+  -> R02-L03 provider connectivity verification
+  -> R02-L04 onboarding lifecycle/revision/expiry/rotation
+  -> R02-L05 composed fail-closed execution authority
+  -> R02-L06 source mutation capability + causal integrity
+  -> R02-L07 durable backfill recovery
+  -> R02-L08 truthful source quality semantics
+  -> R02-L09 truthful source value/ablation
+  -> R02-L10 adversarial exact-head qualification + closeout
 ```
 
-R02 micro-lots are corrective overlays, not new normal product lot numbers.
+These are recovery micro-lots, not normal product lot numbers.
 
 ---
 
-## R02-L01 — executable ownership registry and anti-orphan gate
+## R02-L01 — executable ownership/no-orphan guard
 
-### Owns
+Owns the machine-checkable recovery registry, not a product defect.
 
-The recovery registry itself; no runtime defect is closed here.
+Create/extend architecture tests to enforce unique finding IDs, exactly one owner per finding, allowed dispositions, explicit later tracker for F06, no placeholder state, no duplicate Lot28–31/SA ownership, and no premature closeout.
 
-### Required
-
-Create `tests/architecture/test_lots_06_10_recovery_ownership.py` and enforce:
-
-- unique `R02-Fxx` IDs;
-- exactly one owner for every unresolved finding;
-- local owners are only valid R02 micro-lots;
-- later-owned findings name a real existing owner/tracker;
-- F01/F07 → R02-L02 exactly once;
-- F02 → R02-L03 exactly once;
-- F03/F04 → R02-L04 exactly once;
-- F05/F08 → R02-L05 exactly once;
-- F06 → Lot28/#171 exactly once;
-- no forbidden placeholder disposition;
-- no premature closeout document/proof.
-
-No migration.
+Exit: YAML version 3 F01–F12 is executable as an architecture contract.
 
 ---
 
-## R02-L02 — resolved ATS organization binding + durable/reversible cross-provider job dedup
+## R02-L02 — ATS canonical organization binding + durable reversible dedup
 
-### Owns
+Owns: **F01, F07**.
 
-- R02-F01;
-- R02-F07.
+Implement one public-job canonical grouping/application boundary:
 
-### Why they share one owner
+- provider-native posting and organization identifiers stay immutable provenance;
+- ATS tenant/board/company must bind to an existing Lot08-resolved canonical organization before organization-scoped aggregation;
+- exact deterministic cross-provider duplicates may auto-group only after resolved-identity equality;
+- ambiguous identity or duplicate similarity is review-required;
+- durable group/member/decision/history with stable IDs and rule/version fingerprint;
+- rejection and split/reversal survive replay;
+- no destructive evidence merge;
+- concurrency-safe membership in PostgreSQL.
 
-A cross-provider job comparison is only trustworthy after all provider-native postings refer to the same resolved canonical organization. Implementing F01 without F07 would preserve a hidden dependency on operators choosing matching `organization_key` strings; implementing F07 separately inside Lot08 would duplicate identity authority.
+Likely migration: duplicate group/member/decision audit plus a narrow ATS→canonical-organization binding record if no existing identity-claim table can express the association safely.
 
-### Required architecture
-
-Introduce one public-job canonicalization boundary with two stages:
-
-1. **organization binding**
-   - every configured Greenhouse board, Lever site and SmartRecruiters company keeps its provider-native source identity;
-   - commercial projection must resolve that source identity to an existing canonical `organization_id` through exact official identity or an explicit reviewed binding;
-   - unresolved/ambiguous binding is persisted as review-required and cannot silently create a canonical legal organization for aggregation;
-   - display names remain source evidence, not identity authority.
-2. **job duplicate decision**
-   - compare only jobs already bound to the same canonical organization;
-   - exact conservative rules may auto-group;
-   - ambiguous similarity remains review-required;
-   - persist stable group/member/decision, rule/version/fingerprint and reviewer/audit metadata;
-   - preserve every provider-native SourceRecord/RawObservation/Evidence;
-   - split/reject/reversal is durable and replay-stable.
-
-Do not use fuzzy organization-name auto-merge. Do not create a Lot28-style downstream reconciliation engine here.
-
-### Primary code surfaces
-
-- `src/cip/adapters/sources/canonical_jobs.py`;
-- Greenhouse/Lever/SmartRecruiters registries + mappers;
-- `src/cip/modules/opportunities/infrastructure/projections.py` or a preceding application boundary that prevents unresolved organizations reaching canonical persistence;
-- Lot08 organization identity query/application contracts for safe binding, without moving ownership into adapters;
-- new narrowly owned public-job binding/dedup domain/application/persistence if no existing bounded context fits;
-- migration(s) for source→organization binding and duplicate decisions if durable schema is absent.
-
-### Required tests
-
-- ATS local id cannot mint canonical organization without binding;
-- exact official/resolved organization binding permits projection;
-- ambiguous organization identity becomes review-required and emits no organization-scoped commercial aggregation;
-- two ATS local identifiers can bind to the same canonical organization;
-- exact duplicate across providers groups deterministically;
-- same title/different organization never groups;
-- same organization/title but materially different location/department remains separate or review-required per explicit rule;
-- provider evidence remains independent;
-- correction can split/re-group;
-- reviewed reject/split survives replay;
-- concurrent identical arrivals are race-safe in PostgreSQL;
-- shuffled replay/backfill order yields same decision fingerprint;
-- rollback removes only derived binding/grouping schema and never source history.
-
-### Exit
-
-Lot07's `prudente et réversible` requirement is demonstrated on resolved canonical organization identity, not config-string coincidence.
+Tests: exact duplicates across all ATS pairs, ambiguous org, conflicting org, reviewed rejection, correction-induced split, replay order, concurrent arrivals, source evidence independence.
 
 ---
 
-## R02-L03 — provider-specific connectivity verification before CONNECTED
+## R02-L03 — provider-specific verification before authenticated CONNECTED
 
-### Owns
+Owns: **F02**.
 
-R02-F02.
+Introduce an onboarding application port for bounded provider verification. Reference resolution alone is insufficient.
 
-### Required
+Requirements:
 
-Add an onboarding application port such as `ProviderVerificationPort`, backed by provider-specific bounded implementations. For authenticated providers:
+- policy before network;
+- provider-approved minimal probe;
+- credential/scope/connectivity typed results;
+- strict timeout/size/redirect policy;
+- missing verification implementation fails closed for authenticated providers;
+- manual providers remain human checkpoint flows;
+- auth-none public providers retain truthful network-free semantics where appropriate;
+- no raw secret in DB/API/audit/logs.
 
-- secret resolution is runtime-only;
-- policy/authorization check occurs before network;
-- no verifier implementation means verification-required/fail-closed, not success;
-- provider-specific minimal probe validates credential and required scope;
-- strict timeout/redirect/response-size rules;
-- typed normalized errors for auth, scope, rate-limit, outage, policy, malformed response/config;
-- no raw secret in DB/API/audit/logs;
-- manual provider remains human/provider-approval flow;
-- auth-none public sources retain truthful automatic behavior where the profile explicitly defines verification as not required.
-
-### Tests
-
-Resolvable secret + rejected credential/wrong scope/outage/missing verifier cannot become CONNECTED; successful probe sets current verification; policy denial precedes transport; raw secret redaction is proven end-to-end.
+Tests include rejected credential, wrong scope, timeout/outage, policy denial before fake transport, missing probe, secret redaction and successful verified connection.
 
 ---
 
-## R02-L04 — one legal onboarding state machine with expiry/rotation/reverification
+## R02-L04 — one legal revision-bound onboarding lifecycle
 
-### Owns
+Owns: **F03, F04**.
 
-- R02-F03;
-- R02-F04.
+Implement a single explicit transition graph and one revision model for current authorization.
 
-### Required
+Verification validity must bind to:
 
-Define one explicit previous→next graph for every onboarding state and force every service operation through it. Illegal transitions fail before mutation and before success audit.
+- current secret-reference configuration revision;
+- current provider-profile/verification-contract revision;
+- successful provider verification outcome;
+- current expiry/revocation state.
 
-Rotation/expiry must be part of the same lifecycle:
+Changing secret refs, auth mode, required secret names, verification method/profile or relevant scope invalidates the prior verification. Illegal state transitions fail before mutation/audit. Rotation, expiry, revoke and reverification use the same state machine.
 
-- successful verification is bound to the current non-secret reference-set revision/fingerprint;
-- replacing a reference invalidates prior verification;
-- `now >= expires_at` is non-current authorization;
-- failed reverify cannot preserve stale CONNECTED truth;
-- revoke invalidates current authorization deterministically;
-- blocked/quarantined controls cannot be bypassed by alternate transitions;
-- unknown credential expiry stays unknown, not fabricated as infinite validity;
-- concurrency verify↔rotate/revoke is safe under PostgreSQL.
-
-Expose operator API/UI controls only where needed to make lifecycle actions operable and auditable.
-
-### Exit
-
-The domain transition graph, service behavior, API and runtime-consumed authorization view all describe the same lifecycle.
+Concurrency tests: verify vs rotate, verify vs revoke, profile sync vs verify, exact expiry boundary, repeated operations, blocked provider escape attempt.
 
 ---
 
 ## R02-L05 — composed fail-closed source execution authority
 
-### Owns
+Owns: **F05, F08**.
 
-- R02-F05;
-- R02-F08.
+Replace bool-only fragmented truth with one typed eligibility decision used by scheduler, queued worker, priority/manual refresh and backfill.
 
-### Architecture decision
+Final decision composes:
 
-Do **not** choose between onboarding and portfolio by deleting one. They own different truths:
+- explicit Source Portfolio membership and executable state;
+- runtime adapter/capability existence;
+- current Provider Onboarding authorization state/revision where auth applies;
+- portfolio authorization expiry;
+- quota/cost blocking state;
+- operational execution blocks.
 
-- Provider Onboarding = credential/authorization truth.
-- Source Portfolio = single runtime execution decision authority.
+Missing portfolio or required onboarding state fails closed. Startup validates both directions between executable catalog entries, adapters and schedules. Recheck eligibility at the last safe pre-network boundary so revoke/expiry after queueing cannot leak one more request.
 
-The portfolio decision must compose onboarding instead of duplicating it.
-
-### Required decision contract
-
-Replace a boolean-only conceptual model with a typed eligibility result sufficient for observability:
-
-```text
-source portfolio membership/status
-+ current provider onboarding authorization (when required)
-+ authorization expiry / verification revision
-+ freshness / circuit / quota / cost
-+ runtime adapter capability/availability
-= allow | deny(reason)
-```
-
-Required behavior:
-
-- missing portfolio row => deny;
-- candidate/planned/disabled => deny;
-- authenticated source missing current CONNECTED verification => deny;
-- revoked/failed/expired/rotated-but-unverified => deny;
-- quota/cost/health block => deny;
-- adapter unavailable/mismatched => deny;
-- auth-none source may run only when its explicit portfolio/source-governance contract is executable;
-- reverse startup validation proves every executable adapter/schedule/manual/backfill target has governed portfolio ownership;
-- no implicit auto-promotion of unknown adapters;
-- queued/claimed incremental jobs and claimed backfill partitions are revalidated at the last safe pre-network boundary;
-- denial produces typed/observable reason and zero provider network.
-
-### Concurrency/race tests
-
-- revoke after queue but before collect => no network;
-- expiry at exact boundary => no network;
-- rotate after queue but before collect => no network until new verification;
-- pause/disable after queue => no network;
-- backfill sees same outcomes as incremental;
-- missing portfolio record never restores legacy execution;
-- startup catches runtime source without portfolio entry;
-- explicit approved source remains executable after bootstrap.
-
-### Boundary with Lot28
-
-R02-L05 may synchronize/consult onboarding state only to make the execution decision. It must not build a generalized downstream outbox, entity invalidation bus or derived-state projector; those remain Lot28.
+Do not build Lot28 reconciliation here.
 
 ---
 
-## R02-L06 — adversarial exact-head qualification and closeout
+## R02-L06 — source mutation capability contract and causal integrity
 
-### Required re-audit
+Owns: **F09**.
 
-Re-read issues #21/#23/#25/#27/#29 and inspect the implemented code, migrations and tests rather than trusting this plan. Any new historical residual becomes R02-F09+ with exactly one owner before closeout.
+### Goal
 
-### Adversarial matrix
+Make corrections/tombstones/retractions a real executable source-record contract rather than a permissive enum plus manifest flags.
 
-- Lot06 active refresh/removed ageing semantics preserved.
-- F07 unresolved ATS identity cannot mint canonical org/opportunity.
-- F01 exact duplicates converge only after resolved identity; ambiguity and corrections remain reversible.
-- F02 secret availability alone never proves authenticated connectivity.
-- F03/F04 illegal transition, exact expiry, rotate/reverify/revoke races fail safely.
-- F05 unknown/candidate/disabled source cannot execute.
-- F08 onboarding revoke/expiry/failure/reference rotation blocks queued incremental/backfill/manual network calls.
-- F06 remains solely Lot28-owned.
-- no raw secrets, active scanning, auth bypass, fuzzy identity auto-merge or destructive source-history merge introduced.
+### Required behavior
 
-### Exact-head gates
+- mutation target exists;
+- target belongs to same `source_id` and `source_record_key` (and compatible record type/adapter where required);
+- mutation advances the current causal head or returns a typed stale/conflict outcome;
+- concurrent competing mutations cannot silently fork current state;
+- persistence maintains referential integrity for supersedes relationships where safe;
+- reducer/replay validates causal history instead of ignoring supersedes;
+- capability manifests are contract-tested against adapter behavior.
 
-One final SHA must pass architecture, unit/integration, PostgreSQL concurrency, migration upgrade→downgrade→upgrade, lint/type/coverage/full backend regression, frontend checks when touched, security/redaction tests, review-thread zero check and exact-head CI.
+### ATS completion
 
-Only then create `LOTS_06_10_FINALITY_RECOVERY_CLOSEOUT.md` and close #175.
+For Greenhouse/Lever/SmartRecruiters:
+
+- changed fingerprint after a known predecessor -> `CORRECTION` with predecessor ID;
+- record present in prior complete checkpoint but absent from a new **complete successful** traversal -> `TOMBSTONE` with predecessor ID;
+- partial/error/incomplete traversal -> never infer deletion;
+- reappearance after tombstone follows an explicit deterministic resurrection/upsert rule;
+- provider evidence/history never deleted.
+
+### Migration/tests
+
+Likely migration for supersedes FK/index/current-head protection or an equivalent normalized current-head table. Test cross-record supersedes rejection, unknown predecessor, stale branch, simultaneous corrections, tombstone race, replay order, deletion after complete traversal and no deletion after partial traversal.
+
+Lot28 receives these valid mutations later; L06 does not propagate derived state globally.
+
+---
+
+## R02-L07 — durable backfill crash/partial-progress/circuit recovery
+
+Owns: **F10**.
+
+### Required architecture
+
+Prefer reusing the collection orchestration lease/circuit primitives or extracting shared primitives rather than creating a second divergent reliability stack.
+
+Backfill must have:
+
+- durable lease owner and expiry or equivalent job ownership token;
+- stale RUNNING recovery;
+- PostgreSQL `SKIP LOCKED`/ownership-safe single claimant;
+- retry `available_at` and bounded exponential backoff;
+- circuit OPEN/HALF_OPEN behavior compatible with incremental collection;
+- distinct retryable/non-retryable terminal semantics;
+- safe partial-batch persistence for `AdapterPartialExecutionError`;
+- cursor/progress checkpoint persisted atomically with source-local observations;
+- no double-counting `records_written` on retry;
+- pause/disable/revoke invalidates in-flight completion safely;
+- execution authority rechecked immediately before provider network.
+
+### Tests
+
+Crash after claim; lease expiry/takeover; two workers; partial page succeeds then provider fails; retry resumes at partial cursor; circuit opens; backoff respected; pause/disable/revoke while running; lease lost on completion; migration upgrade/downgrade/upgrade.
+
+---
+
+## R02-L08 — truthful source-quality population/delta semantics
+
+Owns: **F11**.
+
+Extend `AdapterCollectionBatch` with a typed, provider-neutral run-quality profile rather than overloading `observations`.
+
+Recommended data:
+
+- `records_seen` / current provider population when knowable;
+- `records_changed`;
+- `records_removed`;
+- page/window count;
+- `traversal_complete`;
+- schema fingerprints sampled from validated provider records;
+- field-population summary;
+- optional provider-declared totals;
+- metric availability flags.
+
+Quality baseline rules:
+
+- population anomaly uses population metric, not immutable delta count;
+- delta/change rate may have a separate baseline;
+- partial/incomplete run never trains a healthy population baseline and never generates deletion inference;
+- `not_modified` does not erase last truthful population state;
+- schema/field health uses representative validated records rather than only changed rows where available;
+- adapters unable to supply a metric report `unknown`, not zero.
+
+Tests: 1000→1000 with one changed stays healthy; 1000→10 complete traversal flags anomaly; one changed in otherwise stable provider does not; incomplete traversal does not poison baseline; removal-only run; schema drift; 304/not-modified.
+
+---
+
+## R02-L09 — truthful source-value and ablation attribution
+
+Owns: **F12**.
+
+Create one value-event derivation contract shared by incremental and backfill completion.
+
+Requirements:
+
+- count accepted/persisted observations and source-owned canonical/commercial/identity outputs using one definition;
+- do not hardcode backfill projections to zero;
+- preserve `execution_mode` so historical outputs are distinguishable from fresh-trigger value;
+- replay/idempotent event key remains unique;
+- partial retries cannot double-count;
+- source ablation summaries remain reproducible;
+- if Lot28 later changes projection plumbing, value attribution consumes the canonical persistence result rather than duplicating reconciliation.
+
+Tests use at least one real historical source path that produces commercial or identity output, not only the zero-output reference adapter.
+
+---
+
+## R02-L10 — final adversarial qualification and closeout
+
+Owns terminal qualification only.
+
+Before closeout, rerun the audit against the implemented code and add F13+ if a new historical residual is proven. No placeholder closure is allowed.
+
+Exact-head gates:
+
+- ownership manifest tests;
+- ATS identity/dedup/mutation/replay/concurrency;
+- provider verification/lifecycle/redaction;
+- composed execution authority/no-network-after-deny;
+- backfill lease/crash/partial/circuit PostgreSQL tests;
+- quality semantics;
+- value/ablation semantics;
+- migration upgrade/downgrade/upgrade;
+- architecture + backend full regression;
+- frontend lint/type/test/build if UI touched;
+- security gates;
+- zero unresolved review threads;
+- exact-head CI green.
+
+Only L10 may create `LOTS_06_10_FINALITY_RECOVERY_CLOSEOUT.md`.

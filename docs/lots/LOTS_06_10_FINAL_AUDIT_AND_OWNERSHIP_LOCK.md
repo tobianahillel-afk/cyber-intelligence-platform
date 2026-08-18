@@ -1,164 +1,154 @@
-# Lots 06–10 final audit and ownership lock
+# Lots 06–10 final audit and ownership lock — third pass
 
-Status: **FINAL_AUDIT_COMPLETE_IMPLEMENTATION_PENDING**  
+Status: **THIRD_PASS_FINAL_AUDIT_COMPLETE_IMPLEMENTATION_PENDING**  
 Recovery: **R02**  
 Tracking issue: **#175**  
-Audited baseline: `main@8d7184b8a6f494ceb407ab489d8971f4d015bab6`  
-Second adversarial pass locked: **2026-08-18**
+Audited baseline: `main@8d7184b8a6f494ceb407ab489d8971f4d015bab6`
 
-This document and `lots_06_10_recovery_findings.yml` are the authoritative pre-implementation ownership lock. This is **not** a runtime closeout.
+This document and `lots_06_10_recovery_findings.yml` version 3 are the authoritative pre-implementation ownership lock for R02. This is not runtime closeout.
 
-## 1. Final result after second adversarial pass
+## 1. Final result
 
-### Active R02 implementation findings
+### R02-local findings
 
-| ID | Historical lot | Capability | Severity | Owner |
+| ID | Historical lot | Severity | Owner | Locked correction |
 |---|---:|---|---|---|
-| R02-F01 | 07 | durable/reversible cross-provider public-job dedup | high | R02-L02 |
-| R02-F02 | 09 | provider-specific connectivity verification | high | R02-L03 |
-| R02-F03 | 09 | legal onboarding transition graph | high | R02-L04 |
-| R02-F04 | 09 | expiry/rotation/reverification lifecycle | high | R02-L04 |
-| R02-F05 | 10 | fail-closed central source-portfolio membership/execution | critical | R02-L05 |
-| R02-F07 | 07 | ATS commercial projection requires resolved canonical organization identity | high | R02-L02 |
-| R02-F08 | 10 / integration 09→10 | onboarding authorization must participate in runtime execution authority | critical | R02-L05 |
+| F01 | 07 | HIGH | L02 | durable/reversible inter-ATS duplicate decisions |
+| F02 | 09 | HIGH | L03 | provider-specific verification |
+| F03 | 09 | HIGH | L04 | legal transition graph |
+| F04 | 09 | HIGH | L04 | revision-bound profile/credential expiry/rotation/reverify |
+| F05 | 10 | CRITICAL | L05 | fail-closed central portfolio membership |
+| F07 | 07↔08 | HIGH | L02 | resolved canonical organization binding before ATS aggregation |
+| F08 | 09→10 | CRITICAL | L05 | onboarding authorization composed into runtime eligibility |
+| F09 | 10 | HIGH | L06 | causal source mutations + truthful capability manifests |
+| F10 | 10 | CRITICAL | L07 | leased/crash-safe/partial/circuit-aware backfill |
+| F11 | 10 | HIGH | L08 | population-aware source quality semantics |
+| F12 | 10 | HIGH | L09 | truthful historical source-value/ablation accounting |
 
 ### Existing later-owned residual
 
-| ID | Historical lot | Capability | Severity | Owner | Disposition |
-|---|---:|---|---|---|---|
-| R02-F06 | 10 | global backfill/incremental/replay + correction/retraction/expiry derived-state convergence | critical | Lot28/#171 | owned_by_existing_later_scope |
+| ID | Lot | Severity | Owner | Disposition |
+|---|---:|---|---|---|
+| F06 | 10 | CRITICAL | Lot28/#171 | owned_by_existing_later_scope |
 
-### Historical cores retained
+There is no known ownerless residual in the audited Lots06–10 scope after this third pass.
 
-- Lot06 core remains terminal.
-- Lot08 **internal identity foundation** remains terminal; F07 is the Lot07 integration that must consume it.
+## 2. Third-pass architectural decisions
 
-There is no ownerless residual in the reviewed scope after this lock.
+### Source mutation is upstream truth; propagation remains downstream
 
-## 2. Decisions that changed in the second pass
+Lot10 already defines immutable source mutation actions. R02-L06 will make their causal lineage and capability manifests truthful. It may create correction/tombstone source events but must not directly invalidate every opportunity/hypothesis/read model. Lot28 consumes valid mutations through its one reconciliation architecture.
 
-### Lot07 now has two defects, not one
+### Backfill reliability must converge on shared collection reliability primitives
 
-The first audit correctly found missing durable/reversible inter-ATS dedup (F01), but treated the canonical `organization_key` as an already-safe identity input. The deeper trace disproves that assumption.
+The final product should not keep two incompatible reliability stacks. Incremental collection already has leases, expired-lease recovery and circuit/backoff. L07 should reuse or extract shared primitives so backfill has equivalent ownership/retry safety while preserving bounded partition semantics.
 
-Greenhouse, Lever and SmartRecruiters registries provide local configuration IDs and names. Those IDs flow through their mappers into `CanonicalPublicJob.organization_key`; the canonical mapper derives an `organization_id` from that key and constructs an `Organization`; central commercial persistence then upserts it and can generate an opportunity.
+### Quality must distinguish state from change
 
-The current path therefore lacks an enforced proof that an ATS tenant/board/company has been bound to a canonical organization through Lot08's safe identity rules.
+For full-snapshot/delta-hybrid providers, provider population, traversal completeness and immutable changes are different measurements. L08 must represent them separately. `len(batch.observations)` cannot be the universal source-volume truth.
 
-**Decision:** F07 is HIGH and owned by the same R02-L02 as F01. Identity must be resolved/bound before cross-provider grouping or organization-scoped commercial aggregation. Lot08 itself is not reopened.
+### Historical value is value, but not a fresh trigger
 
-### Lot10 now has two local critical execution defects, not one
+Backfill-derived commercial/identity outputs must be counted for source value/ablation. Their `historical_backfill` mode must remain explicit so they do not masquerade as fresh trigger volume or generate false historical alert value.
 
-F05 remains the explicit `missing SourcePortfolioRecord -> True` legacy fail-open.
+### Provider verification is revision-bound
 
-The deeper trace also proves separate authorization truths:
+A successful provider verification is proof about an exact configuration. Changing secret references or the provider profile/required auth contract invalidates that proof. L04 owns the single revision-aware lifecycle.
 
-- Lot09 onboarding has `state`, `expires_at`, `last_verified_at`, secret references, failure and revocation;
-- Lot10 portfolio has independent status/`authorization_expires_at`/health;
-- `source_execution_allowed()` consumes the latter but not the former;
-- both incremental and backfill workers rely on this gate before adapter network execution.
+## 3. Evidence lock for new findings
 
-Historical Lot10 requires automatic stop at authorization expiry and explicitly composes onboarding into its exit chain.
+### F09
 
-**Decision:** F08 is CRITICAL and owned by R02-L05. Lot09 remains the credential/authorization source of truth; Lot10 remains the single execution authority; Lot10's verdict must compose the current Lot09 truth.
+- RawObservation mutation vocabulary exists.
+- `supersedes_observation_id` is carried but not validated as the same-record current predecessor by the reducer.
+- reducer ignores the supersedes edge and orders by time/key.
+- ATS capability manifests claim corrections/tombstones.
+- Greenhouse/Lever/SmartRecruiters changed postings are currently normal UPSERT observations; disappearance is checkpoint absence.
 
-## 3. Exact ownership lock
+Decision: implement the capability rather than weakening the catalogue, because a correct explicit mutation stream makes the product more complete and gives Lot28 a precise upstream event contract.
 
-### R02-L01
+### F10
 
-Owns only machine-checkable recovery ownership/no-orphan enforcement.
+- Backfill partition persistence lacks lease owner/expiry/next-available retry time.
+- claim moves PENDING/FAILED to RUNNING; abandoned RUNNING has no recovery path.
+- partial adapter batch is discarded in backfill exception handling.
+- FAILED can be reclaimed immediately without the incremental circuit/backoff.
 
-### R02-L02 — F01 + F07
+Decision: CRITICAL. A production backfill must survive process death and upstream failure without permanent wedging, refetch storms or lost safe progress.
 
-Owns the public-ATS canonicalization boundary:
+### F11
 
-- source-native ATS organization/tenant identity preserved;
-- explicit source→canonical organization binding through exact official or reviewed identity decision;
-- unresolved identity cannot mint canonical org-scoped commercial state;
-- durable conservative/reversible cross-provider job grouping;
-- no fuzzy/name-only organization auto-merge;
-- no destructive provider evidence merge.
+- quality evaluator trains on `len(observations)`.
+- ATS observations are delta emissions after full current-state traversal.
 
-Lot28 later consumes canonical changes for global downstream reconciliation.
+Decision: HIGH. Wrong quality telemetry can disable/trust the wrong sources and hides genuine population collapse while flagging healthy low-change runs.
 
-### R02-L03 — F02
+### F12
 
-Owns provider-specific bounded connectivity verification before authenticated CONNECTED.
+- value event schema supports projection counts.
+- incremental reports them.
+- backfill hardcodes zeros.
 
-### R02-L04 — F03 + F04
+Decision: HIGH because Lot10 explicitly uses value/ablation to evaluate source usefulness; systematically undercounting historical-source contribution can drive wrong source-portfolio decisions.
 
-Owns one legal provider onboarding state machine including expiration, reference rotation and re-verification. No parallel lifecycle.
+## 4. Non-findings locked by deeper inspection
 
-### R02-L05 — F05 + F08
+Do not reopen these without new code evidence:
 
-Owns one composed runtime execution authority:
+- Greenhouse, Lever and SmartRecruiters traversal completeness/pagination are bounded and currently defensible.
+- Lot08 exact official identifier persistence has global uniqueness; no internal collision bug proven.
+- incremental circuit breaker is real and durable; F10 concerns backfill parity.
+- priority refresh is not a separate authority bypass.
+- normal source-portfolio sync does not simply erase manual PAUSED/DISABLED state.
+- construction of typed adapter projections remains distinct from forbidden adapter-owned database writes.
 
-`portfolio membership/status + onboarding authorization/current verification + freshness/health + quota/cost + adapter availability -> typed allow/deny`
+## 5. One-owner map
 
-It must govern scheduled, queued, incremental, backfill and manual network-capable execution, rechecking at the last safe pre-network boundary.
+```text
+L01: registry/no-orphan process
+L02: F01 F07
+L03: F02
+L04: F03 F04
+L05: F05 F08
+L06: F09
+L07: F10
+L08: F11
+L09: F12
+L10: final qualification only
+Lot28/#171: F06
+```
 
-### R02-L06
+No capability in this map has two runtime owners.
 
-Owns only final adversarial qualification/exact-head proof and eventual closeout.
+## 6. Mandatory terminal proofs
 
-### Lot28/#171 — F06
+### L02
+Resolved organization binding, exact conservative grouping, review ambiguity, reversal/split, replay and concurrent arrival.
 
-Sole owner of platform-wide derived-state reconciliation/invalidation and backfill/incremental/replay convergence. R02 must not duplicate it.
+### L03
+Real provider verification, typed auth/scope/outage errors, policy before network, secret redaction.
 
-## 4. Evidence lock
+### L04
+Full transition matrix; rotation/profile-change invalidation; expiry/revoke; revision binding; races.
 
-### F01
+### L05
+Missing membership deny; onboarding revoke/expiry deny; adapter/schedule reverse completeness; final pre-network recheck; no network after deny.
 
-`exact_cross_provider_match()` and candidate key exist, but no durable grouping decision/reversal is materialized.
+### L06
+Same-record causal predecessor; invalid/forked mutation rejection; manifest executable tests; ATS correction/tombstone only after complete traversal; concurrent lineage safety.
 
-### F02
+### L07
+Lease/crash takeover; partial cursor persistence; retry backoff/circuit; pause/disable/revoke race; no duplicate progress.
 
-`verify_provider_configuration()` resolves required references; existing INPI API test demonstrates that environment references becoming available are sufficient to reach `connected`. Provider connectivity/scope itself is not verified.
+### L08
+Population-vs-delta tests including stable 1000/1-change, real collapse, partial traversal, not-modified and schema/field drift.
 
-### F03/F04
+### L09
+Real historical commercial/identity output accounting, replay/partial retry idempotency and correct ablation summaries.
 
-`_transition()` writes target state directly. `expires_at` exists, but current ordinary routes/service do not provide a complete revision-bound rotation/expire/reverify lifecycle.
+### L10
+All migration, PostgreSQL, architecture, backend, frontend-if-touched, security, regression, review and exact-head CI gates on one SHA.
 
-### F05
+## 7. Closeout rule
 
-`source_execution_allowed()` explicitly returns true when no portfolio record exists.
-
-### F07
-
-The three public ATS mappers use registry-local ID as `organization_key`; canonical job mapping constructs an Organization; `persist_commercial_projections()` upserts it. Greenhouse integration test proves the behavior end-to-end.
-
-### F08
-
-Portfolio catalog/health use portfolio authorization metadata, not current onboarding record state. Both ordinary incremental worker and backfill worker call the shared portfolio execution guard; this makes a composed guard the correct fix and disproves the need for a separate backfill finding.
-
-## 5. Explicit non-findings / anti-duplication
-
-- No Lot06 immediate tombstone requirement beyond bounded expiry/current refresh.
-- No Lot08 fuzzy matching project; internal exact/review identity foundation remains terminal.
-- No F09 claiming backfill fully bypasses source portfolio: it already uses the shared guard.
-- No reinterpretation of typed `CommercialProjection` as adapter-owned direct SQL.
-- No second global outbox/reconciliation queue; Lot28 owns that.
-- No supply-chain/release duplication (Lot29/#6).
-- No DNS/address-safety duplication (Lot30/#169).
-- No privacy non-resurrection duplication (Lot31/#5).
-- No browser/CAPTCHA/MFA bypass.
-- No synthetic live-provider proof duplication of Source Activation/SA20.
-
-## 6. Required terminal proof
-
-R02 cannot close until the same exact final SHA proves:
-
-- registry/no-orphan architecture guard;
-- F01/F07 identity binding + reversible job dedup under replay, correction and PostgreSQL concurrency;
-- F02 provider auth/scope/connectivity verification with policy-before-network and redaction;
-- F03/F04 legal transition matrix + exact expiry + rotation/reverify/revoke race safety;
-- F05/F08 fail-closed composed execution authority across scheduler/queued worker/backfill/manual paths, with zero network after denial;
-- F06 still uniquely handed to Lot28 unless independently completed there;
-- reversible migrations where introduced;
-- full backend and architecture gates;
-- frontend gates when touched;
-- security/redaction regression;
-- no unresolved review threads;
-- exact-head CI green.
-
-Only then may `docs/lots/LOTS_06_10_FINALITY_RECOVERY_CLOSEOUT.md` be created and issue #175 closed.
+Do not create `docs/lots/LOTS_06_10_FINALITY_RECOVERY_CLOSEOUT.md` before L10 has one exact implementation SHA proving all R02-local findings. Issue #175 remains open until then.
