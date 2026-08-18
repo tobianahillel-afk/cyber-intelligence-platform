@@ -1,0 +1,290 @@
+version: 3
+recovery_id: R02
+title: Lots 06-10 implementation finality recovery
+status: THIRD_PASS_FINAL_AUDIT_COMPLETE_IMPLEMENTATION_PENDING
+baseline:
+  branch: main
+  sha: 8d7184b8a6f494ceb407ab489d8971f4d015bab6
+tracking_issue: 175
+historical_trackers:
+  lot_06: 21
+  lot_07: 23
+  lot_08: 25
+  lot_09: 27
+  lot_10: 29
+
+allowed_terminal_dispositions:
+  - implemented_proven_here
+  - owned_by_existing_later_scope
+  - terminal_already_proven
+  - explicitly_excluded
+
+forbidden_terminal_dispositions:
+  - later
+  - future_hardening
+  - manual
+  - blocked
+  - not_currently_called
+  - works_in_test
+
+findings:
+  - id: R02-F01
+    historical_lot: 7
+    historical_issue: 23
+    capability: cross_provider_public_job_dedup_runtime_and_reversibility
+    severity: high
+    status: recovery_local
+    owner: R02-L02
+    evidence:
+      - canonical public jobs expose exact_cross_provider_match and a provider-independent candidate key
+      - provider/source-scoped evidence and signals remain independently persisted
+      - no durable duplicate group, reviewed rejection or reversible split decision is materialized
+    invariant: >-
+      Exact cross-provider duplicates converge through a durable deterministic decision without deleting source-native
+      evidence; ambiguity never auto-merges and every decision is replay-stable and reversible.
+    terminal_disposition: null
+
+  - id: R02-F02
+    historical_lot: 9
+    historical_issue: 27
+    capability: provider_specific_connectivity_verification
+    severity: high
+    status: recovery_local
+    owner: R02-L03
+    evidence:
+      - authenticated verification checks required secret-reference availability
+      - available references currently permit CONNECTED without a provider-specific credential/scope/connectivity probe
+    invariant: >-
+      Authenticated CONNECTED requires an approved bounded provider-specific verification after policy gating, with
+      typed failures and no secret material crossing persistence, API, audit or logs.
+    terminal_disposition: null
+
+  - id: R02-F03
+    historical_lot: 9
+    historical_issue: 27
+    capability: onboarding_state_transition_legality
+    severity: high
+    status: recovery_local
+    owner: R02-L04
+    evidence:
+      - onboarding _transition assigns record.state to the requested target
+      - no executable previous-to-next legal transition graph is enforced before mutation
+    invariant: >-
+      Every onboarding transition is validated before state mutation and audit; illegal jumps cannot create state or
+      misleading success history.
+    terminal_disposition: null
+
+  - id: R02-F04
+    historical_lot: 9
+    historical_issue: 27
+    capability: credential_profile_expiry_rotation_and_reverification_lifecycle
+    severity: high
+    status: recovery_local
+    owner: R02-L04
+    evidence:
+      - expires_at and last_verified_at exist but are not a complete revision-bound lifecycle
+      - secret-reference replacement is not bound to a verification revision
+      - provider profile synchronization can change auth mode or required secret names without intrinsically invalidating prior CONNECTED verification
+    invariant: >-
+      CONNECTED/current authorization is valid only for the exact current secret-reference revision and provider
+      verification-contract revision; rotation, profile changes, expiry and revoke invalidate stale verification and
+      require a legal successful re-verification where applicable.
+    terminal_disposition: null
+
+  - id: R02-F05
+    historical_lot: 10
+    historical_issue: 29
+    capability: fail_closed_source_portfolio_execution_authority
+    severity: critical
+    status: recovery_local
+    owner: R02-L05
+    evidence:
+      - source_execution_allowed loads SourcePortfolioRecord by source_id
+      - a missing portfolio row explicitly returns true as legacy behavior
+    invariant: >-
+      Every source execution has explicit central portfolio ownership; missing, candidate, paused, disabled or
+      otherwise ineligible sources fail closed with a typed observable deny reason.
+    terminal_disposition: null
+
+  - id: R02-F06
+    historical_lot: 10
+    historical_issue: 29
+    capability: backfill_incremental_and_retraction_derived_state_convergence
+    severity: critical
+    status: later_scope
+    owner: Lot28
+    tracker_issue: 171
+    evidence:
+      - Lot10 historically requires backfill/incremental convergence and correction/retraction semantics
+      - issue 171 already owns durable cross-module propagation, invalidation and replay/backfill convergence
+    invariant: >-
+      Incremental, historical, replay and mutation events converge to one analyst-current downstream state through
+      the shared Lot28 reconciliation architecture.
+    terminal_disposition: owned_by_existing_later_scope
+
+  - id: R02-F07
+    historical_lot: 7
+    historical_issue: 23
+    related_historical_lot: 8
+    capability: ats_commercial_projection_resolved_organization_binding
+    severity: high
+    status: recovery_local
+    owner: R02-L02
+    evidence:
+      - ATS registry IDs feed CanonicalPublicJob.organization_key
+      - canonical mapping derives an organization UUID and constructs an Organization from the ATS key/name
+      - central commercial persistence can upsert that organization and generate opportunity state without an enforced Lot08 resolved-identity binding
+    invariant: >-
+      Provider-native ATS organization identity remains provenance, but organization-scoped commercial aggregation
+      and cross-provider dedup may use a canonical organization only after an explicit evidence-backed Lot08-safe
+      resolved or reviewed binding.
+    terminal_disposition: null
+
+  - id: R02-F08
+    historical_lot: 10
+    historical_issue: 29
+    related_historical_lot: 9
+    capability: provider_onboarding_runtime_execution_authority_convergence
+    severity: critical
+    status: recovery_local
+    owner: R02-L05
+    evidence:
+      - onboarding and Source Portfolio persist separate authorization state
+      - source_execution_allowed consumes portfolio/freshness state but not current onboarding lifecycle state
+      - runtime adapter reconciliation can promote target-dependent portfolio entries based on adapter presence
+    invariant: >-
+      Provider Onboarding owns credential/authorization lifecycle; Source Portfolio is the one runtime execution
+      authority and composes that current onboarding truth with portfolio status, health/quota/cost and adapter
+      readiness at the final safe pre-network boundary.
+    terminal_disposition: null
+
+  - id: R02-F09
+    historical_lot: 10
+    historical_issue: 29
+    capability: source_record_mutation_capability_contract_and_causal_integrity
+    severity: high
+    status: recovery_local
+    owner: R02-L06
+    evidence:
+      - RawObservation supports UPSERT CORRECTION TOMBSTONE RETRACTION and supersedes_observation_id
+      - the reducer ignores the supersedes edge and reduces by effective time plus source_record_key
+      - persistence does not enforce the supersedes target as the current predecessor of the same source record
+      - Greenhouse Lever and SmartRecruiters manifests advertise corrections and tombstones while current collectors emit changed records as default UPSERT and disappearance only as checkpoint absence
+    invariant: >-
+      Every source mutation advances a valid same-record causal lineage without silent forks; manifest mutation
+      capabilities are executable and tested, changed ATS records can produce causal corrections, and disappearance
+      creates a tombstone only after a complete successful traversal.
+    terminal_disposition: null
+
+  - id: R02-F10
+    historical_lot: 10
+    historical_issue: 29
+    capability: durable_backfill_crash_partial_progress_and_circuit_recovery
+    severity: critical
+    status: recovery_local
+    owner: R02-L07
+    evidence:
+      - BackfillPartitionRecord has state cursor attempts and timestamps but no lease owner lease expiry or retry availability timestamp
+      - claim_backfill_partition changes PENDING or FAILED to RUNNING and no stale RUNNING recovery is present
+      - backfill worker catches AdapterPartialExecutionError through AdapterExecutionError and discards its partial batch/checkpoint
+      - FAILED backfill partitions are immediately reclaimable without the incremental collection circuit/backoff path
+    invariant: >-
+      Backfill work is durably owned, crash-recoverable, partially resumable and provider-safe: stale RUNNING work is
+      recoverable, partial progress is atomically checkpointed, retries are backed off/circuit-gated, and concurrent
+      workers or pause/disable/revoke races cannot corrupt progress.
+    terminal_disposition: null
+
+  - id: R02-F11
+    historical_lot: 10
+    historical_issue: 29
+    capability: source_quality_population_and_delta_semantics
+    severity: high
+    status: recovery_local
+    owner: R02-L08
+    evidence:
+      - source health evaluates quality using batch.observations
+      - quality baseline sets records_count to len(observations) and trains an EWMA expected records per run
+      - public ATS collectors traverse the current provider population but emit observations only for changed records
+    invariant: >-
+      Source health distinguishes provider/current population and traversal completeness from immutable delta/change
+      emissions; incomplete or partial runs do not poison a healthy baseline and unavailable metrics are unknown rather
+      than fabricated as zero.
+    terminal_disposition: null
+
+  - id: R02-F12
+    historical_lot: 10
+    historical_issue: 29
+    capability: backfill_source_value_and_ablation_attribution
+    severity: high
+    status: recovery_local
+    owner: R02-L09
+    evidence:
+      - SourceValueEvent supports commercial_projections and identity_projections for both execution modes
+      - incremental worker derives nonzero projection counts from its batch
+      - backfill completion hardcodes commercial_projections and identity_projections to zero
+      - historical value tests cover a zero-output reference adapter rather than a real derived-output backfill
+    invariant: >-
+      Incremental and historical executions report accepted/persisted source value under one counting contract while
+      preserving execution mode, replay idempotency and the distinction between historical evidence value and fresh
+      commercial triggers.
+    terminal_disposition: null
+
+terminal_proofs:
+  - historical_lot: 6
+    capability: greenhouse_historical_core
+    disposition: terminal_already_proven
+    rationale: >-
+      Greenhouse policy gating, strict bounded current-board traversal, fingerprinted immutable observations and
+      bounded active-signal refresh remain valid. Lot10 mutation-capability finality is tracked separately as F09.
+
+  - historical_lot: 8
+    capability: organization_identity_safe_auto_confirmation_boundary
+    disposition: terminal_already_proven
+    rationale: >-
+      Official identifier identity remains exact-first and normalized exact identifiers have globally unique persisted
+      keys; ambiguous/name-only identity remains a review concern. ATS consumption of this identity authority is F07.
+
+handoffs:
+  - capability: cross_module_derived_state_reconciliation_and_invalidation
+    owner: Lot28
+    tracker_issue: 171
+  - capability: supply_chain_release_provenance_repository_protection
+    owner: Lot29
+    tracker_issue: 6
+  - capability: dns_address_safety_and_broad_resilience
+    owner: Lot30
+    tracker_issue: 169
+  - capability: privacy_rights_deletion_non_resurrection
+    owner: Lot31
+    tracker_issue: 5
+  - capability: residual_controlled_provider_live_proof
+    owner: SA20
+
+micro_lots:
+  - id: R02-L01
+    owns: []
+    purpose: executable ownership and no-orphan guard
+  - id: R02-L02
+    owns: [R02-F01, R02-F07]
+  - id: R02-L03
+    owns: [R02-F02]
+  - id: R02-L04
+    owns: [R02-F03, R02-F04]
+  - id: R02-L05
+    owns: [R02-F05, R02-F08]
+  - id: R02-L06
+    owns: [R02-F09]
+  - id: R02-L07
+    owns: [R02-F10]
+  - id: R02-L08
+    owns: [R02-F11]
+  - id: R02-L09
+    owns: [R02-F12]
+  - id: R02-L10
+    owns: []
+    purpose: final adversarial exact-head qualification and closeout
+
+closeout:
+  required_micro_lot: R02-L10
+  closeout_document: docs/lots/LOTS_06_10_FINALITY_RECOVERY_CLOSEOUT.md
+  create_only_after_runtime_implementation: true
