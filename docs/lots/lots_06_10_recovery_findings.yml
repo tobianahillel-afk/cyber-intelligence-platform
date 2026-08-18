@@ -1,4 +1,4 @@
-version: 1
+version: 2
 recovery_id: R02
 title: Lots 06-10 implementation finality recovery
 status: FINAL_AUDIT_COMPLETE_IMPLEMENTATION_PENDING
@@ -37,8 +37,8 @@ findings:
     owner: R02-L02
     evidence:
       - src/cip/adapters/sources/canonical_jobs.py exposes exact_cross_provider_match and an exact-match candidate key
-      - public-job source_record_key and CommercialSignal identifiers remain provider/source scoped
-      - no durable cross-provider duplicate decision, group, rejection or reversal contract is materialized by the canonical job mapping path
+      - public-job source_record_key, Evidence and CommercialSignal identities remain provider/source scoped
+      - no durable cross-provider duplicate decision, group, rejection or reversal contract is materialized by the ordinary canonical job path
     invariant: >-
       Exact duplicates across approved ATS providers converge to one analyst-current commercial fact without
       erasing source-native evidence, ambiguous cases are never auto-merged, and every dedup decision is
@@ -53,9 +53,10 @@ findings:
     status: recovery_local
     owner: R02-L03
     evidence:
-      - verify_provider_configuration delegates to _verification_result
+      - verify_provider_configuration delegates authenticated verification to _verification_result
       - authenticated verification checks missing references and SecretReferenceResolver.is_available only
-      - _verification_result returns connected without invoking a provider-specific connectivity port
+      - tests/integration/test_provider_onboarding_api.py treats available environment references as sufficient for INPI to become connected
+      - no provider-specific connectivity port is invoked before CONNECTED
     invariant: >-
       An authenticated provider cannot enter CONNECTED solely because a secret reference resolves; an approved,
       bounded, typed provider-specific connectivity verification must succeed, with policy applied before network
@@ -85,9 +86,9 @@ findings:
     status: recovery_local
     owner: R02-L04
     evidence:
-      - ProviderOnboardingRecord exposes expires_at and service reads it into the domain model
+      - ProviderOnboardingRecord exposes expires_at and last_verified_at
       - ordinary onboarding routes expose start, human checkpoint, secret-reference registration, verify and revoke
-      - revoke clears expires_at, but the ordinary service/API does not establish a complete rotate/expire/reverify workflow or block a stale connected state from the Lot09 lifecycle itself
+      - revoke clears current authorization metadata, but there is no complete rotate/expire/reverify workflow bound to the current reference revision
     invariant: >-
       Credential/reference rotation and expiry are explicit audited lifecycle events; expired authorization cannot
       remain CONNECTED/current, replacement references require re-verification, and revocation/rotation never
@@ -104,6 +105,7 @@ findings:
     evidence:
       - source_execution_allowed loads SourcePortfolioRecord by source_id
       - when no portfolio record exists it explicitly returns true for legacy behavior
+      - incremental and backfill workers both depend on source_execution_allowed before adapter execution
     invariant: >-
       Every executable queued, scheduled, backfill, refresh or manual source run is represented by and authorized
       through the central source portfolio; a missing catalogue record is non-executable rather than a legacy
@@ -120,12 +122,57 @@ findings:
     tracker_issue: 171
     evidence:
       - Lot10 originally requires backfill/incremental convergence plus correction, deletion and retraction behavior
-      - the later cross-module finality audit explicitly records that historical backfill and incremental workers do not yet share the complete downstream reconciliation contract
+      - the later cross-module finality audit records that historical backfill and incremental workers do not yet share the complete downstream reconciliation contract
       - issue 171 assigns durable propagation, invalidation and replay/backfill convergence to Lot28
     invariant: >-
       Incremental ingestion, historical backfill, replay and correction/retraction/expiry converge to the same
       canonical and analyst-current derived state through the shared durable reconciliation architecture.
     terminal_disposition: owned_by_existing_later_scope
+
+  - id: R02-F07
+    historical_lot: 7
+    historical_issue: 23
+    related_historical_issue: 25
+    capability: public_ats_projection_requires_resolved_organization_identity
+    severity: high
+    status: recovery_local
+    owner: R02-L02
+    evidence:
+      - Greenhouse, Lever and SmartRecruiters registries accept local id/token-or-identifier/canonical_name/country/enabled but no resolved organization binding
+      - their mappers pass the registry id as CanonicalPublicJob.organization_key
+      - CanonicalPublicJob derives organization_id deterministically from organization_key and map_canonical_public_job constructs an Organization from that configured name/key
+      - persist_commercial_projections upserts projection.organization before evidence/signal persistence and opportunity generation
+      - tests/integration/test_greenhouse_commercial_projection.py proves that a registry-derived Example Security organization is created by this path without a Lot08 identity-resolution decision
+    invariant: >-
+      An ATS site/board/company configuration may identify a provider tenant, but it cannot implicitly mint or
+      assert canonical legal organization identity. Public-job commercial projection must bind to an existing
+      resolved canonical organization or to an explicit evidence-backed/reviewed identity decision before
+      organization-scoped commercial aggregation and cross-provider deduplication. Provider-native provenance
+      remains independent and no fuzzy/name-only automatic identity merge is introduced.
+    terminal_disposition: null
+
+  - id: R02-F08
+    historical_lot: 10
+    historical_issue: 29
+    related_historical_issue: 27
+    capability: provider_onboarding_runtime_execution_authority_convergence
+    severity: critical
+    status: recovery_local
+    owner: R02-L05
+    evidence:
+      - provider onboarding persists its own state, expires_at, last_verified_at and revocation lifecycle
+      - source portfolio persists a separate authorization_expires_at and computes AUTHORIZATION_EXPIRED from portfolio/catalog state
+      - source portfolio synchronization and health do not consume ProviderOnboardingRecord authorization state
+      - incremental and backfill workers gate execution through source_execution_allowed, which consults portfolio state but not onboarding state
+      - historical Lot10 exit criteria explicitly compose catalogue -> onboarding -> backfill -> incremental refresh -> health -> disable and require automatic stop at authorization expiry
+    invariant: >-
+      Provider onboarding is the authoritative credential/authorization truth and source portfolio is the
+      authoritative execution decision point. Every network-capable execution path must compose the current
+      onboarding authorization state with portfolio status, freshness, quota/cost and adapter availability;
+      revoked, expired, failed, rotated-but-unverified or otherwise non-current authorization must deny execution,
+      including jobs already queued before the state change. The decision is revalidated immediately before
+      provider network without introducing a competing global reconciliation architecture.
+    terminal_disposition: null
 
 terminal_proofs:
   - historical_lot: 6
@@ -138,12 +185,13 @@ terminal_proofs:
       tombstone requirement is added beyond the historical Lot06 contract.
 
   - historical_lot: 8
-    capability: organization_identity_safe_auto_confirmation_boundary
+    capability: organization_identity_internal_safe_auto_confirmation_boundary
     disposition: terminal_already_proven
     rationale: >-
-      Current identity contracts preserve explicit evidence/identity projections and prevent multiple automatic
-      confirmations; the audited resolver path only auto-confirms exact official identifiers while ambiguous or
-      conflicting candidates remain review-required. Broader temporal graph finality belongs to later lots.
+      The Lot08 identity module itself remains conservative: exact official identifiers are the safe automatic
+      confirmation boundary while ambiguous/conflicting/name-only candidates remain review-required. R02-F07 is
+      deliberately a Lot07 integration finding: ATS commercial projection does not currently prove it has consumed
+      this identity authority before upserting a canonical organization.
 
 handoffs:
   - capability: cross_module_derived_state_reconciliation_and_invalidation

@@ -1,14 +1,14 @@
 # Lots 06–10 recovery code surface and test map
 
-Status: **PLANNED_LOCKED**  
+Status: **PLANNED_LOCKED_AFTER_SECOND_AUDIT**  
 Recovery: **R02**  
 Issue: **#175**
 
-This file is the implementation navigation map for R02. Paths marked `existing` are present on the audited baseline. Paths marked `candidate` are recommended ownership locations and may be renamed only if the final implementation preserves the same bounded-context ownership.
+This map records the code surfaces proven by the second audit and the intended implementation ownership. Candidate paths may be renamed if bounded-context ownership remains identical.
 
 ## R02-L01 — ownership registry
 
-### Existing
+Existing docs:
 
 - `docs/lots/lots_06_10_recovery_findings.yml`
 - `docs/lots/LOTS_06_10_IMPLEMENTATION_FINALITY_RECOVERY.md`
@@ -17,301 +17,198 @@ This file is the implementation navigation map for R02. Paths marked `existing` 
 - this file
 - `docs/lots/LOTS_06_10_FINAL_AUDIT_AND_OWNERSHIP_LOCK.md`
 
-### Create
-
-- `tests/architecture/test_lots_06_10_recovery_ownership.py`
-
-### Test focus
-
-Manifest uniqueness, allowed dispositions, owner presence, later-tracker presence, no placeholder values, exact Lot28 handoff and no premature closeout claim.
-
-### Migration
-
-None.
+Create `tests/architecture/test_lots_06_10_recovery_ownership.py` and validate F01–F08 ownership/dispositions plus no premature closeout.
 
 ---
 
-## R02-L02 — Lot07 cross-provider public-job duplicate decisions
+## R02-L02 — ATS organization binding + cross-provider duplicate decisions
 
-### Existing source contract
+### Proven existing surfaces
 
 - `src/cip/adapters/sources/canonical_jobs.py`
-  - `CanonicalPublicJob`
+  - `CanonicalPublicJob.organization_key`
+  - derived `organization_id`
   - `exact_match_candidate_key`
   - `exact_cross_provider_match`
-  - source-native observation/projection mapping
-- `src/cip/adapters/sources/greenhouse/`
-- `src/cip/adapters/sources/lever/`
-- `src/cip/adapters/sources/smartrecruiters/`
-- collection orchestration projection/persistence boundary
+  - `map_canonical_public_job()` constructs `Organization`, Evidence, CommercialSignal.
+- `src/cip/adapters/sources/greenhouse/registry.py` / `mapper.py`
+  - board `id` becomes `organization_key`.
+- `src/cip/adapters/sources/lever/registry.py` / `mapper.py`
+  - site `id` becomes `organization_key`.
+- `src/cip/adapters/sources/smartrecruiters/registry.py` / `mapper.py`
+  - company `id` becomes `organization_key`.
+- `src/cip/modules/opportunities/infrastructure/projections.py`
+  - `persist_commercial_projections()` upserts `projection.organization` before evidence/signal/opportunity generation.
+- Lot08 organization identity application/infrastructure surfaces for exact/reviewed identity decisions.
 
-### Candidate new/modified ownership
+### Existing proof tests to modify/extend
 
-Prefer a domain/application contract named for public-job duplicate grouping, not a generic utility. For example:
+- `tests/integration/test_greenhouse_commercial_projection.py` currently proves a registry-derived organization can be created directly.
+- canonical ATS mapper/collector tests under `tests/unit/adapters/`.
+- Lot08 organization identity tests and `tests/integration/test_organization_identity_persistence_api.py`.
 
-- `src/cip/modules/professional_context/domain/job_duplicates.py` if that existing bounded context owns canonical job semantics; or
-- a narrowly scoped `public_jobs` domain/application package if architecture tests show no existing bounded context is correct.
+### Candidate implementation surfaces
 
-Do not place persistence logic inside provider adapters.
+Prefer a narrow public-job binding/dedup bounded context or an existing domain that can own both source→canonical organization binding and job duplicate decisions. Provider adapters must not own SQL persistence.
 
-Likely infrastructure surfaces:
+Likely schema:
 
-- SQLAlchemy records for duplicate group, member and decision/audit;
-- repository/application service invoked after canonical public-job persistence;
-- migration under the repository's Alembic migration path;
-- read model/API only if required for analyst reversal/review.
+- source ATS organization binding: provider/source tenant key → canonical organization id + decision state + evidence/rule/version + reviewer/audit;
+- duplicate group/member/decision + decision history/reversal metadata.
 
-### Required stored facts
+Do not copy provider payloads into these tables and do not destructively rewrite source-native evidence.
 
-At minimum:
+### Required tests
 
-- stable group id;
-- source-native member identities;
-- decision state;
-- rule/version/fingerprint;
-- creation/update time;
-- review actor/time for manual override if supported;
-- reversal/split history or equivalent immutable audit.
-
-Never copy provider payloads into the dedup table.
-
-### Tests to locate/extend
-
-- canonical public job unit tests;
-- Greenhouse/Lever/SmartRecruiters mapper/collector tests;
-- PostgreSQL persistence integration tests;
-- replay/idempotency tests;
-- concurrency test for duplicate simultaneous arrival;
-- architecture test proving adapter packages do not own dedup persistence.
-
-### Migration strategy
-
-New grouping rows should start empty for legacy data unless a deterministic controlled replay/backfill establishes them. Do not infer historical exact matches solely during schema migration.
-
-### Rollback
-
-Drop only duplicate-grouping projections introduced by R02. Preserve source records, raw observations, evidence and provider-scoped facts.
+- unresolved ATS binding blocks canonical org-scoped projection;
+- exact/reviewed binding permits it;
+- ambiguous/name-only binding never auto-confirms;
+- same legal org across different ATS local IDs converges;
+- exact cross-provider duplicate deterministic/replay-safe;
+- ambiguity/review reject/split/correction reversible;
+- PostgreSQL concurrent arrivals unique/race-safe;
+- provider-native evidence independently queryable after grouping/split.
 
 ---
 
-## R02-L03 — Lot09 connectivity verification
+## R02-L03 — provider connectivity verification
 
 ### Existing
 
 - `src/cip/modules/provider_onboarding/application/service.py`
-  - `verify_provider_configuration`
-  - `_verification_result`
-- `src/cip/modules/provider_onboarding/application/secrets.py`
-- `src/cip/modules/provider_onboarding/application/runtime_secrets.py`
+- secret-reference resolver/runtime secret surfaces
+- provider profile/catalogue
 - `src/cip/modules/provider_onboarding/api/routes.py`
-- provider onboarding domain/profile catalogue
-- approved provider adapter/client infrastructure
+- approved provider client/transport infrastructure.
+
+### Existing proof test
+
+`tests/integration/test_provider_onboarding_api.py` currently sets INPI env references and expects `connected`; this must be changed so reference availability alone cannot prove connectivity.
 
 ### Candidate create
 
-- `src/cip/modules/provider_onboarding/application/ports.py` or a dedicated existing ports module extension for `ProviderVerificationPort`;
-- provider-specific verification adapters in infrastructure/provider packages;
-- a registry that binds `source_id/auth_mode` to a verification capability without importing concrete clients into the domain/application core.
+- onboarding `ProviderVerificationPort` and typed secret-free result;
+- provider verifier registry;
+- provider-specific minimal verification adapters.
 
-### Port requirements
-
-The application-facing result must be typed and secret-free. Suggested result fields:
-
-- status/result enum;
-- normalized error code;
-- provider verification method/version;
-- verified_at supplied by application clock;
-- optional bounded non-secret metadata needed for diagnosis.
-
-Never return token/key/password values.
-
-### Tests
-
-- provider onboarding service unit tests with fake verification port;
-- transport-specific tests fully network-free;
-- policy-before-network architecture/integration test;
-- error normalization tests;
-- audit redaction test;
-- API serialization test proving no secret material.
-
-### Migration
-
-Only if verification method/version must be persisted. Existing `last_verified_at`, error code/message and audit history should be reused where sufficient.
+Test rejected auth/scope, outage, timeout, missing verifier, policy-before-network, auth-none/manual semantics and complete redaction.
 
 ---
 
-## R02-L04 — Lot09 transition/rotation/expiry lifecycle
+## R02-L04 — transition/expiry/rotation/reverify lifecycle
 
 ### Existing
 
-- `src/cip/modules/provider_onboarding/domain/models.py`
-- `src/cip/modules/provider_onboarding/application/service.py`
-  - `_transition`
-  - register/verify/revoke operations
-- `src/cip/modules/provider_onboarding/api/routes.py`
-- `src/cip/modules/provider_onboarding/api/schemas.py`
-- onboarding infrastructure model with state, secret references, `last_verified_at`, `expires_at`, errors and audit history
-- source-portfolio freshness/authorization integration
+- provider onboarding domain models;
+- `application/service.py` including `_transition`, register/verify/revoke;
+- API routes/schemas;
+- persistence record with state, secret refs, `last_verified_at`, `expires_at`, error/audit fields;
+- unit tests under `tests/unit/provider_onboarding/`;
+- `tests/integration/test_provider_onboarding_api.py`.
 
-### Candidate create/modify
+### Candidate modifications
 
-- one domain transition policy/table, e.g. `domain/lifecycle.py`, if adding it to `models.py` would violate module-size/single-responsibility standards;
-- explicit application operations for rotation and expiry/reverification if they cannot be expressed safely by existing registration/verify methods;
-- API schemas/routes for operator-visible rotation/expiry actions only as needed;
-- UI Sources onboarding controls/status if current frontend needs the lifecycle to be operable.
+- one domain lifecycle/transition policy;
+- reference-set non-secret revision/fingerprint binding successful verification to current configuration;
+- explicit rotation/expiry/reverify application/API behavior;
+- operator UI status/actions when needed.
 
-### Transition policy constraints
-
-- total coverage of known states;
-- no wildcard “any -> failed/connected” shortcut unless historically and semantically justified;
-- blocked/quarantined terminal guards;
-- idempotent same-state behavior defined explicitly rather than accidental;
-- no state mutation before validation.
-
-### Persistence/migration candidates
-
-Reuse current columns first. Add only metadata required to bind a successful verification to the current secret-reference configuration, for example a non-secret reference-set fingerprint/revision.
-
-No secret contents in fingerprints if that would derive sensitive material; fingerprint stable reference identifiers/configuration, not resolved secret values.
-
-### Tests
-
-- full transition-table parametrized tests;
-- invalid-edge negative matrix;
-- rotate/reverify/revoke lifecycle;
-- exact expiry boundary;
-- PostgreSQL race: rotate vs verify;
-- API conflict status for invalid transitions;
-- source-portfolio composed execution denial after expiry/revoke;
-- audit ordering and redaction.
+Tests: full legal/illegal edge matrix; no audit on invalid jump; exact expiry; rotate→must reverify; failed reverify; revoke; blocked state; PostgreSQL verify↔rotate/revoke race; secret redaction.
 
 ---
 
-## R02-L05 — Lot10 fail-closed source-portfolio authority
+## R02-L05 — composed fail-closed source execution authority
 
-### Existing
+### Proven existing surfaces
 
 - `src/cip/modules/source_portfolio/application/execution.py`
-  - `source_execution_allowed`
+  - currently `record is None -> True`.
 - `src/cip/modules/source_portfolio/application/catalog.py`
-- `src/cip/modules/source_portfolio/application/service.py`
-- `src/cip/modules/source_portfolio/application/backfill.py`
-- `src/cip/modules/source_portfolio/application/backfill_worker.py`
+  - portfolio sync; `authorization_expires_at` comes from catalog entry.
 - `src/cip/modules/source_portfolio/application/health.py`
-- `src/cip/modules/source_portfolio/application/records.py`
-- source-portfolio bootstrap/reconciliation startup path
-- machine-readable source portfolio policy/catalogue
-- collection scheduler/worker execution paths
+  - computes authorization/quota/cost freshness blocks from portfolio state.
+- `src/cip/modules/source_portfolio/application/service.py`.
+- `src/cip/modules/provider_onboarding/application/service.py`
+  - separate onboarding state/expiry/verification/revoke truth.
+- `src/cip/modules/collection_orchestration/application/worker.py`
+  - claims then calls `source_execution_allowed()` before `adapter.collect()`.
+- `src/cip/modules/source_portfolio/application/backfill_worker.py`
+  - `_claim_partition()` calls `source_execution_allowed()` before selecting a partition; collect occurs after claim.
+
+### Existing tests
+
+- `tests/integration/test_source_portfolio_execution_guards.py`
+  - pause-after-queue cancellation;
+  - portfolio `authorization_expires_at` block;
+  - quota/cost block.
+- `tests/integration/test_source_portfolio_backfill_worker.py`.
+- `tests/integration/test_source_portfolio_runtime_reconciliation.py`.
+- `tests/integration/test_source_portfolio_lifecycle.py`.
+- `tests/integration/test_provider_onboarding_api.py`.
 
 ### Required modifications
 
-1. Replace `record is None -> True` with fail-closed semantics.
-2. Introduce a typed deny/configuration reason rather than silently collapsing all denial causes where the caller needs observability.
-3. Add reverse startup validation: executable adapter/schedule/runtime source -> exactly one portfolio ownership record.
-4. Ensure queued jobs are rechecked at execution time.
-5. Ensure backfill/manual refresh uses the same gate.
-6. Keep candidates/non-executable sources unable to run even if an adapter exists.
+1. replace missing-row allow with typed fail-closed decision;
+2. compose current onboarding authorization for providers requiring onboarding;
+3. define mapping source_id/provider profile ↔ portfolio source without duplicate identity tables;
+4. reverse validate runtime adapters/schedules/manual/backfill targets against portfolio at startup;
+5. recheck composed eligibility at last safe pre-network boundary for incremental and backfill work;
+6. make denial observable and prove zero network call;
+7. preserve auth-none public source semantics only when explicitly executable/governed.
 
-### Data/bootstrap migration
+### Required race/negative tests
 
-Before default denial is activated, enumerate all existing executable sources and synchronize them from the machine-readable portfolio. Missing entries are configuration errors, not candidates for implicit auto-executable creation.
+- missing record deny;
+- candidate/disabled deny even with adapter present;
+- onboarding revoked/failed/expired deny;
+- rotated reference without successful current-revision verification deny;
+- revoke/expiry/rotate after queue/claim but before collect => zero network;
+- incremental/backfill/manual parity;
+- portfolio authorization expiry and onboarding expiry cannot contradict into an allow;
+- startup hard-fails/reports executable runtime source without portfolio ownership;
+- approved current source works after synchronization.
 
-### Tests
+### Lot28 boundary
 
-- `source_execution_allowed` missing-record deny;
-- startup reverse reconciliation;
-- schedule validation;
-- worker recheck after source disable;
-- backfill/manual path equality;
-- policy denial before provider call;
-- candidate source with adapter still denied;
-- authorized source works after bootstrap.
-
-### No duplicate Lot28 work
-
-Do not change R02-L05 into the Lot28 outbox/reconciliation implementation. The only R02-L05 concern is whether the source is allowed to execute and whether every execution path is governed by the same portfolio authority.
+No global outbox/derived-state invalidation implementation here. F06 remains Lot28/#171.
 
 ---
 
-## R02-F06 / Lot28 handoff map
-
-No R02 production code is authorized for this finding.
-
-Canonical owner:
-
-- Lot28 / issue #171;
-- existing Lot28 recovery docs on `main`.
-
-R02 tests may assert the ownership pointer, but may not create:
-
-- a second transactional outbox;
-- a second derived-state queue;
-- provider-specific cross-module invalidation;
-- a competing global reconciliation scheduler.
-
----
-
-## Historical-preservation tests
+## Historical-preservation gates
 
 ### Lot06
 
-Preserve:
-
-- unchanged active job refresh without duplicate observation;
-- bounded expiry;
-- source governance before request;
-- no candidate/private application data.
+Preserve unchanged-active refresh, fingerprint-gated observations, bounded TTL, source governance and no applicant/private data.
 
 ### Lot08
 
-Preserve:
+Preserve exact official-identifier safety, ambiguity review, conflicting identifier retention and evidence provenance. F07 must **consume**, not weaken or replace, this authority.
 
-- official-identifier validation;
-- no name-only auto-confirmation;
-- ambiguous/conflicting review state;
-- evidence/identity projection consistency;
-- no private-person enrichment introduced by R02.
+## Migration gate
 
----
+If R02-L02/L04/L05 adds schema or reference revisions:
 
-## Migration gate for the entire recovery
+- upgrade from current main succeeds;
+- no historical identity binding/dedup/verification success is fabricated;
+- legacy rows default to conservative unresolved/reverify-required state where truth is absent;
+- downgrade preserves source-native evidence and secret safety;
+- upgrade-after-downgrade succeeds on PostgreSQL.
 
-If R02-L02 or R02-L04 adds schema:
-
-1. upgrade from current `main` schema succeeds;
-2. existing rows remain truthfully interpretable;
-3. no historical successful verification or duplicate decision is fabricated;
-4. downgrade succeeds without deleting source-native evidence;
-5. upgrade after downgrade succeeds;
-6. PostgreSQL-backed migration tests run on the exact final code head.
-
-## Security gate
-
-R02 must preserve:
-
-- no raw provider secret in API/DB/audit/logs/fixtures;
-- no auth/CAPTCHA/MFA bypass;
-- no active scanning;
-- policy and portfolio checks before provider network;
-- no weaker organization matching;
-- no destructive source-history dedup.
-
-## Final exact-head test matrix
-
-The closeout SHA must run, as applicable:
+## Final exact-head matrix
 
 ```text
-architecture
-provider adapter unit tests
-ATS canonical/replay tests
-provider onboarding unit + PostgreSQL integration tests
-source portfolio/backfill/worker integration tests
+architecture ownership + adapter boundaries
+ATS unit/integration + replay/concurrency
+organization identity integration
+provider onboarding unit/integration + secret redaction
+source portfolio scheduler/worker/backfill/manual execution guards
+PostgreSQL race tests
 migration upgrade/downgrade/upgrade
 backend lint/type/coverage/full regression
 frontend lint/type/test/build when touched
-security/secret-redaction tests
+security/policy-before-network
 unresolved review-thread check
-exact-head CI
+exact-head GitHub CI
 ```
 
-A green subset is not finality proof.
+A green subset is not R02 finality proof.
